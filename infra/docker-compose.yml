@@ -1,0 +1,28 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: craftcard-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-craftcard_root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-craftcard}
+      MYSQL_USER: ${MYSQL_USER:-craftcard}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-craftcard_pass}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - craftcard-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-craftcard_root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - craftcard-network
+
+volumes:
+  craftcard-data:
+
+networks:
+  craftcard-network:
+    driver: bridge

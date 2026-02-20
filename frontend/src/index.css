@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Brand tokens */
+    --cc-primary: #00E4F2;
+    --cc-accent: #D12BF2;
+    --cc-purple: #68007B;
+    --cc-bg: #1A1A2E;
+    --cc-bg-card: #16213E;
+    --cc-text: #FFFFFF;
+    --cc-text-secondary: #A0AEC0;
+    --cc-text-muted: #718096;
+
+    /* shadcn/ui tokens (dark theme) */
+    --background: 235 33% 14%;
+    --foreground: 0 0% 100%;
+    --card: 216 45% 16%;
+    --card-foreground: 0 0% 100%;
+    --popover: 216 45% 16%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 184 100% 47%;
+    --primary-foreground: 235 33% 14%;
+    --secondary: 216 45% 22%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 216 45% 22%;
+    --muted-foreground: 215 16% 57%;
+    --accent: 289 93% 47%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 216 45% 25%;
+    --input: 216 45% 25%;
+    --ring: 184 100% 47%;
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, var(--cc-primary), var(--cc-accent));
+  }
+
+  .gradient-bg {
+    background-image: linear-gradient(135deg, var(--cc-primary), var(--cc-accent));
+  }
+
+  .gradient-bg-subtle {
+    background-image: linear-gradient(135deg, var(--cc-primary), var(--cc-accent));
+    opacity: 0.1;
+  }
+
+  .glass {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10;
+  }
+
+  .glass-card {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl;
+  }
+}

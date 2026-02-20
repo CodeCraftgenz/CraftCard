@@ -1,0 +1,124 @@
+import { motion } from 'framer-motion';
+import {
+  Instagram,
+  Linkedin,
+  Github,
+  Globe,
+  Mail,
+  MessageCircle,
+  User,
+} from 'lucide-react';
+
+interface CardPreviewProps {
+  displayName?: string;
+  bio?: string;
+  photoUrl?: string;
+  buttonColor?: string;
+  socialLinks?: Array<{
+    platform: string;
+    label: string;
+    url: string;
+  }>;
+  demo?: boolean;
+}
+
+const DEMO_CARD: CardPreviewProps = {
+  displayName: 'Maria Silva',
+  bio: 'Designer & Criadora de Conteudo. Ajudo marcas a crescerem com design autenticado e estrategias criativas.',
+  buttonColor: '#00E4F2',
+  socialLinks: [
+    { platform: 'instagram', label: 'Instagram', url: '#' },
+    { platform: 'linkedin', label: 'LinkedIn', url: '#' },
+    { platform: 'email', label: 'Email', url: '#' },
+    { platform: 'whatsapp', label: 'WhatsApp', url: '#' },
+  ],
+};
+
+const platformIcons: Record<string, typeof Instagram> = {
+  instagram: Instagram,
+  linkedin: Linkedin,
+  github: Github,
+  website: Globe,
+  email: Mail,
+  whatsapp: MessageCircle,
+};
+
+export function CardPreview({
+  displayName,
+  bio,
+  photoUrl,
+  buttonColor,
+  socialLinks,
+  demo,
+}: CardPreviewProps) {
+  const card = demo ? DEMO_CARD : { displayName, bio, photoUrl, buttonColor, socialLinks };
+  const accent = card.buttonColor || '#00E4F2';
+
+  return (
+    <motion.div
+      initial={demo ? { opacity: 0, scale: 0.95 } : false}
+      animate={demo ? { opacity: 1, scale: 1 } : undefined}
+      transition={{ duration: 0.5 }}
+      className="w-full max-w-[340px] mx-auto"
+    >
+      <div
+        className="rounded-3xl overflow-hidden shadow-2xl"
+        style={{
+          background: `linear-gradient(180deg, ${accent}15 0%, #16213E 40%)`,
+        }}
+      >
+        <div className="p-6 flex flex-col items-center text-center">
+          {/* Avatar */}
+          <div
+            className="w-24 h-24 rounded-full flex items-center justify-center mb-4 shadow-lg"
+            style={{
+              background: card.photoUrl
+                ? `url(${card.photoUrl}) center/cover`
+                : `linear-gradient(135deg, ${accent}, #D12BF2)`,
+            }}
+          >
+            {!card.photoUrl && <User className="w-10 h-10 text-white" />}
+          </div>
+
+          {/* Name */}
+          <h3 className="text-xl font-bold text-white mb-1">
+            {card.displayName || 'Seu Nome'}
+          </h3>
+
+          {/* Bio */}
+          {card.bio && (
+            <p className="text-sm text-white/60 mb-6 leading-relaxed max-w-[260px]">
+              {card.bio}
+            </p>
+          )}
+
+          {/* Social Links */}
+          <div className="w-full flex flex-col gap-2.5">
+            {(card.socialLinks || []).map((link, i) => {
+              const Icon = platformIcons[link.platform] || Globe;
+              return (
+                <motion.a
+                  key={i}
+                  href={demo ? undefined : link.url}
+                  target={demo ? undefined : '_blank'}
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-white font-medium text-sm transition-all"
+                  style={{
+                    backgroundColor: `${accent}20`,
+                    borderLeft: `3px solid ${accent}`,
+                  }}
+                >
+                  <Icon size={18} style={{ color: accent }} />
+                  <span>{link.label}</span>
+                  <span className="ml-auto text-white/30">&rsaquo;</span>
+                </motion.a>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
