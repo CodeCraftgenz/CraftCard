@@ -5,11 +5,12 @@ import { Public } from '../common/decorators/public.decorator';
 import { googleAuthSchema } from './dto/google-auth.dto';
 
 const REFRESH_COOKIE = 'refreshToken';
+const isProduction = process.env.NODE_ENV === 'production';
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
-  path: '/api/auth',
+  secure: isProduction,
+  sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
+  path: '/',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
@@ -68,7 +69,7 @@ export class AuthController {
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const currentToken = req.cookies?.[REFRESH_COOKIE];
     await this.authService.logout(currentToken);
-    res.clearCookie(REFRESH_COOKIE, { path: '/api/auth' });
+    res.clearCookie(REFRESH_COOKIE, { path: '/' });
     return { message: 'Logout realizado' };
   }
 }
