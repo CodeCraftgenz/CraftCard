@@ -35,10 +35,12 @@ export function EditorPage() {
   const [saved, setSaved] = useState(false);
   const [debouncedSlug, setDebouncedSlug] = useState('');
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const initializedRef = useRef(false);
 
-  // Sync profile data to form
+  // Sync profile data to form only on initial load
   useEffect(() => {
-    if (profile) {
+    if (profile && !initializedRef.current) {
+      initializedRef.current = true;
       setForm({
         displayName: profile.displayName || '',
         bio: profile.bio || '',
