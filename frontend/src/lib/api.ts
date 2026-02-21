@@ -26,6 +26,14 @@ function processQueue(error: unknown | null) {
   failedQueue = [];
 }
 
+// Auto-detect FormData and remove Content-Type so Axios sets multipart boundary
+api.interceptors.request.use((config) => {
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
+  return config;
+});
+
 api.interceptors.response.use(
   (response) => response.data?.data ?? response.data,
   async (error) => {

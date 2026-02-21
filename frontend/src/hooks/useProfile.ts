@@ -49,9 +49,7 @@ export function useUploadPhoto() {
     mutationFn: (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      return api.post('/me/photo-upload', formData, {
-        headers: { 'Content-Type': undefined },
-      });
+      return api.post('/me/photo-upload', formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
@@ -66,9 +64,7 @@ export function useUploadResume() {
     mutationFn: (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      return api.post('/me/resume-upload', formData, {
-        headers: { 'Content-Type': undefined },
-      });
+      return api.post('/me/resume-upload', formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });

@@ -95,14 +95,30 @@ export function EditorPage() {
     triggerAutoSave();
   };
 
+  const [uploadError, setUploadError] = useState('');
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) await uploadPhoto.mutateAsync(file);
+    if (!file) return;
+    setUploadError('');
+    try {
+      await uploadPhoto.mutateAsync(file);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao enviar foto';
+      setUploadError(msg);
+    }
   };
 
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) await uploadResume.mutateAsync(file);
+    if (!file) return;
+    setUploadError('');
+    try {
+      await uploadResume.mutateAsync(file);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao enviar curriculo';
+      setUploadError(msg);
+    }
   };
 
   const handleCopyLink = () => {
@@ -255,6 +271,9 @@ export function EditorPage() {
                     />
                   </label>
                   <p className="text-xs text-white/30">JPG, PNG ou WebP. Max 5MB</p>
+                  {uploadError && (
+                    <p className="text-xs text-red-400 mt-1">{uploadError}</p>
+                  )}
                 </div>
               </div>
             </div>
