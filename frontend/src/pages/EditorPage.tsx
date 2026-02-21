@@ -36,6 +36,7 @@ export function EditorPage() {
   const [slugInput, setSlugInput] = useState('');
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [photoVersion, setPhotoVersion] = useState(Date.now());
   const [debouncedSlug, setDebouncedSlug] = useState('');
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const initializedRef = useRef(false);
@@ -103,6 +104,7 @@ export function EditorPage() {
     setUploadError('');
     try {
       await uploadPhoto.mutateAsync(file);
+      setPhotoVersion(Date.now());
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro ao enviar foto';
       setUploadError(msg);
@@ -247,7 +249,7 @@ export function EditorPage() {
                     className="w-24 h-24 rounded-2xl bg-brand-bg-card flex items-center justify-center overflow-hidden border-2 border-white/10 transition-all hover:border-brand-cyan/30"
                     style={
                       resolvePhotoUrl(profile?.photoUrl)
-                        ? { backgroundImage: `url(${resolvePhotoUrl(profile?.photoUrl)})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                        ? { backgroundImage: `url(${resolvePhotoUrl(profile?.photoUrl)}?v=${photoVersion})`, backgroundSize: 'cover', backgroundPosition: 'center' }
                         : undefined
                     }
                   >
@@ -564,7 +566,7 @@ export function EditorPage() {
               <CardPreview
                 displayName={form.displayName}
                 bio={form.bio}
-                photoUrl={resolvePhotoUrl(profile?.photoUrl)}
+                photoUrl={resolvePhotoUrl(profile?.photoUrl) ? `${resolvePhotoUrl(profile?.photoUrl)}?v=${photoVersion}` : undefined}
                 buttonColor={form.buttonColor}
                 socialLinks={form.socialLinks}
               />
