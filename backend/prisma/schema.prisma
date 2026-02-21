@@ -59,19 +59,22 @@ model SocialLink {
 }
 
 model Payment {
-  id                    String    @id @default(uuid())
-  userId                String    @map("user_id")
-  stripeSessionId       String?   @unique @map("stripe_session_id")
-  stripePaymentIntentId String?   @unique @map("stripe_payment_intent_id")
-  amount                Decimal   @db.Decimal(10, 2)
-  currency              String    @default("BRL")
-  status                String    @default("pending")
-  paidAt                DateTime? @map("paid_at")
-  createdAt             DateTime  @default(now()) @map("created_at")
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  preferenceId   String?   @map("preference_id")
+  mpPaymentId    String?   @unique @map("mp_payment_id")
+  amount         Decimal   @db.Decimal(10, 2)
+  currency       String    @default("BRL")
+  status         String    @default("pending")
+  payerEmail     String?   @map("payer_email")
+  mpResponseJson String?   @map("mp_response_json") @db.Text
+  paidAt         DateTime? @map("paid_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, status])
+  @@index([payerEmail])
   @@map("payments")
 }
 

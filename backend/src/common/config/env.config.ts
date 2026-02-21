@@ -13,8 +13,9 @@ export const envSchema = z.object({
 
   GOOGLE_CLIENT_ID: z.string().min(1),
 
-  STRIPE_SECRET_KEY: z.string().min(1),
-  STRIPE_WEBHOOK_SECRET: z.string().min(1),
+  MP_ACCESS_TOKEN: z.string().min(1),
+  MP_WEBHOOK_SECRET: z.string().min(1),
+  MP_PUBLIC_KEY: z.string().min(1),
 
   FTP_HOST: z.string().min(1),
   FTP_USER: z.string().min(1),

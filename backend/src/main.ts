@@ -3,7 +3,6 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
 import helmet from 'helmet';
-import { json } from 'express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/exceptions/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
@@ -29,11 +28,6 @@ async function bootstrap() {
 
   // Cookie parser
   app.use(cookieParser());
-
-  // Raw body for Stripe webhooks (must be before global json parser)
-  app.use('/api/stripe/webhook', json({ type: 'application/json', verify: (req: any, _res, buf) => {
-    req.rawBody = buf;
-  }}));
 
   // Global filters and interceptors
   app.useGlobalFilters(new AllExceptionsFilter());

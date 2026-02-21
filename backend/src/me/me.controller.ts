@@ -21,7 +21,7 @@ export class MeController {
     if (!userData) throw AppException.notFound('Usuario');
 
     const payment = await this.prisma.payment.findFirst({
-      where: { userId: user.sub, status: 'paid' },
+      where: { userId: user.sub, status: 'approved' },
     });
 
     return {

@@ -10,7 +10,6 @@ import {
   useUploadPhoto,
   useUploadResume,
   useCheckSlug,
-  type Profile,
 } from '@/hooks/useProfile';
 import { api } from '@/lib/api';
 import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS } from '@/lib/constants';
@@ -135,7 +134,7 @@ export function EditorPage() {
   };
 
   const handleCheckout = async () => {
-    const data: { url: string } = await api.post('/stripe/checkout-session');
+    const data: { url: string } = await api.post('/payments/checkout');
     window.location.href = data.url;
   };
 
