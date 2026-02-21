@@ -1,6 +1,9 @@
 import {
   Controller,
+  Get,
   Post,
+  Param,
+  Res,
   UseInterceptors,
   UploadedFile,
   ParseFilePipe,
@@ -8,22 +11,44 @@ import {
   FileTypeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 import * as sharp from 'sharp';
 import { StorageService } from './storage.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
+import { AppException } from '../common/exceptions/app.exception';
 
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_RESUME_SIZE = 10 * 1024 * 1024; // 10MB
 
-@Controller('me')
+@Controller()
 export class StorageController {
   constructor(
     private readonly storageService: StorageService,
     private readonly prisma: PrismaService,
   ) {}
 
-  @Post('photo-upload')
+  @Public()
+  @Get('photos/:userId')
+  async servePhoto(@Param('userId') userId: string, @Res() res: Response) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { userId },
+      select: { photoData: true },
+    });
+    if (!profile?.photoData) {
+      throw AppException.notFound('Foto');
+    }
+    const buffer = Buffer.from(profile.photoData, 'base64');
+    res.set({
+      'Content-Type': 'image/webp',
+      'Content-Length': buffer.length.toString(),
+      'Cache-Control': 'public, max-age=86400',
+    });
+    res.send(buffer);
+  }
+
+  @Post('me/photo-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadPhoto(
     @CurrentUser() user: JwtPayload,
@@ -43,20 +68,21 @@ export class StorageController {
       .webp({ quality: 80 })
       .toBuffer();
 
-    // Convert to base64 data URL
     const base64 = processed.toString('base64');
-    const dataUrl = `data:image/webp;base64,${base64}`;
 
-    // Save to database
+    // Build a short URL that serves the photo via API
+    const photoUrl = `/api/photos/${user.sub}`;
+
+    // Save base64 to database, short URL in photoUrl
     await this.prisma.profile.update({
       where: { userId: user.sub },
-      data: { photoUrl: dataUrl, photoData: base64 },
+      data: { photoUrl, photoData: base64 },
     });
 
-    return { url: dataUrl };
+    return { url: photoUrl };
   }
 
-  @Post('resume-upload')
+  @Post('me/resume-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadResume(
     @CurrentUser() user: JwtPayload,

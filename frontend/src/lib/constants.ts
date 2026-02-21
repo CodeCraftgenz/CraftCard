@@ -1,7 +1,15 @@
 export const API_URL = import.meta.env.VITE_API_URL || '/api';
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
+export const API_BASE = API_URL.replace(/\/api$/, '');
 export const APP_NAME = 'CraftCard';
+
+/** Resolve a photo URL: absolute URLs pass through, relative API paths get the backend origin prepended */
+export function resolvePhotoUrl(photoUrl: string | null | undefined): string | undefined {
+  if (!photoUrl) return undefined;
+  if (photoUrl.startsWith('http') || photoUrl.startsWith('data:')) return photoUrl;
+  return API_BASE + photoUrl;
+}
 
 export const BRAND_COLORS = {
   cyan: '#00E4F2',

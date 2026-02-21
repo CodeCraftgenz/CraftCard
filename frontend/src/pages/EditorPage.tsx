@@ -15,7 +15,7 @@ import {
   useCheckSlug,
 } from '@/hooks/useProfile';
 import { api } from '@/lib/api';
-import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS } from '@/lib/constants';
+import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, resolvePhotoUrl } from '@/lib/constants';
 
 export function EditorPage() {
   const { hasPaid } = useAuth();
@@ -246,8 +246,8 @@ export function EditorPage() {
                   <div
                     className="w-24 h-24 rounded-2xl bg-brand-bg-card flex items-center justify-center overflow-hidden border-2 border-white/10 transition-all hover:border-brand-cyan/30"
                     style={
-                      profile?.photoUrl
-                        ? { backgroundImage: `url(${profile.photoUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                      resolvePhotoUrl(profile?.photoUrl)
+                        ? { backgroundImage: `url(${resolvePhotoUrl(profile?.photoUrl)})`, backgroundSize: 'cover', backgroundPosition: 'center' }
                         : undefined
                     }
                   >
@@ -564,7 +564,7 @@ export function EditorPage() {
               <CardPreview
                 displayName={form.displayName}
                 bio={form.bio}
-                photoUrl={profile?.photoUrl || undefined}
+                photoUrl={resolvePhotoUrl(profile?.photoUrl)}
                 buttonColor={form.buttonColor}
                 socialLinks={form.socialLinks}
               />

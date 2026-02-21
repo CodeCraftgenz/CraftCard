@@ -18,7 +18,7 @@ import {
   User,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { APP_NAME } from '@/lib/constants';
+import { APP_NAME, resolvePhotoUrl } from '@/lib/constants';
 
 interface PublicProfile {
   displayName: string;
@@ -108,7 +108,7 @@ export function PublicCardPage() {
         <meta name="description" content={profile.bio || `Cartao digital de ${profile.displayName}`} />
         <meta property="og:title" content={`${profile.displayName} — ${APP_NAME}`} />
         <meta property="og:description" content={profile.bio || `Cartao digital de ${profile.displayName}`} />
-        {profile.photoUrl && <meta property="og:image" content={profile.photoUrl} />}
+        {profile.photoUrl && <meta property="og:image" content={resolvePhotoUrl(profile.photoUrl) || ''} />}
       </Helmet>
 
       <div
@@ -128,8 +128,8 @@ export function PublicCardPage() {
               className="w-28 h-28 rounded-full mb-4 shadow-xl flex items-center justify-center border-4"
               style={{
                 borderColor: `${accent}40`,
-                background: profile.photoUrl
-                  ? `url(${profile.photoUrl}) center/cover`
+                background: resolvePhotoUrl(profile.photoUrl)
+                  ? `url(${resolvePhotoUrl(profile.photoUrl)}) center/cover`
                   : `linear-gradient(135deg, ${accent}, #D12BF2)`,
               }}
             >
