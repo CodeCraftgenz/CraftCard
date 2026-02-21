@@ -50,7 +50,7 @@ export function useUploadPhoto() {
       const formData = new FormData();
       formData.append('file', file);
       return api.post('/me/photo-upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': undefined },
       });
     },
     onSuccess: () => {
@@ -67,7 +67,7 @@ export function useUploadResume() {
       const formData = new FormData();
       formData.append('file', file);
       return api.post('/me/resume-upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': undefined },
       });
     },
     onSuccess: () => {
