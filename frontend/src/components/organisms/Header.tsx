@@ -28,8 +28,8 @@ export function Header() {
 
   const handleLogout = async () => {
     setShowDropdown(false);
-    await logout();
     navigate('/');
+    await logout();
   };
 
   return (
