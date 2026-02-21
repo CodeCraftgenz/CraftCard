@@ -36,20 +36,35 @@ export function LoginPage() {
       return;
     }
 
-    if (!window.google || !buttonRef.current) return;
+    const renderGoogleButton = () => {
+      if (!window.google || !buttonRef.current) return;
 
-    window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleCallback,
-    });
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCallback,
+      });
 
-    window.google.accounts.id.renderButton(buttonRef.current, {
-      theme: 'filled_black',
-      size: 'large',
-      text: 'signin_with',
-      shape: 'pill',
-      width: 300,
-    });
+      window.google.accounts.id.renderButton(buttonRef.current, {
+        theme: 'filled_black',
+        size: 'large',
+        text: 'signin_with',
+        shape: 'pill',
+        width: 300,
+      });
+    };
+
+    if (window.google) {
+      renderGoogleButton();
+    } else {
+      // SDK still loading — wait for it
+      const interval = setInterval(() => {
+        if (window.google) {
+          clearInterval(interval);
+          renderGoogleButton();
+        }
+      }, 100);
+      return () => clearInterval(interval);
+    }
   }, [isAuthenticated, navigate, handleGoogleCallback]);
 
   if (isLoading) {
