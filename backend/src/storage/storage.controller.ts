@@ -8,7 +8,7 @@ import {
   FileTypeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import sharp from 'sharp';
+import * as sharp from 'sharp';
 import { StorageService } from './storage.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
