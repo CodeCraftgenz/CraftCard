@@ -17,7 +17,17 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // Helmet security headers
-  app.use(helmet());
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: {
+        directives: {
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          'img-src': ["'self'", 'data:', 'https:'],
+        },
+      },
+    }),
+  );
 
   // CORS
   const corsOrigin = configService.get('CORS_ORIGIN', { infer: true })!;
