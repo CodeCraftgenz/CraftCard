@@ -50,7 +50,11 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
+        const refreshResponse = await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
+        const newAccessToken = refreshResponse.data?.data?.accessToken;
+        if (newAccessToken) {
+          setAccessToken(newAccessToken);
+        }
         processQueue(null);
         return api(originalRequest);
       } catch (refreshError) {
