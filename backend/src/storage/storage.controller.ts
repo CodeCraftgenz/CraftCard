@@ -37,31 +37,23 @@ export class StorageController {
     )
     file: Express.Multer.File,
   ) {
-    // Resize and convert to WebP
+    // Resize to 400x400 and convert to WebP with good quality
     const processed = await sharp(file.buffer)
       .resize(400, 400, { fit: 'cover' })
-      .webp({ quality: 85 })
+      .webp({ quality: 80 })
       .toBuffer();
 
-    // Delete old photo
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId: user.sub },
-      select: { photoUrl: true },
-    });
-    if (profile?.photoUrl) {
-      await this.storageService.deleteFile(profile.photoUrl);
-    }
+    // Convert to base64 data URL
+    const base64 = processed.toString('base64');
+    const dataUrl = `data:image/webp;base64,${base64}`;
 
-    // Upload new photo
-    const url = await this.storageService.uploadFile(processed, 'photos', user.sub, 'webp');
-
-    // Update profile
+    // Save to database
     await this.prisma.profile.update({
       where: { userId: user.sub },
-      data: { photoUrl: url },
+      data: { photoUrl: dataUrl, photoData: base64 },
     });
 
-    return { url };
+    return { url: dataUrl };
   }
 
   @Post('resume-upload')

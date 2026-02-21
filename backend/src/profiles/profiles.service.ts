@@ -17,7 +17,8 @@ export class ProfilesService {
       include: { socialLinks: { orderBy: { order: 'asc' } } },
     });
     if (!profile) throw AppException.notFound('Perfil');
-    return profile;
+    const { photoData: _, ...rest } = profile;
+    return rest;
   }
 
   async getBySlug(slug: string) {
@@ -31,7 +32,8 @@ export class ProfilesService {
     if (!profile || !profile.isPublished) {
       throw AppException.notFound('Perfil');
     }
-    return profile;
+    const { photoData: _, ...rest } = profile;
+    return rest;
   }
 
   async update(userId: string, data: UpdateProfileDto) {
