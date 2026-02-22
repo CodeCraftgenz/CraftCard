@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus,
-  Camera, FileText, Palette, Link2, Sparkles, Eye,
+  Camera, FileText, Palette, Link2, Sparkles, Eye, Smartphone,
   QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, ChevronDown, ChevronUp, Star,
 } from 'lucide-react';
 import {
@@ -28,6 +28,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { useContacts, useMarkAsRead } from '@/hooks/useContacts';
 import { useTestimonials, useApproveTestimonial, useRejectTestimonial } from '@/hooks/useTestimonials';
 import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, resolvePhotoUrl } from '@/lib/constants';
+import { usePwaInstall } from '@/hooks/usePwaInstall';
 import type { CardTemplate } from '@/lib/card-templates';
 
 const CARD_THEMES = [
@@ -58,6 +59,8 @@ export function EditorPage() {
   const rejectTestimonial = useRejectTestimonial();
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const { canInstall, isInstalled, install: installPwa } = usePwaInstall();
+  const [pwaDismissed, setPwaDismissed] = useState(false);
 
   const [form, setForm] = useState({
     displayName: '',
@@ -607,6 +610,58 @@ export function EditorPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* PWA Install Banner */}
+        <AnimatePresence>
+          {canInstall && !pwaDismissed && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-8 relative overflow-hidden rounded-2xl border border-brand-cyan/20"
+            >
+              <div className="absolute inset-0 gradient-bg opacity-5" />
+              <div className="relative p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-brand-cyan/10 flex items-center justify-center shrink-0">
+                    <Smartphone size={20} className="text-brand-cyan" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">Instalar no celular</h3>
+                    <p className="text-xs text-white/40 mt-0.5">
+                      Adicione o CraftCard na tela inicial para acesso rapido
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setPwaDismissed(true)}
+                    className="px-4 py-2 rounded-xl text-sm text-white/40 hover:text-white/60 transition-colors"
+                  >
+                    Agora nao
+                  </button>
+                  <button
+                    type="button"
+                    onClick={installPwa}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl gradient-bg font-semibold text-sm hover:opacity-90 transition-all"
+                  >
+                    <Download size={14} />
+                    Instalar
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Installed PWA Badge */}
+        {isInstalled && (
+          <div className="mb-8 flex items-center gap-2 text-xs text-green-400 bg-green-500/5 border border-green-500/10 rounded-xl px-4 py-2.5 w-fit">
+            <Smartphone size={14} />
+            App instalado no dispositivo
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr,380px] gap-8">
           {/* Editor Form */}
