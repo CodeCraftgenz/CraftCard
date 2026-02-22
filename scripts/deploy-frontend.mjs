@@ -16,7 +16,7 @@ const env = Object.fromEntries(
 );
 
 async function deploy() {
-  const client = new Client();
+  const client = new Client(30000);
   client.ftp.verbose = false;
 
   try {
@@ -26,6 +26,11 @@ async function deploy() {
       user: env.FTP_USER,
       password: env.FTP_PASSWORD,
       secure: false,
+    });
+    client.trackProgress((info) => {
+      if (info.bytesOverall > 0) {
+        process.stdout.write(`\r  Uploaded ${(info.bytesOverall / 1024).toFixed(0)} KB`);
+      }
     });
 
     // FTP user root = domain dir, upload to / (which is public_html for the web server)
