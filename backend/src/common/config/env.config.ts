@@ -31,6 +31,11 @@ export const envSchema = z.object({
 export type EnvConfig = z.infer<typeof envSchema>;
 
 export function validateEnv(config: Record<string, unknown>): EnvConfig {
+  // Auto-detect BACKEND_URL from Render's RENDER_EXTERNAL_URL if not explicitly set
+  if (!config.BACKEND_URL && config.RENDER_EXTERNAL_URL) {
+    config.BACKEND_URL = config.RENDER_EXTERNAL_URL as string;
+  }
+
   const parsed = envSchema.safeParse(config);
   if (!parsed.success) {
     const errors = parsed.error.flatten().fieldErrors;
