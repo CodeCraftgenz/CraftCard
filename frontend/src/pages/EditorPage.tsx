@@ -12,10 +12,12 @@ import {
   useProfile,
   useUpdateProfile,
   useUploadPhoto,
+  useUploadCover,
   useUploadResume,
   useCheckSlug,
 } from '@/hooks/useProfile';
 import { api } from '@/lib/api';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, resolvePhotoUrl } from '@/lib/constants';
 
 const CARD_THEMES = [
@@ -23,6 +25,12 @@ const CARD_THEMES = [
   { value: 'gradient', label: 'Gradiente', preview: 'bg-gradient-to-br from-purple-500/20 to-pink-500/20' },
   { value: 'minimal', label: 'Minimalista', preview: 'bg-white/5' },
   { value: 'bold', label: 'Vibrante', preview: 'bg-gradient-to-br from-yellow-500/20 to-red-500/20' },
+  { value: 'ocean', label: 'Oceano', preview: 'bg-gradient-to-br from-blue-500/20 to-teal-500/20' },
+  { value: 'sunset', label: 'Por do Sol', preview: 'bg-gradient-to-br from-orange-500/20 to-pink-500/20' },
+  { value: 'forest', label: 'Floresta', preview: 'bg-gradient-to-br from-green-500/20 to-emerald-500/20' },
+  { value: 'neon', label: 'Neon', preview: 'bg-black border border-pink-500/40' },
+  { value: 'elegant', label: 'Elegante', preview: 'bg-gradient-to-br from-yellow-600/15 to-amber-800/15' },
+  { value: 'cosmic', label: 'Cosmico', preview: 'bg-gradient-to-br from-purple-600/20 to-blue-800/20' },
 ];
 
 export function EditorPage() {
@@ -30,7 +38,9 @@ export function EditorPage() {
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
   const uploadPhoto = useUploadPhoto();
+  const uploadCover = useUploadCover();
   const uploadResume = useUploadResume();
+  const { data: analytics } = useAnalytics(hasPaid);
 
   const [form, setForm] = useState({
     displayName: '',
@@ -46,6 +56,7 @@ export function EditorPage() {
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [photoVersion, setPhotoVersion] = useState(Date.now());
+  const [coverVersion, setCoverVersion] = useState(Date.now());
   const [debouncedSlug, setDebouncedSlug] = useState('');
   const [showQrCode, setShowQrCode] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -166,6 +177,19 @@ export function EditorPage() {
     }
   };
 
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError('');
+    try {
+      await uploadCover.mutateAsync(file);
+      setCoverVersion(Date.now());
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao enviar foto de capa';
+      setUploadError(msg);
+    }
+  };
+
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -190,6 +214,13 @@ export function EditorPage() {
     updateField('socialLinks', [
       ...form.socialLinks,
       { platform: 'website', label: '', url: '', order: form.socialLinks.length },
+    ]);
+  };
+
+  const addCustomLink = () => {
+    updateField('socialLinks', [
+      ...form.socialLinks,
+      { platform: 'custom', label: '', url: '', order: form.socialLinks.length },
     ]);
   };
 
@@ -230,6 +261,19 @@ export function EditorPage() {
     if (!dateStr) return null;
     const date = new Date(dateStr);
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  };
+
+  // Helper: fill in missing days with count=0 for last 30 days
+  const getLast30Days = (dailyViews: Array<{ date: string; count: number }>) => {
+    const map = new Map(dailyViews.map((d) => [d.date, d.count]));
+    const days: Array<{ date: string; count: number }> = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      days.push({ date: key, count: map.get(key) || 0 });
+    }
+    return days;
   };
 
   if (isLoading) {
@@ -475,6 +519,41 @@ export function EditorPage() {
               </div>
             </div>
 
+            {/* Cover Photo Section */}
+            <div className="glass-card p-6 group hover:border-white/20 transition-colors">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                  <Camera size={16} className="text-purple-400" />
+                </div>
+                <h3 className="font-semibold">Foto de Capa</h3>
+              </div>
+              <div className="space-y-3">
+                {profile?.coverPhotoUrl && (
+                  <div
+                    className="w-full h-24 rounded-xl bg-brand-bg-card overflow-hidden border border-white/10"
+                    style={{
+                      backgroundImage: `url(${resolvePhotoUrl(profile.coverPhotoUrl)}?v=${coverVersion})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }}
+                  />
+                )}
+                <div className="flex items-center gap-3">
+                  <label className="px-5 py-2.5 rounded-xl border border-white/10 text-sm cursor-pointer hover:bg-white/5 hover:border-white/20 transition-all font-medium inline-flex items-center gap-2">
+                    <Upload size={14} />
+                    {uploadCover.isPending ? 'Enviando...' : 'Escolher capa'}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={handleCoverUpload}
+                    />
+                  </label>
+                  <p className="text-xs text-white/30">1200x400. JPG, PNG ou WebP. Max 5MB</p>
+                </div>
+              </div>
+            </div>
+
             {/* Basic Info */}
             <div className="glass-card p-6 hover:border-white/20 transition-colors">
               <div className="flex items-center gap-2 mb-5">
@@ -521,9 +600,9 @@ export function EditorPage() {
                     <Link2 size={16} className="text-blue-400" />
                   </div>
                   <h3 className="font-semibold">Redes Sociais</h3>
-                  {form.socialLinks.length > 0 && (
+                  {form.socialLinks.filter(l => l.platform !== 'custom').length > 0 && (
                     <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-white/50">
-                      {form.socialLinks.length}
+                      {form.socialLinks.filter(l => l.platform !== 'custom').length}
                     </span>
                   )}
                 </div>
@@ -537,61 +616,138 @@ export function EditorPage() {
               </div>
               <div className="space-y-3">
                 <AnimatePresence>
-                  {form.socialLinks.map((link, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/5"
-                    >
-                      <GripVertical size={16} className="text-white/15 mt-2.5 shrink-0 cursor-grab" />
-                      <div className="flex-1 space-y-2">
-                        <div className="flex gap-2">
-                          <select
-                            value={link.platform}
-                            onChange={(e) => updateSocialLink(i, 'platform', e.target.value)}
-                            title="Plataforma"
-                            className="px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-brand-cyan/50 transition-all"
-                          >
-                            {SOCIAL_PLATFORMS.map((p) => (
-                              <option key={p.value} value={p.value} className="bg-brand-bg-dark">
-                                {p.label}
-                              </option>
-                            ))}
-                          </select>
+                  {form.socialLinks.map((link, i) => {
+                    if (link.platform === 'custom') return null;
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/5"
+                      >
+                        <GripVertical size={16} className="text-white/15 mt-2.5 shrink-0 cursor-grab" />
+                        <div className="flex-1 space-y-2">
+                          <div className="flex gap-2">
+                            <select
+                              value={link.platform}
+                              onChange={(e) => updateSocialLink(i, 'platform', e.target.value)}
+                              title="Plataforma"
+                              className="px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-brand-cyan/50 transition-all"
+                            >
+                              {SOCIAL_PLATFORMS.filter(p => p.value !== 'custom').map((p) => (
+                                <option key={p.value} value={p.value} className="bg-brand-bg-dark">
+                                  {p.label}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="text"
+                              value={link.label}
+                              onChange={(e) => updateSocialLink(i, 'label', e.target.value)}
+                              placeholder="Label"
+                              className="flex-1 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
+                            />
+                          </div>
                           <input
-                            type="text"
-                            value={link.label}
-                            onChange={(e) => updateSocialLink(i, 'label', e.target.value)}
-                            placeholder="Label"
-                            className="flex-1 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
+                            type="url"
+                            value={link.url}
+                            onChange={(e) => updateSocialLink(i, 'url', e.target.value)}
+                            placeholder="https://..."
+                            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
                           />
                         </div>
-                        <input
-                          type="url"
-                          value={link.url}
-                          onChange={(e) => updateSocialLink(i, 'url', e.target.value)}
-                          placeholder="https://..."
-                          className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeSocialLink(i)}
-                        title="Remover link"
-                        className="mt-2 p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-all"
-                      >
-                        <X size={14} />
-                      </button>
-                    </motion.div>
-                  ))}
+                        <button
+                          type="button"
+                          onClick={() => removeSocialLink(i)}
+                          title="Remover link"
+                          className="mt-2 p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                        >
+                          <X size={14} />
+                        </button>
+                      </motion.div>
+                    );
+                  })}
                 </AnimatePresence>
-                {form.socialLinks.length === 0 && (
+                {form.socialLinks.filter(l => l.platform !== 'custom').length === 0 && (
                   <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
                     <Link2 size={24} className="mx-auto text-white/15 mb-2" />
                     <p className="text-sm text-white/30">Nenhum link adicionado</p>
                     <p className="text-xs text-white/15 mt-1">Clique em "Adicionar" para comecar</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Custom Links (Link-in-bio) */}
+            <div className="glass-card p-6 hover:border-white/20 transition-colors">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-brand-cyan/10 flex items-center justify-center">
+                    <ExternalLink size={16} className="text-brand-cyan" />
+                  </div>
+                  <h3 className="font-semibold">Links Personalizados</h3>
+                  {form.socialLinks.filter(l => l.platform === 'custom').length > 0 && (
+                    <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-white/50">
+                      {form.socialLinks.filter(l => l.platform === 'custom').length}
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={addCustomLink}
+                  className="flex items-center gap-1.5 text-sm text-brand-cyan hover:text-brand-cyan/80 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-brand-cyan/5"
+                >
+                  <Plus size={16} /> Adicionar
+                </button>
+              </div>
+              <p className="text-xs text-white/30 mb-4">Links exibidos como botoes no seu cartao (estilo Linktree)</p>
+              <div className="space-y-3">
+                <AnimatePresence>
+                  {form.socialLinks.map((link, i) => {
+                    if (link.platform !== 'custom') return null;
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/5"
+                      >
+                        <GripVertical size={16} className="text-white/15 mt-2.5 shrink-0 cursor-grab" />
+                        <div className="flex-1 space-y-2">
+                          <input
+                            type="text"
+                            value={link.label}
+                            onChange={(e) => updateSocialLink(i, 'label', e.target.value)}
+                            placeholder="Titulo do link (ex: Meu Portfolio)"
+                            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
+                          />
+                          <input
+                            type="url"
+                            value={link.url}
+                            onChange={(e) => updateSocialLink(i, 'url', e.target.value)}
+                            placeholder="https://..."
+                            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeSocialLink(i)}
+                          title="Remover link"
+                          className="mt-2 p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                        >
+                          <X size={14} />
+                        </button>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+                {form.socialLinks.filter(l => l.platform === 'custom').length === 0 && (
+                  <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
+                    <ExternalLink size={24} className="mx-auto text-white/15 mb-2" />
+                    <p className="text-sm text-white/30">Nenhum link personalizado</p>
+                    <p className="text-xs text-white/15 mt-1">Adicione links para exibir como botoes no cartao</p>
                   </div>
                 )}
               </div>
@@ -641,7 +797,7 @@ export function EditorPage() {
                 {/* Card Theme */}
                 <div>
                   <label className="text-xs font-medium text-white/50 mb-3 block uppercase tracking-wider">Tema do cartao</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                     {CARD_THEMES.map((theme) => (
                       <button
                         type="button"
@@ -723,6 +879,61 @@ export function EditorPage() {
               </div>
             </div>
 
+            {/* Analytics (paid users only) */}
+            {hasPaid && analytics && (
+              <div className="glass-card p-6 hover:border-white/20 transition-colors">
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-8 h-8 rounded-lg bg-brand-cyan/10 flex items-center justify-center">
+                    <BarChart3 size={16} className="text-brand-cyan" />
+                  </div>
+                  <h3 className="font-semibold">Analytics</h3>
+                  <span className="text-xs text-white/30 ml-auto">Ultimos 30 dias</span>
+                </div>
+
+                {/* Daily Views Chart */}
+                <div className="mb-6">
+                  <p className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider">Visualizacoes por dia</p>
+                  {analytics.dailyViews.length > 0 ? (
+                    <div className="flex items-end gap-1 h-24">
+                      {getLast30Days(analytics.dailyViews).map((day) => {
+                        const maxCount = Math.max(...getLast30Days(analytics.dailyViews).map(d => d.count), 1);
+                        const height = Math.max((day.count / maxCount) * 100, 2);
+                        return (
+                          <div
+                            key={day.date}
+                            className="flex-1 rounded-t transition-all hover:opacity-80 group relative"
+                            style={{ height: `${height}%`, backgroundColor: day.count > 0 ? '#00E4F2' : '#ffffff10' }}
+                            title={`${day.date}: ${day.count} views`}
+                          />
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-white/30 text-center py-4">Nenhuma visualizacao ainda</p>
+                  )}
+                  <div className="flex justify-between mt-2">
+                    <span className="text-[10px] text-white/20">30 dias atras</span>
+                    <span className="text-[10px] text-white/20">Hoje</span>
+                  </div>
+                </div>
+
+                {/* Link Clicks */}
+                {analytics.linkClicks.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider">Cliques nos links</p>
+                    <div className="space-y-2">
+                      {analytics.linkClicks.slice(0, 10).map((link, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm p-2 rounded-lg bg-white/[0.03]">
+                          <span className="text-white/70 truncate flex-1">{link.label}</span>
+                          <span className="text-brand-cyan font-semibold ml-2">{link.totalClicks}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Actions Bar */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -773,7 +984,9 @@ export function EditorPage() {
                 displayName={form.displayName}
                 bio={form.bio}
                 photoUrl={resolvePhotoUrl(profile?.photoUrl) ? `${resolvePhotoUrl(profile?.photoUrl)}?v=${photoVersion}` : undefined}
+                coverPhotoUrl={resolvePhotoUrl(profile?.coverPhotoUrl) ? `${resolvePhotoUrl(profile?.coverPhotoUrl)}?v=${coverVersion}` : undefined}
                 buttonColor={form.buttonColor}
+                cardTheme={form.cardTheme}
                 socialLinks={form.socialLinks}
               />
             </div>

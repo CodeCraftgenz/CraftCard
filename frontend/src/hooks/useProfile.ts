@@ -21,6 +21,7 @@ export interface Profile {
   isPublished: boolean;
   viewCount: number;
   cardTheme: string;
+  coverPhotoUrl: string | null;
   socialLinks: SocialLink[];
 }
 
@@ -52,6 +53,21 @@ export function useUploadPhoto() {
       const formData = new FormData();
       formData.append('file', file);
       return api.post('/me/photo-upload', formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+  });
+}
+
+export function useUploadCover() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return api.post('/me/cover-upload', formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });

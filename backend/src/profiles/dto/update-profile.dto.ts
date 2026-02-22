@@ -14,7 +14,7 @@ const safeUrlSchema = z.string().url().refine(
 export const socialLinkSchema = z.object({
   platform: z.enum([
     'whatsapp', 'instagram', 'linkedin', 'github', 'twitter',
-    'tiktok', 'youtube', 'website', 'email', 'other',
+    'tiktok', 'youtube', 'website', 'email', 'other', 'custom',
   ]),
   label: z.string().min(1).max(100),
   url: safeUrlSchema,
@@ -35,7 +35,8 @@ export const updateProfileSchema = z.object({
   isPublished: z.boolean().optional(),
   resumeUrl: z.preprocess(emptyToUndefined, safeUrlSchema.optional().nullable()),
   resumeType: z.enum(['pdf', 'link']).optional().nullable(),
-  cardTheme: z.enum(['default', 'gradient', 'minimal', 'bold']).optional(),
+  cardTheme: z.enum(['default', 'gradient', 'minimal', 'bold', 'ocean', 'sunset', 'forest', 'neon', 'elegant', 'cosmic']).optional(),
+  coverPhotoUrl: z.preprocess(emptyToUndefined, safeUrlSchema.optional().nullable()),
   socialLinks: z.array(socialLinkSchema).max(20).optional(),
 }).transform((data) => {
   // Filter out incomplete social links (empty label or invalid url)

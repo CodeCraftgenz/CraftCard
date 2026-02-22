@@ -1,11 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { SlugsService } from '../slugs/slugs.service';
 import { AppException } from '../common/exceptions/app.exception';
+import { randomUUID } from 'crypto';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class ProfilesService {
+  private readonly logger = new Logger(ProfilesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly slugsService: SlugsService,
@@ -17,7 +20,7 @@ export class ProfilesService {
       include: { socialLinks: { orderBy: { order: 'asc' } } },
     });
     if (!profile) throw AppException.notFound('Perfil');
-    const { photoData: _, ...rest } = profile;
+    const { photoData: _, coverPhotoData: _c, ...rest } = profile;
     return rest;
   }
 
@@ -39,7 +42,10 @@ export class ProfilesService {
       data: { viewCount: { increment: 1 } },
     }).catch(() => { /* ignore errors */ });
 
-    const { photoData: _, ...rest } = profile;
+    // Track daily view (fire-and-forget)
+    this.trackDailyView(profile.id).catch(() => {});
+
+    const { photoData: _, coverPhotoData: _c, ...rest } = profile;
     return rest;
   }
 
@@ -86,5 +92,28 @@ export class ProfilesService {
         include: { socialLinks: { orderBy: { order: 'asc' } } },
       });
     });
+  }
+
+  private async trackDailyView(profileId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    try {
+      const existing = await this.prisma.profileView.findUnique({
+        where: { profileId_date: { profileId, date: today } },
+      });
+      if (existing) {
+        await this.prisma.profileView.update({
+          where: { id: existing.id },
+          data: { count: { increment: 1 } },
+        });
+      } else {
+        await this.prisma.profileView.create({
+          data: { id: randomUUID(), profileId, date: today, count: 1 },
+        });
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to track daily view: ${err}`);
+    }
   }
 }

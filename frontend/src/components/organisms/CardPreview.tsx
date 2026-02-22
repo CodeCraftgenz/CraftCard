@@ -6,6 +6,7 @@ import {
   Globe,
   Mail,
   MessageCircle,
+  ExternalLink,
   User,
 } from 'lucide-react';
 
@@ -13,7 +14,9 @@ interface CardPreviewProps {
   displayName?: string;
   bio?: string;
   photoUrl?: string;
+  coverPhotoUrl?: string;
   buttonColor?: string;
+  cardTheme?: string;
   socialLinks?: Array<{
     platform: string;
     label: string;
@@ -41,17 +44,20 @@ const platformIcons: Record<string, typeof Instagram> = {
   website: Globe,
   email: Mail,
   whatsapp: MessageCircle,
+  custom: ExternalLink,
 };
 
 export function CardPreview({
   displayName,
   bio,
   photoUrl,
+  coverPhotoUrl,
   buttonColor,
+  cardTheme,
   socialLinks,
   demo,
 }: CardPreviewProps) {
-  const card = demo ? DEMO_CARD : { displayName, bio, photoUrl, buttonColor, socialLinks };
+  const card = demo ? DEMO_CARD : { displayName, bio, photoUrl, coverPhotoUrl, buttonColor, cardTheme, socialLinks };
   const accent = card.buttonColor || '#00E4F2';
 
   return (
@@ -67,10 +73,22 @@ export function CardPreview({
           background: `linear-gradient(180deg, ${accent}15 0%, #16213E 40%)`,
         }}
       >
-        <div className="p-6 flex flex-col items-center text-center">
+        {/* Cover Photo */}
+        {card.coverPhotoUrl && (
+          <div
+            className="w-full h-20 bg-white/5"
+            style={{
+              backgroundImage: `url(${card.coverPhotoUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+        )}
+
+        <div className={`p-6 flex flex-col items-center text-center ${card.coverPhotoUrl ? '-mt-10' : ''}`}>
           {/* Avatar */}
           <div
-            className="w-24 h-24 rounded-full flex items-center justify-center mb-4 shadow-lg"
+            className="w-24 h-24 rounded-full flex items-center justify-center mb-4 shadow-lg border-4 border-[#16213E]"
             style={{
               background: card.photoUrl
                 ? `url(${card.photoUrl}) center/cover`

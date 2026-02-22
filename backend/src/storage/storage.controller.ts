@@ -82,6 +82,55 @@ export class StorageController {
     return { url: photoUrl };
   }
 
+  @Public()
+  @Get('covers/:userId')
+  async serveCover(@Param('userId') userId: string, @Res() res: Response) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { userId },
+      select: { coverPhotoData: true },
+    });
+    if (!profile?.coverPhotoData) {
+      throw AppException.notFound('Capa');
+    }
+    const buffer = Buffer.from(profile.coverPhotoData, 'base64');
+    res.set({
+      'Content-Type': 'image/webp',
+      'Content-Length': buffer.length.toString(),
+      'Cache-Control': 'public, max-age=86400',
+    });
+    res.send(buffer);
+  }
+
+  @Post('me/cover-upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadCover(
+    @CurrentUser() user: JwtPayload,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: MAX_PHOTO_SIZE }),
+          new FileTypeValidator({ fileType: /(jpeg|jpg|png|webp)$/i }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    const processed = await sharp(file.buffer)
+      .resize(1200, 400, { fit: 'cover' })
+      .webp({ quality: 80 })
+      .toBuffer();
+
+    const base64 = processed.toString('base64');
+    const coverPhotoUrl = `/api/covers/${user.sub}`;
+
+    await this.prisma.profile.update({
+      where: { userId: user.sub },
+      data: { coverPhotoUrl, coverPhotoData: base64 },
+    });
+
+    return { url: coverPhotoUrl };
+  }
+
   @Post('me/resume-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadResume(

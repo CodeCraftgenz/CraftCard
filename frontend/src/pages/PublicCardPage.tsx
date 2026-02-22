@@ -13,12 +13,14 @@ import {
   Twitter,
   Music2,
   Link as LinkIcon,
+  ExternalLink,
   Share2,
   FileText,
   User,
   Download,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { trackLinkClick } from '@/hooks/useAnalytics';
 import { APP_NAME, resolvePhotoUrl } from '@/lib/constants';
 
 interface PublicProfile {
@@ -28,8 +30,10 @@ interface PublicProfile {
   resumeUrl: string | null;
   buttonColor: string;
   cardTheme: string;
+  coverPhotoUrl: string | null;
   viewCount: number;
   socialLinks: Array<{
+    id: string;
     platform: string;
     label: string;
     url: string;
@@ -52,6 +56,7 @@ const platformIcons: Record<string, typeof Instagram> = {
   email: Mail,
   whatsapp: MessageCircle,
   other: LinkIcon,
+  custom: ExternalLink,
 };
 
 const platformColors: Record<string, string> = {
@@ -73,6 +78,18 @@ function getThemeBackground(theme: string, accent: string): string {
       return '#1A1A2E';
     case 'bold':
       return `linear-gradient(180deg, ${accent}30 0%, ${accent}10 30%, #1A1A2E 60%)`;
+    case 'ocean':
+      return 'linear-gradient(135deg, #0077B620 0%, #20B2AA20 50%, #1A1A2E 100%)';
+    case 'sunset':
+      return 'linear-gradient(135deg, #FF634720 0%, #FF69B420 50%, #1A1A2E 100%)';
+    case 'forest':
+      return 'linear-gradient(135deg, #22883320 0%, #50C87820 50%, #1A1A2E 100%)';
+    case 'neon':
+      return '#0A0A0A';
+    case 'elegant':
+      return 'linear-gradient(180deg, #B8860B15 0%, #8B451310 30%, #1A1A2E 60%)';
+    case 'cosmic':
+      return 'linear-gradient(135deg, #6A0DAD20 0%, #1E3A8A20 50%, #0F0F2E 100%)';
     default:
       return `linear-gradient(180deg, ${accent}15 0%, #1A1A2E 30%, #1A1A2E 100%)`;
   }
@@ -86,6 +103,18 @@ function getThemeCardStyle(theme: string): string {
       return 'bg-transparent';
     case 'bold':
       return 'backdrop-blur-xl bg-white/5 border-2 border-white/20 rounded-3xl shadow-2xl';
+    case 'ocean':
+      return 'backdrop-blur-xl bg-white/5 border border-teal-500/20 rounded-3xl shadow-2xl';
+    case 'sunset':
+      return 'backdrop-blur-xl bg-white/5 border border-orange-500/20 rounded-3xl shadow-2xl';
+    case 'forest':
+      return 'backdrop-blur-xl bg-white/5 border border-green-500/20 rounded-3xl shadow-2xl';
+    case 'neon':
+      return 'backdrop-blur-xl bg-black/50 border border-pink-500/40 rounded-3xl shadow-[0_0_30px_rgba(236,72,153,0.15)]';
+    case 'elegant':
+      return 'backdrop-blur-xl bg-white/[0.06] border border-yellow-600/20 rounded-3xl shadow-2xl';
+    case 'cosmic':
+      return 'backdrop-blur-xl bg-white/5 border border-purple-500/20 rounded-3xl shadow-2xl';
     default:
       return 'backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl';
   }
@@ -203,12 +232,24 @@ export function PublicCardPage() {
           animate={{ opacity: 1, y: 0 }}
           className={`w-full max-w-md ${theme !== 'minimal' ? 'p-6' : ''} ${getThemeCardStyle(theme)}`}
         >
+          {/* Cover Photo */}
+          {profile.coverPhotoUrl && (
+            <div
+              className="w-full h-32 rounded-t-3xl bg-white/5"
+              style={{
+                backgroundImage: `url(${resolvePhotoUrl(profile.coverPhotoUrl)})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            />
+          )}
+
           {/* Avatar */}
-          <div className="flex flex-col items-center mb-8">
+          <div className={`flex flex-col items-center mb-8 ${profile.coverPhotoUrl ? '-mt-14' : ''}`}>
             <div
               className="w-28 h-28 rounded-full mb-4 shadow-xl flex items-center justify-center border-4"
               style={{
-                borderColor: `${accent}40`,
+                borderColor: profile.coverPhotoUrl ? '#1A1A2E' : `${accent}40`,
                 background: resolvePhotoUrl(profile.photoUrl)
                   ? `url(${resolvePhotoUrl(profile.photoUrl)}) center/cover`
                   : `linear-gradient(135deg, ${accent}, #D12BF2)`,
@@ -228,16 +269,17 @@ export function PublicCardPage() {
 
           {/* Social Links */}
           <div className="space-y-3">
-            {profile.socialLinks.map((link, i) => {
+            {profile.socialLinks.filter(l => l.platform !== 'custom').map((link, i) => {
               const Icon = platformIcons[link.platform] || Globe;
               const bgColor = platformColors[link.platform] || accent;
 
               return (
                 <motion.a
-                  key={i}
+                  key={link.id}
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackLinkClick(link.id)}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.08 }}
@@ -259,6 +301,33 @@ export function PublicCardPage() {
               );
             })}
           </div>
+
+          {/* Custom Links (Link-in-bio style) */}
+          {profile.socialLinks.filter(l => l.platform === 'custom').length > 0 && (
+            <div className="mt-4 space-y-3">
+              {profile.socialLinks.filter(l => l.platform === 'custom').map((link, i) => (
+                <motion.a
+                  key={link.id}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackLinkClick(link.id)}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: (profile.socialLinks.filter(l => l.platform !== 'custom').length + i) * 0.08 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="block w-full text-center px-5 py-3.5 rounded-2xl font-semibold text-sm text-white transition-all hover:opacity-90"
+                  style={{ backgroundColor: `${accent}30`, borderLeft: `3px solid ${accent}` }}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <ExternalLink size={16} style={{ color: accent }} />
+                    <span>{link.label}</span>
+                  </div>
+                </motion.a>
+              ))}
+            </div>
+          )}
 
           {/* Resume */}
           {profile.resumeUrl && (

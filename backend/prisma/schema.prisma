@@ -40,8 +40,12 @@ model Profile {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  socialLinks SocialLink[]
+  coverPhotoUrl  String?  @map("cover_photo_url")
+  coverPhotoData String?  @map("cover_photo_data") @db.MediumText
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  socialLinks  SocialLink[]
+  profileViews ProfileView[]
 
   @@map("profiles")
 }
@@ -55,10 +59,39 @@ model SocialLink {
   order     Int      @default(0)
   createdAt DateTime @default(now()) @map("created_at")
 
-  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile    Profile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  linkClicks LinkClick[]
 
   @@index([profileId])
   @@map("social_links")
+}
+
+model ProfileView {
+  id        String   @id @default(uuid())
+  profileId String   @map("profile_id")
+  date      DateTime @db.Date
+  count     Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, date])
+  @@index([profileId])
+  @@map("profile_views")
+}
+
+model LinkClick {
+  id           String     @id @default(uuid())
+  socialLinkId String     @map("social_link_id")
+  date         DateTime   @db.Date
+  count        Int        @default(1)
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  socialLink SocialLink @relation(fields: [socialLinkId], references: [id], onDelete: Cascade)
+
+  @@unique([socialLinkId, date])
+  @@index([socialLinkId])
+  @@map("link_clicks")
 }
 
 model Payment {

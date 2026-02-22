@@ -41,4 +41,5 @@ export const SOCIAL_PLATFORMS = [
   { value: 'website', label: 'Site', icon: 'Globe' },
   { value: 'email', label: 'Email', icon: 'Mail' },
   { value: 'other', label: 'Outro', icon: 'Link' },
+  { value: 'custom', label: 'Link Personalizado', icon: 'ExternalLink' },
 ] as const;

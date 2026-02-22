@@ -9,6 +9,7 @@ import { ProfilesModule } from './profiles/profiles.module';
 import { MeModule } from './me/me.module';
 import { StorageModule } from './storage/storage.module';
 import { PaymentsModule } from './payments/payments.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { AppController } from './app.controller';
 import configuration from './common/config/configuration';
 
@@ -25,6 +26,7 @@ import configuration from './common/config/configuration';
     MeModule,
     StorageModule,
     PaymentsModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [
