@@ -5,7 +5,7 @@ services:
     plan: free
     region: oregon
     buildCommand: npm ci && npx prisma generate && npm run build
-    startCommand: npx prisma migrate resolve --applied 20260222240000_add_photo_positioning && npx prisma migrate deploy && node dist/main.js
+    startCommand: npx prisma migrate resolve --applied 20260222240000_add_photo_positioning; npx prisma migrate deploy && node dist/main
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
