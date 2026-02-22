@@ -28,6 +28,7 @@ import {
   MessageSquare,
   Star,
   ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { trackLinkClick } from '@/hooks/useAnalytics';
@@ -433,16 +434,18 @@ export function PublicCardPage() {
                       </motion.a>
                     );
                   })}
-                  {hiddenCount > 0 && !showAllLinks && (
+                  {hiddenCount > 0 && (
                     <motion.button
                       type="button"
-                      onClick={() => setShowAllLinks(true)}
+                      onClick={() => setShowAllLinks(!showAllLinks)}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-dashed border-white/15 text-white/50 hover:text-white/80 hover:border-white/30 hover:bg-white/5 transition-all text-sm"
                     >
-                      <ChevronDown size={16} />
-                      Ver mais {hiddenCount} {hiddenCount === 1 ? 'link' : 'links'}
+                      {showAllLinks ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      {showAllLinks
+                        ? 'Ver menos'
+                        : `Ver mais ${hiddenCount} ${hiddenCount === 1 ? 'link' : 'links'}`}
                     </motion.button>
                   )}
                 </>
