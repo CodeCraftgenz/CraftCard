@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus,
   GripVertical, Camera, FileText, Palette, Link2, Sparkles, Eye,
-  QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, ChevronDown, ChevronUp,
+  QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, ChevronDown, ChevronUp, Star,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
 import { CardPreview } from '@/components/organisms/CardPreview';
@@ -19,6 +19,7 @@ import {
 import { api } from '@/lib/api';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useContacts, useMarkAsRead } from '@/hooks/useContacts';
+import { useTestimonials, useApproveTestimonial, useRejectTestimonial } from '@/hooks/useTestimonials';
 import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, resolvePhotoUrl } from '@/lib/constants';
 
 const CARD_THEMES = [
@@ -44,6 +45,9 @@ export function EditorPage() {
   const { data: analytics } = useAnalytics(hasPaid);
   const { data: contacts } = useContacts(hasPaid);
   const markAsRead = useMarkAsRead();
+  const { data: testimonials } = useTestimonials(hasPaid);
+  const approveTestimonial = useApproveTestimonial();
+  const rejectTestimonial = useRejectTestimonial();
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
 
   const [form, setForm] = useState({
@@ -294,6 +298,23 @@ export function EditorPage() {
     return days;
   };
 
+  const getProfileCompleteness = () => {
+    const items: Array<{ label: string; done: boolean; weight: number }> = [
+      { label: 'Nome exibido', done: form.displayName.trim().length >= 2, weight: 15 },
+      { label: 'Bio', done: form.bio.trim().length > 0, weight: 15 },
+      { label: 'Foto de perfil', done: !!profile?.photoUrl, weight: 15 },
+      { label: 'Foto de capa', done: !!profile?.coverPhotoUrl, weight: 10 },
+      { label: 'Rede social', done: form.socialLinks.filter((l) => l.platform !== 'custom' && l.url.trim().length > 10).length >= 1, weight: 15 },
+      { label: 'Link personalizado', done: form.socialLinks.filter((l) => l.platform === 'custom' && l.url.trim().length > 10).length >= 1, weight: 10 },
+      { label: 'Slug configurado', done: slugInput.length >= 3, weight: 10 },
+      { label: 'Publicado', done: form.isPublished, weight: 10 },
+    ];
+    const total = items.reduce((acc, i) => acc + (i.done ? i.weight : 0), 0);
+    return { items, total };
+  };
+
+  const completeness = getProfileCompleteness();
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-brand-bg-dark flex items-center justify-center">
@@ -324,6 +345,42 @@ export function EditorPage() {
             Editor do Cartao
           </h1>
           <p className="text-sm text-white/40 mt-1">Personalize seu cartao digital profissional</p>
+        </motion.div>
+
+        {/* Profile Completeness */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="mb-8 glass-card p-5"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium text-white/70">Completude do perfil</span>
+            <span className="text-sm font-bold" style={{ color: completeness.total >= 80 ? '#4ade80' : completeness.total >= 50 ? '#facc15' : '#f87171' }}>
+              {completeness.total}%
+            </span>
+          </div>
+          <div className="w-full h-2.5 rounded-full bg-white/10 overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${completeness.total}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className="h-full rounded-full"
+              style={{ background: 'linear-gradient(90deg, #00E4F2, #D12BF2)' }}
+            />
+          </div>
+          {completeness.total < 100 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {completeness.items.filter((i) => !i.done).map((item) => (
+                <span key={item.label} className="text-xs text-white/30 bg-white/5 px-2.5 py-1 rounded-lg">
+                  {item.label}
+                </span>
+              ))}
+            </div>
+          )}
+          {completeness.total === 100 && (
+            <p className="text-xs text-green-400 mt-2">Perfil completo! Seu cartao esta pronto.</p>
+          )}
         </motion.div>
 
         {/* Subscription status banner (when paid) */}
@@ -1061,6 +1118,80 @@ export function EditorPage() {
                     <MessageSquare size={24} className="mx-auto text-white/15 mb-2" />
                     <p className="text-sm text-white/30">Nenhuma mensagem ainda</p>
                     <p className="text-xs text-white/15 mt-1">Quando alguem enviar uma mensagem pelo seu cartao, ela aparecera aqui</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Testimonials (paid users only) */}
+            {hasPaid && (
+              <div className="glass-card p-6 hover:border-white/20 transition-colors">
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+                    <Star size={16} className="text-yellow-400" />
+                  </div>
+                  <h3 className="font-semibold">Depoimentos</h3>
+                  {testimonials && testimonials.filter((t) => !t.isApproved).length > 0 && (
+                    <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full font-semibold">
+                      {testimonials.filter((t) => !t.isApproved).length} pendente{testimonials.filter((t) => !t.isApproved).length > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+
+                {testimonials && testimonials.length > 0 ? (
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {testimonials.map((t) => (
+                      <div
+                        key={t.id}
+                        className={`p-3 rounded-xl border transition-all ${
+                          t.isApproved ? 'bg-white/[0.02] border-white/5' : 'bg-yellow-500/5 border-yellow-500/20'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-white">{t.authorName}</span>
+                              {t.authorRole && <span className="text-xs text-white/30">· {t.authorRole}</span>}
+                              {t.isApproved ? (
+                                <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded-full">Aprovado</span>
+                              ) : (
+                                <span className="text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded-full">Pendente</span>
+                              )}
+                            </div>
+                            <p className="text-sm text-white/50 mt-1 italic">"{t.text}"</p>
+                            <p className="text-xs text-white/20 mt-1">
+                              {new Date(t.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {!t.isApproved && (
+                              <button
+                                type="button"
+                                onClick={() => approveTestimonial.mutate(t.id)}
+                                title="Aprovar depoimento"
+                                className="p-1.5 rounded-lg text-white/30 hover:text-green-400 hover:bg-green-400/10 transition-all"
+                              >
+                                <Check size={14} />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => rejectTestimonial.mutate(t.id)}
+                              title="Remover depoimento"
+                              className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
+                    <Star size={24} className="mx-auto text-white/15 mb-2" />
+                    <p className="text-sm text-white/30">Nenhum depoimento ainda</p>
+                    <p className="text-xs text-white/15 mt-1">Quando alguem deixar um depoimento no seu cartao, ele aparecera aqui</p>
                   </div>
                 )}
               </div>

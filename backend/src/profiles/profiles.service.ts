@@ -29,6 +29,7 @@ export class ProfilesService {
       where: { slug },
       include: {
         socialLinks: { orderBy: { order: 'asc' } },
+        testimonials: { where: { isApproved: true }, orderBy: { createdAt: 'desc' }, take: 10 },
         user: { select: { name: true, email: true } },
       },
     });

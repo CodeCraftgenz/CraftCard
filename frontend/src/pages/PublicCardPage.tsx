@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import html2canvas from 'html2canvas';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,10 +26,12 @@ import {
   Check,
   QrCode,
   MessageSquare,
+  Star,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { trackLinkClick } from '@/hooks/useAnalytics';
 import { useSendMessage } from '@/hooks/useContacts';
+import { useSubmitTestimonial } from '@/hooks/useTestimonials';
 import { APP_NAME, resolvePhotoUrl } from '@/lib/constants';
 
 interface PublicProfile {
@@ -48,6 +51,13 @@ interface PublicProfile {
     label: string;
     url: string;
     order: number;
+  }>;
+  testimonials?: Array<{
+    id: string;
+    authorName: string;
+    authorRole: string | null;
+    text: string;
+    createdAt: string;
   }>;
   user?: {
     name: string;
@@ -186,7 +196,13 @@ export function PublicCardPage() {
   const [contactForm, setContactForm] = useState({ senderName: '', senderEmail: '', message: '' });
   const [contactSuccess, setContactSuccess] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showTestimonialForm, setShowTestimonialForm] = useState(false);
+  const [testimonialForm, setTestimonialForm] = useState({ authorName: '', authorRole: '', text: '' });
+  const [testimonialSuccess, setTestimonialSuccess] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const sendMessage = useSendMessage();
+  const submitTestimonial = useSubmitTestimonial();
 
   const { data: profile, isLoading, error } = useQuery<PublicProfile>({
     queryKey: ['public-profile', slug],
@@ -216,6 +232,28 @@ export function PublicCardPage() {
     }
   };
 
+  const handleSubmitTestimonial = async () => {
+    if (!slug) return;
+    try {
+      await submitTestimonial.mutateAsync({
+        slug,
+        data: {
+          authorName: testimonialForm.authorName,
+          authorRole: testimonialForm.authorRole || undefined,
+          text: testimonialForm.text,
+        },
+      });
+      setTestimonialSuccess(true);
+      setTestimonialForm({ authorName: '', authorRole: '', text: '' });
+      setTimeout(() => {
+        setTestimonialSuccess(false);
+        setShowTestimonialForm(false);
+      }, 3000);
+    } catch {
+      // Error handled by mutation state
+    }
+  };
+
   const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
   const displayName = profile?.displayName || '';
 
@@ -223,6 +261,26 @@ export function PublicCardPage() {
     navigator.clipboard.writeText(pageUrl);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
+  };
+
+  const handleExportImage = async () => {
+    if (!cardRef.current || !slug) return;
+    setExporting(true);
+    try {
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: '#1A1A2E',
+        scale: 2,
+        useCORS: true,
+      });
+      const link = document.createElement('a');
+      link.download = `cartao-${slug}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch {
+      // silently fail
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (isLoading) {
@@ -259,6 +317,7 @@ export function PublicCardPage() {
       </Helmet>
 
       <div
+        ref={cardRef}
         className="min-h-screen flex flex-col items-center justify-center px-4 py-12"
         style={{ background: getThemeBackground(theme, accent) }}
       >
@@ -384,6 +443,50 @@ export function PublicCardPage() {
               ))}
             </div>
           )}
+
+          {/* Testimonials */}
+          {profile.testimonials && profile.testimonials.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-3 px-1">
+                <Star size={14} className="text-yellow-400" />
+                <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">Depoimentos</span>
+              </div>
+              <div className="space-y-3">
+                {profile.testimonials.map((t) => (
+                  <motion.div
+                    key={t.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-2xl bg-white/5 border border-white/10"
+                  >
+                    <p className="text-sm text-white/70 italic leading-relaxed">"{t.text}"</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center">
+                        <span className="text-[10px] font-bold text-white/60">{t.authorName.charAt(0).toUpperCase()}</span>
+                      </div>
+                      <div>
+                        <span className="text-xs font-medium text-white/80">{t.authorName}</span>
+                        {t.authorRole && <span className="text-xs text-white/30 ml-1">· {t.authorRole}</span>}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Leave Testimonial Button */}
+          <motion.button
+            type="button"
+            onClick={() => setShowTestimonialForm(true)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.62 }}
+            className="mt-3 w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-white/10 text-white/70 hover:text-white hover:bg-white/5 transition-all text-sm"
+          >
+            <Star size={16} />
+            Deixar Depoimento
+          </motion.button>
 
           {/* Resume */}
           {profile.resumeUrl && (
@@ -604,6 +707,97 @@ export function PublicCardPage() {
                 />
                 <span className="text-[10px] text-white/30">Escaneie para acessar</span>
               </div>
+
+              {/* Export as Image */}
+              <button
+                type="button"
+                onClick={handleExportImage}
+                disabled={exporting}
+                className="mt-3 w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-white/10 text-white/70 hover:text-white hover:bg-white/5 transition-all text-sm disabled:opacity-40"
+              >
+                <Download size={16} />
+                {exporting ? 'Gerando imagem...' : 'Exportar como Imagem'}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Testimonial Form Modal */}
+      <AnimatePresence>
+        {showTestimonialForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowTestimonialForm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-[#1A1A2E] border border-white/10 rounded-2xl p-6"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Star size={20} className="text-yellow-400" />
+                  Deixar Depoimento
+                </h3>
+                <button type="button" onClick={() => setShowTestimonialForm(false)} title="Fechar" className="text-white/40 hover:text-white transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+
+              {testimonialSuccess ? (
+                <div className="text-center py-8">
+                  <Check size={40} className="mx-auto text-green-400 mb-3" />
+                  <p className="text-white font-semibold">Depoimento enviado!</p>
+                  <p className="text-sm text-white/40 mt-1">Sera exibido apos aprovacao do proprietario.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={testimonialForm.authorName}
+                    onChange={(e) => setTestimonialForm((prev) => ({ ...prev, authorName: e.target.value }))}
+                    placeholder="Seu nome *"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50 transition-all"
+                  />
+                  <input
+                    type="text"
+                    value={testimonialForm.authorRole}
+                    onChange={(e) => setTestimonialForm((prev) => ({ ...prev, authorRole: e.target.value }))}
+                    placeholder="Seu cargo/empresa (opcional)"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50 transition-all"
+                  />
+                  <textarea
+                    value={testimonialForm.text}
+                    onChange={(e) => setTestimonialForm((prev) => ({ ...prev, text: e.target.value }))}
+                    placeholder="Escreva seu depoimento *"
+                    rows={4}
+                    maxLength={500}
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50 transition-all resize-none"
+                  />
+                  <div className="flex justify-end">
+                    <span className="text-xs text-white/20">{testimonialForm.text.length}/500</span>
+                  </div>
+                  {submitTestimonial.isError && (
+                    <p className="text-xs text-red-400">Erro ao enviar depoimento. Tente novamente.</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleSubmitTestimonial}
+                    disabled={testimonialForm.authorName.length < 2 || testimonialForm.text.length < 10 || submitTestimonial.isPending}
+                    className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: accent }}
+                  >
+                    <Send size={16} />
+                    {submitTestimonial.isPending ? 'Enviando...' : 'Enviar Depoimento'}
+                  </button>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}

@@ -50,6 +50,7 @@ model Profile {
   socialLinks     SocialLink[]
   profileViews    ProfileView[]
   contactMessages ContactMessage[]
+  testimonials    Testimonial[]
 
   @@map("profiles")
 }
@@ -147,4 +148,20 @@ model ContactMessage {
   @@index([profileId])
   @@index([profileId, isRead])
   @@map("contact_messages")
+}
+
+model Testimonial {
+  id         String   @id @default(uuid())
+  profileId  String   @map("profile_id")
+  authorName String   @map("author_name")
+  authorRole String?  @map("author_role")
+  text       String   @db.Text
+  isApproved Boolean  @default(false) @map("is_approved")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([profileId, isApproved])
+  @@map("testimonials")
 }
