@@ -13,12 +13,14 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   hasPaid: boolean;
+  paidUntil: string | null;
 }
 
 interface AuthContextType extends AuthState {
   login: (googleCredential: string) => Promise<void>;
   devLogin: (email?: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -29,19 +31,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: false,
     isLoading: true,
     hasPaid: false,
+    paidUntil: null,
   });
 
   const fetchMe = useCallback(async () => {
     try {
-      const data: { user: User; hasPaid: boolean } = await api.get('/me');
+      const data: { user: User; hasPaid: boolean; paidUntil: string | null } = await api.get('/me');
       setState({
         user: data.user,
         isAuthenticated: true,
         isLoading: false,
         hasPaid: data.hasPaid,
+        paidUntil: data.paidUntil,
       });
     } catch {
-      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false });
+      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false, paidUntil: null });
     }
   }, []);
 
@@ -52,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const handleLogout = () => {
       clearAccessToken();
-      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false });
+      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false, paidUntil: null });
     };
     window.addEventListener('auth:logout', handleLogout);
     return () => window.removeEventListener('auth:logout', handleLogout);
@@ -77,12 +81,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await api.post('/auth/logout');
     } finally {
       clearAccessToken();
-      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false });
+      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false, paidUntil: null });
     }
   }, []);
 
+  const refreshAuth = useCallback(async () => {
+    await fetchMe();
+  }, [fetchMe]);
+
   return (
-    <AuthContext.Provider value={{ ...state, login, devLogin, logout }}>
+    <AuthContext.Provider value={{ ...state, login, devLogin, logout, refreshAuth }}>
       {children}
     </AuthContext.Provider>
   );

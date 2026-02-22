@@ -16,6 +16,7 @@ import {
   Share2,
   FileText,
   User,
+  Download,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { APP_NAME, resolvePhotoUrl } from '@/lib/constants';
@@ -26,12 +27,18 @@ interface PublicProfile {
   photoUrl: string | null;
   resumeUrl: string | null;
   buttonColor: string;
+  cardTheme: string;
+  viewCount: number;
   socialLinks: Array<{
     platform: string;
     label: string;
     url: string;
     order: number;
   }>;
+  user?: {
+    name: string;
+    email: string;
+  };
 }
 
 const platformIcons: Record<string, typeof Instagram> = {
@@ -57,6 +64,81 @@ const platformColors: Record<string, string> = {
   whatsapp: '#25D366',
   email: '#EA4335',
 };
+
+function getThemeBackground(theme: string, accent: string): string {
+  switch (theme) {
+    case 'gradient':
+      return `linear-gradient(135deg, ${accent}25 0%, #D12BF220 50%, #1A1A2E 100%)`;
+    case 'minimal':
+      return '#1A1A2E';
+    case 'bold':
+      return `linear-gradient(180deg, ${accent}30 0%, ${accent}10 30%, #1A1A2E 60%)`;
+    default:
+      return `linear-gradient(180deg, ${accent}15 0%, #1A1A2E 30%, #1A1A2E 100%)`;
+  }
+}
+
+function getThemeCardStyle(theme: string): string {
+  switch (theme) {
+    case 'gradient':
+      return 'backdrop-blur-xl bg-white/[0.08] border border-white/10 rounded-3xl shadow-2xl';
+    case 'minimal':
+      return 'bg-transparent';
+    case 'bold':
+      return 'backdrop-blur-xl bg-white/5 border-2 border-white/20 rounded-3xl shadow-2xl';
+    default:
+      return 'backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl';
+  }
+}
+
+function generateVCard(profile: PublicProfile): string {
+  const lines = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    `FN:${profile.displayName}`,
+  ];
+
+  if (profile.bio) {
+    lines.push(`NOTE:${profile.bio.replace(/\n/g, '\\n')}`);
+  }
+
+  if (profile.photoUrl) {
+    lines.push(`PHOTO;TYPE=URL:${resolvePhotoUrl(profile.photoUrl)}`);
+  }
+
+  const emailLink = profile.socialLinks.find((l) => l.platform === 'email');
+  if (emailLink) {
+    const email = emailLink.url.replace('mailto:', '');
+    lines.push(`EMAIL:${email}`);
+  }
+
+  const whatsappLink = profile.socialLinks.find((l) => l.platform === 'whatsapp');
+  if (whatsappLink) {
+    const phone = whatsappLink.url.replace(/.*wa\.me\//, '').replace(/\D/g, '');
+    if (phone) lines.push(`TEL;TYPE=CELL:+${phone}`);
+  }
+
+  const websiteLink = profile.socialLinks.find((l) => l.platform === 'website');
+  if (websiteLink) {
+    lines.push(`URL:${websiteLink.url}`);
+  }
+
+  lines.push(`URL:${window.location.href}`);
+  lines.push('END:VCARD');
+
+  return lines.join('\r\n');
+}
+
+function handleDownloadVCard(profile: PublicProfile) {
+  const vcf = generateVCard(profile);
+  const blob = new Blob([vcf], { type: 'text/vcard;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${profile.displayName.replace(/\s+/g, '-').toLowerCase()}.vcf`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 export function PublicCardPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -100,6 +182,7 @@ export function PublicCardPage() {
   }
 
   const accent = profile.buttonColor || '#00E4F2';
+  const theme = profile.cardTheme || 'default';
 
   return (
     <>
@@ -113,14 +196,12 @@ export function PublicCardPage() {
 
       <div
         className="min-h-screen flex flex-col items-center justify-center px-4 py-12"
-        style={{
-          background: `linear-gradient(180deg, ${accent}15 0%, #1A1A2E 30%, #1A1A2E 100%)`,
-        }}
+        style={{ background: getThemeBackground(theme, accent) }}
       >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md"
+          className={`w-full max-w-md ${theme !== 'minimal' ? 'p-6' : ''} ${getThemeCardStyle(theme)}`}
         >
           {/* Avatar */}
           <div className="flex flex-col items-center mb-8">
@@ -194,6 +275,19 @@ export function PublicCardPage() {
               Ver Curriculo
             </motion.a>
           )}
+
+          {/* Save Contact (vCard) */}
+          <motion.button
+            onClick={() => handleDownloadVCard(profile)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="mt-3 w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold text-white transition-all hover:opacity-90"
+            style={{ backgroundColor: accent }}
+          >
+            <Download size={16} />
+            Salvar Contato
+          </motion.button>
 
           {/* Share */}
           <div className="mt-6 flex justify-center">

@@ -35,6 +35,8 @@ model Profile {
   buttonColor String   @default("#00E4F2") @map("button_color")
   slug        String   @unique
   isPublished Boolean  @default(false) @map("is_published")
+  viewCount   Int      @default(0) @map("view_count")
+  cardTheme   String   @default("default") @map("card_theme")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -70,6 +72,7 @@ model Payment {
   payerEmail     String?   @map("payer_email")
   mpResponseJson String?   @map("mp_response_json") @db.Text
   paidAt         DateTime? @map("paid_at")
+  expiresAt      DateTime? @map("expires_at")
   createdAt      DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

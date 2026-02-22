@@ -44,24 +44,26 @@ describe('PaymentsService', () => {
     service = module.get<PaymentsService>(PaymentsService);
   });
 
-  describe('hasUserPaid', () => {
-    it('should return true if user has approved payment', async () => {
-      prisma.payment.findFirst.mockResolvedValue({ id: '1', status: 'approved' });
-      expect(await service.hasUserPaid('user-1')).toBe(true);
+  describe('getActiveSubscription', () => {
+    it('should return active if user has approved payment', async () => {
+      prisma.payment.findFirst.mockResolvedValue({ id: '1', status: 'approved', expiresAt: null });
+      const result = await service.getActiveSubscription('user-1');
+      expect(result.active).toBe(true);
     });
 
-    it('should return false if no approved payment exists', async () => {
+    it('should return not active if no approved payment exists', async () => {
       prisma.payment.findFirst.mockResolvedValue(null);
-      expect(await service.hasUserPaid('user-1')).toBe(false);
+      const result = await service.getActiveSubscription('user-1');
+      expect(result.active).toBe(false);
     });
   });
 
   describe('createCheckoutPreference', () => {
-    it('should throw conflict if user already paid', async () => {
-      prisma.payment.findFirst.mockResolvedValue({ id: '1', status: 'approved' });
+    it('should throw conflict if user has active subscription', async () => {
+      prisma.payment.findFirst.mockResolvedValue({ id: '1', status: 'approved', expiresAt: null });
       await expect(
         service.createCheckoutPreference('user-1', 'test@test.com'),
-      ).rejects.toThrow('Pagamento ja realizado');
+      ).rejects.toThrow('Voce ja possui uma assinatura ativa');
     });
   });
 

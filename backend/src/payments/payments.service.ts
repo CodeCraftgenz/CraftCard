@@ -18,6 +18,9 @@ const MP_STATUS_MAP: Record<string, string> = {
   charged_back: 'refunded',
 };
 
+const SUBSCRIPTION_PRICE = 30.0;
+const SUBSCRIPTION_DAYS = 365;
+
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
@@ -33,17 +36,29 @@ export class PaymentsService {
     this.preference = new Preference(mpClient);
   }
 
-  async hasUserPaid(userId: string): Promise<boolean> {
+  async getActiveSubscription(userId: string): Promise<{ active: boolean; expiresAt: Date | null }> {
     const payment = await this.prisma.payment.findFirst({
-      where: { userId, status: 'approved' },
+      where: {
+        userId,
+        status: 'approved',
+        OR: [
+          { expiresAt: null },          // Legacy payments (lifetime)
+          { expiresAt: { gt: new Date() } }, // Active annual subscription
+        ],
+      },
+      orderBy: { paidAt: 'desc' },
     });
-    return !!payment;
+
+    return {
+      active: !!payment,
+      expiresAt: payment?.expiresAt ?? null,
+    };
   }
 
   async createCheckoutPreference(userId: string, email: string): Promise<{ url: string }> {
-    const alreadyPaid = await this.hasUserPaid(userId);
-    if (alreadyPaid) {
-      throw AppException.conflict('Pagamento ja realizado');
+    const subscription = await this.getActiveSubscription(userId);
+    if (subscription.active) {
+      throw AppException.conflict('Voce ja possui uma assinatura ativa');
     }
 
     const frontendUrl = this.configService.get('FRONTEND_URL', { infer: true });
@@ -52,7 +67,7 @@ export class PaymentsService {
     const payment = await this.prisma.payment.create({
       data: {
         userId,
-        amount: 20.0,
+        amount: SUBSCRIPTION_PRICE,
         currency: 'BRL',
         status: 'pending',
         payerEmail: email,
@@ -64,11 +79,11 @@ export class PaymentsService {
         items: [
           {
             id: payment.id,
-            title: 'CraftCard - Cartao Digital Profissional',
-            description: 'Pagamento unico para criar e publicar seu cartao digital',
+            title: 'CraftCard - Cartao Digital Profissional (Anual)',
+            description: 'Assinatura anual para criar e publicar seu cartao digital',
             quantity: 1,
             currency_id: 'BRL',
-            unit_price: 20.0,
+            unit_price: SUBSCRIPTION_PRICE,
           },
         ],
         back_urls: {
@@ -172,16 +187,20 @@ export class PaymentsService {
       return;
     }
 
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000);
+
     await this.prisma.payment.update({
       where: { id: externalRef },
       data: {
         status: newStatus,
         mpPaymentId: String(mpPaymentId),
         mpResponseJson: JSON.stringify(mpPayment),
-        paidAt: newStatus === 'approved' ? new Date() : undefined,
+        paidAt: newStatus === 'approved' ? now : undefined,
+        expiresAt: newStatus === 'approved' ? expiresAt : undefined,
       },
     });
 
-    this.logger.log(`Payment ${externalRef} → ${newStatus} (MP: ${mpPaymentId})`);
+    this.logger.log(`Payment ${externalRef} → ${newStatus} (MP: ${mpPaymentId}, expires: ${expiresAt.toISOString()})`);
   }
 }

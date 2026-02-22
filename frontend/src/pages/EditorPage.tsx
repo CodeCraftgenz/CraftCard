@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus,
   GripVertical, Camera, FileText, Palette, Link2, Sparkles, Eye,
+  QrCode, BarChart3, Calendar, Download,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
 import { CardPreview } from '@/components/organisms/CardPreview';
@@ -17,8 +18,15 @@ import {
 import { api } from '@/lib/api';
 import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, resolvePhotoUrl } from '@/lib/constants';
 
+const CARD_THEMES = [
+  { value: 'default', label: 'Classico', preview: 'bg-gradient-to-b from-brand-cyan/10 to-transparent' },
+  { value: 'gradient', label: 'Gradiente', preview: 'bg-gradient-to-br from-purple-500/20 to-pink-500/20' },
+  { value: 'minimal', label: 'Minimalista', preview: 'bg-white/5' },
+  { value: 'bold', label: 'Vibrante', preview: 'bg-gradient-to-br from-yellow-500/20 to-red-500/20' },
+];
+
 export function EditorPage() {
-  const { hasPaid } = useAuth();
+  const { hasPaid, paidUntil } = useAuth();
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
   const uploadPhoto = useUploadPhoto();
@@ -30,6 +38,7 @@ export function EditorPage() {
     buttonColor: '#00E4F2',
     slug: '',
     isPublished: false,
+    cardTheme: 'default',
     socialLinks: [] as Array<{ platform: string; label: string; url: string; order: number }>,
   });
 
@@ -38,6 +47,7 @@ export function EditorPage() {
   const [saved, setSaved] = useState(false);
   const [photoVersion, setPhotoVersion] = useState(Date.now());
   const [debouncedSlug, setDebouncedSlug] = useState('');
+  const [showQrCode, setShowQrCode] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const initializedRef = useRef(false);
 
@@ -51,6 +61,7 @@ export function EditorPage() {
         buttonColor: profile.buttonColor || '#00E4F2',
         slug: profile.slug || '',
         isPublished: profile.isPublished,
+        cardTheme: profile.cardTheme || 'default',
         socialLinks: profile.socialLinks.map((l) => ({
           platform: l.platform,
           label: l.label,
@@ -73,15 +84,59 @@ export function EditorPage() {
     debouncedSlug !== profile?.slug && debouncedSlug.length >= 3,
   );
 
+  // Build a clean payload - only include valid, non-empty fields
+  const buildSavePayload = useCallback(() => {
+    const data: Record<string, unknown> = {};
+
+    // Only send displayName if >= 2 chars
+    const trimmedName = form.displayName.trim();
+    if (trimmedName.length >= 2) {
+      data.displayName = trimmedName;
+    }
+
+    // Bio can be empty (nullable)
+    if (form.bio.trim()) {
+      data.bio = form.bio.trim();
+    } else {
+      data.bio = null;
+    }
+
+    data.buttonColor = form.buttonColor;
+    data.isPublished = form.isPublished;
+    data.cardTheme = form.cardTheme;
+
+    // Only send slug if >= 3 chars
+    if (slugInput.length >= 3) {
+      data.slug = slugInput;
+    }
+
+    // Filter social links - only include complete ones with valid URL
+    const validLinks = form.socialLinks.filter((l) => {
+      const hasLabel = l.label.trim().length > 0;
+      const hasUrl = l.url.trim().length > 0;
+      const isValidUrl = /^https?:\/\/.+/i.test(l.url.trim());
+      return hasLabel && hasUrl && isValidUrl;
+    });
+    data.socialLinks = validLinks.map((l, i) => ({
+      platform: l.platform,
+      label: l.label.trim(),
+      url: l.url.trim(),
+      order: i,
+    }));
+
+    return data;
+  }, [form, slugInput]);
+
   const handleSave = useCallback(async () => {
-    const data = {
-      ...form,
-      slug: slugInput,
-    };
-    await updateProfile.mutateAsync(data);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  }, [form, slugInput, updateProfile]);
+    try {
+      const data = buildSavePayload();
+      await updateProfile.mutateAsync(data);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      // Silently fail on auto-save validation errors
+    }
+  }, [buildSavePayload, updateProfile]);
 
   // Auto-save with debounce
   const triggerAutoSave = useCallback(() => {
@@ -123,9 +178,10 @@ export function EditorPage() {
     }
   };
 
+  const cardUrl = `${window.location.origin}/${profile?.slug || slugInput}`;
+
   const handleCopyLink = () => {
-    const url = `${window.location.origin}/${profile?.slug}`;
-    navigator.clipboard.writeText(url);
+    navigator.clipboard.writeText(cardUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -161,6 +217,21 @@ export function EditorPage() {
     window.location.href = data.url;
   };
 
+  const handleDownloadQr = () => {
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(cardUrl)}&bgcolor=1A1A2E&color=00E4F2`;
+    const link = document.createElement('a');
+    link.href = qrUrl;
+    link.download = `qrcode-${profile?.slug || 'cartao'}.png`;
+    link.click();
+  };
+
+  // Format expiration date
+  const formatExpiry = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-brand-bg-dark flex items-center justify-center">
@@ -193,7 +264,46 @@ export function EditorPage() {
           <p className="text-sm text-white/40 mt-1">Personalize seu cartao digital profissional</p>
         </motion.div>
 
-        {/* Payment banner */}
+        {/* Subscription status banner (when paid) */}
+        <AnimatePresence>
+          {hasPaid && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-8 relative overflow-hidden rounded-2xl border border-green-500/20"
+            >
+              <div className="absolute inset-0 bg-green-500/5" />
+              <div className="relative p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center shrink-0">
+                    <Check size={20} className="text-green-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-green-400">Assinatura Ativa</h3>
+                    {paidUntil && (
+                      <p className="text-xs text-white/40 flex items-center gap-1 mt-0.5">
+                        <Calendar size={12} />
+                        Valida ate {formatExpiry(paidUntil)}
+                      </p>
+                    )}
+                    {!paidUntil && (
+                      <p className="text-xs text-white/40 mt-0.5">Acesso vitalicio</p>
+                    )}
+                  </div>
+                </div>
+                {profile?.viewCount !== undefined && profile.viewCount > 0 && (
+                  <div className="flex items-center gap-2 text-sm text-white/50 bg-white/5 px-4 py-2 rounded-xl">
+                    <BarChart3 size={16} className="text-brand-cyan" />
+                    <span><strong className="text-white">{profile.viewCount}</strong> visualizacoes</span>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Payment banner (when NOT paid) */}
         <AnimatePresence>
           {!hasPaid && (
             <motion.div
@@ -211,7 +321,7 @@ export function EditorPage() {
                   <div>
                     <h3 className="font-bold text-lg">Desbloqueie seu cartao</h3>
                     <p className="text-sm text-white/50">
-                      Pagamento unico de R$20 para publicar e compartilhar
+                      Assinatura anual de R$30 para publicar e compartilhar
                     </p>
                   </div>
                 </div>
@@ -220,9 +330,94 @@ export function EditorPage() {
                   onClick={handleCheckout}
                   className="flex items-center gap-2 px-8 py-3 rounded-xl gradient-bg font-bold text-sm hover:opacity-90 transition-all hover:shadow-lg hover:shadow-brand-cyan/20 shrink-0"
                 >
-                  Pagar R$ 20,00
+                  Assinar R$ 30,00/ano
                 </button>
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Published card link (when published) */}
+        <AnimatePresence>
+          {profile?.isPublished && hasPaid && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-8 glass-card p-5"
+            >
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-brand-cyan/10 flex items-center justify-center shrink-0">
+                    <ExternalLink size={18} className="text-brand-cyan" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-white/40 mb-1">Seu cartao esta no ar!</p>
+                    <a
+                      href={cardUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-cyan hover:underline text-sm font-medium truncate block"
+                    >
+                      {cardUrl}
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleCopyLink}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 text-sm hover:bg-white/5 hover:border-white/20 transition-all"
+                  >
+                    {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                    {copied ? 'Copiado!' : 'Copiar'}
+                  </button>
+                  <a
+                    href={cardUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-bg text-sm font-semibold hover:opacity-90 transition-all"
+                  >
+                    <ExternalLink size={14} />
+                    Acessar
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setShowQrCode(!showQrCode)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 text-sm hover:bg-white/5 hover:border-white/20 transition-all"
+                    title="QR Code"
+                  >
+                    <QrCode size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* QR Code Section */}
+              <AnimatePresence>
+                {showQrCode && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-4 pt-4 border-t border-white/10 flex flex-col items-center gap-3"
+                  >
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(cardUrl)}&bgcolor=1A1A2E&color=00E4F2&format=svg`}
+                      alt="QR Code do cartao"
+                      className="w-40 h-40 rounded-xl"
+                    />
+                    <p className="text-xs text-white/40">Escaneie para acessar seu cartao</p>
+                    <button
+                      type="button"
+                      onClick={handleDownloadQr}
+                      className="flex items-center gap-2 text-sm text-brand-cyan hover:text-brand-cyan/80 transition-colors"
+                    >
+                      <Download size={14} />
+                      Baixar QR Code
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>
@@ -443,6 +638,28 @@ export function EditorPage() {
                 <h3 className="font-semibold">Aparencia</h3>
               </div>
               <div className="space-y-5">
+                {/* Card Theme */}
+                <div>
+                  <label className="text-xs font-medium text-white/50 mb-3 block uppercase tracking-wider">Tema do cartao</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {CARD_THEMES.map((theme) => (
+                      <button
+                        type="button"
+                        key={theme.value}
+                        onClick={() => updateField('cardTheme', theme.value)}
+                        className={`p-3 rounded-xl border-2 transition-all text-center ${
+                          form.cardTheme === theme.value
+                            ? 'border-brand-cyan shadow-md shadow-brand-cyan/20'
+                            : 'border-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <div className={`w-full h-8 rounded-lg mb-2 ${theme.preview}`} />
+                        <span className="text-xs text-white/70">{theme.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div>
                   <label className="text-xs font-medium text-white/50 mb-3 block uppercase tracking-wider">Cor dos botoes</label>
                   <div className="flex flex-wrap gap-2.5">
@@ -479,7 +696,7 @@ export function EditorPage() {
                   <label className="text-xs font-medium text-white/50 mb-1.5 block uppercase tracking-wider">Slug (URL publica)</label>
                   <div className="flex items-center gap-0 rounded-xl overflow-hidden border border-white/10 focus-within:border-brand-cyan/50 transition-all">
                     <span className="text-sm text-white/30 px-4 py-3 bg-white/[0.03] border-r border-white/10 shrink-0">
-                      craftcard.com.br/
+                      {window.location.origin}/
                     </span>
                     <input
                       type="text"
@@ -522,17 +739,6 @@ export function EditorPage() {
                 {saved ? <Check size={16} /> : <Save size={16} />}
                 {saved ? 'Salvo!' : updateProfile.isPending ? 'Salvando...' : 'Salvar'}
               </button>
-
-              {profile?.isPublished && (
-                <button
-                  type="button"
-                  onClick={handleCopyLink}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 text-sm hover:bg-white/5 hover:border-white/20 transition-all"
-                >
-                  {copied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
-                  {copied ? 'Copiado!' : 'Copiar link'}
-                </button>
-              )}
 
               {hasPaid && (
                 <label className="flex items-center gap-3 text-sm cursor-pointer ml-auto px-3 py-2 rounded-xl hover:bg-white/5 transition-colors">

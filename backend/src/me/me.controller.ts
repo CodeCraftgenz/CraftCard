@@ -1,11 +1,15 @@
 import { Controller, Get, Delete } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { PaymentsService } from '../payments/payments.service';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
 import { AppException } from '../common/exceptions/app.exception';
 
 @Controller('me')
 export class MeController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly paymentsService: PaymentsService,
+  ) {}
 
   @Get()
   async getMe(@CurrentUser() user: JwtPayload) {
@@ -20,9 +24,7 @@ export class MeController {
 
     if (!userData) throw AppException.notFound('Usuario');
 
-    const payment = await this.prisma.payment.findFirst({
-      where: { userId: user.sub, status: 'approved' },
-    });
+    const subscription = await this.paymentsService.getActiveSubscription(user.sub);
 
     return {
       user: {
@@ -32,7 +34,8 @@ export class MeController {
         avatarUrl: userData.avatarUrl,
       },
       profile: userData.profile,
-      hasPaid: !!payment,
+      hasPaid: subscription.active,
+      paidUntil: subscription.expiresAt?.toISOString() ?? null,
     };
   }
 

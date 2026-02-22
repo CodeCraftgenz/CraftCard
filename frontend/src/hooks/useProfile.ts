@@ -19,6 +19,8 @@ export interface Profile {
   buttonColor: string;
   slug: string;
   isPublished: boolean;
+  viewCount: number;
+  cardTheme: string;
   socialLinks: SocialLink[];
 }
 

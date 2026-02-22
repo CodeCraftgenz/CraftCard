@@ -14,8 +14,8 @@ export class PaidUserGuard implements CanActivate {
       throw AppException.unauthorized();
     }
 
-    const hasPaid = await this.paymentsService.hasUserPaid(userId);
-    if (!hasPaid) {
+    const subscription = await this.paymentsService.getActiveSubscription(userId);
+    if (!subscription.active) {
       throw AppException.forbidden('Pagamento necessario para acessar este recurso');
     }
 

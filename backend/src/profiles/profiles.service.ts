@@ -32,6 +32,13 @@ export class ProfilesService {
     if (!profile || !profile.isPublished) {
       throw AppException.notFound('Perfil');
     }
+
+    // Increment view count (fire-and-forget)
+    this.prisma.profile.update({
+      where: { slug },
+      data: { viewCount: { increment: 1 } },
+    }).catch(() => { /* ignore errors */ });
+
     const { photoData: _, ...rest } = profile;
     return rest;
   }
