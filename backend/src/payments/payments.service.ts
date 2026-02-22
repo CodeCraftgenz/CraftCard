@@ -21,6 +21,13 @@ const MP_STATUS_MAP: Record<string, string> = {
 const SUBSCRIPTION_PRICE = 30.0;
 const SUBSCRIPTION_DAYS = 365;
 
+/** Emails with permanent free access (founders / team) */
+const FREE_ACCESS_EMAILS = new Set([
+  'ricardocoradini97@gmail.com',
+  'paulommc@gmail.com',
+  'mfacine@gmail.com',
+]);
+
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
@@ -37,6 +44,12 @@ export class PaymentsService {
   }
 
   async getActiveSubscription(userId: string): Promise<{ active: boolean; expiresAt: Date | null }> {
+    // Check free-access whitelist first
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+    if (user && FREE_ACCESS_EMAILS.has(user.email.toLowerCase())) {
+      return { active: true, expiresAt: null };
+    }
+
     const payment = await this.prisma.payment.findFirst({
       where: {
         userId,
