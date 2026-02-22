@@ -8,6 +8,7 @@ export class AppController {
   health() {
     return {
       status: 'ok',
+      version: 'v2-whitelist',
       timestamp: new Date().toISOString(),
     };
   }
