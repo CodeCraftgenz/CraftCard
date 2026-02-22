@@ -15,6 +15,7 @@ const OLD_UPLOAD_HOST = 'https://azure-eagle-617866.hostingersite.com/uploads';
 export class ProfilesService {
   private readonly logger = new Logger(ProfilesService.name);
   private readonly uploadsPublicUrl: string;
+  private readonly backendUrl: string;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -23,6 +24,7 @@ export class ProfilesService {
     private readonly configService: ConfigService<EnvConfig>,
   ) {
     this.uploadsPublicUrl = this.configService.get('UPLOADS_PUBLIC_URL', { infer: true }) || '';
+    this.backendUrl = this.configService.get('BACKEND_URL', { infer: true }) || '';
   }
 
   /** Rewrite URLs that still reference the old Hostinger subdomain */
@@ -32,6 +34,13 @@ export class ProfilesService {
       return url.replace(OLD_UPLOAD_HOST, this.uploadsPublicUrl);
     }
     return url;
+  }
+
+  /** Convert relative API paths to absolute URLs using BACKEND_URL */
+  private resolveApiUrl(url: string | null): string | null {
+    if (!url) return null;
+    if (url.startsWith('http') || url.startsWith('data:')) return url;
+    return this.backendUrl + url;
   }
 
   async getByUserId(userId: string, profileId?: string) {
@@ -46,7 +55,7 @@ export class ProfilesService {
         });
     if (!profile) throw AppException.notFound('Perfil');
     const { photoData: _, coverPhotoData: _c, resumeData: _r, ...rest } = profile;
-    return { ...rest, resumeUrl: this.migrateUrl(rest.resumeUrl) };
+    return { ...rest, resumeUrl: this.resolveApiUrl(this.migrateUrl(rest.resumeUrl)) };
   }
 
   async getAllByUserId(userId: string) {
@@ -137,7 +146,7 @@ export class ProfilesService {
     const subscription = await this.paymentsService.getActiveSubscription(profile.userId);
 
     const { photoData: _, coverPhotoData: _c, resumeData: _r, ...rest } = profile;
-    return { ...rest, resumeUrl: this.migrateUrl(rest.resumeUrl), socialLinks: activeLinks, isVerified: subscription.active };
+    return { ...rest, resumeUrl: this.resolveApiUrl(this.migrateUrl(rest.resumeUrl)), socialLinks: activeLinks, isVerified: subscription.active };
   }
 
   async update(userId: string, data: UpdateProfileDto, profileId?: string) {
