@@ -27,6 +27,7 @@ import {
   QrCode,
   MessageSquare,
   Star,
+  ChevronDown,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { trackLinkClick } from '@/hooks/useAnalytics';
@@ -200,6 +201,7 @@ export function PublicCardPage() {
   const [testimonialForm, setTestimonialForm] = useState({ authorName: '', authorRole: '', text: '' });
   const [testimonialSuccess, setTestimonialSuccess] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [showAllLinks, setShowAllLinks] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const sendMessage = useSendMessage();
   const submitTestimonial = useSubmitTestimonial();
@@ -207,7 +209,8 @@ export function PublicCardPage() {
   const { data: profile, isLoading, error } = useQuery<PublicProfile>({
     queryKey: ['public-profile', slug],
     queryFn: () => api.get(`/profile/${slug}`),
-    retry: false,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
   });
 
   const handleSendMessage = async () => {
@@ -324,7 +327,7 @@ export function PublicCardPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`w-full max-w-md ${theme !== 'minimal' ? 'p-6' : ''} ${getThemeCardStyle(theme)}`}
+          className={`w-full max-w-md sm:max-w-lg ${theme !== 'minimal' ? 'p-6' : ''} ${getThemeCardStyle(theme)}`}
         >
           {/* Cover Photo */}
           {profile.coverPhotoUrl && (
@@ -384,37 +387,59 @@ export function PublicCardPage() {
 
           {/* Social Links */}
           <div className="space-y-3">
-            {profile.socialLinks.filter(l => l.platform !== 'custom').map((link, i) => {
-              const Icon = platformIcons[link.platform] || Globe;
-              const bgColor = platformColors[link.platform] || accent;
+            {(() => {
+              const socialOnly = profile.socialLinks.filter(l => l.platform !== 'custom');
+              const visibleLinks = showAllLinks ? socialOnly : socialOnly.slice(0, 3);
+              const hiddenCount = socialOnly.length - 3;
 
               return (
-                <motion.a
-                  key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => trackLinkClick(link.id)}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.08 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex items-center gap-4 px-5 py-3.5 rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all group"
-                >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: `${bgColor}20` }}
-                  >
-                    <Icon size={20} style={{ color: bgColor }} />
-                  </div>
-                  <span className="font-medium text-sm">{link.label}</span>
-                  <span className="ml-auto text-white/20 group-hover:text-white/40 transition-colors">
-                    &rsaquo;
-                  </span>
-                </motion.a>
+                <>
+                  {visibleLinks.map((link, i) => {
+                    const Icon = platformIcons[link.platform] || Globe;
+                    const bgColor = platformColors[link.platform] || accent;
+
+                    return (
+                      <motion.a
+                        key={link.id}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => trackLinkClick(link.id)}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.08 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="flex items-center gap-4 px-5 py-3.5 rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all group"
+                      >
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: `${bgColor}20` }}
+                        >
+                          <Icon size={20} style={{ color: bgColor }} />
+                        </div>
+                        <span className="font-medium text-sm">{link.label}</span>
+                        <span className="ml-auto text-white/20 group-hover:text-white/40 transition-colors">
+                          &rsaquo;
+                        </span>
+                      </motion.a>
+                    );
+                  })}
+                  {hiddenCount > 0 && !showAllLinks && (
+                    <motion.button
+                      type="button"
+                      onClick={() => setShowAllLinks(true)}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-dashed border-white/15 text-white/50 hover:text-white/80 hover:border-white/30 hover:bg-white/5 transition-all text-sm"
+                    >
+                      <ChevronDown size={16} />
+                      Ver mais {hiddenCount} {hiddenCount === 1 ? 'link' : 'links'}
+                    </motion.button>
+                  )}
+                </>
               );
-            })}
+            })()}
           </div>
 
           {/* Custom Links (Link-in-bio style) */}
@@ -510,8 +535,7 @@ export function PublicCardPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="mt-3 w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold text-white transition-all hover:opacity-90"
-            style={{ backgroundColor: accent }}
+            className="mt-3 w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-white/10 text-white/70 hover:text-white hover:bg-white/5 transition-all text-sm"
           >
             <Download size={16} />
             Salvar Contato

@@ -1,5 +1,8 @@
 RewriteEngine On
 
+# Nunca reescrever arquivos de upload (resumes, fotos, etc.)
+RewriteRule ^uploads/ - [L]
+
 # Se o arquivo ou diretorio existe, serve direto
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

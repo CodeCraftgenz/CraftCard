@@ -35,7 +35,7 @@ async function deploy() {
     await client.uploadFromDir(distDir);
 
     console.log('\nDeploy complete!');
-    console.log('Site: https://azure-eagle-617866.hostingersite.com');
+    console.log('Site: https://craftcardgenz.com');
   } catch (err) {
     console.error('Deploy failed:', err.message);
     process.exit(1);

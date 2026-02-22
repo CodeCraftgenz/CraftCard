@@ -11,13 +11,22 @@ const safeUrlSchema = z.string().url().refine(
   { message: 'Protocolo nao permitido' },
 );
 
+/** URL schema for social links — accepts http(s) and mailto: */
+const socialUrlSchema = z.string().min(1).refine(
+  (url) => /^https?:\/\/.+/i.test(url) || /^mailto:.+@.+/i.test(url),
+  { message: 'URL invalida' },
+).refine(
+  (url) => !DANGEROUS_PROTOCOLS.test(url),
+  { message: 'Protocolo nao permitido' },
+);
+
 export const socialLinkSchema = z.object({
   platform: z.enum([
     'whatsapp', 'instagram', 'linkedin', 'github', 'twitter',
     'tiktok', 'youtube', 'website', 'email', 'other', 'custom',
   ]),
   label: z.string().min(1).max(100),
-  url: safeUrlSchema,
+  url: socialUrlSchema,
   order: z.number().int().min(0).max(50),
   startsAt: z.coerce.date().optional().nullable(),
   endsAt: z.coerce.date().optional().nullable(),

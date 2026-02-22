@@ -163,7 +163,7 @@ export function EditorPage() {
     const validLinks = form.socialLinks.filter((l) => {
       const hasLabel = l.label.trim().length > 0;
       const hasUrl = l.url.trim().length > 0;
-      const isValidUrl = /^https?:\/\/.+/i.test(l.url.trim());
+      const isValidUrl = /^(https?:\/\/|mailto:).+/i.test(l.url.trim());
       return hasLabel && hasUrl && isValidUrl;
     });
     data.socialLinks = validLinks.map((l, i) => ({
