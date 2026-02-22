@@ -31,15 +31,15 @@ export const PRESET_BUTTON_COLORS = [
 ] as const;
 
 export const SOCIAL_PLATFORMS = [
-  { value: 'whatsapp', label: 'WhatsApp', icon: 'MessageCircle' },
-  { value: 'instagram', label: 'Instagram', icon: 'Instagram' },
-  { value: 'linkedin', label: 'LinkedIn', icon: 'Linkedin' },
-  { value: 'github', label: 'GitHub', icon: 'Github' },
-  { value: 'twitter', label: 'X (Twitter)', icon: 'Twitter' },
-  { value: 'tiktok', label: 'TikTok', icon: 'Music2' },
-  { value: 'youtube', label: 'YouTube', icon: 'Youtube' },
-  { value: 'website', label: 'Site', icon: 'Globe' },
-  { value: 'email', label: 'Email', icon: 'Mail' },
-  { value: 'other', label: 'Outro', icon: 'Link' },
-  { value: 'custom', label: 'Link Personalizado', icon: 'ExternalLink' },
+  { value: 'whatsapp', label: 'WhatsApp', icon: 'MessageCircle', urlPrefix: 'https://wa.me/', placeholder: 'https://wa.me/5511999999999' },
+  { value: 'instagram', label: 'Instagram', icon: 'Instagram', urlPrefix: 'https://instagram.com/', placeholder: 'https://instagram.com/seu_usuario' },
+  { value: 'linkedin', label: 'LinkedIn', icon: 'Linkedin', urlPrefix: 'https://linkedin.com/in/', placeholder: 'https://linkedin.com/in/seu-perfil' },
+  { value: 'github', label: 'GitHub', icon: 'Github', urlPrefix: 'https://github.com/', placeholder: 'https://github.com/seu_usuario' },
+  { value: 'twitter', label: 'X (Twitter)', icon: 'Twitter', urlPrefix: 'https://x.com/', placeholder: 'https://x.com/seu_usuario' },
+  { value: 'tiktok', label: 'TikTok', icon: 'Music2', urlPrefix: 'https://tiktok.com/@', placeholder: 'https://tiktok.com/@seu_usuario' },
+  { value: 'youtube', label: 'YouTube', icon: 'Youtube', urlPrefix: 'https://youtube.com/@', placeholder: 'https://youtube.com/@seu_canal' },
+  { value: 'website', label: 'Site', icon: 'Globe', urlPrefix: 'https://', placeholder: 'https://seu-site.com' },
+  { value: 'email', label: 'Email', icon: 'Mail', urlPrefix: 'mailto:', placeholder: 'mailto:seu@email.com' },
+  { value: 'other', label: 'Outro', icon: 'Link', urlPrefix: 'https://', placeholder: 'https://...' },
+  { value: 'custom', label: 'Link Personalizado', icon: 'ExternalLink', urlPrefix: 'https://', placeholder: 'https://...' },
 ] as const;

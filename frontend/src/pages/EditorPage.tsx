@@ -223,14 +223,14 @@ export function EditorPage() {
   const addSocialLink = () => {
     updateField('socialLinks', [
       ...form.socialLinks,
-      { platform: 'website', label: '', url: '', order: form.socialLinks.length },
+      { platform: 'website', label: '', url: 'https://', order: form.socialLinks.length },
     ]);
   };
 
   const addCustomLink = () => {
     updateField('socialLinks', [
       ...form.socialLinks,
-      { platform: 'custom', label: '', url: '', order: form.socialLinks.length },
+      { platform: 'custom', label: '', url: 'https://', order: form.socialLinks.length },
     ]);
   };
 
@@ -246,8 +246,16 @@ export function EditorPage() {
     links[index] = { ...links[index], [field]: value };
     if (field === 'platform') {
       const platform = SOCIAL_PLATFORMS.find((p) => p.value === value);
-      if (platform && !links[index].label) {
-        links[index].label = platform.label;
+      if (platform) {
+        if (!links[index].label) {
+          links[index].label = platform.label;
+        }
+        // Pre-fill URL with platform prefix if URL is empty or still has old prefix
+        const oldPlatform = SOCIAL_PLATFORMS.find((p) => p.value === form.socialLinks[index]?.platform);
+        const currentUrl = links[index].url;
+        if (!currentUrl || currentUrl === oldPlatform?.urlPrefix) {
+          links[index].url = platform.urlPrefix;
+        }
       }
     }
     updateField('socialLinks', links);
@@ -699,7 +707,7 @@ export function EditorPage() {
                             type="url"
                             value={link.url}
                             onChange={(e) => updateSocialLink(i, 'url', e.target.value)}
-                            placeholder="https://..."
+                            placeholder={SOCIAL_PLATFORMS.find((p) => p.value === link.platform)?.placeholder || 'https://...'}
                             className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
                           />
                         </div>
