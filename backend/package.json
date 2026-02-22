@@ -7,7 +7,7 @@
     "start": "node dist/main",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "npx prisma migrate resolve --applied 20260222240000_add_photo_positioning && npx prisma migrate deploy && node dist/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
