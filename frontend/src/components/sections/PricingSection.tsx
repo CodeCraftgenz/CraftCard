@@ -9,8 +9,11 @@ const features = [
   'Foto, bio e redes sociais',
   'Botao de WhatsApp',
   'Upload de curriculo',
+  'QR Code do seu cartao',
+  'Salvar Contato (vCard)',
+  '4 temas visuais',
+  'Contador de visualizacoes',
   'SEO basico para compartilhamento',
-  'Pagamento unico, sem mensalidade',
 ];
 
 export function PricingSection() {
@@ -24,7 +27,7 @@ export function PricingSection() {
             Preco <span className="gradient-text">simples</span>
           </h2>
           <p className="mt-4 text-white/50 max-w-2xl mx-auto">
-            Pague uma unica vez e tenha seu cartao digital para sempre
+            Um investimento acessivel para um ano inteiro de presenca digital
           </p>
         </div>
 
@@ -40,13 +43,14 @@ export function PricingSection() {
 
             <div className="text-center mb-8">
               <p className="text-sm text-brand-cyan font-semibold uppercase tracking-wider mb-2">
-                Pagamento unico
+                Assinatura anual
               </p>
               <div className="flex items-baseline justify-center gap-1">
                 <span className="text-sm text-white/50">R$</span>
-                <span className="text-6xl font-extrabold gradient-text">20</span>
+                <span className="text-6xl font-extrabold gradient-text">30</span>
+                <span className="text-sm text-white/40">/ano</span>
               </div>
-              <p className="text-sm text-white/40 mt-2">Sem assinatura. Sem taxa mensal.</p>
+              <p className="text-sm text-white/40 mt-2">Menos de R$2,50 por mes. Cancele quando quiser.</p>
             </div>
 
             <div className="space-y-3 mb-8">

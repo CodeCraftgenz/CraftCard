@@ -34,7 +34,7 @@ export function CtaSection() {
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </Link>
           <p className="mt-4 text-sm text-white/30">
-            Pagamento unico de R$20 &middot; Sem assinatura
+            R$30/ano &middot; Menos de R$2,50 por mes
           </p>
         </div>
       </motion.div>

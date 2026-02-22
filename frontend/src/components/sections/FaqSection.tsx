@@ -4,8 +4,8 @@ import { ChevronDown } from 'lucide-react';
 
 const faqs = [
   {
-    q: 'O pagamento e mesmo unico?',
-    a: 'Sim! Voce paga R$20 uma unica vez e tem acesso vitalicio ao seu cartao digital. Sem assinaturas ou taxas recorrentes.',
+    q: 'Como funciona a assinatura?',
+    a: 'A assinatura e anual por R$30. Voce tem acesso completo por 365 dias. Ao final do periodo, basta renovar para continuar com seu cartao ativo.',
   },
   {
     q: 'Posso editar meu cartao depois de publicar?',
@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     q: 'Quais formas de pagamento sao aceitas?',
-    a: 'Aceitamos cartao de credito/debito. O pagamento e processado de forma segura pelo Stripe.',
+    a: 'Aceitamos cartao de credito/debito, PIX e boleto. O pagamento e processado de forma segura pelo Mercado Pago.',
   },
   {
     q: 'Posso excluir minha conta?',

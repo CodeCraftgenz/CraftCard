@@ -11,8 +11,8 @@ const steps = [
   {
     icon: CreditCard,
     step: '02',
-    title: 'Pague uma vez',
-    desc: 'Pagamento unico de R$20. Sem assinatura, sem surpresas.',
+    title: 'Assine por R$30/ano',
+    desc: 'Menos de R$2,50/mes para ter seu cartao digital profissional.',
   },
   {
     icon: Rocket,
