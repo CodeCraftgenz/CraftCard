@@ -33,9 +33,11 @@ async function deploy() {
       }
     });
 
-    // FTP user root = domain dir, upload to / (which is public_html for the web server)
-    await client.cd('/');
-    console.log('Connected! Uploading frontend to root...');
+    // Upload to public_html (Hostinger document root)
+    await client.cd('/public_html');
+    console.log('Connected! Cleaning old assets...');
+    try { await client.removeDir('assets'); } catch { /* may not exist */ }
+    console.log('Uploading frontend to /public_html/...');
 
     await client.uploadFromDir(distDir);
 
