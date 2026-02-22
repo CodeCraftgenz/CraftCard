@@ -793,97 +793,102 @@ export function EditorPage() {
                 </button>
               </div>
               <div className="space-y-3">
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext
-                    items={form.socialLinks.map((_, i) => i).filter(i => form.socialLinks[i].platform !== 'custom')}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {form.socialLinks.map((link, i) => {
-                      if (link.platform === 'custom') return null;
-                      return (
-                        <SortableLinkItem key={i} id={i} onRemove={() => removeSocialLink(i)}>
-                          <div className="flex gap-2">
-                            <select
-                              value={link.platform}
-                              onChange={(e) => updateSocialLink(i, 'platform', e.target.value)}
-                              title="Plataforma"
-                              className="px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-brand-cyan/50 transition-all"
-                            >
-                              {SOCIAL_PLATFORMS.filter(p => p.value !== 'custom').map((p) => (
-                                <option key={p.value} value={p.value} className="bg-brand-bg-dark">
-                                  {p.label}
-                                </option>
-                              ))}
-                            </select>
-                            <input
-                              type="text"
-                              value={link.label}
-                              onChange={(e) => updateSocialLink(i, 'label', e.target.value)}
-                              placeholder="Label"
-                              className="flex-1 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
-                            />
-                          </div>
-                          <input
-                            type="url"
-                            value={link.url}
-                            onChange={(e) => updateSocialLink(i, 'url', e.target.value)}
-                            placeholder={SOCIAL_PLATFORMS.find((p) => p.value === link.platform)?.placeholder || 'https://...'}
-                            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
-                          />
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const links = [...form.socialLinks];
-                                const hasSchedule = links[i].startsAt || links[i].endsAt;
-                                links[i] = { ...links[i], startsAt: hasSchedule ? null : '', endsAt: hasSchedule ? null : '' };
-                                updateField('socialLinks', links);
-                              }}
-                              className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-all ${
-                                link.startsAt || link.endsAt ? 'text-brand-cyan bg-brand-cyan/10' : 'text-white/30 hover:text-white/50 hover:bg-white/5'
-                              }`}
-                            >
-                              <Calendar size={12} />
-                              Agendamento
-                            </button>
-                          </div>
-                          {(link.startsAt !== null || link.endsAt !== null) && (
+                <div className={`space-y-3 ${form.socialLinks.filter(l => l.platform !== 'custom').length > 3 ? 'max-h-[480px] overflow-y-auto pr-1 scrollbar-thin' : ''}`}>
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext
+                      items={form.socialLinks.map((_, i) => i).filter(i => form.socialLinks[i].platform !== 'custom')}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {form.socialLinks.map((link, i) => {
+                        if (link.platform === 'custom') return null;
+                        return (
+                          <SortableLinkItem key={i} id={i} onRemove={() => removeSocialLink(i)}>
                             <div className="flex gap-2">
-                              <div className="flex-1">
-                                <label className="text-[10px] text-white/30 block mb-1">Inicio</label>
-                                <input
-                                  type="datetime-local"
-                                  title="Data de inicio"
-                                  value={link.startsAt || ''}
-                                  onChange={(e) => {
-                                    const links = [...form.socialLinks];
-                                    links[i] = { ...links[i], startsAt: e.target.value || null };
-                                    updateField('socialLinks', links);
-                                  }}
-                                  className="w-full px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-brand-cyan/50 transition-all"
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <label className="text-[10px] text-white/30 block mb-1">Fim</label>
-                                <input
-                                  type="datetime-local"
-                                  title="Data de fim"
-                                  value={link.endsAt || ''}
-                                  onChange={(e) => {
-                                    const links = [...form.socialLinks];
-                                    links[i] = { ...links[i], endsAt: e.target.value || null };
-                                    updateField('socialLinks', links);
-                                  }}
-                                  className="w-full px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-brand-cyan/50 transition-all"
-                                />
-                              </div>
+                              <select
+                                value={link.platform}
+                                onChange={(e) => updateSocialLink(i, 'platform', e.target.value)}
+                                title="Plataforma"
+                                className="px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-brand-cyan/50 transition-all"
+                              >
+                                {SOCIAL_PLATFORMS.filter(p => p.value !== 'custom').map((p) => (
+                                  <option key={p.value} value={p.value} className="bg-brand-bg-dark">
+                                    {p.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <input
+                                type="text"
+                                value={link.label}
+                                onChange={(e) => updateSocialLink(i, 'label', e.target.value)}
+                                placeholder="Label"
+                                className="flex-1 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
+                              />
                             </div>
-                          )}
-                        </SortableLinkItem>
-                      );
-                    })}
-                  </SortableContext>
-                </DndContext>
+                            <input
+                              type="url"
+                              value={link.url}
+                              onChange={(e) => updateSocialLink(i, 'url', e.target.value)}
+                              placeholder={SOCIAL_PLATFORMS.find((p) => p.value === link.platform)?.placeholder || 'https://...'}
+                              className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
+                            />
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const links = [...form.socialLinks];
+                                  const hasSchedule = links[i].startsAt || links[i].endsAt;
+                                  links[i] = { ...links[i], startsAt: hasSchedule ? null : '', endsAt: hasSchedule ? null : '' };
+                                  updateField('socialLinks', links);
+                                }}
+                                className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-all ${
+                                  link.startsAt || link.endsAt ? 'text-brand-cyan bg-brand-cyan/10' : 'text-white/30 hover:text-white/50 hover:bg-white/5'
+                                }`}
+                              >
+                                <Calendar size={12} />
+                                Agendamento
+                              </button>
+                            </div>
+                            {(link.startsAt !== null || link.endsAt !== null) && (
+                              <div className="flex gap-2">
+                                <div className="flex-1">
+                                  <label className="text-[10px] text-white/30 block mb-1">Inicio</label>
+                                  <input
+                                    type="datetime-local"
+                                    title="Data de inicio"
+                                    value={link.startsAt || ''}
+                                    onChange={(e) => {
+                                      const links = [...form.socialLinks];
+                                      links[i] = { ...links[i], startsAt: e.target.value || null };
+                                      updateField('socialLinks', links);
+                                    }}
+                                    className="w-full px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-brand-cyan/50 transition-all"
+                                  />
+                                </div>
+                                <div className="flex-1">
+                                  <label className="text-[10px] text-white/30 block mb-1">Fim</label>
+                                  <input
+                                    type="datetime-local"
+                                    title="Data de fim"
+                                    value={link.endsAt || ''}
+                                    onChange={(e) => {
+                                      const links = [...form.socialLinks];
+                                      links[i] = { ...links[i], endsAt: e.target.value || null };
+                                      updateField('socialLinks', links);
+                                    }}
+                                    className="w-full px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-brand-cyan/50 transition-all"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </SortableLinkItem>
+                        );
+                      })}
+                    </SortableContext>
+                  </DndContext>
+                </div>
+                {form.socialLinks.filter(l => l.platform !== 'custom').length > 3 && (
+                  <p className="text-xs text-white/30 text-center pt-1">Role para ver mais links</p>
+                )}
                 {form.socialLinks.filter(l => l.platform !== 'custom').length === 0 && (
                   <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
                     <Link2 size={24} className="mx-auto text-white/15 mb-2" />
@@ -918,83 +923,88 @@ export function EditorPage() {
               </div>
               <p className="text-xs text-white/30 mb-4">Links exibidos como botoes no seu cartao (estilo Linktree)</p>
               <div className="space-y-3">
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext
-                    items={form.socialLinks.map((_, i) => i).filter(i => form.socialLinks[i].platform === 'custom')}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {form.socialLinks.map((link, i) => {
-                      if (link.platform !== 'custom') return null;
-                      return (
-                        <SortableLinkItem key={i} id={i} onRemove={() => removeSocialLink(i)}>
-                          <input
-                            type="text"
-                            value={link.label}
-                            onChange={(e) => updateSocialLink(i, 'label', e.target.value)}
-                            placeholder="Titulo do link (ex: Meu Portfolio)"
-                            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
-                          />
-                          <input
-                            type="url"
-                            value={link.url}
-                            onChange={(e) => updateSocialLink(i, 'url', e.target.value)}
-                            placeholder="https://..."
-                            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
-                          />
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const links = [...form.socialLinks];
-                                const hasSchedule = links[i].startsAt || links[i].endsAt;
-                                links[i] = { ...links[i], startsAt: hasSchedule ? null : '', endsAt: hasSchedule ? null : '' };
-                                updateField('socialLinks', links);
-                              }}
-                              className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-all ${
-                                link.startsAt || link.endsAt ? 'text-brand-cyan bg-brand-cyan/10' : 'text-white/30 hover:text-white/50 hover:bg-white/5'
-                              }`}
-                            >
-                              <Calendar size={12} />
-                              Agendamento
-                            </button>
-                          </div>
-                          {(link.startsAt !== null || link.endsAt !== null) && (
-                            <div className="flex gap-2">
-                              <div className="flex-1">
-                                <label className="text-[10px] text-white/30 block mb-1">Inicio</label>
-                                <input
-                                  type="datetime-local"
-                                  title="Data de inicio"
-                                  value={link.startsAt || ''}
-                                  onChange={(e) => {
-                                    const links = [...form.socialLinks];
-                                    links[i] = { ...links[i], startsAt: e.target.value || null };
-                                    updateField('socialLinks', links);
-                                  }}
-                                  className="w-full px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-brand-cyan/50 transition-all"
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <label className="text-[10px] text-white/30 block mb-1">Fim</label>
-                                <input
-                                  type="datetime-local"
-                                  title="Data de fim"
-                                  value={link.endsAt || ''}
-                                  onChange={(e) => {
-                                    const links = [...form.socialLinks];
-                                    links[i] = { ...links[i], endsAt: e.target.value || null };
-                                    updateField('socialLinks', links);
-                                  }}
-                                  className="w-full px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-brand-cyan/50 transition-all"
-                                />
-                              </div>
+                <div className={`space-y-3 ${form.socialLinks.filter(l => l.platform === 'custom').length > 3 ? 'max-h-[480px] overflow-y-auto pr-1 scrollbar-thin' : ''}`}>
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext
+                      items={form.socialLinks.map((_, i) => i).filter(i => form.socialLinks[i].platform === 'custom')}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {form.socialLinks.map((link, i) => {
+                        if (link.platform !== 'custom') return null;
+                        return (
+                          <SortableLinkItem key={i} id={i} onRemove={() => removeSocialLink(i)}>
+                            <input
+                              type="text"
+                              value={link.label}
+                              onChange={(e) => updateSocialLink(i, 'label', e.target.value)}
+                              placeholder="Titulo do link (ex: Meu Portfolio)"
+                              className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
+                            />
+                            <input
+                              type="url"
+                              value={link.url}
+                              onChange={(e) => updateSocialLink(i, 'url', e.target.value)}
+                              placeholder="https://..."
+                              className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
+                            />
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const links = [...form.socialLinks];
+                                  const hasSchedule = links[i].startsAt || links[i].endsAt;
+                                  links[i] = { ...links[i], startsAt: hasSchedule ? null : '', endsAt: hasSchedule ? null : '' };
+                                  updateField('socialLinks', links);
+                                }}
+                                className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-all ${
+                                  link.startsAt || link.endsAt ? 'text-brand-cyan bg-brand-cyan/10' : 'text-white/30 hover:text-white/50 hover:bg-white/5'
+                                }`}
+                              >
+                                <Calendar size={12} />
+                                Agendamento
+                              </button>
                             </div>
-                          )}
-                        </SortableLinkItem>
-                      );
-                    })}
-                  </SortableContext>
-                </DndContext>
+                            {(link.startsAt !== null || link.endsAt !== null) && (
+                              <div className="flex gap-2">
+                                <div className="flex-1">
+                                  <label className="text-[10px] text-white/30 block mb-1">Inicio</label>
+                                  <input
+                                    type="datetime-local"
+                                    title="Data de inicio"
+                                    value={link.startsAt || ''}
+                                    onChange={(e) => {
+                                      const links = [...form.socialLinks];
+                                      links[i] = { ...links[i], startsAt: e.target.value || null };
+                                      updateField('socialLinks', links);
+                                    }}
+                                    className="w-full px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-brand-cyan/50 transition-all"
+                                  />
+                                </div>
+                                <div className="flex-1">
+                                  <label className="text-[10px] text-white/30 block mb-1">Fim</label>
+                                  <input
+                                    type="datetime-local"
+                                    title="Data de fim"
+                                    value={link.endsAt || ''}
+                                    onChange={(e) => {
+                                      const links = [...form.socialLinks];
+                                      links[i] = { ...links[i], endsAt: e.target.value || null };
+                                      updateField('socialLinks', links);
+                                    }}
+                                    className="w-full px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-brand-cyan/50 transition-all"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </SortableLinkItem>
+                        );
+                      })}
+                    </SortableContext>
+                  </DndContext>
+                </div>
+                {form.socialLinks.filter(l => l.platform === 'custom').length > 3 && (
+                  <p className="text-xs text-white/30 text-center pt-1">Role para ver mais links</p>
+                )}
                 {form.socialLinks.filter(l => l.platform === 'custom').length === 0 && (
                   <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
                     <ExternalLink size={24} className="mx-auto text-white/15 mb-2" />

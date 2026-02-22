@@ -397,13 +397,13 @@ export function PublicCardPage() {
                   {visibleLinks.map((link, i) => {
                     const Icon = platformIcons[link.platform] || Globe;
                     const bgColor = platformColors[link.platform] || accent;
+                    const isMailto = link.url.startsWith('mailto:');
 
                     return (
                       <motion.a
                         key={link.id}
                         href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        {...(!isMailto && { target: '_blank', rel: 'noopener noreferrer' })}
                         onClick={() => trackLinkClick(link.id)}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}

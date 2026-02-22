@@ -1,18 +1,36 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { SlugsService } from '../slugs/slugs.service';
 import { AppException } from '../common/exceptions/app.exception';
 import { randomUUID } from 'crypto';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
+import type { EnvConfig } from '../common/config/env.config';
+
+/** Old Hostinger subdomain — URLs stored before domain migration */
+const OLD_UPLOAD_HOST = 'https://azure-eagle-617866.hostingersite.com/uploads';
 
 @Injectable()
 export class ProfilesService {
   private readonly logger = new Logger(ProfilesService.name);
+  private readonly uploadsPublicUrl: string;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly slugsService: SlugsService,
-  ) {}
+    private readonly configService: ConfigService<EnvConfig>,
+  ) {
+    this.uploadsPublicUrl = this.configService.get('UPLOADS_PUBLIC_URL', { infer: true }) || '';
+  }
+
+  /** Rewrite URLs that still reference the old Hostinger subdomain */
+  private migrateUrl(url: string | null): string | null {
+    if (!url || !this.uploadsPublicUrl) return url;
+    if (url.startsWith(OLD_UPLOAD_HOST)) {
+      return url.replace(OLD_UPLOAD_HOST, this.uploadsPublicUrl);
+    }
+    return url;
+  }
 
   async getByUserId(userId: string) {
     const profile = await this.prisma.profile.findUnique({
@@ -21,7 +39,7 @@ export class ProfilesService {
     });
     if (!profile) throw AppException.notFound('Perfil');
     const { photoData: _, coverPhotoData: _c, ...rest } = profile;
-    return rest;
+    return { ...rest, resumeUrl: this.migrateUrl(rest.resumeUrl) };
   }
 
   async getBySlug(slug: string) {
@@ -55,7 +73,7 @@ export class ProfilesService {
     });
 
     const { photoData: _, coverPhotoData: _c, ...rest } = profile;
-    return { ...rest, socialLinks: activeLinks };
+    return { ...rest, resumeUrl: this.migrateUrl(rest.resumeUrl), socialLinks: activeLinks };
   }
 
   async update(userId: string, data: UpdateProfileDto) {
