@@ -43,6 +43,8 @@ interface PublicProfile {
   buttonColor: string;
   cardTheme: string;
   coverPhotoUrl: string | null;
+  photoPositionY: number;
+  coverPositionY: number;
   availabilityStatus: string | null;
   availabilityMessage: string | null;
   viewCount: number;
@@ -336,7 +338,7 @@ export function PublicCardPage() {
               style={{
                 backgroundImage: `url(${resolvePhotoUrl(profile.coverPhotoUrl)})`,
                 backgroundSize: 'cover',
-                backgroundPosition: 'center',
+                backgroundPosition: `center ${profile.coverPositionY ?? 50}%`,
               }}
             />
           )}
@@ -348,8 +350,13 @@ export function PublicCardPage() {
               style={{
                 borderColor: profile.coverPhotoUrl ? '#1A1A2E' : `${accent}40`,
                 background: resolvePhotoUrl(profile.photoUrl)
-                  ? `url(${resolvePhotoUrl(profile.photoUrl)}) center/cover`
+                  ? undefined
                   : `linear-gradient(135deg, ${accent}, #D12BF2)`,
+                ...(resolvePhotoUrl(profile.photoUrl) ? {
+                  backgroundImage: `url(${resolvePhotoUrl(profile.photoUrl)})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: `center ${profile.photoPositionY ?? 50}%`,
+                } : {}),
               }}
             >
               {!profile.photoUrl && <User className="w-12 h-12 text-white" />}

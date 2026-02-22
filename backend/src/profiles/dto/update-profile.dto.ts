@@ -56,6 +56,8 @@ export const updateProfileSchema = z.object({
   coverPhotoUrl: z.preprocess(emptyToUndefined, safeUrlSchema.optional().nullable()),
   availabilityStatus: z.enum(['available', 'busy', 'unavailable']).optional().nullable(),
   availabilityMessage: z.preprocess(emptyToUndefined, z.string().max(100).optional().nullable()),
+  photoPositionY: z.number().int().min(0).max(100).optional(),
+  coverPositionY: z.number().int().min(0).max(100).optional(),
   socialLinks: z.array(socialLinkSchema).max(20).optional(),
 }).transform((data) => {
   // Filter out incomplete social links (empty label or invalid url)

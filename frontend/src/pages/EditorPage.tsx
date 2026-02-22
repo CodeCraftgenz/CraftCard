@@ -71,6 +71,8 @@ export function EditorPage() {
     cardTheme: 'default',
     availabilityStatus: '' as string,
     availabilityMessage: '',
+    photoPositionY: 50,
+    coverPositionY: 50,
     socialLinks: [] as Array<{ platform: string; label: string; url: string; order: number; startsAt: string | null; endsAt: string | null }>,
   });
 
@@ -97,6 +99,8 @@ export function EditorPage() {
         cardTheme: profile.cardTheme || 'default',
         availabilityStatus: profile.availabilityStatus || '',
         availabilityMessage: profile.availabilityMessage || '',
+        photoPositionY: profile.photoPositionY ?? 50,
+        coverPositionY: profile.coverPositionY ?? 50,
         socialLinks: profile.socialLinks.map((l) => ({
           platform: l.platform,
           label: l.label,
@@ -156,6 +160,8 @@ export function EditorPage() {
     data.cardTheme = form.cardTheme;
     data.availabilityStatus = form.availabilityStatus || null;
     data.availabilityMessage = form.availabilityMessage.trim() || null;
+    data.photoPositionY = form.photoPositionY;
+    data.coverPositionY = form.coverPositionY;
 
     // Only send slug if >= 3 chars
     if (slugInput.length >= 3) {
@@ -685,7 +691,7 @@ export function EditorPage() {
                     className="w-24 h-24 rounded-2xl bg-brand-bg-card flex items-center justify-center overflow-hidden border-2 border-white/10 transition-all hover:border-brand-cyan/30"
                     style={
                       resolvePhotoUrl(profile?.photoUrl)
-                        ? { backgroundImage: `url(${resolvePhotoUrl(profile?.photoUrl)}?v=${photoVersion})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                        ? { backgroundImage: `url(${resolvePhotoUrl(profile?.photoUrl)}?v=${photoVersion})`, backgroundSize: 'cover', backgroundPosition: `center ${form.photoPositionY}%` }
                         : undefined
                     }
                   >
@@ -714,6 +720,25 @@ export function EditorPage() {
                   )}
                 </div>
               </div>
+              {profile?.photoUrl && (
+                <div className="mt-4">
+                  <label className="text-xs font-medium text-white/50 mb-1.5 block uppercase tracking-wider">Posicao vertical</label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={form.photoPositionY}
+                    onChange={(e) => updateField('photoPositionY', Number(e.target.value))}
+                    title="Posicao vertical da foto de perfil"
+                    className="w-full accent-brand-cyan"
+                  />
+                  <div className="flex justify-between text-[10px] text-white/30 mt-0.5">
+                    <span>Topo</span>
+                    <span>Centro</span>
+                    <span>Base</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Cover Photo Section */}
@@ -731,7 +756,7 @@ export function EditorPage() {
                     style={{
                       backgroundImage: `url(${resolvePhotoUrl(profile.coverPhotoUrl)}?v=${coverVersion})`,
                       backgroundSize: 'cover',
-                      backgroundPosition: 'center',
+                      backgroundPosition: `center ${form.coverPositionY}%`,
                     }}
                   />
                 )}
@@ -748,6 +773,25 @@ export function EditorPage() {
                   </label>
                   <p className="text-xs text-white/30">1200x400. JPG, PNG ou WebP. Max 5MB</p>
                 </div>
+                {profile?.coverPhotoUrl && (
+                  <div className="mt-3">
+                    <label className="text-xs font-medium text-white/50 mb-1.5 block uppercase tracking-wider">Posicao vertical</label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={form.coverPositionY}
+                      onChange={(e) => updateField('coverPositionY', Number(e.target.value))}
+                      title="Posicao vertical da foto de capa"
+                      className="w-full accent-brand-cyan"
+                    />
+                    <div className="flex justify-between text-[10px] text-white/30 mt-0.5">
+                      <span>Topo</span>
+                      <span>Centro</span>
+                      <span>Base</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1457,6 +1501,8 @@ export function EditorPage() {
                 buttonColor={form.buttonColor}
                 cardTheme={form.cardTheme}
                 availabilityStatus={form.availabilityStatus || undefined}
+                photoPositionY={form.photoPositionY}
+                coverPositionY={form.coverPositionY}
                 socialLinks={form.socialLinks}
               />
             </div>

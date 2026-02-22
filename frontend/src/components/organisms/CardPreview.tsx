@@ -18,6 +18,8 @@ interface CardPreviewProps {
   buttonColor?: string;
   cardTheme?: string;
   availabilityStatus?: string;
+  photoPositionY?: number;
+  coverPositionY?: number;
   socialLinks?: Array<{
     platform: string;
     label: string;
@@ -56,10 +58,12 @@ export function CardPreview({
   buttonColor,
   cardTheme,
   availabilityStatus,
+  photoPositionY = 50,
+  coverPositionY = 50,
   socialLinks,
   demo,
 }: CardPreviewProps) {
-  const card = demo ? DEMO_CARD : { displayName, bio, photoUrl, coverPhotoUrl, buttonColor, cardTheme, availabilityStatus, socialLinks };
+  const card = demo ? DEMO_CARD : { displayName, bio, photoUrl, coverPhotoUrl, buttonColor, cardTheme, availabilityStatus, photoPositionY, coverPositionY, socialLinks };
   const accent = card.buttonColor || '#00E4F2';
 
   return (
@@ -82,7 +86,7 @@ export function CardPreview({
             style={{
               backgroundImage: `url(${card.coverPhotoUrl})`,
               backgroundSize: 'cover',
-              backgroundPosition: 'center',
+              backgroundPosition: `center ${card.coverPositionY ?? 50}%`,
             }}
           />
         )}
@@ -93,8 +97,13 @@ export function CardPreview({
             className="w-24 h-24 rounded-full flex items-center justify-center mb-4 shadow-lg border-4 border-[#16213E]"
             style={{
               background: card.photoUrl
-                ? `url(${card.photoUrl}) center/cover`
+                ? undefined
                 : `linear-gradient(135deg, ${accent}, #D12BF2)`,
+              ...(card.photoUrl ? {
+                backgroundImage: `url(${card.photoUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: `center ${card.photoPositionY ?? 50}%`,
+              } : {}),
             }}
           >
             {!card.photoUrl && <User className="w-10 h-10 text-white" />}
