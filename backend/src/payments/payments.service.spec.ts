@@ -25,6 +25,7 @@ describe('PaymentsService', () => {
           MP_ACCESS_TOKEN: 'APP_USR-fake-token',
           MP_WEBHOOK_SECRET: 'placeholder',
           MP_PUBLIC_KEY: 'APP_USR-fake-public-key',
+          BACKEND_URL: 'http://localhost:3000',
           FRONTEND_URL: 'http://localhost:5173',
           NODE_ENV: 'development',
           CORS_ORIGIN: 'http://localhost:5173',

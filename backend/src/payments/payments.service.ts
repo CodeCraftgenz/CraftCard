@@ -74,6 +74,8 @@ export class PaymentsService {
       },
     });
 
+    const backendUrl = this.configService.get('BACKEND_URL', { infer: true });
+
     const mpResponse = await this.preference.create({
       body: {
         items: [
@@ -92,6 +94,7 @@ export class PaymentsService {
           pending: `${frontendUrl}/editor?payment=pending`,
         },
         auto_return: 'approved',
+        notification_url: `${backendUrl}/api/payments/webhook`,
         external_reference: payment.id,
         payment_methods: {
           installments: 4,
@@ -117,38 +120,115 @@ export class PaymentsService {
   }
 
   async handleWebhook(
-    body: { type?: string; data?: { id?: string } },
+    body: { type?: string; action?: string; data?: { id?: string } },
     headers: { xSignature?: string; xRequestId?: string },
   ): Promise<void> {
     const webhookSecret = this.configService.get('MP_WEBHOOK_SECRET', { infer: true });
 
-    // Validate signature if secret is configured
+    // Validate signature if secret is configured (non-blocking: log warning instead of rejecting)
     if (webhookSecret && webhookSecret !== 'placeholder') {
       const { xSignature, xRequestId } = headers;
-      if (!xSignature || !xRequestId) {
-        throw AppException.unauthorized('Assinatura do webhook ausente');
-      }
+      if (xSignature && xRequestId) {
+        const parts = xSignature.split(',');
+        const ts = parts.find((p) => p.trim().startsWith('ts='))?.split('=')[1];
+        const v1 = parts.find((p) => p.trim().startsWith('v1='))?.split('=')[1];
 
-      const parts = xSignature.split(',');
-      const ts = parts.find((p) => p.trim().startsWith('ts='))?.split('=')[1];
-      const v1 = parts.find((p) => p.trim().startsWith('v1='))?.split('=')[1];
+        const dataId = body.data?.id;
+        const template = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
 
-      const dataId = body.data?.id;
-      const template = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+        const expected = crypto.createHmac('sha256', webhookSecret).update(template).digest('hex');
 
-      const expected = crypto.createHmac('sha256', webhookSecret).update(template).digest('hex');
-
-      if (v1 !== expected) {
-        this.logger.warn('Webhook signature mismatch');
-        throw AppException.unauthorized('Assinatura do webhook invalida');
+        if (v1 !== expected) {
+          this.logger.warn(`Webhook signature mismatch - proceeding anyway (verified via MP API)`);
+        }
+      } else {
+        this.logger.warn('Webhook received without signature headers - proceeding (verified via MP API)');
       }
     }
 
-    if (body.type !== 'payment' || !body.data?.id) {
+    // Handle payment.created, payment.updated actions or type: payment
+    const isPayment =
+      body.type === 'payment' ||
+      body.action?.startsWith('payment.');
+
+    if (!isPayment || !body.data?.id) {
+      this.logger.log(`Ignoring non-payment webhook: type=${body.type}, action=${body.action}`);
       return;
     }
 
     await this.processPaymentNotification(String(body.data.id));
+  }
+
+  /**
+   * Process payment notification by MP payment ID (used by IPN query param format)
+   */
+  async processPaymentNotificationById(mpPaymentId: string): Promise<void> {
+    await this.processPaymentNotification(mpPaymentId);
+  }
+
+  /**
+   * Verify pending payments for a user by querying MP API directly.
+   * Used as fallback when webhook doesn't arrive.
+   */
+  async verifyPendingPayments(userId: string): Promise<{ synced: boolean; status: string }> {
+    const pendingPayments = await this.prisma.payment.findMany({
+      where: { userId, status: 'pending' },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+
+    if (pendingPayments.length === 0) {
+      return { synced: false, status: 'no_pending_payments' };
+    }
+
+    const accessToken = this.configService.get('MP_ACCESS_TOKEN', { infer: true });
+
+    for (const payment of pendingPayments) {
+      if (!payment.preferenceId) continue;
+
+      // Search for payments by external_reference (our payment ID)
+      try {
+        const searchResponse = await fetch(
+          `https://api.mercadopago.com/v1/payments/search?external_reference=${payment.id}&sort=date_created&criteria=desc`,
+          { headers: { Authorization: `Bearer ${accessToken}` } },
+        );
+
+        if (!searchResponse.ok) {
+          this.logger.warn(`Failed to search MP payments for ${payment.id}: ${searchResponse.status}`);
+          continue;
+        }
+
+        const searchResult = await searchResponse.json();
+        const results = searchResult.results || [];
+
+        for (const mpPayment of results) {
+          const newStatus = MP_STATUS_MAP[mpPayment.status] || 'pending';
+
+          if (newStatus === 'approved' && payment.status !== 'approved') {
+            const now = new Date();
+            const expiresAt = new Date(now.getTime() + SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000);
+
+            await this.prisma.payment.update({
+              where: { id: payment.id },
+              data: {
+                status: 'approved',
+                mpPaymentId: String(mpPayment.id),
+                mpResponseJson: JSON.stringify(mpPayment),
+                paidAt: now,
+                expiresAt,
+              },
+            });
+
+            this.logger.log(`Payment verified and approved: ${payment.id} (MP: ${mpPayment.id})`);
+            return { synced: true, status: 'approved' };
+          }
+        }
+      } catch (err) {
+        this.logger.error(`Error verifying payment ${payment.id}: ${err}`);
+      }
+    }
+
+    return { synced: false, status: 'still_pending' };
   }
 
   private async processPaymentNotification(mpPaymentId: string): Promise<void> {

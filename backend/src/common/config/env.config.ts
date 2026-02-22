@@ -23,6 +23,7 @@ export const envSchema = z.object({
   FTP_BASE_PATH: z.string().default('/public_html/uploads'),
   UPLOADS_PUBLIC_URL: z.string().url(),
 
+  BACKEND_URL: z.string().default('http://localhost:3000'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   FRONTEND_URL: z.string().default('http://localhost:5173'),
 });

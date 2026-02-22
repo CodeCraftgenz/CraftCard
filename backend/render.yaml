@@ -18,9 +18,11 @@ services:
         generateValue: true
       - key: GOOGLE_CLIENT_ID
         sync: false
-      - key: STRIPE_SECRET_KEY
+      - key: MP_ACCESS_TOKEN
         sync: false
-      - key: STRIPE_WEBHOOK_SECRET
+      - key: MP_WEBHOOK_SECRET
+        sync: false
+      - key: MP_PUBLIC_KEY
         sync: false
       - key: FTP_HOST
         sync: false
@@ -31,6 +33,8 @@ services:
       - key: FTP_BASE_PATH
         sync: false
       - key: UPLOADS_PUBLIC_URL
+        sync: false
+      - key: BACKEND_URL
         sync: false
       - key: CORS_ORIGIN
         sync: false
