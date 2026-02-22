@@ -411,10 +411,11 @@ export function PublicCardPage() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         className="flex items-center gap-4 px-5 py-3.5 rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all group"
+                        style={{ borderLeft: `3px solid ${accent}` }}
                       >
                         <div
                           className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                          style={{ backgroundColor: `${bgColor}20` }}
+                          style={{ backgroundColor: `${accent}20` }}
                         >
                           <Icon size={20} style={{ color: bgColor }} />
                         </div>

@@ -28,6 +28,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
       this.logger.warn(`[${code}] ${message}`);
     }
 
+    // Guard against double-response (e.g. when res was already sent manually)
+    if (response.headersSent) return;
+
     response.status(status).json({
       success: false,
       error: {
