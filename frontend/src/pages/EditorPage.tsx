@@ -45,7 +45,12 @@ const CARD_THEMES = [
 ];
 
 export function EditorPage() {
-  const { hasPaid, paidUntil } = useAuth();
+  const { hasPaid, paidUntil, refreshAuth } = useAuth();
+
+  // Refresh auth state on mount to ensure hasPaid is up-to-date
+  useEffect(() => {
+    refreshAuth();
+  }, [refreshAuth]);
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
   const uploadPhoto = useUploadPhoto();
