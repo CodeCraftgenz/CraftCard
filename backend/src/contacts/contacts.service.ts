@@ -12,7 +12,7 @@ export class ContactsService {
   ) {}
 
   async sendMessage(slug: string, data: SendMessageDto) {
-    const profile = await this.prisma.profile.findUnique({
+    const profile = await this.prisma.profile.findFirst({
       where: { slug },
       select: { id: true, isPublished: true, user: { select: { email: true } } },
     });
@@ -42,8 +42,8 @@ export class ContactsService {
   }
 
   async getMessages(userId: string) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId },
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId, isPrimary: true },
       select: { id: true },
     });
     if (!profile) throw AppException.notFound('Perfil');
@@ -56,8 +56,8 @@ export class ContactsService {
   }
 
   async markAsRead(messageId: string, userId: string) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId },
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId, isPrimary: true },
       select: { id: true },
     });
     if (!profile) throw AppException.notFound('Perfil');
@@ -76,8 +76,8 @@ export class ContactsService {
   }
 
   async getUnreadCount(userId: string) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId },
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId, isPrimary: true },
       select: { id: true },
     });
     if (!profile) return { count: 0 };

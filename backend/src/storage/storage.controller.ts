@@ -21,6 +21,7 @@ import { AppException } from '../common/exceptions/app.exception';
 
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_RESUME_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
 
 @Controller()
 export class StorageController {
@@ -32,8 +33,8 @@ export class StorageController {
   @Public()
   @Get('photos/:userId')
   async servePhoto(@Param('userId') userId: string, @Res() res: Response) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId },
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId, isPrimary: true },
       select: { photoData: true },
     });
     if (!profile?.photoData) {
@@ -73,9 +74,15 @@ export class StorageController {
     // Build a short URL that serves the photo via API
     const photoUrl = `/api/photos/${user.sub}`;
 
-    // Save base64 to database, short URL in photoUrl
+    // Find primary profile then update
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId: user.sub, isPrimary: true },
+      select: { id: true },
+    });
+    if (!profile) throw AppException.notFound('Perfil');
+
     await this.prisma.profile.update({
-      where: { userId: user.sub },
+      where: { id: profile.id },
       data: { photoUrl, photoData: base64 },
     });
 
@@ -85,8 +92,8 @@ export class StorageController {
   @Public()
   @Get('covers/:userId')
   async serveCover(@Param('userId') userId: string, @Res() res: Response) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId },
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId, isPrimary: true },
       select: { coverPhotoData: true },
     });
     if (!profile?.coverPhotoData) {
@@ -123,8 +130,14 @@ export class StorageController {
     const base64 = processed.toString('base64');
     const coverPhotoUrl = `/api/covers/${user.sub}`;
 
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId: user.sub, isPrimary: true },
+      select: { id: true },
+    });
+    if (!profile) throw AppException.notFound('Perfil');
+
     await this.prisma.profile.update({
-      where: { userId: user.sub },
+      where: { id: profile.id },
       data: { coverPhotoUrl, coverPhotoData: base64 },
     });
 
@@ -146,8 +159,8 @@ export class StorageController {
     file: Express.Multer.File,
   ) {
     // Delete old resume
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId: user.sub },
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId: user.sub, isPrimary: true },
       select: { resumeUrl: true },
     });
     if (profile?.resumeUrl) {
@@ -158,9 +171,56 @@ export class StorageController {
     const url = await this.storageService.uploadFile(file.buffer, 'resumes', user.sub, 'pdf');
 
     // Update profile
+    const currentProfile = await this.prisma.profile.findFirst({
+      where: { userId: user.sub, isPrimary: true },
+      select: { id: true },
+    });
+    if (!currentProfile) throw AppException.notFound('Perfil');
+
     await this.prisma.profile.update({
-      where: { userId: user.sub },
+      where: { id: currentProfile.id },
       data: { resumeUrl: url, resumeType: 'pdf' },
+    });
+
+    return { url };
+  }
+
+  @Post('me/video-upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadVideo(
+    @CurrentUser() user: JwtPayload,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: MAX_VIDEO_SIZE }),
+          new FileTypeValidator({ fileType: /mp4$/i }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    // Delete old video
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId: user.sub, isPrimary: true },
+      select: { videoUrl: true },
+    });
+    if (profile?.videoUrl) {
+      await this.storageService.deleteFile(profile.videoUrl);
+    }
+
+    // Upload new video
+    const url = await this.storageService.uploadFile(file.buffer, 'videos', user.sub, 'mp4');
+
+    // Update profile
+    const currentProfile = await this.prisma.profile.findFirst({
+      where: { userId: user.sub, isPrimary: true },
+      select: { id: true },
+    });
+    if (!currentProfile) throw AppException.notFound('Perfil');
+
+    await this.prisma.profile.update({
+      where: { id: currentProfile.id },
+      data: { videoUrl: url },
     });
 
     return { url };

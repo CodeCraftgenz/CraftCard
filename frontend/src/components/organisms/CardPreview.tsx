@@ -8,6 +8,7 @@ import {
   MessageCircle,
   ExternalLink,
   User,
+  BadgeCheck,
 } from 'lucide-react';
 
 interface CardPreviewProps {
@@ -20,6 +21,7 @@ interface CardPreviewProps {
   availabilityStatus?: string;
   photoPositionY?: number;
   coverPositionY?: number;
+  isVerified?: boolean;
   socialLinks?: Array<{
     platform: string;
     label: string;
@@ -60,10 +62,11 @@ export function CardPreview({
   availabilityStatus,
   photoPositionY = 50,
   coverPositionY = 50,
+  isVerified,
   socialLinks,
   demo,
 }: CardPreviewProps) {
-  const card = demo ? DEMO_CARD : { displayName, bio, photoUrl, coverPhotoUrl, buttonColor, cardTheme, availabilityStatus, photoPositionY, coverPositionY, socialLinks };
+  const card = demo ? DEMO_CARD : { displayName, bio, photoUrl, coverPhotoUrl, buttonColor, cardTheme, availabilityStatus, photoPositionY, coverPositionY, isVerified, socialLinks };
   const accent = card.buttonColor || '#00E4F2';
 
   return (
@@ -110,8 +113,11 @@ export function CardPreview({
           </div>
 
           {/* Name */}
-          <h3 className="text-xl font-bold text-white mb-1">
+          <h3 className="text-xl font-bold text-white mb-1 flex items-center justify-center gap-1">
             {card.displayName || 'Seu Nome'}
+            {card.isVerified && (
+              <BadgeCheck size={18} className="text-blue-400 shrink-0" />
+            )}
           </h3>
 
           {/* Availability Badge */}

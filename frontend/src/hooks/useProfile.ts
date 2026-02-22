@@ -28,25 +28,74 @@ export interface Profile {
   coverPositionY: number;
   availabilityStatus: string | null;
   availabilityMessage: string | null;
+  videoUrl: string | null;
+  leadCaptureEnabled: boolean;
   socialLinks: SocialLink[];
 }
 
-export function useProfile() {
+export function useProfile(cardId?: string) {
+  const params = cardId ? `?cardId=${cardId}` : '';
   return useQuery<Profile>({
-    queryKey: ['profile'],
-    queryFn: () => api.get('/me/profile'),
+    queryKey: ['profile', cardId || 'primary'],
+    queryFn: () => api.get(`/me/profile${params}`),
   });
 }
 
-export function useUpdateProfile() {
+export function useUpdateProfile(cardId?: string) {
   const queryClient = useQueryClient();
+  const params = cardId ? `?cardId=${cardId}` : '';
 
   return useMutation({
     mutationFn: (data: Partial<Profile> & { socialLinks?: SocialLink[] }) =>
-      api.put('/me/profile', data),
+      api.put(`/me/profile${params}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['me'] });
+      queryClient.invalidateQueries({ queryKey: ['cards'] });
+    },
+  });
+}
+
+export function useCards() {
+  return useQuery<Array<{ id: string; label: string; slug: string; isPrimary: boolean; displayName: string }>>({
+    queryKey: ['cards'],
+    queryFn: () => api.get('/me/cards'),
+  });
+}
+
+export function useCreateCard() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (label: string) => api.post('/me/cards', { label }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cards'] });
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+    },
+  });
+}
+
+export function useDeleteCard() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/me/cards/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cards'] });
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+    },
+  });
+}
+
+export function useSetPrimaryCard() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.put(`/me/cards/${id}/primary`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cards'] });
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
     },
   });
 }
@@ -89,6 +138,21 @@ export function useUploadResume() {
       const formData = new FormData();
       formData.append('file', file);
       return api.post('/me/resume-upload', formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+  });
+}
+
+export function useUploadVideo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return api.post('/me/video-upload', formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });

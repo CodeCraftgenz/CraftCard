@@ -8,12 +8,21 @@ interface User {
   avatarUrl: string | null;
 }
 
+export interface CardSummary {
+  id: string;
+  label: string;
+  slug: string;
+  isPrimary: boolean;
+  displayName: string;
+}
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   hasPaid: boolean;
   paidUntil: string | null;
+  cards: CardSummary[];
 }
 
 interface AuthContextType extends AuthState {
@@ -32,20 +41,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading: true,
     hasPaid: false,
     paidUntil: null,
+    cards: [],
   });
 
   const fetchMe = useCallback(async () => {
     try {
-      const data: { user: User; hasPaid: boolean; paidUntil: string | null } = await api.get('/me');
+      const data: { user: User; hasPaid: boolean; paidUntil: string | null; cards: CardSummary[] } = await api.get('/me');
       setState({
         user: data.user,
         isAuthenticated: true,
         isLoading: false,
         hasPaid: data.hasPaid,
         paidUntil: data.paidUntil,
+        cards: data.cards || [],
       });
     } catch {
-      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false, paidUntil: null });
+      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false, paidUntil: null, cards: [] });
     }
   }, []);
 
@@ -56,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const handleLogout = () => {
       clearAccessToken();
-      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false, paidUntil: null });
+      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false, paidUntil: null, cards: [] });
     };
     window.addEventListener('auth:logout', handleLogout);
     return () => window.removeEventListener('auth:logout', handleLogout);
@@ -81,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await api.post('/auth/logout');
     } finally {
       clearAccessToken();
-      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false, paidUntil: null });
+      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false, paidUntil: null, cards: [] });
     }
   }, []);
 

@@ -13,6 +13,8 @@ import { PaymentsModule } from './payments/payments.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { TestimonialsModule } from './testimonials/testimonials.module';
+import { GalleryModule } from './gallery/gallery.module';
+import { BookingsModule } from './bookings/bookings.module';
 import { MailModule } from './mail/mail.module';
 import { AppController } from './app.controller';
 import configuration from './common/config/configuration';
@@ -37,6 +39,8 @@ import configuration from './common/config/configuration';
     AnalyticsModule,
     ContactsModule,
     TestimonialsModule,
+    GalleryModule,
+    BookingsModule,
     MailModule,
   ],
   controllers: [AppController],

@@ -16,7 +16,7 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  profile       Profile?
+  profiles      Profile[]
   payments      Payment[]
   refreshTokens RefreshToken[]
 
@@ -25,8 +25,10 @@ model User {
 
 model Profile {
   id          String   @id @default(uuid())
-  userId      String   @unique @map("user_id")
+  userId      String   @map("user_id")
   displayName String   @map("display_name")
+  label       String   @default("Principal") @db.VarChar(50)
+  isPrimary   Boolean  @default(true) @map("is_primary")
   bio         String?  @db.Text
   photoUrl    String?  @map("photo_url")
   photoData   String?  @map("photo_data") @db.MediumText
@@ -49,12 +51,19 @@ model Profile {
   availabilityStatus  String?  @map("availability_status")
   availabilityMessage String?  @map("availability_message")
 
+  videoUrl            String?  @map("video_url")
+  leadCaptureEnabled  Boolean  @default(false) @map("lead_capture_enabled")
+
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   socialLinks     SocialLink[]
   profileViews    ProfileView[]
   contactMessages ContactMessage[]
   testimonials    Testimonial[]
+  galleryImages   GalleryImage[]
+  availableSlots  AvailableSlot[]
+  bookings        Booking[]
 
+  @@index([userId])
   @@map("profiles")
 }
 
@@ -155,6 +164,20 @@ model ContactMessage {
   @@map("contact_messages")
 }
 
+model GalleryImage {
+  id        String   @id @default(uuid())
+  profileId String   @map("profile_id")
+  imageData String   @map("image_data") @db.MediumText
+  caption   String?  @db.VarChar(200)
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("gallery_images")
+}
+
 model Testimonial {
   id         String   @id @default(uuid())
   profileId  String   @map("profile_id")
@@ -169,4 +192,36 @@ model Testimonial {
   @@index([profileId])
   @@index([profileId, isApproved])
   @@map("testimonials")
+}
+
+model AvailableSlot {
+  id        String @id @default(uuid())
+  profileId String @map("profile_id")
+  dayOfWeek Int    @map("day_of_week")
+  startTime String @map("start_time") @db.VarChar(5)
+  endTime   String @map("end_time") @db.VarChar(5)
+  duration  Int    @default(30)
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, dayOfWeek])
+  @@map("available_slots")
+}
+
+model Booking {
+  id        String   @id @default(uuid())
+  profileId String   @map("profile_id")
+  name      String
+  email     String
+  phone     String?
+  date      DateTime @db.Date
+  time      String   @db.VarChar(5)
+  status    String   @default("pending")
+  notes     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, date])
+  @@map("bookings")
 }

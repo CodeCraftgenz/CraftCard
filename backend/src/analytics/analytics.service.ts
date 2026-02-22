@@ -66,8 +66,8 @@ export class AnalyticsService {
 
   /** Get analytics dashboard data for a user (last 30 days) */
   async getAnalytics(userId: string) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId },
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId, isPrimary: true },
       select: { id: true, viewCount: true },
     });
     if (!profile) return { totalViews: 0, dailyViews: [], linkClicks: [] };

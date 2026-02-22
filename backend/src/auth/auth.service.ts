@@ -45,6 +45,8 @@ export class AuthService {
           displayName: user.name,
           slug: uniqueSlug,
           photoUrl: user.avatarUrl,
+          label: 'Principal',
+          isPrimary: true,
         },
       });
 
@@ -198,6 +200,8 @@ export class AuthService {
           userId: user.id,
           displayName: name,
           slug: uniqueSlug,
+          label: 'Principal',
+          isPrimary: true,
         },
       });
 

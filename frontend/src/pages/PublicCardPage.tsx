@@ -24,14 +24,21 @@ import {
   Send,
   Copy,
   Check,
-  QrCode,
   MessageSquare,
   Star,
   ChevronDown,
   ChevronUp,
+  BadgeCheck,
+  ImageIcon,
+  CalendarDays,
 } from 'lucide-react';
+import { CustomQrCode } from '@/components/organisms/CustomQrCode';
+import { AnimatedBackground } from '@/components/atoms/AnimatedBackground';
+import { GalleryGrid } from '@/components/organisms/GalleryGrid';
+import { BookingCalendar } from '@/components/organisms/BookingCalendar';
 import { api } from '@/lib/api';
 import { trackLinkClick } from '@/hooks/useAnalytics';
+import { usePublicSlots } from '@/hooks/useBookings';
 import { useSendMessage } from '@/hooks/useContacts';
 import { useSubmitTestimonial } from '@/hooks/useTestimonials';
 import { APP_NAME, resolvePhotoUrl } from '@/lib/constants';
@@ -49,6 +56,9 @@ interface PublicProfile {
   availabilityStatus: string | null;
   availabilityMessage: string | null;
   viewCount: number;
+  isVerified?: boolean;
+  videoUrl?: string | null;
+  leadCaptureEnabled?: boolean;
   socialLinks: Array<{
     id: string;
     platform: string;
@@ -62,6 +72,12 @@ interface PublicProfile {
     authorRole: string | null;
     text: string;
     createdAt: string;
+  }>;
+  galleryImages?: Array<{
+    id: string;
+    imageData: string;
+    caption: string | null;
+    order: number;
   }>;
   user?: {
     name: string;
@@ -205,9 +221,17 @@ export function PublicCardPage() {
   const [testimonialSuccess, setTestimonialSuccess] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [showAllLinks, setShowAllLinks] = useState(false);
+  const [leadGatePassed, setLeadGatePassed] = useState(() => {
+    if (!slug) return false;
+    return localStorage.getItem(`lead-${slug}`) === 'true';
+  });
+  const [leadForm, setLeadForm] = useState({ name: '', email: '' });
+  const [leadSubmitting, setLeadSubmitting] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const sendMessage = useSendMessage();
   const submitTestimonial = useSubmitTestimonial();
+  const { data: publicSlots } = usePublicSlots(slug);
 
   const { data: profile, isLoading, error } = useQuery<PublicProfile>({
     queryKey: ['public-profile', slug],
@@ -258,6 +282,26 @@ export function PublicCardPage() {
     } catch {
       // Error handled by mutation state
     }
+  };
+
+  const handleLeadSubmit = async () => {
+    if (!slug || leadForm.name.length < 2 || !leadForm.email.includes('@')) return;
+    setLeadSubmitting(true);
+    try {
+      await sendMessage.mutateAsync({
+        slug,
+        data: {
+          senderName: leadForm.name,
+          senderEmail: leadForm.email,
+          message: `[Lead] ${leadForm.name} (${leadForm.email})`,
+        },
+      });
+    } catch {
+      // continue even if API fails
+    }
+    localStorage.setItem(`lead-${slug}`, 'true');
+    setLeadGatePassed(true);
+    setLeadSubmitting(false);
   };
 
   const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
@@ -312,6 +356,65 @@ export function PublicCardPage() {
   const accent = profile.buttonColor || '#00E4F2';
   const theme = profile.cardTheme || 'default';
 
+  // Lead capture gate
+  if (profile.leadCaptureEnabled && !leadGatePassed) {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center px-4 py-12"
+        style={{ background: getThemeBackground(theme, accent) }}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md p-8 backdrop-blur-xl bg-white/[0.08] border border-white/10 rounded-3xl shadow-2xl"
+        >
+          <div className="flex flex-col items-center mb-6">
+            {profile.photoUrl && (
+              <div
+                className="w-20 h-20 rounded-full mb-4 shadow-xl border-4"
+                style={{
+                  borderColor: `${accent}40`,
+                  backgroundImage: `url(${resolvePhotoUrl(profile.photoUrl)})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              />
+            )}
+            <h2 className="text-xl font-bold text-white text-center">{profile.displayName}</h2>
+            <p className="text-sm text-white/50 text-center mt-2">
+              Preencha seus dados para acessar o cartao
+            </p>
+          </div>
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={leadForm.name}
+              onChange={(e) => setLeadForm((p) => ({ ...p, name: e.target.value }))}
+              placeholder="Seu nome *"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50 transition-all"
+            />
+            <input
+              type="email"
+              value={leadForm.email}
+              onChange={(e) => setLeadForm((p) => ({ ...p, email: e.target.value }))}
+              placeholder="Seu email *"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50 transition-all"
+            />
+            <button
+              type="button"
+              onClick={handleLeadSubmit}
+              disabled={leadForm.name.length < 2 || !leadForm.email.includes('@') || leadSubmitting}
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ backgroundColor: accent }}
+            >
+              {leadSubmitting ? 'Acessando...' : 'Acessar Cartao'}
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Helmet>
@@ -319,14 +422,20 @@ export function PublicCardPage() {
         <meta name="description" content={profile.bio || `Cartao digital de ${profile.displayName}`} />
         <meta property="og:title" content={`${profile.displayName} — ${APP_NAME}`} />
         <meta property="og:description" content={profile.bio || `Cartao digital de ${profile.displayName}`} />
+        <meta property="og:type" content="profile" />
+        <meta property="og:url" content={pageUrl} />
         {profile.photoUrl && <meta property="og:image" content={resolvePhotoUrl(profile.photoUrl) || ''} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${profile.displayName} — ${APP_NAME}`} />
+        <meta name="twitter:description" content={profile.bio || `Cartao digital de ${profile.displayName}`} />
       </Helmet>
 
       <div
         ref={cardRef}
-        className="min-h-screen flex flex-col items-center justify-center px-4 py-12"
+        className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12"
         style={{ background: getThemeBackground(theme, accent) }}
       >
+        <AnimatedBackground theme={theme} />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -342,6 +451,20 @@ export function PublicCardPage() {
                 backgroundPosition: `center ${profile.coverPositionY ?? 50}%`,
               }}
             />
+          )}
+
+          {/* Video Intro */}
+          {profile.videoUrl && (
+            <div className="w-full rounded-xl overflow-hidden mb-4">
+              <video
+                src={profile.videoUrl}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full max-h-48 object-cover rounded-xl"
+              />
+            </div>
           )}
 
           {/* Avatar */}
@@ -363,7 +486,14 @@ export function PublicCardPage() {
               {!profile.photoUrl && <User className="w-12 h-12 text-white" />}
             </div>
 
-            <h1 className="text-2xl font-bold text-white text-center">{profile.displayName}</h1>
+            <h1 className="text-2xl font-bold text-white text-center flex items-center justify-center gap-1.5">
+              {profile.displayName}
+              {profile.isVerified && (
+                <span title="Perfil verificado" className="inline-flex">
+                  <BadgeCheck size={22} className="text-blue-400 shrink-0" style={{ filter: 'drop-shadow(0 0 4px rgba(59,130,246,0.5))' }} />
+                </span>
+              )}
+            </h1>
 
             {/* Availability Badge */}
             {profile.availabilityStatus && (
@@ -480,6 +610,17 @@ export function PublicCardPage() {
             </div>
           )}
 
+          {/* Gallery / Portfolio */}
+          {profile.galleryImages && profile.galleryImages.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-3 px-1">
+                <ImageIcon size={14} className="text-white/50" />
+                <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">Portfolio</span>
+              </div>
+              <GalleryGrid images={profile.galleryImages} />
+            </div>
+          )}
+
           {/* Testimonials */}
           {profile.testimonials && profile.testimonials.length > 0 && (
             <div className="mt-6">
@@ -564,6 +705,22 @@ export function PublicCardPage() {
             <MessageSquare size={16} />
             Enviar Mensagem
           </motion.button>
+
+          {/* Booking Button */}
+          {publicSlots && publicSlots.length > 0 && (
+            <motion.button
+              type="button"
+              onClick={() => setShowBooking(true)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="mt-3 w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold text-white transition-all hover:opacity-90"
+              style={{ backgroundColor: `${accent}30`, borderLeft: `3px solid ${accent}` }}
+            >
+              <CalendarDays size={16} />
+              Agendar Reuniao
+            </motion.button>
+          )}
 
           {/* Share */}
           <div className="mt-6 flex justify-center">
@@ -734,11 +891,12 @@ export function PublicCardPage() {
 
               {/* QR Code */}
               <div className="mt-4 flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-white/10">
-                <QrCode size={20} className="text-white/50" />
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(pageUrl)}&bgcolor=1A1A2E&color=00E4F2&format=svg`}
-                  alt="QR Code"
-                  className="w-32 h-32 rounded-lg"
+                <CustomQrCode
+                  url={pageUrl}
+                  fgColor={accent}
+                  bgColor="#1A1A2E"
+                  logoUrl={resolvePhotoUrl(profile.photoUrl)}
+                  size={160}
                 />
                 <span className="text-[10px] text-white/30">Escaneie para acessar</span>
               </div>
@@ -833,6 +991,38 @@ export function PublicCardPage() {
                   </button>
                 </div>
               )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Booking Modal */}
+      <AnimatePresence>
+        {showBooking && slug && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowBooking(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-[#1A1A2E] border border-white/10 rounded-2xl p-6 max-h-[85vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <CalendarDays size={20} className="text-brand-cyan" />
+                  Agendar Reuniao
+                </h3>
+                <button type="button" onClick={() => setShowBooking(false)} title="Fechar" className="text-white/40 hover:text-white transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+              <BookingCalendar slug={slug} accent={accent} onClose={() => setShowBooking(false)} />
             </motion.div>
           </motion.div>
         )}

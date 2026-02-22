@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus,
   Camera, FileText, Palette, Link2, Sparkles, Eye, Smartphone,
-  QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, ChevronDown, ChevronUp, Star,
+  QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, ChevronDown, ChevronUp, Star, Video, UserPlus,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
@@ -14,6 +14,8 @@ import { Header } from '@/components/organisms/Header';
 import { SortableLinkItem } from '@/components/organisms/SortableLinkItem';
 import { TemplatePicker } from '@/components/organisms/TemplatePicker';
 import { CardPreview } from '@/components/organisms/CardPreview';
+import { CustomQrCode } from '@/components/organisms/CustomQrCode';
+import { CardSwitcher } from '@/components/organisms/CardSwitcher';
 import { useAuth } from '@/providers/AuthProvider';
 import {
   useProfile,
@@ -21,12 +23,19 @@ import {
   useUploadPhoto,
   useUploadCover,
   useUploadResume,
+  useUploadVideo,
   useCheckSlug,
+  useCards,
+  useCreateCard,
+  useDeleteCard,
+  useSetPrimaryCard,
 } from '@/hooks/useProfile';
 import { api } from '@/lib/api';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useContacts, useMarkAsRead } from '@/hooks/useContacts';
 import { useTestimonials, useApproveTestimonial, useRejectTestimonial } from '@/hooks/useTestimonials';
+import { useGallery, useUploadGalleryImage, useDeleteGalleryImage } from '@/hooks/useGallery';
+import { useMySlots, useSaveSlots, useMyBookings, useUpdateBookingStatus } from '@/hooks/useBookings';
 import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, resolvePhotoUrl } from '@/lib/constants';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
 import type { CardTemplate } from '@/lib/card-templates';
@@ -45,23 +54,49 @@ const CARD_THEMES = [
 ];
 
 export function EditorPage() {
-  const { hasPaid, paidUntil, refreshAuth } = useAuth();
+  const { hasPaid, paidUntil, refreshAuth, cards: authCards } = useAuth();
+  const [activeCardId, setActiveCardId] = useState<string | undefined>(undefined);
 
   // Refresh auth state on mount to ensure hasPaid is up-to-date
   useEffect(() => {
     refreshAuth();
   }, [refreshAuth]);
-  const { data: profile, isLoading } = useProfile();
-  const updateProfile = useUpdateProfile();
+
+  // Set initial activeCardId from auth cards
+  useEffect(() => {
+    if (authCards.length > 0 && !activeCardId) {
+      const primary = authCards.find((c) => c.isPrimary);
+      setActiveCardId(primary?.id || authCards[0].id);
+    }
+  }, [authCards, activeCardId]);
+
+  const { data: cardsData } = useCards();
+  const createCard = useCreateCard();
+  const deleteCard = useDeleteCard();
+  const setPrimaryCard = useSetPrimaryCard();
+  const cards = cardsData || authCards;
+
+  const { data: profile, isLoading } = useProfile(activeCardId);
+  const updateProfile = useUpdateProfile(activeCardId);
   const uploadPhoto = useUploadPhoto();
   const uploadCover = useUploadCover();
   const uploadResume = useUploadResume();
+  const uploadVideo = useUploadVideo();
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const { data: analytics } = useAnalytics(hasPaid);
   const { data: contacts } = useContacts(hasPaid);
   const markAsRead = useMarkAsRead();
   const { data: testimonials } = useTestimonials(hasPaid);
   const approveTestimonial = useApproveTestimonial();
   const rejectTestimonial = useRejectTestimonial();
+  const { data: galleryImages } = useGallery();
+  const uploadGalleryImage = useUploadGalleryImage();
+  const deleteGalleryImage = useDeleteGalleryImage();
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const { data: mySlots } = useMySlots();
+  const saveSlots = useSaveSlots();
+  const { data: myBookings } = useMyBookings();
+  const updateBookingStatus = useUpdateBookingStatus();
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const { canInstall, isInstalled, install: installPwa } = usePwaInstall();
@@ -78,6 +113,7 @@ export function EditorPage() {
     availabilityMessage: '',
     photoPositionY: 50,
     coverPositionY: 50,
+    leadCaptureEnabled: false,
     socialLinks: [] as Array<{ platform: string; label: string; url: string; order: number; startsAt: string | null; endsAt: string | null }>,
   });
 
@@ -91,7 +127,12 @@ export function EditorPage() {
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const initializedRef = useRef(false);
 
-  // Sync profile data to form only on initial load
+  // Reset form when switching cards
+  useEffect(() => {
+    initializedRef.current = false;
+  }, [activeCardId]);
+
+  // Sync profile data to form only on initial load (or card switch)
   useEffect(() => {
     if (profile && !initializedRef.current) {
       initializedRef.current = true;
@@ -106,6 +147,7 @@ export function EditorPage() {
         availabilityMessage: profile.availabilityMessage || '',
         photoPositionY: profile.photoPositionY ?? 50,
         coverPositionY: profile.coverPositionY ?? 50,
+        leadCaptureEnabled: profile.leadCaptureEnabled ?? false,
         socialLinks: profile.socialLinks.map((l) => ({
           platform: l.platform,
           label: l.label,
@@ -167,6 +209,7 @@ export function EditorPage() {
     data.availabilityMessage = form.availabilityMessage.trim() || null;
     data.photoPositionY = form.photoPositionY;
     data.coverPositionY = form.coverPositionY;
+    data.leadCaptureEnabled = form.leadCaptureEnabled;
 
     // Only send slug if >= 3 chars
     if (slugInput.length >= 3) {
@@ -310,13 +353,7 @@ export function EditorPage() {
     window.location.href = data.url;
   };
 
-  const handleDownloadQr = () => {
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(cardUrl)}&bgcolor=1A1A2E&color=00E4F2`;
-    const link = document.createElement('a');
-    link.href = qrUrl;
-    link.download = `qrcode-${profile?.slug || 'cartao'}.png`;
-    link.click();
-  };
+  // handleDownloadQr is now handled by CustomQrCode component
 
   const applyTemplate = (template: CardTemplate) => {
     setForm((prev) => ({
@@ -405,6 +442,32 @@ export function EditorPage() {
           </h1>
           <p className="text-sm text-white/40 mt-1">Personalize seu cartao digital profissional</p>
         </motion.div>
+
+        {/* Card Switcher (multiple cards) */}
+        {hasPaid && cards.length > 0 && (
+          <CardSwitcher
+            cards={cards}
+            activeCardId={activeCardId}
+            onSwitch={(id) => setActiveCardId(id)}
+            onCreate={(label) => createCard.mutate(label, {
+              onSuccess: () => refreshAuth(),
+            })}
+            onDelete={(id) => {
+              deleteCard.mutate(id, {
+                onSuccess: () => {
+                  refreshAuth();
+                  const remaining = cards.filter((c) => c.id !== id);
+                  const primary = remaining.find((c) => c.isPrimary);
+                  setActiveCardId(primary?.id || remaining[0]?.id);
+                },
+              });
+            }}
+            onSetPrimary={(id) => setPrimaryCard.mutate(id, {
+              onSuccess: () => refreshAuth(),
+            })}
+            hasPaid={hasPaid}
+          />
+        )}
 
         {/* Profile Completeness */}
         <motion.div
@@ -601,20 +664,14 @@ export function EditorPage() {
                     exit={{ opacity: 0, height: 0 }}
                     className="mt-4 pt-4 border-t border-white/10 flex flex-col items-center gap-3"
                   >
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(cardUrl)}&bgcolor=1A1A2E&color=00E4F2&format=svg`}
-                      alt="QR Code do cartao"
-                      className="w-40 h-40 rounded-xl"
+                    <CustomQrCode
+                      url={cardUrl}
+                      fgColor={form.buttonColor || '#00E4F2'}
+                      bgColor="#1A1A2E"
+                      logoUrl={resolvePhotoUrl(profile?.photoUrl) || null}
+                      size={200}
                     />
                     <p className="text-xs text-white/40">Escaneie para acessar seu cartao</p>
-                    <button
-                      type="button"
-                      onClick={handleDownloadQr}
-                      className="flex items-center gap-2 text-sm text-brand-cyan hover:text-brand-cyan/80 transition-colors"
-                    >
-                      <Download size={14} />
-                      Baixar QR Code
-                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1378,6 +1435,255 @@ export function EditorPage() {
               </div>
             )}
 
+            {/* Gallery (paid users only) */}
+            {hasPaid && (
+              <div className="glass-card p-6 hover:border-white/20 transition-colors">
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <Camera size={16} className="text-purple-400" />
+                  </div>
+                  <h3 className="font-semibold">Galeria / Portfolio</h3>
+                  <span className="text-xs text-white/30 ml-auto">{galleryImages?.length || 0}/12</span>
+                </div>
+
+                {/* Gallery Grid */}
+                {galleryImages && galleryImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    {galleryImages.map((img) => (
+                      <div key={img.id} className="relative group aspect-square rounded-lg overflow-hidden">
+                        <img
+                          src={`data:image/webp;base64,${img.imageData}`}
+                          alt={img.caption || 'Galeria'}
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          title="Remover imagem"
+                          onClick={() => deleteGalleryImage.mutate(img.id)}
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X size={12} className="text-white" />
+                        </button>
+                        {img.caption && (
+                          <div className="absolute inset-x-0 bottom-0 bg-black/50 px-1 py-0.5">
+                            <p className="text-[9px] text-white/70 truncate">{img.caption}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Upload Button */}
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  title="Selecionar imagem"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      uploadGalleryImage.mutate({ file });
+                      e.target.value = '';
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  disabled={(galleryImages?.length || 0) >= 12 || uploadGalleryImage.isPending}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-white/15 text-white/50 hover:text-white/80 hover:border-white/30 hover:bg-white/5 transition-all text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <Plus size={16} />
+                  {uploadGalleryImage.isPending ? 'Enviando...' : 'Adicionar Imagem'}
+                </button>
+              </div>
+            )}
+
+            {/* Video Intro (paid users only) */}
+            {hasPaid && (
+              <div className="glass-card p-6 hover:border-white/20 transition-colors">
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center">
+                    <Video size={16} className="text-pink-400" />
+                  </div>
+                  <h3 className="font-semibold">Video Intro</h3>
+                  <span className="text-xs text-white/30 ml-auto">Max 15s, 20MB</span>
+                </div>
+
+                {profile?.videoUrl && (
+                  <div className="mb-4 rounded-xl overflow-hidden">
+                    <video
+                      src={profile.videoUrl}
+                      controls
+                      className="w-full max-h-48 rounded-xl"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => updateProfile.mutate({ videoUrl: null })}
+                      className="mt-2 flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 transition-colors"
+                    >
+                      <X size={12} />
+                      Remover video
+                    </button>
+                  </div>
+                )}
+
+                <input
+                  ref={videoInputRef}
+                  type="file"
+                  accept="video/mp4"
+                  title="Selecionar video"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      uploadVideo.mutate(file);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => videoInputRef.current?.click()}
+                  disabled={uploadVideo.isPending}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-white/15 text-white/50 hover:text-white/80 hover:border-white/30 hover:bg-white/5 transition-all text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <Upload size={16} />
+                  {uploadVideo.isPending ? 'Enviando...' : 'Enviar Video MP4'}
+                </button>
+              </div>
+            )}
+
+            {/* Lead Capture (paid users only) */}
+            {hasPaid && (
+              <div className="glass-card p-6 hover:border-white/20 transition-colors">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <UserPlus size={16} className="text-emerald-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold">Captura de Leads</h3>
+                    <p className="text-xs text-white/40 mt-0.5">Visitantes preenchem nome e email antes de ver o cartao</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => updateField('leadCaptureEnabled', !form.leadCaptureEnabled)}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${form.leadCaptureEnabled ? 'bg-emerald-500' : 'bg-white/10'}`}
+                  >
+                    <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${form.leadCaptureEnabled ? 'left-[22px]' : 'left-0.5'}`} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Bookings / Scheduling (paid users only) */}
+            {hasPaid && (
+              <div className="glass-card p-6 hover:border-white/20 transition-colors">
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <Calendar size={16} className="text-blue-400" />
+                  </div>
+                  <h3 className="font-semibold">Agendamento</h3>
+                </div>
+
+                {/* Quick Slot Config */}
+                <div className="space-y-3 mb-4">
+                  <p className="text-xs text-white/40">Configure seus horarios disponiveis. Visitantes poderao agendar reunioes.</p>
+                  {['Seg', 'Ter', 'Qua', 'Qui', 'Sex'].map((day, i) => {
+                    const dayOfWeek = i + 1; // 1=Mon, 5=Fri
+                    const slot = mySlots?.find((s) => s.dayOfWeek === dayOfWeek);
+                    return (
+                      <div key={day} className="flex items-center gap-2 text-sm">
+                        <span className="w-8 text-white/50">{day}</span>
+                        <input
+                          type="time"
+                          title={`Inicio ${day}`}
+                          defaultValue={slot?.startTime || '09:00'}
+                          className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs [color-scheme:dark]"
+                          data-day={dayOfWeek}
+                          data-field="start"
+                        />
+                        <span className="text-white/30">-</span>
+                        <input
+                          type="time"
+                          title={`Fim ${day}`}
+                          defaultValue={slot?.endTime || '17:00'}
+                          className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs [color-scheme:dark]"
+                          data-day={dayOfWeek}
+                          data-field="end"
+                        />
+                      </div>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const slots: Array<{ dayOfWeek: number; startTime: string; endTime: string; duration: number }> = [];
+                      for (let d = 1; d <= 5; d++) {
+                        const startEl = document.querySelector<HTMLInputElement>(`[data-day="${d}"][data-field="start"]`);
+                        const endEl = document.querySelector<HTMLInputElement>(`[data-day="${d}"][data-field="end"]`);
+                        if (startEl?.value && endEl?.value && startEl.value < endEl.value) {
+                          slots.push({ dayOfWeek: d, startTime: startEl.value, endTime: endEl.value, duration: 30 });
+                        }
+                      }
+                      saveSlots.mutate(slots);
+                    }}
+                    disabled={saveSlots.isPending}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm hover:bg-blue-500/20 transition-all disabled:opacity-40"
+                  >
+                    <Save size={14} />
+                    {saveSlots.isPending ? 'Salvando...' : 'Salvar Horarios'}
+                  </button>
+                </div>
+
+                {/* Bookings List */}
+                {myBookings && myBookings.length > 0 && (
+                  <div className="border-t border-white/10 pt-4">
+                    <p className="text-xs text-white/40 mb-3">Agendamentos recentes</p>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {myBookings.slice(0, 10).map((b) => (
+                        <div key={b.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5 text-xs">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white font-medium truncate">{b.name}</p>
+                            <p className="text-white/40">{new Date(b.date).toLocaleDateString('pt-BR')} as {b.time}</p>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                            b.status === 'confirmed' ? 'bg-green-500/20 text-green-400' :
+                            b.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
+                            'bg-yellow-500/20 text-yellow-400'
+                          }`}>
+                            {b.status === 'confirmed' ? 'Confirmado' : b.status === 'cancelled' ? 'Cancelado' : 'Pendente'}
+                          </span>
+                          {b.status === 'pending' && (
+                            <div className="flex gap-1">
+                              <button
+                                type="button"
+                                title="Confirmar"
+                                onClick={() => updateBookingStatus.mutate({ id: b.id, status: 'confirmed' })}
+                                className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 hover:bg-green-500/30"
+                              >
+                                <Check size={12} />
+                              </button>
+                              <button
+                                type="button"
+                                title="Cancelar"
+                                onClick={() => updateBookingStatus.mutate({ id: b.id, status: 'cancelled' })}
+                                className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 hover:bg-red-500/30"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Testimonials (paid users only) */}
             {hasPaid && (
               <div className="glass-card p-6 hover:border-white/20 transition-colors">
@@ -1508,6 +1814,7 @@ export function EditorPage() {
                 availabilityStatus={form.availabilityStatus || undefined}
                 photoPositionY={form.photoPositionY}
                 coverPositionY={form.coverPositionY}
+                isVerified={hasPaid}
                 socialLinks={form.socialLinks}
               />
             </div>

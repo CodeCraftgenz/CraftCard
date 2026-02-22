@@ -12,7 +12,7 @@ export class TestimonialsService {
   ) {}
 
   async submit(slug: string, data: CreateTestimonialDto) {
-    const profile = await this.prisma.profile.findUnique({
+    const profile = await this.prisma.profile.findFirst({
       where: { slug },
       select: { id: true, isPublished: true, user: { select: { email: true } } },
     });
@@ -50,8 +50,8 @@ export class TestimonialsService {
   }
 
   async getMine(userId: string) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId },
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId, isPrimary: true },
       select: { id: true },
     });
     if (!profile) throw AppException.notFound('Perfil');
@@ -64,8 +64,8 @@ export class TestimonialsService {
   }
 
   async approve(id: string, userId: string) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId },
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId, isPrimary: true },
       select: { id: true },
     });
     if (!profile) throw AppException.notFound('Perfil');
@@ -84,8 +84,8 @@ export class TestimonialsService {
   }
 
   async reject(id: string, userId: string) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId },
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId, isPrimary: true },
       select: { id: true },
     });
     if (!profile) throw AppException.notFound('Perfil');

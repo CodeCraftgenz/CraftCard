@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { SlugsService } from '../slugs/slugs.service';
+import { PaymentsService } from '../payments/payments.service';
 import { AppException } from '../common/exceptions/app.exception';
 import { randomUUID } from 'crypto';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
@@ -18,6 +19,7 @@ export class ProfilesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly slugsService: SlugsService,
+    private readonly paymentsService: PaymentsService,
     private readonly configService: ConfigService<EnvConfig>,
   ) {
     this.uploadsPublicUrl = this.configService.get('UPLOADS_PUBLIC_URL', { infer: true }) || '';
@@ -32,14 +34,72 @@ export class ProfilesService {
     return url;
   }
 
-  async getByUserId(userId: string) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId },
-      include: { socialLinks: { orderBy: { order: 'asc' } } },
-    });
+  async getByUserId(userId: string, profileId?: string) {
+    const profile = profileId
+      ? await this.prisma.profile.findFirst({
+          where: { id: profileId, userId },
+          include: { socialLinks: { orderBy: { order: 'asc' } } },
+        })
+      : await this.prisma.profile.findFirst({
+          where: { userId, isPrimary: true },
+          include: { socialLinks: { orderBy: { order: 'asc' } } },
+        });
     if (!profile) throw AppException.notFound('Perfil');
     const { photoData: _, coverPhotoData: _c, ...rest } = profile;
     return { ...rest, resumeUrl: this.migrateUrl(rest.resumeUrl) };
+  }
+
+  async getAllByUserId(userId: string) {
+    const profiles = await this.prisma.profile.findMany({
+      where: { userId },
+      orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+      select: { id: true, displayName: true, slug: true, label: true, isPrimary: true, isPublished: true, photoUrl: true },
+    });
+    return profiles;
+  }
+
+  async createCard(userId: string, label: string) {
+    const count = await this.prisma.profile.count({ where: { userId } });
+    if (count >= 5) {
+      throw AppException.badRequest('Maximo de 5 cartoes atingido');
+    }
+
+    const slug = `card-${Date.now().toString(36)}`;
+    return this.prisma.profile.create({
+      data: {
+        userId,
+        displayName: 'Novo Cartao',
+        label,
+        slug,
+        isPrimary: false,
+      },
+      select: { id: true, displayName: true, slug: true, label: true, isPrimary: true },
+    });
+  }
+
+  async deleteCard(userId: string, profileId: string) {
+    const profile = await this.prisma.profile.findFirst({
+      where: { id: profileId, userId },
+    });
+    if (!profile) throw AppException.notFound('Perfil');
+    if (profile.isPrimary) {
+      throw AppException.badRequest('Nao e possivel excluir o cartao principal');
+    }
+    await this.prisma.profile.delete({ where: { id: profileId } });
+    return { deleted: true };
+  }
+
+  async setPrimary(userId: string, profileId: string) {
+    const profile = await this.prisma.profile.findFirst({
+      where: { id: profileId, userId },
+    });
+    if (!profile) throw AppException.notFound('Perfil');
+
+    await this.prisma.$transaction([
+      this.prisma.profile.updateMany({ where: { userId }, data: { isPrimary: false } }),
+      this.prisma.profile.update({ where: { id: profileId }, data: { isPrimary: true } }),
+    ]);
+    return { primary: true };
   }
 
   async getBySlug(slug: string) {
@@ -48,6 +108,7 @@ export class ProfilesService {
       include: {
         socialLinks: { orderBy: { order: 'asc' } },
         testimonials: { where: { isApproved: true }, orderBy: { createdAt: 'desc' }, take: 10 },
+        galleryImages: { orderBy: { order: 'asc' }, select: { id: true, imageData: true, caption: true, order: true } },
         user: { select: { name: true, email: true } },
       },
     });
@@ -72,12 +133,17 @@ export class ProfilesService {
       return true;
     });
 
+    // Check if user has paid (verified badge)
+    const subscription = await this.paymentsService.getActiveSubscription(profile.userId);
+
     const { photoData: _, coverPhotoData: _c, ...rest } = profile;
-    return { ...rest, resumeUrl: this.migrateUrl(rest.resumeUrl), socialLinks: activeLinks };
+    return { ...rest, resumeUrl: this.migrateUrl(rest.resumeUrl), socialLinks: activeLinks, isVerified: subscription.active };
   }
 
-  async update(userId: string, data: UpdateProfileDto) {
-    const profile = await this.prisma.profile.findUnique({ where: { userId } });
+  async update(userId: string, data: UpdateProfileDto, profileId?: string) {
+    const profile = profileId
+      ? await this.prisma.profile.findFirst({ where: { id: profileId, userId } })
+      : await this.prisma.profile.findFirst({ where: { userId, isPrimary: true } });
     if (!profile) throw AppException.notFound('Perfil');
 
     // Validate slug uniqueness
@@ -93,7 +159,7 @@ export class ProfilesService {
     return this.prisma.$transaction(async (tx) => {
       // Update profile fields
       const updated = await tx.profile.update({
-        where: { userId },
+        where: { id: profile.id },
         data: profileData,
       });
 

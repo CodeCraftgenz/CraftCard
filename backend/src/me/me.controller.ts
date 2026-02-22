@@ -16,8 +16,9 @@ export class MeController {
     const userData = await this.prisma.user.findUnique({
       where: { id: user.sub },
       include: {
-        profile: {
+        profiles: {
           include: { socialLinks: { orderBy: { order: 'asc' } } },
+          orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
         },
       },
     });
@@ -25,6 +26,7 @@ export class MeController {
     if (!userData) throw AppException.notFound('Usuario');
 
     const subscription = await this.paymentsService.getActiveSubscription(user.sub);
+    const primaryProfile = userData.profiles.find((p) => p.isPrimary) || userData.profiles[0] || null;
 
     return {
       user: {
@@ -33,7 +35,8 @@ export class MeController {
         name: userData.name,
         avatarUrl: userData.avatarUrl,
       },
-      profile: userData.profile,
+      profile: primaryProfile,
+      cards: userData.profiles.map((p) => ({ id: p.id, label: p.label, slug: p.slug, isPrimary: p.isPrimary, displayName: p.displayName })),
       hasPaid: subscription.active,
       paidUntil: subscription.expiresAt?.toISOString() ?? null,
     };
