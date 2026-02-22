@@ -46,8 +46,16 @@ export class ProfilesService {
     // Track daily view (fire-and-forget)
     this.trackDailyView(profile.id).catch(() => {});
 
+    // Filter links by schedule (only show currently active ones on public page)
+    const now = new Date();
+    const activeLinks = profile.socialLinks.filter((link) => {
+      if (link.startsAt && link.startsAt > now) return false;
+      if (link.endsAt && link.endsAt < now) return false;
+      return true;
+    });
+
     const { photoData: _, coverPhotoData: _c, ...rest } = profile;
-    return rest;
+    return { ...rest, socialLinks: activeLinks };
   }
 
   async update(userId: string, data: UpdateProfileDto) {
@@ -83,6 +91,8 @@ export class ProfilesService {
               label: link.label,
               url: link.url,
               order: link.order,
+              startsAt: link.startsAt ?? null,
+              endsAt: link.endsAt ?? null,
             })),
           });
         }

@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { ThrottlerException } from '@nestjs/throttler';
 import { Response } from 'express';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
@@ -50,6 +51,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
         code: response.code,
         message: response.message,
         details: response.details,
+      };
+    }
+
+    if (exception instanceof ThrottlerException) {
+      return {
+        status: HttpStatus.TOO_MANY_REQUESTS,
+        code: 'TOO_MANY_REQUESTS',
+        message: 'Muitas requisicoes. Tente novamente em instantes.',
       };
     }
 

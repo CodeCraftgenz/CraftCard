@@ -1,16 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import { AppException } from '../common/exceptions/app.exception';
 import type { CreateTestimonialDto } from './dto/create-testimonial.dto';
 
 @Injectable()
 export class TestimonialsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async submit(slug: string, data: CreateTestimonialDto) {
     const profile = await this.prisma.profile.findUnique({
       where: { slug },
-      select: { id: true, isPublished: true },
+      select: { id: true, isPublished: true, user: { select: { email: true } } },
     });
     if (!profile || !profile.isPublished) {
       throw AppException.notFound('Perfil');
@@ -24,6 +28,15 @@ export class TestimonialsService {
         text: data.text,
       },
     });
+
+    // Notify profile owner (fire-and-forget)
+    if (profile.user?.email) {
+      this.mailService.sendNewTestimonialNotification(
+        profile.user.email,
+        data.authorName,
+        data.text.substring(0, 200),
+      ).catch(() => {});
+    }
 
     return { sent: true };
   }

@@ -7,6 +7,8 @@ interface SocialLink {
   label: string;
   url: string;
   order: number;
+  startsAt?: string | null;
+  endsAt?: string | null;
 }
 
 export interface Profile {

@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { TestimonialsService } from './testimonials.service';
 import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
@@ -10,6 +11,7 @@ export class TestimonialsController {
   constructor(private readonly testimonialsService: TestimonialsService) {}
 
   @Public()
+  @Throttle({ short: { ttl: 60000, limit: 5 } })
   @Post(':slug')
   async submit(@Param('slug') slug: string, @Body() body: unknown) {
     const data = createTestimonialSchema.parse(body);

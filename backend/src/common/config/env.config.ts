@@ -26,6 +26,12 @@ export const envSchema = z.object({
   BACKEND_URL: z.string().default('http://localhost:3000'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   FRONTEND_URL: z.string().default('http://localhost:5173'),
+
+  MAIL_HOST: z.string().optional(),
+  MAIL_PORT: z.coerce.number().optional(),
+  MAIL_USER: z.string().optional(),
+  MAIL_PASS: z.string().optional(),
+  MAIL_FROM: z.string().optional(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

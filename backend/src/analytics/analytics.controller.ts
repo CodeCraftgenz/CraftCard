@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AnalyticsService } from './analytics.service';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
@@ -15,6 +16,7 @@ export class AnalyticsController {
   }
 
   @Public()
+  @Throttle({ short: { ttl: 60000, limit: 30 } })
   @Post('click')
   async trackClick(@Body() body: { socialLinkId: string }) {
     if (body.socialLinkId) {

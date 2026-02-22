@@ -19,7 +19,15 @@ export const socialLinkSchema = z.object({
   label: z.string().min(1).max(100),
   url: safeUrlSchema,
   order: z.number().int().min(0).max(50),
-});
+  startsAt: z.coerce.date().optional().nullable(),
+  endsAt: z.coerce.date().optional().nullable(),
+}).refine(
+  (link) => {
+    if (link.startsAt && link.endsAt) return link.endsAt > link.startsAt;
+    return true;
+  },
+  { message: 'Data de fim deve ser posterior a data de inicio', path: ['endsAt'] },
+);
 
 export const updateProfileSchema = z.object({
   displayName: z.preprocess(emptyToUndefined, z.string().min(2).max(100).optional()),

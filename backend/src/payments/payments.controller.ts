@@ -1,4 +1,5 @@
 import { Controller, Post, Body, Headers, Query, Logger } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { PaymentsService } from './payments.service';
 import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
@@ -25,6 +26,7 @@ export class PaymentsController {
   }
 
   @Public()
+  @SkipThrottle()
   @Post('webhook')
   async handleWebhook(
     @Body() body: { type?: string; action?: string; data?: { id?: string } },

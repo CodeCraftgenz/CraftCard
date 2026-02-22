@@ -1,4 +1,5 @@
 import { Controller, Post, Body, Res, Req } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { Public } from '../common/decorators/public.decorator';
@@ -19,6 +20,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @Throttle({ short: { ttl: 60000, limit: 5 } })
   @Post('google')
   async googleLogin(@Body() body: unknown, @Res({ passthrough: true }) res: Response) {
     const { credential } = googleAuthSchema.parse(body);
@@ -48,6 +50,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ short: { ttl: 60000, limit: 5 } })
   @Post('refresh')
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const currentToken = req.cookies?.[REFRESH_COOKIE];

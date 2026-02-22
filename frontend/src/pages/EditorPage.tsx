@@ -2,10 +2,17 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus,
-  GripVertical, Camera, FileText, Palette, Link2, Sparkles, Eye,
+  Camera, FileText, Palette, Link2, Sparkles, Eye,
   QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, ChevronDown, ChevronUp, Star,
 } from 'lucide-react';
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor,
+  useSensors, useSensor, type DragEndEvent,
+} from '@dnd-kit/core';
+import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Header } from '@/components/organisms/Header';
+import { SortableLinkItem } from '@/components/organisms/SortableLinkItem';
+import { TemplatePicker } from '@/components/organisms/TemplatePicker';
 import { CardPreview } from '@/components/organisms/CardPreview';
 import { useAuth } from '@/providers/AuthProvider';
 import {
@@ -21,6 +28,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { useContacts, useMarkAsRead } from '@/hooks/useContacts';
 import { useTestimonials, useApproveTestimonial, useRejectTestimonial } from '@/hooks/useTestimonials';
 import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, resolvePhotoUrl } from '@/lib/constants';
+import type { CardTemplate } from '@/lib/card-templates';
 
 const CARD_THEMES = [
   { value: 'default', label: 'Classico', preview: 'bg-gradient-to-b from-brand-cyan/10 to-transparent' },
@@ -49,6 +57,7 @@ export function EditorPage() {
   const approveTestimonial = useApproveTestimonial();
   const rejectTestimonial = useRejectTestimonial();
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   const [form, setForm] = useState({
     displayName: '',
@@ -59,7 +68,7 @@ export function EditorPage() {
     cardTheme: 'default',
     availabilityStatus: '' as string,
     availabilityMessage: '',
-    socialLinks: [] as Array<{ platform: string; label: string; url: string; order: number }>,
+    socialLinks: [] as Array<{ platform: string; label: string; url: string; order: number; startsAt: string | null; endsAt: string | null }>,
   });
 
   const [slugInput, setSlugInput] = useState('');
@@ -90,6 +99,8 @@ export function EditorPage() {
           label: l.label,
           url: l.url,
           order: l.order,
+          startsAt: l.startsAt || null,
+          endsAt: l.endsAt || null,
         })),
       });
       setSlugInput(profile.slug || '');
@@ -106,6 +117,19 @@ export function EditorPage() {
     debouncedSlug,
     debouncedSlug !== profile?.slug && debouncedSlug.length >= 3,
   );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = Number(active.id);
+    const newIndex = Number(over.id);
+    updateField('socialLinks', arrayMove([...form.socialLinks], oldIndex, newIndex));
+  };
 
   // Build a clean payload - only include valid, non-empty fields
   const buildSavePayload = useCallback(() => {
@@ -147,6 +171,8 @@ export function EditorPage() {
       label: l.label.trim(),
       url: l.url.trim(),
       order: i,
+      startsAt: l.startsAt || null,
+      endsAt: l.endsAt || null,
     }));
 
     return data;
@@ -227,14 +253,14 @@ export function EditorPage() {
   const addSocialLink = () => {
     updateField('socialLinks', [
       ...form.socialLinks,
-      { platform: 'website', label: '', url: 'https://', order: form.socialLinks.length },
+      { platform: 'website', label: '', url: 'https://', order: form.socialLinks.length, startsAt: null, endsAt: null },
     ]);
   };
 
   const addCustomLink = () => {
     updateField('socialLinks', [
       ...form.socialLinks,
-      { platform: 'custom', label: '', url: 'https://', order: form.socialLinks.length },
+      { platform: 'custom', label: '', url: 'https://', order: form.socialLinks.length, startsAt: null, endsAt: null },
     ]);
   };
 
@@ -276,6 +302,25 @@ export function EditorPage() {
     link.href = qrUrl;
     link.download = `qrcode-${profile?.slug || 'cartao'}.png`;
     link.click();
+  };
+
+  const applyTemplate = (template: CardTemplate) => {
+    setForm((prev) => ({
+      ...prev,
+      displayName: prev.displayName || template.displayName,
+      bio: prev.bio || template.bio,
+      cardTheme: template.cardTheme,
+      buttonColor: template.buttonColor,
+      socialLinks: template.suggestedLinks.map((l, i) => ({
+        platform: l.platform,
+        label: l.label,
+        url: l.url,
+        order: i,
+        startsAt: null,
+        endsAt: null,
+      })),
+    }));
+    triggerAutoSave();
   };
 
   // Format expiration date
@@ -382,6 +427,28 @@ export function EditorPage() {
             <p className="text-xs text-green-400 mt-2">Perfil completo! Seu cartao esta pronto.</p>
           )}
         </motion.div>
+
+        {/* Template suggestion (when profile is mostly empty) */}
+        {completeness.total < 30 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 glass-card p-5 border-brand-cyan/20 cursor-pointer hover:border-brand-cyan/40 transition-all"
+            onClick={() => setShowTemplatePicker(true)}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center shrink-0">
+                <Sparkles size={18} />
+              </div>
+              <div>
+                <h3 className="font-semibold text-brand-cyan">Comece com um template</h3>
+                <p className="text-xs text-white/40 mt-0.5">
+                  Escolha um template por profissao e personalize depois
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Subscription status banner (when paid) */}
         <AnimatePresence>
@@ -726,19 +793,15 @@ export function EditorPage() {
                 </button>
               </div>
               <div className="space-y-3">
-                <AnimatePresence>
-                  {form.socialLinks.map((link, i) => {
-                    if (link.platform === 'custom') return null;
-                    return (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/5"
-                      >
-                        <GripVertical size={16} className="text-white/15 mt-2.5 shrink-0 cursor-grab" />
-                        <div className="flex-1 space-y-2">
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext
+                    items={form.socialLinks.map((_, i) => i).filter(i => form.socialLinks[i].platform !== 'custom')}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {form.socialLinks.map((link, i) => {
+                      if (link.platform === 'custom') return null;
+                      return (
+                        <SortableLinkItem key={i} id={i} onRemove={() => removeSocialLink(i)}>
                           <div className="flex gap-2">
                             <select
                               value={link.platform}
@@ -767,19 +830,60 @@ export function EditorPage() {
                             placeholder={SOCIAL_PLATFORMS.find((p) => p.value === link.platform)?.placeholder || 'https://...'}
                             className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
                           />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeSocialLink(i)}
-                          title="Remover link"
-                          className="mt-2 p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-all"
-                        >
-                          <X size={14} />
-                        </button>
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const links = [...form.socialLinks];
+                                const hasSchedule = links[i].startsAt || links[i].endsAt;
+                                links[i] = { ...links[i], startsAt: hasSchedule ? null : '', endsAt: hasSchedule ? null : '' };
+                                updateField('socialLinks', links);
+                              }}
+                              className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-all ${
+                                link.startsAt || link.endsAt ? 'text-brand-cyan bg-brand-cyan/10' : 'text-white/30 hover:text-white/50 hover:bg-white/5'
+                              }`}
+                            >
+                              <Calendar size={12} />
+                              Agendamento
+                            </button>
+                          </div>
+                          {(link.startsAt !== null || link.endsAt !== null) && (
+                            <div className="flex gap-2">
+                              <div className="flex-1">
+                                <label className="text-[10px] text-white/30 block mb-1">Inicio</label>
+                                <input
+                                  type="datetime-local"
+                                  title="Data de inicio"
+                                  value={link.startsAt || ''}
+                                  onChange={(e) => {
+                                    const links = [...form.socialLinks];
+                                    links[i] = { ...links[i], startsAt: e.target.value || null };
+                                    updateField('socialLinks', links);
+                                  }}
+                                  className="w-full px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-brand-cyan/50 transition-all"
+                                />
+                              </div>
+                              <div className="flex-1">
+                                <label className="text-[10px] text-white/30 block mb-1">Fim</label>
+                                <input
+                                  type="datetime-local"
+                                  title="Data de fim"
+                                  value={link.endsAt || ''}
+                                  onChange={(e) => {
+                                    const links = [...form.socialLinks];
+                                    links[i] = { ...links[i], endsAt: e.target.value || null };
+                                    updateField('socialLinks', links);
+                                  }}
+                                  className="w-full px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-brand-cyan/50 transition-all"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </SortableLinkItem>
+                      );
+                    })}
+                  </SortableContext>
+                </DndContext>
                 {form.socialLinks.filter(l => l.platform !== 'custom').length === 0 && (
                   <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
                     <Link2 size={24} className="mx-auto text-white/15 mb-2" />
@@ -814,19 +918,15 @@ export function EditorPage() {
               </div>
               <p className="text-xs text-white/30 mb-4">Links exibidos como botoes no seu cartao (estilo Linktree)</p>
               <div className="space-y-3">
-                <AnimatePresence>
-                  {form.socialLinks.map((link, i) => {
-                    if (link.platform !== 'custom') return null;
-                    return (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/5"
-                      >
-                        <GripVertical size={16} className="text-white/15 mt-2.5 shrink-0 cursor-grab" />
-                        <div className="flex-1 space-y-2">
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext
+                    items={form.socialLinks.map((_, i) => i).filter(i => form.socialLinks[i].platform === 'custom')}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {form.socialLinks.map((link, i) => {
+                      if (link.platform !== 'custom') return null;
+                      return (
+                        <SortableLinkItem key={i} id={i} onRemove={() => removeSocialLink(i)}>
                           <input
                             type="text"
                             value={link.label}
@@ -841,19 +941,60 @@ export function EditorPage() {
                             placeholder="https://..."
                             className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
                           />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeSocialLink(i)}
-                          title="Remover link"
-                          className="mt-2 p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-all"
-                        >
-                          <X size={14} />
-                        </button>
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const links = [...form.socialLinks];
+                                const hasSchedule = links[i].startsAt || links[i].endsAt;
+                                links[i] = { ...links[i], startsAt: hasSchedule ? null : '', endsAt: hasSchedule ? null : '' };
+                                updateField('socialLinks', links);
+                              }}
+                              className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-all ${
+                                link.startsAt || link.endsAt ? 'text-brand-cyan bg-brand-cyan/10' : 'text-white/30 hover:text-white/50 hover:bg-white/5'
+                              }`}
+                            >
+                              <Calendar size={12} />
+                              Agendamento
+                            </button>
+                          </div>
+                          {(link.startsAt !== null || link.endsAt !== null) && (
+                            <div className="flex gap-2">
+                              <div className="flex-1">
+                                <label className="text-[10px] text-white/30 block mb-1">Inicio</label>
+                                <input
+                                  type="datetime-local"
+                                  title="Data de inicio"
+                                  value={link.startsAt || ''}
+                                  onChange={(e) => {
+                                    const links = [...form.socialLinks];
+                                    links[i] = { ...links[i], startsAt: e.target.value || null };
+                                    updateField('socialLinks', links);
+                                  }}
+                                  className="w-full px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-brand-cyan/50 transition-all"
+                                />
+                              </div>
+                              <div className="flex-1">
+                                <label className="text-[10px] text-white/30 block mb-1">Fim</label>
+                                <input
+                                  type="datetime-local"
+                                  title="Data de fim"
+                                  value={link.endsAt || ''}
+                                  onChange={(e) => {
+                                    const links = [...form.socialLinks];
+                                    links[i] = { ...links[i], endsAt: e.target.value || null };
+                                    updateField('socialLinks', links);
+                                  }}
+                                  className="w-full px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-brand-cyan/50 transition-all"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </SortableLinkItem>
+                      );
+                    })}
+                  </SortableContext>
+                </DndContext>
                 {form.socialLinks.filter(l => l.platform === 'custom').length === 0 && (
                   <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
                     <ExternalLink size={24} className="mx-auto text-white/15 mb-2" />
@@ -1257,6 +1398,12 @@ export function EditorPage() {
           </motion.div>
         </div>
       </div>
+
+      <TemplatePicker
+        open={showTemplatePicker}
+        onClose={() => setShowTemplatePicker(false)}
+        onApply={applyTemplate}
+      />
     </div>
   );
 }
