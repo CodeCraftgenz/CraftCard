@@ -527,7 +527,7 @@ export function PublicCardPage() {
           {/* Resume */}
           {profile.resumeUrl && (
             <motion.a
-              href={profile.resumeUrl}
+              href={`${profile.resumeUrl}?v=${Date.now()}`}
               target="_blank"
               rel="noopener noreferrer"
               initial={{ opacity: 0 }}

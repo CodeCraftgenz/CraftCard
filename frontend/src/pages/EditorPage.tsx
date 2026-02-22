@@ -1130,7 +1130,7 @@ export function EditorPage() {
               <div className="flex items-center gap-3">
                 {profile?.resumeUrl && (
                   <a
-                    href={profile.resumeUrl}
+                    href={`${profile.resumeUrl}?v=${Date.now()}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-brand-cyan hover:underline flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand-cyan/5"
