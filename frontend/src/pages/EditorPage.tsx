@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus,
   GripVertical, Camera, FileText, Palette, Link2, Sparkles, Eye,
-  QrCode, BarChart3, Calendar, Download,
+  QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
 import { CardPreview } from '@/components/organisms/CardPreview';
@@ -18,6 +18,7 @@ import {
 } from '@/hooks/useProfile';
 import { api } from '@/lib/api';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useContacts, useMarkAsRead } from '@/hooks/useContacts';
 import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, resolvePhotoUrl } from '@/lib/constants';
 
 const CARD_THEMES = [
@@ -41,6 +42,9 @@ export function EditorPage() {
   const uploadCover = useUploadCover();
   const uploadResume = useUploadResume();
   const { data: analytics } = useAnalytics(hasPaid);
+  const { data: contacts } = useContacts(hasPaid);
+  const markAsRead = useMarkAsRead();
+  const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     displayName: '',
@@ -49,6 +53,8 @@ export function EditorPage() {
     slug: '',
     isPublished: false,
     cardTheme: 'default',
+    availabilityStatus: '' as string,
+    availabilityMessage: '',
     socialLinks: [] as Array<{ platform: string; label: string; url: string; order: number }>,
   });
 
@@ -73,6 +79,8 @@ export function EditorPage() {
         slug: profile.slug || '',
         isPublished: profile.isPublished,
         cardTheme: profile.cardTheme || 'default',
+        availabilityStatus: profile.availabilityStatus || '',
+        availabilityMessage: profile.availabilityMessage || '',
         socialLinks: profile.socialLinks.map((l) => ({
           platform: l.platform,
           label: l.label,
@@ -115,6 +123,8 @@ export function EditorPage() {
     data.buttonColor = form.buttonColor;
     data.isPublished = form.isPublished;
     data.cardTheme = form.cardTheme;
+    data.availabilityStatus = form.availabilityStatus || null;
+    data.availabilityMessage = form.availabilityMessage.trim() || null;
 
     // Only send slug if >= 3 chars
     if (slugInput.length >= 3) {
@@ -365,7 +375,7 @@ export function EditorPage() {
                   <div>
                     <h3 className="font-bold text-lg">Desbloqueie seu cartao</h3>
                     <p className="text-sm text-white/50">
-                      Assinatura anual de R$30 para publicar e compartilhar
+                      De <span className="line-through text-white/30">R$99,90</span> por apenas R$30/ano para publicar e compartilhar
                     </p>
                   </div>
                 </div>
@@ -374,7 +384,7 @@ export function EditorPage() {
                   onClick={handleCheckout}
                   className="flex items-center gap-2 px-8 py-3 rounded-xl gradient-bg font-bold text-sm hover:opacity-90 transition-all hover:shadow-lg hover:shadow-brand-cyan/20 shrink-0"
                 >
-                  Assinar R$ 30,00/ano
+                  Assinar R$ 30,00/ano (70% OFF)
                 </button>
               </div>
             </motion.div>
@@ -588,6 +598,42 @@ export function EditorPage() {
                       {form.bio.length}/500
                     </span>
                   </div>
+                </div>
+
+                {/* Availability Status */}
+                <div>
+                  <label className="text-xs font-medium text-white/50 mb-2 block uppercase tracking-wider">Status de disponibilidade</label>
+                  <div className="flex gap-2">
+                    {([
+                      { value: 'available', label: 'Disponivel', color: 'bg-green-500', ring: 'ring-green-500/30' },
+                      { value: 'busy', label: 'Ocupado', color: 'bg-yellow-500', ring: 'ring-yellow-500/30' },
+                      { value: 'unavailable', label: 'Indisponivel', color: 'bg-red-500', ring: 'ring-red-500/30' },
+                    ] as const).map((opt) => (
+                      <button
+                        type="button"
+                        key={opt.value}
+                        onClick={() => updateField('availabilityStatus', form.availabilityStatus === opt.value ? '' : opt.value)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all border ${
+                          form.availabilityStatus === opt.value
+                            ? `${opt.ring} ring-2 border-transparent bg-white/10`
+                            : 'border-white/10 hover:border-white/20 bg-white/5'
+                        }`}
+                      >
+                        <div className={`w-2.5 h-2.5 rounded-full ${opt.color}`} />
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  {form.availabilityStatus && (
+                    <input
+                      type="text"
+                      value={form.availabilityMessage}
+                      onChange={(e) => updateField('availabilityMessage', e.target.value)}
+                      placeholder="Mensagem personalizada (opcional)"
+                      maxLength={100}
+                      className="mt-2 w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -934,6 +980,84 @@ export function EditorPage() {
               </div>
             )}
 
+            {/* Messages Inbox (paid users only) */}
+            {hasPaid && (
+              <div className="glass-card p-6 hover:border-white/20 transition-colors">
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <MessageSquare size={16} className="text-purple-400" />
+                  </div>
+                  <h3 className="font-semibold">Mensagens</h3>
+                  {contacts && contacts.filter((m) => !m.isRead).length > 0 && (
+                    <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-semibold">
+                      {contacts.filter((m) => !m.isRead).length} nova{contacts.filter((m) => !m.isRead).length > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+
+                {contacts && contacts.length > 0 ? (
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {contacts.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`p-3 rounded-xl border transition-all ${
+                          msg.isRead ? 'bg-white/[0.02] border-white/5' : 'bg-brand-cyan/5 border-brand-cyan/20'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-white">{msg.senderName}</span>
+                              {!msg.isRead && <div className="w-2 h-2 rounded-full bg-brand-cyan shrink-0" />}
+                            </div>
+                            {msg.senderEmail && (
+                              <p className="text-xs text-white/30 flex items-center gap-1 mt-0.5">
+                                <Mail size={10} /> {msg.senderEmail}
+                              </p>
+                            )}
+                            <p className="text-xs text-white/20 mt-0.5">
+                              {new Date(msg.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {!msg.isRead && (
+                              <button
+                                type="button"
+                                onClick={() => markAsRead.mutate(msg.id)}
+                                title="Marcar como lida"
+                                className="p-1.5 rounded-lg text-white/30 hover:text-green-400 hover:bg-green-400/10 transition-all"
+                              >
+                                <Check size={14} />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setExpandedMessage(expandedMessage === msg.id ? null : msg.id)}
+                              title={expandedMessage === msg.id ? 'Recolher' : 'Expandir'}
+                              className="p-1.5 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/5 transition-all"
+                            >
+                              {expandedMessage === msg.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                            </button>
+                          </div>
+                        </div>
+                        {expandedMessage === msg.id ? (
+                          <p className="text-sm text-white/60 mt-2 whitespace-pre-wrap">{msg.message}</p>
+                        ) : (
+                          <p className="text-sm text-white/40 mt-1 truncate">{msg.message}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
+                    <MessageSquare size={24} className="mx-auto text-white/15 mb-2" />
+                    <p className="text-sm text-white/30">Nenhuma mensagem ainda</p>
+                    <p className="text-xs text-white/15 mt-1">Quando alguem enviar uma mensagem pelo seu cartao, ela aparecera aqui</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Actions Bar */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -987,6 +1111,7 @@ export function EditorPage() {
                 coverPhotoUrl={resolvePhotoUrl(profile?.coverPhotoUrl) ? `${resolvePhotoUrl(profile?.coverPhotoUrl)}?v=${coverVersion}` : undefined}
                 buttonColor={form.buttonColor}
                 cardTheme={form.cardTheme}
+                availabilityStatus={form.availabilityStatus || undefined}
                 socialLinks={form.socialLinks}
               />
             </div>

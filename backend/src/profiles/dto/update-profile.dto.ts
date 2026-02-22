@@ -37,6 +37,8 @@ export const updateProfileSchema = z.object({
   resumeType: z.enum(['pdf', 'link']).optional().nullable(),
   cardTheme: z.enum(['default', 'gradient', 'minimal', 'bold', 'ocean', 'sunset', 'forest', 'neon', 'elegant', 'cosmic']).optional(),
   coverPhotoUrl: z.preprocess(emptyToUndefined, safeUrlSchema.optional().nullable()),
+  availabilityStatus: z.enum(['available', 'busy', 'unavailable']).optional().nullable(),
+  availabilityMessage: z.preprocess(emptyToUndefined, z.string().max(100).optional().nullable()),
   socialLinks: z.array(socialLinkSchema).max(20).optional(),
 }).transform((data) => {
   // Filter out incomplete social links (empty label or invalid url)

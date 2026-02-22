@@ -17,6 +17,7 @@ interface CardPreviewProps {
   coverPhotoUrl?: string;
   buttonColor?: string;
   cardTheme?: string;
+  availabilityStatus?: string;
   socialLinks?: Array<{
     platform: string;
     label: string;
@@ -54,10 +55,11 @@ export function CardPreview({
   coverPhotoUrl,
   buttonColor,
   cardTheme,
+  availabilityStatus,
   socialLinks,
   demo,
 }: CardPreviewProps) {
-  const card = demo ? DEMO_CARD : { displayName, bio, photoUrl, coverPhotoUrl, buttonColor, cardTheme, socialLinks };
+  const card = demo ? DEMO_CARD : { displayName, bio, photoUrl, coverPhotoUrl, buttonColor, cardTheme, availabilityStatus, socialLinks };
   const accent = card.buttonColor || '#00E4F2';
 
   return (
@@ -102,6 +104,20 @@ export function CardPreview({
           <h3 className="text-xl font-bold text-white mb-1">
             {card.displayName || 'Seu Nome'}
           </h3>
+
+          {/* Availability Badge */}
+          {card.availabilityStatus && (
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className={`w-2 h-2 rounded-full ${
+                card.availabilityStatus === 'available' ? 'bg-green-400' :
+                card.availabilityStatus === 'busy' ? 'bg-yellow-400' : 'bg-red-400'
+              }`} />
+              <span className="text-[11px] text-white/50">
+                {card.availabilityStatus === 'available' ? 'Disponivel' :
+                 card.availabilityStatus === 'busy' ? 'Ocupado' : 'Indisponivel'}
+              </span>
+            </div>
+          )}
 
           {/* Bio */}
           {card.bio && (

@@ -11,9 +11,13 @@ const features = [
   'Upload de curriculo',
   'QR Code do seu cartao',
   'Salvar Contato (vCard)',
-  '4 temas visuais',
-  'Contador de visualizacoes',
-  'SEO basico para compartilhamento',
+  '10 temas visuais',
+  'Foto de capa personalizada',
+  'Links personalizados (link-in-bio)',
+  'Analytics de visualizacoes e cliques',
+  'Formulario de contato integrado',
+  'Compartilhamento inteligente',
+  'Status de disponibilidade',
 ];
 
 export function PricingSection() {
@@ -42,10 +46,16 @@ export function PricingSection() {
             <div className="absolute top-0 left-0 right-0 h-1 gradient-bg" />
 
             <div className="text-center mb-8">
-              <p className="text-sm text-brand-cyan font-semibold uppercase tracking-wider mb-2">
-                Assinatura anual
-              </p>
-              <div className="flex items-baseline justify-center gap-1">
+              <div className="inline-flex items-center gap-2 mb-3">
+                <p className="text-sm text-brand-cyan font-semibold uppercase tracking-wider">
+                  Assinatura anual
+                </p>
+                <span className="text-xs font-bold bg-gradient-to-r from-brand-cyan to-brand-magenta text-white px-2.5 py-0.5 rounded-full">
+                  70% OFF
+                </span>
+              </div>
+              <div className="flex items-baseline justify-center gap-2">
+                <span className="text-lg text-white/30 line-through">R$99,90</span>
                 <span className="text-sm text-white/50">R$</span>
                 <span className="text-6xl font-extrabold gradient-text">30</span>
                 <span className="text-sm text-white/40">/ano</span>

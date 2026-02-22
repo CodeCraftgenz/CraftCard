@@ -22,6 +22,8 @@ export interface Profile {
   viewCount: number;
   cardTheme: string;
   coverPhotoUrl: string | null;
+  availabilityStatus: string | null;
+  availabilityMessage: string | null;
   socialLinks: SocialLink[];
 }
 

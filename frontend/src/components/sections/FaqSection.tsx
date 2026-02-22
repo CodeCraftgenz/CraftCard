@@ -5,7 +5,7 @@ import { ChevronDown } from 'lucide-react';
 const faqs = [
   {
     q: 'Como funciona a assinatura?',
-    a: 'A assinatura e anual por R$30. Voce tem acesso completo por 365 dias. Ao final do periodo, basta renovar para continuar com seu cartao ativo.',
+    a: 'A assinatura e anual por R$30 (preco promocional — valor original R$99,90). Voce tem acesso completo por 365 dias. Ao final do periodo, basta renovar para continuar com seu cartao ativo.',
   },
   {
     q: 'Posso editar meu cartao depois de publicar?',

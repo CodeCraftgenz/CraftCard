@@ -10,6 +10,7 @@ import { MeModule } from './me/me.module';
 import { StorageModule } from './storage/storage.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { ContactsModule } from './contacts/contacts.module';
 import { AppController } from './app.controller';
 import configuration from './common/config/configuration';
 
@@ -27,6 +28,7 @@ import configuration from './common/config/configuration';
     StorageModule,
     PaymentsModule,
     AnalyticsModule,
+    ContactsModule,
   ],
   controllers: [AppController],
   providers: [

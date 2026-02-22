@@ -43,9 +43,13 @@ model Profile {
   coverPhotoUrl  String?  @map("cover_photo_url")
   coverPhotoData String?  @map("cover_photo_data") @db.MediumText
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  socialLinks  SocialLink[]
-  profileViews ProfileView[]
+  availabilityStatus  String?  @map("availability_status")
+  availabilityMessage String?  @map("availability_message")
+
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  socialLinks     SocialLink[]
+  profileViews    ProfileView[]
+  contactMessages ContactMessage[]
 
   @@map("profiles")
 }
@@ -127,4 +131,20 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+model ContactMessage {
+  id          String   @id @default(uuid())
+  profileId   String   @map("profile_id")
+  senderName  String   @map("sender_name")
+  senderEmail String?  @map("sender_email")
+  message     String   @db.Text
+  isRead      Boolean  @default(false) @map("is_read")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([profileId, isRead])
+  @@map("contact_messages")
 }
