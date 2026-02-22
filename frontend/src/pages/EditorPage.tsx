@@ -114,6 +114,7 @@ export function EditorPage() {
     photoPositionY: 50,
     coverPositionY: 50,
     leadCaptureEnabled: false,
+    bookingEnabled: false,
     socialLinks: [] as Array<{ platform: string; label: string; url: string; order: number; startsAt: string | null; endsAt: string | null }>,
   });
 
@@ -148,6 +149,7 @@ export function EditorPage() {
         photoPositionY: profile.photoPositionY ?? 50,
         coverPositionY: profile.coverPositionY ?? 50,
         leadCaptureEnabled: profile.leadCaptureEnabled ?? false,
+        bookingEnabled: profile.bookingEnabled ?? false,
         socialLinks: profile.socialLinks.map((l) => ({
           platform: l.platform,
           label: l.label,
@@ -210,6 +212,7 @@ export function EditorPage() {
     data.photoPositionY = form.photoPositionY;
     data.coverPositionY = form.coverPositionY;
     data.leadCaptureEnabled = form.leadCaptureEnabled;
+    data.bookingEnabled = form.bookingEnabled;
 
     // Only send slug if >= 3 chars
     if (slugInput.length >= 3) {
@@ -1586,7 +1589,18 @@ export function EditorPage() {
                   <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
                     <Calendar size={16} className="text-blue-400" />
                   </div>
-                  <h3 className="font-semibold">Agendamento</h3>
+                  <div className="flex-1">
+                    <h3 className="font-semibold">Agendamento</h3>
+                    <p className="text-xs text-white/40 mt-0.5">Ative para visitantes agendarem reunioes</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => updateField('bookingEnabled', !form.bookingEnabled)}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${form.bookingEnabled ? 'bg-blue-500' : 'bg-white/10'}`}
+                    title="Ativar agendamento"
+                  >
+                    <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${form.bookingEnabled ? 'left-[22px]' : 'left-0.5'}`} />
+                  </button>
                 </div>
 
                 {/* Quick Slot Config */}

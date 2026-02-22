@@ -59,6 +59,7 @@ interface PublicProfile {
   isVerified?: boolean;
   videoUrl?: string | null;
   leadCaptureEnabled?: boolean;
+  bookingEnabled?: boolean;
   socialLinks: Array<{
     id: string;
     platform: string;

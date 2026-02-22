@@ -9,10 +9,10 @@ export class BookingsService {
   async getSlots(slug: string) {
     const profile = await this.prisma.profile.findFirst({
       where: { slug },
-      select: { id: true, isPublished: true, availableSlots: { orderBy: { dayOfWeek: 'asc' } } },
+      select: { id: true, isPublished: true, bookingEnabled: true, availableSlots: { orderBy: { dayOfWeek: 'asc' } } },
     });
-    if (!profile || !profile.isPublished) {
-      throw AppException.notFound('Perfil');
+    if (!profile || !profile.isPublished || !profile.bookingEnabled) {
+      return [];
     }
     return profile.availableSlots;
   }

@@ -30,6 +30,7 @@ export interface Profile {
   availabilityMessage: string | null;
   videoUrl: string | null;
   leadCaptureEnabled: boolean;
+  bookingEnabled: boolean;
   socialLinks: SocialLink[];
 }
 

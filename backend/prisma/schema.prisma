@@ -54,6 +54,7 @@ model Profile {
 
   videoUrl            String?  @map("video_url")
   leadCaptureEnabled  Boolean  @default(false) @map("lead_capture_enabled")
+  bookingEnabled      Boolean  @default(false) @map("booking_enabled")
 
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   socialLinks     SocialLink[]

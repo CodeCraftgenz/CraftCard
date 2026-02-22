@@ -160,7 +160,7 @@ export class StorageController {
       'Content-Type': 'application/pdf',
       'Content-Length': buffer.length.toString(),
       'Content-Disposition': `inline; filename="${fileName}"`,
-      'Cache-Control': 'public, max-age=3600',
+      'Cache-Control': 'no-cache, must-revalidate',
     });
     res.send(buffer);
   }

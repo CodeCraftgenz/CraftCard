@@ -60,6 +60,7 @@ export const updateProfileSchema = z.object({
   coverPositionY: z.number().int().min(0).max(100).optional(),
   videoUrl: z.preprocess(emptyToUndefined, safeUrlSchema.optional().nullable()),
   leadCaptureEnabled: z.boolean().optional(),
+  bookingEnabled: z.boolean().optional(),
   socialLinks: z.array(socialLinkSchema).max(20).optional(),
 }).transform((data) => {
   // Filter out incomplete social links (empty label or invalid url)
