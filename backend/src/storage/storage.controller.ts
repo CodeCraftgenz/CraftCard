@@ -144,6 +144,27 @@ export class StorageController {
     return { url: coverPhotoUrl };
   }
 
+  @Public()
+  @Get('resume/:slug')
+  async serveResume(@Param('slug') slug: string, @Res() res: Response) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { slug },
+      select: { resumeData: true, resumeType: true, displayName: true },
+    });
+    if (!profile?.resumeData) {
+      throw AppException.notFound('Curriculo');
+    }
+    const buffer = Buffer.from(profile.resumeData, 'base64');
+    const fileName = `${(profile.displayName || 'curriculo').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Length': buffer.length.toString(),
+      'Content-Disposition': `inline; filename="${fileName}"`,
+      'Cache-Control': 'public, max-age=3600',
+    });
+    res.send(buffer);
+  }
+
   @Post('me/resume-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadResume(
@@ -158,31 +179,21 @@ export class StorageController {
     )
     file: Express.Multer.File,
   ) {
-    // Delete old resume
     const profile = await this.prisma.profile.findFirst({
       where: { userId: user.sub, isPrimary: true },
-      select: { resumeUrl: true },
+      select: { id: true, slug: true },
     });
-    if (profile?.resumeUrl) {
-      await this.storageService.deleteFile(profile.resumeUrl);
-    }
+    if (!profile) throw AppException.notFound('Perfil');
 
-    // Upload new resume
-    const url = await this.storageService.uploadFile(file.buffer, 'resumes', user.sub, 'pdf');
-
-    // Update profile
-    const currentProfile = await this.prisma.profile.findFirst({
-      where: { userId: user.sub, isPrimary: true },
-      select: { id: true },
-    });
-    if (!currentProfile) throw AppException.notFound('Perfil');
+    const base64 = file.buffer.toString('base64');
+    const resumeUrl = `/api/resume/${profile.slug}`;
 
     await this.prisma.profile.update({
-      where: { id: currentProfile.id },
-      data: { resumeUrl: url, resumeType: 'pdf' },
+      where: { id: profile.id },
+      data: { resumeUrl, resumeData: base64, resumeType: 'pdf' },
     });
 
-    return { url };
+    return { url: resumeUrl };
   }
 
   @Post('me/video-upload')

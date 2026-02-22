@@ -1571,6 +1571,7 @@ export function EditorPage() {
                     type="button"
                     onClick={() => updateField('leadCaptureEnabled', !form.leadCaptureEnabled)}
                     className={`relative w-11 h-6 rounded-full transition-colors ${form.leadCaptureEnabled ? 'bg-emerald-500' : 'bg-white/10'}`}
+                    title="Ativar captura de leads"
                   >
                     <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${form.leadCaptureEnabled ? 'left-[22px]' : 'left-0.5'}`} />
                   </button>

@@ -33,6 +33,7 @@ model Profile {
   photoUrl    String?  @map("photo_url")
   photoData   String?  @map("photo_data") @db.MediumText
   resumeUrl   String?  @map("resume_url")
+  resumeData  String?  @map("resume_data") @db.LongText
   resumeType  String?  @map("resume_type")
   buttonColor String   @default("#00E4F2") @map("button_color")
   slug        String   @unique

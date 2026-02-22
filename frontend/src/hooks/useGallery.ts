@@ -23,9 +23,7 @@ export function useUploadGalleryImage() {
       const formData = new FormData();
       formData.append('file', file);
       if (caption) formData.append('caption', caption);
-      return api.post('/me/gallery', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      return api.post('/me/gallery', formData);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['gallery'] }),
   });

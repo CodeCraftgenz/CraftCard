@@ -439,7 +439,7 @@ export function PublicCardPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`w-full max-w-md sm:max-w-lg ${theme !== 'minimal' ? 'p-6' : ''} ${getThemeCardStyle(theme)}`}
+          className={`w-full max-w-md sm:max-w-lg lg:max-w-2xl ${theme !== 'minimal' ? 'p-6' : ''} ${getThemeCardStyle(theme)}`}
         >
           {/* Cover Photo */}
           {profile.coverPhotoUrl && (
@@ -668,7 +668,7 @@ export function PublicCardPage() {
           {/* Resume */}
           {profile.resumeUrl && (
             <motion.a
-              href={`${profile.resumeUrl}?v=${Date.now()}`}
+              href={`${resolvePhotoUrl(profile.resumeUrl) || profile.resumeUrl}?v=${Date.now()}`}
               target="_blank"
               rel="noopener noreferrer"
               initial={{ opacity: 0 }}

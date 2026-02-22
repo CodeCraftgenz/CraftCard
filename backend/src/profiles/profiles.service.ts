@@ -45,7 +45,7 @@ export class ProfilesService {
           include: { socialLinks: { orderBy: { order: 'asc' } } },
         });
     if (!profile) throw AppException.notFound('Perfil');
-    const { photoData: _, coverPhotoData: _c, ...rest } = profile;
+    const { photoData: _, coverPhotoData: _c, resumeData: _r, ...rest } = profile;
     return { ...rest, resumeUrl: this.migrateUrl(rest.resumeUrl) };
   }
 
@@ -136,7 +136,7 @@ export class ProfilesService {
     // Check if user has paid (verified badge)
     const subscription = await this.paymentsService.getActiveSubscription(profile.userId);
 
-    const { photoData: _, coverPhotoData: _c, ...rest } = profile;
+    const { photoData: _, coverPhotoData: _c, resumeData: _r, ...rest } = profile;
     return { ...rest, resumeUrl: this.migrateUrl(rest.resumeUrl), socialLinks: activeLinks, isVerified: subscription.active };
   }
 
