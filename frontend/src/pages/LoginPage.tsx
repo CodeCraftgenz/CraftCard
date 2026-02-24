@@ -41,6 +41,8 @@ export function LoginPage() {
   }, [login, navigate]);
 
   useEffect(() => {
+    if (isLoading) return;
+
     if (isAuthenticated) {
       navigate('/editor');
       return;
@@ -97,7 +99,7 @@ export function LoginPage() {
       }, 200);
       return () => clearInterval(interval);
     }
-  }, [isAuthenticated, navigate, handleGoogleCallback]);
+  }, [isLoading, isAuthenticated, navigate, handleGoogleCallback]);
 
   if (isLoading) {
     return (

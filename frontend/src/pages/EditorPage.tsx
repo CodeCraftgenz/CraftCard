@@ -465,14 +465,6 @@ export function EditorPage() {
 
   const completeness = getProfileCompleteness();
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-brand-bg-dark flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-brand-cyan/30 border-t-brand-cyan rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   const handleOnboardingComplete = useCallback((data: OnboardingData) => {
     setForm((prev) => ({
       ...prev,
@@ -511,6 +503,14 @@ export function EditorPage() {
     setShowOnboarding(false);
     localStorage.setItem('craftcard_onboarding_done', '1');
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-brand-bg-dark flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-brand-cyan/30 border-t-brand-cyan rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-brand-bg-dark text-white">
@@ -2146,6 +2146,13 @@ export function EditorPage() {
                 photoPositionY={form.photoPositionY}
                 coverPositionY={form.coverPositionY}
                 isVerified={hasPaid}
+                fontFamily={form.fontFamily}
+                fontSizeScale={form.fontSizeScale}
+                backgroundType={form.backgroundType}
+                backgroundGradient={form.backgroundGradient}
+                backgroundPattern={form.backgroundPattern}
+                linkStyle={form.linkStyle}
+                linkAnimation={form.linkAnimation}
                 socialLinks={form.socialLinks}
               />
             </div>

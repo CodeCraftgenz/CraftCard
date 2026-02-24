@@ -9,6 +9,13 @@ import {
   ExternalLink,
   User,
   BadgeCheck,
+  Phone,
+  Music,
+  PlayCircle,
+  MapPin,
+  FileDown,
+  CreditCard,
+  Minus,
 } from 'lucide-react';
 
 interface CardPreviewProps {
@@ -22,10 +29,18 @@ interface CardPreviewProps {
   photoPositionY?: number;
   coverPositionY?: number;
   isVerified?: boolean;
+  fontFamily?: string | null;
+  fontSizeScale?: number;
+  backgroundType?: string;
+  backgroundGradient?: string | null;
+  backgroundPattern?: string | null;
+  linkStyle?: string;
+  linkAnimation?: string;
   socialLinks?: Array<{
     platform: string;
     label: string;
     url: string;
+    linkType?: string | null;
   }>;
   demo?: boolean;
 }
@@ -50,7 +65,77 @@ const platformIcons: Record<string, typeof Instagram> = {
   email: Mail,
   whatsapp: MessageCircle,
   custom: ExternalLink,
+  phone: Phone,
+  music_embed: Music,
+  video_embed: PlayCircle,
+  map: MapPin,
+  file: FileDown,
+  pix: CreditCard,
+  header: Minus,
 };
+
+function getThemeBackground(theme: string, accent: string): string {
+  switch (theme) {
+    case 'gradient':
+      return `linear-gradient(135deg, ${accent}25 0%, #D12BF220 50%, #1A1A2E 100%)`;
+    case 'minimal':
+      return '#1A1A2E';
+    case 'bold':
+      return `linear-gradient(180deg, ${accent}30 0%, ${accent}10 30%, #1A1A2E 60%)`;
+    case 'ocean':
+      return 'linear-gradient(135deg, #0077B620 0%, #20B2AA20 50%, #1A1A2E 100%)';
+    case 'sunset':
+      return 'linear-gradient(135deg, #FF634720 0%, #FF69B420 50%, #1A1A2E 100%)';
+    case 'forest':
+      return 'linear-gradient(135deg, #22883320 0%, #50C87820 50%, #1A1A2E 100%)';
+    case 'neon':
+      return '#0A0A0A';
+    case 'elegant':
+      return 'linear-gradient(180deg, #B8860B15 0%, #8B451310 30%, #1A1A2E 60%)';
+    case 'cosmic':
+      return 'linear-gradient(135deg, #6A0DAD20 0%, #1E3A8A20 50%, #0F0F2E 100%)';
+    default:
+      return `linear-gradient(180deg, ${accent}15 0%, #1A1A2E 30%, #1A1A2E 100%)`;
+  }
+}
+
+function getThemeCardClass(theme: string): string {
+  switch (theme) {
+    case 'neon':
+      return 'border border-pink-500/40 shadow-[0_0_20px_rgba(236,72,153,0.1)]';
+    case 'ocean':
+      return 'border border-teal-500/20';
+    case 'sunset':
+      return 'border border-orange-500/20';
+    case 'forest':
+      return 'border border-green-500/20';
+    case 'elegant':
+      return 'border border-yellow-600/20';
+    case 'cosmic':
+      return 'border border-purple-500/20';
+    case 'bold':
+      return 'border-2 border-white/20';
+    case 'minimal':
+      return '';
+    default:
+      return 'border border-white/10';
+  }
+}
+
+function getLinkClasses(style: string): string {
+  switch (style) {
+    case 'pill':
+      return 'rounded-full';
+    case 'square':
+      return 'rounded-md';
+    case 'outline':
+      return 'rounded-xl bg-transparent !border';
+    case 'ghost':
+      return 'rounded-xl bg-transparent';
+    default:
+      return 'rounded-xl';
+  }
+}
 
 export function CardPreview({
   displayName,
@@ -63,11 +148,39 @@ export function CardPreview({
   photoPositionY = 50,
   coverPositionY = 50,
   isVerified,
+  fontFamily,
+  fontSizeScale = 1,
+  backgroundType,
+  backgroundGradient,
+  backgroundPattern,
+  linkStyle = 'rounded',
   socialLinks,
   demo,
 }: CardPreviewProps) {
-  const card = demo ? DEMO_CARD : { displayName, bio, photoUrl, coverPhotoUrl, buttonColor, cardTheme, availabilityStatus, photoPositionY, coverPositionY, isVerified, socialLinks };
+  const card = demo ? DEMO_CARD : {
+    displayName, bio, photoUrl, coverPhotoUrl, buttonColor, cardTheme,
+    availabilityStatus, photoPositionY, coverPositionY, isVerified, socialLinks,
+  };
   const accent = card.buttonColor || '#00E4F2';
+  const theme = card.cardTheme || 'default';
+  const font = fontFamily || 'Inter';
+  const scale = fontSizeScale || 1;
+  const bgType = backgroundType || 'theme';
+
+  // Compute background
+  const computedBg = (() => {
+    if (bgType === 'gradient' && backgroundGradient) {
+      const parts = backgroundGradient.split(',');
+      if (parts.length >= 3) return `linear-gradient(${parts[0]},${parts[1]},${parts[2]})`;
+    }
+    if (bgType === 'pattern') {
+      return getThemeBackground(theme, accent);
+    }
+    return getThemeBackground(theme, accent);
+  })();
+
+  const linkClass = getLinkClasses(linkStyle);
+  const themeCardClass = getThemeCardClass(theme);
 
   return (
     <motion.div
@@ -75,13 +188,26 @@ export function CardPreview({
       animate={demo ? { opacity: 1, scale: 1 } : undefined}
       transition={{ duration: 0.5 }}
       className="w-full max-w-[340px] mx-auto"
+      style={{ fontFamily: `'${font}', sans-serif`, fontSize: `${scale}rem` }}
     >
       <div
-        className="rounded-3xl overflow-hidden shadow-2xl"
-        style={{
-          background: `linear-gradient(180deg, ${accent}15 0%, #16213E 40%)`,
-        }}
+        className={`rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl bg-white/[0.06] ${themeCardClass}`}
+        style={{ background: computedBg }}
       >
+        {/* Pattern overlay */}
+        {bgType === 'pattern' && backgroundPattern && (
+          <div className="absolute inset-0 pointer-events-none opacity-10">
+            {backgroundPattern === 'dots' && (
+              <svg width="100%" height="100%">
+                <pattern id="prev-dots" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <circle cx="3" cy="3" r="1.5" fill={`${accent}30`} />
+                </pattern>
+                <rect width="100%" height="100%" fill="url(#prev-dots)" />
+              </svg>
+            )}
+          </div>
+        )}
+
         {/* Cover Photo */}
         {card.coverPhotoUrl && (
           <div
@@ -144,25 +270,36 @@ export function CardPreview({
           {/* Social Links */}
           <div className="w-full flex flex-col gap-2.5">
             {(card.socialLinks || []).map((link, i) => {
+              // Header separator
+              if (link.platform === 'header' || link.linkType === 'header') {
+                return (
+                  <div key={i} className="text-xs font-semibold text-white/40 uppercase tracking-wider mt-2 mb-1 text-left px-1">
+                    {link.label}
+                  </div>
+                );
+              }
+
               const Icon = platformIcons[link.platform] || Globe;
+              const isOutline = linkStyle === 'outline';
+              const isGhost = linkStyle === 'ghost';
+
               return (
-                <motion.a
+                <motion.div
                   key={i}
-                  href={demo ? undefined : link.url}
-                  target={demo ? undefined : '_blank'}
-                  rel="noopener noreferrer"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-white font-medium text-sm transition-all"
+                  className={`flex items-center gap-3 px-4 py-3 text-white font-medium text-sm transition-all ${linkClass}`}
                   style={{
-                    backgroundColor: `${accent}20`,
-                    borderLeft: `3px solid ${accent}`,
+                    backgroundColor: isGhost ? 'transparent' : isOutline ? 'transparent' : `${accent}20`,
+                    borderColor: isOutline ? `${accent}60` : undefined,
+                    borderWidth: isOutline ? 1 : undefined,
+                    borderLeft: !isOutline && !isGhost ? `3px solid ${accent}` : undefined,
                   }}
                 >
                   <Icon size={18} style={{ color: accent }} />
-                  <span>{link.label}</span>
+                  <span>{link.label || 'Link'}</span>
                   <span className="ml-auto text-white/30">&rsaquo;</span>
-                </motion.a>
+                </motion.div>
               );
             })}
           </div>
