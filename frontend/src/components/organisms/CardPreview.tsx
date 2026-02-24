@@ -249,7 +249,7 @@ export function CardPreview({
           </div>
 
           {/* Name */}
-          <h3 className="text-xl font-bold text-white mb-1 flex items-center justify-center gap-1">
+          <h3 className="font-bold text-white mb-1 flex items-center justify-center gap-1" style={{ fontSize: '1.25em' }}>
             {card.displayName || 'Seu Nome'}
             {card.isVerified && (
               <BadgeCheck size={18} className="text-blue-400 shrink-0" />
@@ -263,7 +263,7 @@ export function CardPreview({
                 card.availabilityStatus === 'available' ? 'bg-green-400' :
                 card.availabilityStatus === 'busy' ? 'bg-yellow-400' : 'bg-red-400'
               }`} />
-              <span className="text-[11px] text-white/50">
+              <span className="text-white/50" style={{ fontSize: '0.6875em' }}>
                 {card.availabilityStatus === 'available' ? 'Disponivel' :
                  card.availabilityStatus === 'busy' ? 'Ocupado' : 'Indisponivel'}
               </span>
@@ -272,7 +272,7 @@ export function CardPreview({
 
           {/* Bio */}
           {card.bio && (
-            <p className="text-sm text-white/60 mb-6 leading-relaxed max-w-[260px]">
+            <p className="text-white/60 mb-6 leading-relaxed max-w-[260px]" style={{ fontSize: '0.875em' }}>
               {card.bio}
             </p>
           )}
@@ -283,7 +283,7 @@ export function CardPreview({
               // Header separator
               if (link.platform === 'header' || link.linkType === 'header') {
                 return (
-                  <div key={i} className="text-xs font-semibold text-white/40 uppercase tracking-wider mt-2 mb-1 text-left px-1">
+                  <div key={i} className="font-semibold text-white/40 uppercase tracking-wider mt-2 mb-1 text-left px-1" style={{ fontSize: '0.75em' }}>
                     {link.label}
                   </div>
                 );
@@ -298,8 +298,9 @@ export function CardPreview({
                   key={i}
                   whileHover={getHoverAnim(linkAnimation)}
                   whileTap={{ scale: 0.98 }}
-                  className={`flex items-center gap-3 px-4 py-3 text-white font-medium text-sm transition-all cursor-pointer ${linkClass} ${linkAnimation === 'glow' ? 'hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]' : ''}`}
+                  className={`flex items-center gap-3 px-4 py-3 text-white font-medium transition-all cursor-pointer ${linkClass} ${linkAnimation === 'glow' ? 'hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]' : ''}`}
                   style={{
+                    fontSize: '0.875em',
                     backgroundColor: isGhost ? 'transparent' : isOutline ? 'transparent' : `${accent}20`,
                     borderColor: isOutline ? `${accent}60` : undefined,
                     borderWidth: isOutline ? 1 : undefined,

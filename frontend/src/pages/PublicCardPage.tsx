@@ -608,7 +608,7 @@ export function PublicCardPage() {
               {!profile.photoUrl && <User className="w-12 h-12 text-white" />}
             </div>
 
-            <h1 className="text-2xl font-bold text-white text-center flex items-center justify-center gap-1.5">
+            <h1 className="font-bold text-white text-center flex items-center justify-center gap-1.5" style={{ fontSize: '1.5em' }}>
               {profile.displayName}
               {profile.isVerified && (
                 <span title="Perfil verificado" className="inline-flex">
@@ -625,7 +625,7 @@ export function PublicCardPage() {
                   profile.availabilityStatus === 'busy' ? 'bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.5)]' :
                   'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'
                 }`} />
-                <span className={`text-xs font-medium ${
+                <span style={{ fontSize: '0.75em' }} className={`font-medium ${
                   profile.availabilityStatus === 'available' ? 'text-green-400' :
                   profile.availabilityStatus === 'busy' ? 'text-yellow-400' : 'text-red-400'
                 }`}>
@@ -635,15 +635,15 @@ export function PublicCardPage() {
               </div>
             )}
             {profile.availabilityMessage && profile.availabilityStatus && (
-              <p className="text-xs text-white/40 mt-1">{profile.availabilityMessage}</p>
+              <p className="text-white/40 mt-1" style={{ fontSize: '0.75em' }}>{profile.availabilityMessage}</p>
             )}
 
             {profile.tagline && (
-              <p className="text-xs text-white/40 text-center mt-1 italic">{profile.tagline}</p>
+              <p className="text-white/40 text-center mt-1 italic" style={{ fontSize: '0.75em' }}>{profile.tagline}</p>
             )}
 
             {profile.bio && (
-              <p className="text-sm text-white/60 text-center mt-2 max-w-sm leading-relaxed">
+              <p className="text-white/60 text-center mt-2 max-w-sm leading-relaxed" style={{ fontSize: '0.875em' }}>
                 {profile.bio}
               </p>
             )}
@@ -652,13 +652,13 @@ export function PublicCardPage() {
             {(profile.location || profile.pronouns || profile.workingHours) && (
               <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
                 {profile.pronouns && (
-                  <span className="text-[10px] text-white/30 px-2 py-0.5 rounded-full bg-white/5">{profile.pronouns}</span>
+                  <span className="text-white/30 px-2 py-0.5 rounded-full bg-white/5" style={{ fontSize: '0.625em' }}>{profile.pronouns}</span>
                 )}
                 {profile.location && (
-                  <span className="text-[10px] text-white/30 px-2 py-0.5 rounded-full bg-white/5">{profile.location}</span>
+                  <span className="text-white/30 px-2 py-0.5 rounded-full bg-white/5" style={{ fontSize: '0.625em' }}>{profile.location}</span>
                 )}
                 {profile.workingHours && (
-                  <span className="text-[10px] text-white/30 px-2 py-0.5 rounded-full bg-white/5">{profile.workingHours}</span>
+                  <span className="text-white/30 px-2 py-0.5 rounded-full bg-white/5" style={{ fontSize: '0.625em' }}>{profile.workingHours}</span>
                 )}
               </div>
             )}
