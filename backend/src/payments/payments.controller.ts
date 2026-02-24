@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Headers, Query, Logger } from '@nestjs/common';
+import { Controller, Post, Get, Body, Headers, Query, Logger } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { PaymentsService } from './payments.service';
 import { Public } from '../common/decorators/public.decorator';
@@ -13,6 +13,21 @@ export class PaymentsController {
   @Post('checkout')
   async createCheckout(@CurrentUser() user: JwtPayload) {
     return this.paymentsService.createCheckoutPreference(user.sub, user.email);
+  }
+
+  /** Admin: activate a plan for any user by email */
+  @Post('admin/activate-plan')
+  async adminActivatePlan(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: { email: string; plan: string; days?: number },
+  ) {
+    return this.paymentsService.adminActivatePlan(user.sub, body.email, body.plan, body.days);
+  }
+
+  /** Admin: list all users with their plans */
+  @Get('admin/users')
+  async adminListUsers(@CurrentUser() user: JwtPayload) {
+    return this.paymentsService.adminListUsers(user.sub);
   }
 
   /**

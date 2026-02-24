@@ -288,6 +288,77 @@ export class PaymentsService {
     return { synced: false, status: 'still_pending' };
   }
 
+  /** Admin-only: activate a plan for any user by email */
+  async adminActivatePlan(adminUserId: string, targetEmail: string, plan: string, days?: number): Promise<{ activated: boolean; email: string; plan: string; expiresAt: string | null }> {
+    // Verify caller is admin
+    const admin = await this.prisma.user.findUnique({ where: { id: adminUserId }, select: { email: true } });
+    if (!admin || !FREE_ACCESS_EMAILS.has(admin.email.toLowerCase())) {
+      throw AppException.forbidden('Acesso restrito a administradores');
+    }
+
+    const validPlans = ['FREE', 'PRO', 'BUSINESS', 'ENTERPRISE'];
+    const normalizedPlan = plan.toUpperCase();
+    if (!validPlans.includes(normalizedPlan)) {
+      throw AppException.badRequest(`Plano invalido. Use: ${validPlans.join(', ')}`);
+    }
+
+    const targetUser = await this.prisma.user.findFirst({
+      where: { email: { equals: targetEmail } },
+      select: { id: true, email: true, name: true },
+    });
+    if (!targetUser) {
+      throw AppException.notFound(`Usuario com email ${targetEmail}`);
+    }
+
+    // Update user plan
+    await this.prisma.user.update({
+      where: { id: targetUser.id },
+      data: { plan: normalizedPlan },
+    });
+
+    // Create payment record for audit
+    const subscriptionDays = days || SUBSCRIPTION_DAYS;
+    const now = new Date();
+    const expiresAt = normalizedPlan === 'FREE' ? null : new Date(now.getTime() + subscriptionDays * 24 * 60 * 60 * 1000);
+
+    if (normalizedPlan !== 'FREE') {
+      await this.prisma.payment.create({
+        data: {
+          userId: targetUser.id,
+          amount: 0,
+          currency: 'BRL',
+          status: 'approved',
+          payerEmail: targetEmail,
+          paidAt: now,
+          expiresAt,
+        },
+      });
+    }
+
+    this.logger.log(`Admin ${admin.email} activated ${normalizedPlan} for ${targetEmail} (expires: ${expiresAt?.toISOString() || 'never'})`);
+
+    return {
+      activated: true,
+      email: targetEmail,
+      plan: normalizedPlan,
+      expiresAt: expiresAt?.toISOString() || null,
+    };
+  }
+
+  /** Admin-only: list all users with their plans */
+  async adminListUsers(adminUserId: string): Promise<{ id: string; name: string | null; email: string; plan: string; createdAt: Date }[]> {
+    const admin = await this.prisma.user.findUnique({ where: { id: adminUserId }, select: { email: true } });
+    if (!admin || !FREE_ACCESS_EMAILS.has(admin.email.toLowerCase())) {
+      throw AppException.forbidden('Acesso restrito a administradores');
+    }
+
+    return this.prisma.user.findMany({
+      select: { id: true, name: true, email: true, plan: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+  }
+
   private async processPaymentNotification(mpPaymentId: string): Promise<void> {
     const accessToken = this.configService.get('MP_ACCESS_TOKEN', { infer: true });
     const response = await fetch(`https://api.mercadopago.com/v1/payments/${mpPaymentId}`, {
