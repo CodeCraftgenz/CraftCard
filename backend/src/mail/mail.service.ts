@@ -12,7 +12,7 @@ export class MailService {
 
   constructor(private readonly config: ConfigService) {
     const host = this.config.get<string>('MAIL_HOST');
-    const port = this.config.get<number>('MAIL_PORT');
+    const portNum = Number(this.config.get('MAIL_PORT')) || 465;
     const user = this.config.get<string>('MAIL_USER');
     const pass = this.config.get<string>('MAIL_PASS');
     this.from = this.config.get<string>('MAIL_FROM') || user || 'noreply@craftcard.com';
@@ -21,11 +21,11 @@ export class MailService {
     if (host && user && pass) {
       this.transporter = nodemailer.createTransport({
         host,
-        port: port || 465,
-        secure: (port || 465) === 465,
+        port: portNum,
+        secure: portNum === 465,
         auth: { user, pass },
       });
-      this.logger.log('Mail transporter configured');
+      this.logger.log(`Mail transporter configured (${host}:${portNum}, secure=${portNum === 465})`);
     } else {
       this.logger.warn('MAIL_* env vars not configured — email notifications disabled');
     }
