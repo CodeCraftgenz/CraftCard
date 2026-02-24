@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus,
   Camera, FileText, Palette, Link2, Sparkles, Eye, Smartphone,
-  QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, ChevronDown, ChevronUp, Star, Video, UserPlus,
+  QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, Star, Video, UserPlus,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
@@ -36,7 +36,7 @@ import { useContacts, useMarkAsRead } from '@/hooks/useContacts';
 import { useTestimonials, useApproveTestimonial, useRejectTestimonial } from '@/hooks/useTestimonials';
 import { useGallery, useUploadGalleryImage, useDeleteGalleryImage } from '@/hooks/useGallery';
 import { useMySlots, useSaveSlots, useMyBookings, useUpdateBookingStatus } from '@/hooks/useBookings';
-import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, resolvePhotoUrl } from '@/lib/constants';
+import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, resolvePhotoUrl, API_URL } from '@/lib/constants';
 import { StyleEditor } from '@/components/organisms/StyleEditor';
 import { ServicesEditor } from '@/components/organisms/ServicesEditor';
 import { FaqEditor } from '@/components/organisms/FaqEditor';
@@ -1651,78 +1651,107 @@ export function EditorPage() {
               </div>
             )}
 
-            {/* Messages Inbox (paid users only) */}
+            {/* Messages / Leads Inbox (paid users only) */}
             {hasPaid && (
               <div className="glass-card p-6 hover:border-white/20 transition-colors">
-                <div className="flex items-center gap-2 mb-5">
-                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                    <MessageSquare size={16} className="text-purple-400" />
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                      <MessageSquare size={16} className="text-purple-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Leads & Mensagens</h3>
+                      <p className="text-xs text-white/30">{contacts?.length || 0} contatos recebidos</p>
+                    </div>
+                    {contacts && contacts.filter((m) => !m.isRead).length > 0 && (
+                      <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-semibold">
+                        {contacts.filter((m) => !m.isRead).length} nova{contacts.filter((m) => !m.isRead).length > 1 ? 's' : ''}
+                      </span>
+                    )}
                   </div>
-                  <h3 className="font-semibold">Mensagens</h3>
-                  {contacts && contacts.filter((m) => !m.isRead).length > 0 && (
-                    <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-semibold">
-                      {contacts.filter((m) => !m.isRead).length} nova{contacts.filter((m) => !m.isRead).length > 1 ? 's' : ''}
-                    </span>
+                  {contacts && contacts.length > 0 && (
+                    <a
+                      href={`${API_URL}/contacts/me/export`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-white/50 rounded-lg text-xs hover:bg-white/10 transition-colors"
+                    >
+                      <Download size={12} />
+                      CSV
+                    </a>
                   )}
                 </div>
 
                 {contacts && contacts.length > 0 ? (
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                  <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
                     {contacts.map((msg) => (
                       <div
                         key={msg.id}
-                        className={`p-3 rounded-xl border transition-all ${
+                        className={`p-4 rounded-xl border transition-all ${
                           msg.isRead ? 'bg-white/[0.02] border-white/5' : 'bg-brand-cyan/5 border-brand-cyan/20'
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start gap-3">
+                          {/* Avatar */}
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-cyan/20 to-purple-500/20 flex items-center justify-center text-sm font-bold text-brand-cyan shrink-0">
+                            {msg.senderName.charAt(0).toUpperCase()}
+                          </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-white">{msg.senderName}</span>
-                              {!msg.isRead && <div className="w-2 h-2 rounded-full bg-brand-cyan shrink-0" />}
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-sm font-semibold text-white truncate">{msg.senderName}</span>
+                                {!msg.isRead && <div className="w-2 h-2 rounded-full bg-brand-cyan shrink-0" />}
+                              </div>
+                              <span className="text-[10px] text-white/20 shrink-0">
+                                {new Date(msg.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              </span>
                             </div>
                             {msg.senderEmail && (
-                              <p className="text-xs text-white/30 flex items-center gap-1 mt-0.5">
-                                <Mail size={10} /> {msg.senderEmail}
-                              </p>
+                              <p className="text-xs text-white/40 mt-0.5 truncate">{msg.senderEmail}</p>
                             )}
-                            <p className="text-xs text-white/20 mt-0.5">
-                              {new Date(msg.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            {!msg.isRead && (
+                            {expandedMessage === msg.id ? (
+                              <p className="text-sm text-white/60 mt-2 whitespace-pre-wrap">{msg.message}</p>
+                            ) : (
+                              <p className="text-sm text-white/40 mt-1 truncate">{msg.message}</p>
+                            )}
+                            {/* Action buttons */}
+                            <div className="flex items-center gap-2 mt-2">
                               <button
                                 type="button"
-                                onClick={() => markAsRead.mutate(msg.id)}
-                                title="Marcar como lida"
-                                className="p-1.5 rounded-lg text-white/30 hover:text-green-400 hover:bg-green-400/10 transition-all"
+                                onClick={() => setExpandedMessage(expandedMessage === msg.id ? null : msg.id)}
+                                className="text-xs text-white/30 hover:text-white/60 transition-colors"
                               >
-                                <Check size={14} />
+                                {expandedMessage === msg.id ? 'Recolher' : 'Ver mais'}
                               </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => setExpandedMessage(expandedMessage === msg.id ? null : msg.id)}
-                              title={expandedMessage === msg.id ? 'Recolher' : 'Expandir'}
-                              className="p-1.5 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/5 transition-all"
-                            >
-                              {expandedMessage === msg.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                            </button>
+                              {msg.senderEmail && (
+                                <a
+                                  href={`mailto:${msg.senderEmail}?subject=Re: Mensagem via CraftCard`}
+                                  className="text-xs text-brand-cyan/60 hover:text-brand-cyan transition-colors flex items-center gap-1"
+                                >
+                                  <Mail size={10} />
+                                  Responder
+                                </a>
+                              )}
+                              {!msg.isRead && (
+                                <button
+                                  type="button"
+                                  onClick={() => markAsRead.mutate(msg.id)}
+                                  className="text-xs text-green-400/50 hover:text-green-400 transition-colors flex items-center gap-1"
+                                >
+                                  <Check size={10} />
+                                  Lida
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        {expandedMessage === msg.id ? (
-                          <p className="text-sm text-white/60 mt-2 whitespace-pre-wrap">{msg.message}</p>
-                        ) : (
-                          <p className="text-sm text-white/40 mt-1 truncate">{msg.message}</p>
-                        )}
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
                     <MessageSquare size={24} className="mx-auto text-white/15 mb-2" />
-                    <p className="text-sm text-white/30">Nenhuma mensagem ainda</p>
+                    <p className="text-sm text-white/30">Nenhum lead ainda</p>
                     <p className="text-xs text-white/15 mt-1">Quando alguem enviar uma mensagem pelo seu cartao, ela aparecera aqui</p>
                   </div>
                 )}

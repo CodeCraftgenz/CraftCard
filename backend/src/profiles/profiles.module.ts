@@ -7,9 +7,10 @@ import { OgImageService } from './og-image.service';
 import { SlugsController } from '../slugs/slugs.controller';
 import { SlugsService } from '../slugs/slugs.service';
 import { PaymentsModule } from '../payments/payments.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [PaymentsModule],
+  imports: [PaymentsModule, AuthModule],
   controllers: [ProfilesController, SlugsController, OgController],
   providers: [ProfilesService, SectionsService, SlugsService, OgImageService],
   exports: [ProfilesService, SlugsService],

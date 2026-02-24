@@ -35,6 +35,7 @@ import { trackViewEvent } from '@/hooks/useAnalytics';
 import { usePublicSlots } from '@/hooks/useBookings';
 import { useSendMessage } from '@/hooks/useContacts';
 import { useSubmitTestimonial } from '@/hooks/useTestimonials';
+import { useAuth } from '@/providers/AuthProvider';
 import { API_BASE, APP_NAME, resolvePhotoUrl } from '@/lib/constants';
 import { loadGoogleFont } from '@/lib/google-fonts';
 
@@ -302,6 +303,7 @@ function handleDownloadVCard(profile: PublicProfile) {
 
 export function PublicCardPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { cards } = useAuth();
   const [showContactForm, setShowContactForm] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [contactForm, setContactForm] = useState({ senderName: '', senderEmail: '', message: '' });
@@ -324,6 +326,9 @@ export function PublicCardPage() {
   const submitTestimonial = useSubmitTestimonial();
   const { data: publicSlots } = usePublicSlots(slug);
 
+  // Check if the viewer is the card owner (to skip view tracking)
+  const isOwner = cards?.some((c) => c.slug === slug) ?? false;
+
   const { data: profile, isLoading, error } = useQuery<PublicProfile>({
     queryKey: ['public-profile', slug],
     queryFn: () => api.get(`/profile/${slug}`),
@@ -344,8 +349,8 @@ export function PublicCardPage() {
   // Load custom Google Font (must be before conditional returns — Rules of Hooks)
   useEffect(() => { if (profile) loadGoogleFont(fontFamily); }, [fontFamily, profile]);
 
-  // Track view event with device/referrer info (fire once)
-  useEffect(() => { if (profile?.id) trackViewEvent(profile.id); }, [profile?.id]);
+  // Track view event — skip if viewer is the card owner
+  useEffect(() => { if (profile?.id && !isOwner) trackViewEvent(profile.id); }, [profile?.id, isOwner]);
 
   const handleSendMessage = async () => {
     if (!slug) return;

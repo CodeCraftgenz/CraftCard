@@ -121,7 +121,7 @@ export class ProfilesService {
     return { primary: true };
   }
 
-  async getBySlug(slug: string) {
+  async getBySlug(slug: string, viewerUserId?: string) {
     const profile = await this.prisma.profile.findUnique({
       where: { slug },
       include: {
@@ -138,14 +138,18 @@ export class ProfilesService {
       throw AppException.notFound('Perfil');
     }
 
-    // Increment view count (fire-and-forget)
-    this.prisma.profile.update({
-      where: { slug },
-      data: { viewCount: { increment: 1 } },
-    }).catch(() => { /* ignore errors */ });
+    // Only count views from external visitors (not the card owner)
+    const isOwner = viewerUserId && profile.userId === viewerUserId;
+    if (!isOwner) {
+      // Increment view count (fire-and-forget)
+      this.prisma.profile.update({
+        where: { slug },
+        data: { viewCount: { increment: 1 } },
+      }).catch(() => { /* ignore errors */ });
 
-    // Track daily view (fire-and-forget)
-    this.trackDailyView(profile.id).catch(() => {});
+      // Track daily view (fire-and-forget)
+      this.trackDailyView(profile.id).catch(() => {});
+    }
 
     // Filter links by schedule (only show currently active ones on public page)
     const now = new Date();

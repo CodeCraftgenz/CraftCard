@@ -1,4 +1,6 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, Req } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { Request } from 'express';
 import { ProfilesService } from './profiles.service';
 import { SectionsService } from './sections.service';
 import { Public } from '../common/decorators/public.decorator';
@@ -10,6 +12,7 @@ export class ProfilesController {
   constructor(
     private readonly profilesService: ProfilesService,
     private readonly sectionsService: SectionsService,
+    private readonly jwtService: JwtService,
   ) {}
 
   @Get('me/profile')
@@ -45,8 +48,17 @@ export class ProfilesController {
 
   @Public()
   @Get('profile/:slug')
-  async getPublicProfile(@Param('slug') slug: string) {
-    return this.profilesService.getBySlug(slug);
+  async getPublicProfile(@Param('slug') slug: string, @Req() req: Request) {
+    // Try to extract viewer user ID from JWT cookie (optional, for skipping owner views)
+    let viewerUserId: string | undefined;
+    try {
+      const token = (req as any).cookies?.accessToken;
+      if (token) {
+        const payload = this.jwtService.verify<{ sub: string }>(token);
+        viewerUserId = payload.sub;
+      }
+    } catch { /* ignore invalid/expired tokens */ }
+    return this.profilesService.getBySlug(slug, viewerUserId);
   }
 
   // --- Services CRUD ---
