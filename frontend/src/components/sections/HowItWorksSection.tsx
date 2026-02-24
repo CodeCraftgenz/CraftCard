@@ -11,8 +11,8 @@ const steps = [
   {
     icon: CreditCard,
     step: '02',
-    title: 'Assine por R$30/ano',
-    desc: 'De R$99,90 por apenas R$30/ano. Menos de R$2,50/mes para ter seu cartao digital profissional.',
+    title: 'Escolha seu plano',
+    desc: 'Comece gratis ou escolha o plano ideal para voce. Profissionais e empresas.',
   },
   {
     icon: Rocket,

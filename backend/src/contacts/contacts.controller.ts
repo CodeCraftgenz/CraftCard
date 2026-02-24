@@ -34,6 +34,11 @@ export class ContactsController {
     res.send(csv);
   }
 
+  @Get('me/unread-count')
+  async getUnreadCount(@CurrentUser() user: JwtPayload) {
+    return this.contactsService.getUnreadCount(user.sub);
+  }
+
   @Patch(':id/read')
   async markAsRead(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.contactsService.markAsRead(id, user.sub);

@@ -4,24 +4,40 @@ import { ChevronDown } from 'lucide-react';
 
 const faqs = [
   {
-    q: 'Como funciona a assinatura?',
-    a: 'A assinatura e anual por R$30 (preco promocional — valor original R$99,90). Voce tem acesso completo por 365 dias. Ao final do periodo, basta renovar para continuar com seu cartao ativo.',
+    q: 'Posso comecar gratis?',
+    a: 'Sim! O plano Free permite criar 1 cartao digital com ate 5 links, 3 temas e publicar gratuitamente. Voce pode fazer upgrade para o Pro ou Business a qualquer momento.',
   },
   {
-    q: 'Posso editar meu cartao depois de publicar?',
-    a: 'Claro! Voce pode alterar foto, bio, redes sociais, cores e slug quantas vezes quiser, a qualquer momento.',
+    q: 'Qual a diferenca entre os planos?',
+    a: 'O plano Free e ideal para experimentar. O Pro (R$30/ano) libera todos os recursos: analytics, galeria, agendamentos, depoimentos, servicos, FAQ, customizacao visual completa e ate 5 cartoes. O Business (R$199/ano) e para empresas: ate 10 usuarios, dashboard centralizado, branding da empresa e webhooks.',
+  },
+  {
+    q: 'Como funciona para empresas?',
+    a: 'No plano Business, voce cria uma organizacao, convida membros por email e gerencia todos os cartoes de um so lugar. A empresa define cores, logo e fonte — os membros editam apenas o conteudo (nome, bio, links). O dashboard mostra analytics e leads consolidados de toda a equipe.',
+  },
+  {
+    q: 'Posso comecar gratis e fazer upgrade depois?',
+    a: 'Com certeza! Comece no plano Free e faca upgrade quando precisar de mais recursos. Seus dados e cartao sao mantidos ao trocar de plano.',
+  },
+  {
+    q: 'Como funciona a assinatura Pro?',
+    a: 'A assinatura Pro e anual por R$30 (preco promocional — valor original R$99,90). Voce tem acesso completo por 365 dias. Ao final do periodo, basta renovar para continuar com todos os recursos.',
   },
   {
     q: 'Quais formas de pagamento sao aceitas?',
     a: 'Aceitamos cartao de credito/debito, PIX e boleto. O pagamento e processado de forma segura pelo Mercado Pago.',
   },
   {
-    q: 'Posso excluir minha conta?',
-    a: 'Sim. Voce pode excluir sua conta e todos os seus dados a qualquer momento, em conformidade com a LGPD.',
+    q: 'Posso editar meu cartao depois de publicar?',
+    a: 'Claro! Voce pode alterar foto, bio, redes sociais, cores e slug quantas vezes quiser, a qualquer momento.',
   },
   {
     q: 'O cartao funciona em qualquer dispositivo?',
     a: 'Sim! Seu cartao e totalmente responsivo e funciona perfeitamente em celulares, tablets e computadores.',
+  },
+  {
+    q: 'Posso excluir minha conta?',
+    a: 'Sim. Voce pode excluir sua conta e todos os seus dados a qualquer momento, em conformidade com a LGPD.',
   },
 ];
 

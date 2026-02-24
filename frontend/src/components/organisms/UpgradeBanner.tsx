@@ -16,6 +16,10 @@ const FEATURE_LABELS: Partial<Record<keyof PlanLimits, string>> = {
   customFonts: 'Fontes customizadas',
   customBg: 'Fundos personalizados',
   leadsExport: 'Exportar leads (CSV)',
+  orgDashboard: 'Dashboard da organizacao',
+  branding: 'Branding centralizado',
+  customDomain: 'Dominio customizado',
+  webhooks: 'Webhooks e integracoes',
 };
 
 interface UpgradeBannerProps {

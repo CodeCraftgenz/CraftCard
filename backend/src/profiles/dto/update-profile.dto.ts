@@ -96,9 +96,14 @@ export const updateProfileSchema = z.object({
   socialLinks: z.array(socialLinkSchema).max(20).optional(),
 }).transform((data) => {
   // Filter out incomplete social links (empty label or invalid url)
+  // Headers and Pix don't need a URL — only filter other types
   if (data.socialLinks) {
     data.socialLinks = data.socialLinks.filter(
-      (link) => link.label.trim() !== '' && link.url.trim() !== '',
+      (link) => {
+        if (link.label.trim() === '') return false;
+        if (link.platform === 'header' || link.platform === 'pix') return true;
+        return link.url.trim() !== '';
+      },
     );
   }
   return data;

@@ -22,7 +22,7 @@ export function CtaSection() {
           <span className="gradient-text">cartao digital</span>?
         </h2>
         <p className="mt-6 text-lg text-white/50 max-w-2xl mx-auto">
-          Junte-se a profissionais que ja estao compartilhando seus contatos de
+          Junte-se a profissionais e empresas que ja estao compartilhando seus contatos de
           forma moderna e elegante.
         </p>
         <div className="mt-10">
@@ -34,7 +34,7 @@ export function CtaSection() {
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </Link>
           <p className="mt-4 text-sm text-white/30">
-            <span className="line-through text-white/20">R$99,90</span> R$30/ano &middot; Menos de R$2,50 por mes
+            Comece gratis &middot; Planos a partir de R$30/ano
           </p>
         </div>
       </motion.div>

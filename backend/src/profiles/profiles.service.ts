@@ -4,6 +4,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { SlugsService } from '../slugs/slugs.service';
 import { PaymentsService } from '../payments/payments.service';
 import { AppException } from '../common/exceptions/app.exception';
+import { getPlanLimits, FREE_THEMES } from '../payments/plan-limits';
 import { randomUUID } from 'crypto';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
 import type { EnvConfig } from '../common/config/env.config';
@@ -44,14 +45,21 @@ export class ProfilesService {
   }
 
   async getByUserId(userId: string, profileId?: string) {
+    const include = {
+      socialLinks: { orderBy: { order: 'asc' } as const },
+      services: { orderBy: { order: 'asc' } as const, select: { id: true, title: true, description: true, price: true, order: true } },
+      faqItems: { orderBy: { order: 'asc' } as const, select: { id: true, question: true, answer: true, order: true } },
+      testimonials: { where: { isApproved: true }, orderBy: { createdAt: 'desc' } as const, take: 10 },
+      galleryImages: { orderBy: { order: 'asc' } as const, select: { id: true, imageUrl: true, imageData: true, caption: true, order: true } },
+    };
     const profile = profileId
       ? await this.prisma.profile.findFirst({
           where: { id: profileId, userId },
-          include: { socialLinks: { orderBy: { order: 'asc' } } },
+          include,
         })
       : await this.prisma.profile.findFirst({
           where: { userId, isPrimary: true },
-          include: { socialLinks: { orderBy: { order: 'asc' } } },
+          include,
         });
     if (!profile) throw AppException.notFound('Perfil');
     const { photoData: _, coverPhotoData: _c, resumeData: _r, ...rest } = profile;
@@ -68,9 +76,11 @@ export class ProfilesService {
   }
 
   async createCard(userId: string, label: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
+    const limits = getPlanLimits(user?.plan || 'FREE');
     const count = await this.prisma.profile.count({ where: { userId } });
-    if (count >= 5) {
-      throw AppException.badRequest('Maximo de 5 cartoes atingido');
+    if (count >= limits.maxCards) {
+      throw AppException.badRequest(`Maximo de ${limits.maxCards} ${limits.maxCards === 1 ? 'cartao' : 'cartoes'} no plano ${user?.plan || 'FREE'}`);
     }
 
     const slug = `card-${Date.now().toString(36)}`;
@@ -174,6 +184,22 @@ export class ProfilesService {
       ? await this.prisma.profile.findFirst({ where: { id: profileId, userId }, include: { organization: { select: { brandingActive: true } } } })
       : await this.prisma.profile.findFirst({ where: { userId, isPrimary: true }, include: { organization: { select: { brandingActive: true } } } });
     if (!profile) throw AppException.notFound('Perfil');
+
+    // Enforce plan limits
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
+    const limits = getPlanLimits(user?.plan || 'FREE');
+
+    // Validate maxLinks
+    if (data.socialLinks && data.socialLinks.length > limits.maxLinks) {
+      throw AppException.badRequest(`Maximo de ${limits.maxLinks} links no plano ${user?.plan || 'FREE'}`);
+    }
+
+    // Validate theme for free tier
+    if (data.cardTheme && limits.maxThemes !== 'all') {
+      if (!FREE_THEMES.includes(data.cardTheme)) {
+        throw AppException.badRequest(`Tema "${data.cardTheme}" nao disponivel no plano gratuito`);
+      }
+    }
 
     // If org branding is active, strip visual customization fields
     if (profile.organization?.brandingActive) {
