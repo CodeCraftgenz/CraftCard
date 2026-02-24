@@ -219,17 +219,17 @@ export class OrganizationsService {
       },
     });
 
-    // Send invite email (non-blocking but logged)
+    // Send invite email (await so we can inform the frontend)
     const inviter = await this.prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
-    this.mailService.sendOrgInvite(data.email, org.name, inviter?.name || 'Admin', token)
-      .then((sent) => {
-        if (!sent) this.logger.warn(`Invite created for ${data.email} but email was NOT delivered`);
-      })
-      .catch((err) => {
-        this.logger.error(`Invite email error for ${data.email}: ${err}`);
-      });
+    let emailSent = false;
+    try {
+      emailSent = await this.mailService.sendOrgInvite(data.email, org.name, inviter?.name || 'Admin', token);
+    } catch (err) {
+      this.logger.error(`Invite email error for ${data.email}: ${err}`);
+    }
+    if (!emailSent) this.logger.warn(`Invite created for ${data.email} but email was NOT delivered`);
 
-    return { id: invite.id, token: invite.token, expiresAt: invite.expiresAt };
+    return { id: invite.id, token: invite.token, expiresAt: invite.expiresAt, emailSent };
   }
 
   async getPendingInvites(orgId: string) {

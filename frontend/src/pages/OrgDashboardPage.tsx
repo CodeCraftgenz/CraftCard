@@ -218,10 +218,17 @@ function MembersTab({ orgId }: { orgId: string }) {
   const removeMember = useRemoveMember(orgId);
   const [inviteEmail, setInviteEmail] = useState('');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [inviteResult, setInviteResult] = useState<{ emailSent: boolean; token: string } | null>(null);
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
-    await inviteMember.mutateAsync({ email: inviteEmail.trim() });
+    const result = await inviteMember.mutateAsync({ email: inviteEmail.trim() });
+    const res = result as { token?: string; emailSent?: boolean };
+    if (res.token && !res.emailSent) {
+      setInviteResult({ emailSent: false, token: res.token });
+    } else {
+      setInviteResult(res.emailSent ? { emailSent: true, token: res.token || '' } : null);
+    }
     setInviteEmail('');
   };
 
@@ -252,6 +259,39 @@ function MembersTab({ orgId }: { orgId: string }) {
             <Plus size={16} />
           </button>
         </div>
+        {/* Invite result feedback */}
+        {inviteResult && !inviteResult.emailSent && (
+          <div className="mt-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
+            <p className="text-yellow-400 text-sm font-medium mb-2">
+              Convite criado, mas o email nao foi enviado.
+            </p>
+            <p className="text-white/50 text-xs mb-3">
+              Compartilhe o link abaixo manualmente com o convidado:
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                readOnly
+                value={`${window.location.origin}/org/join/${inviteResult.token}`}
+                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-mono"
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/org/join/${inviteResult.token}`);
+                  setCopiedToken(inviteResult.token);
+                  setTimeout(() => setCopiedToken(null), 2000);
+                }}
+                className="px-3 py-2 bg-brand-cyan/20 text-brand-cyan rounded-lg text-xs font-medium hover:bg-brand-cyan/30 transition-colors"
+              >
+                {copiedToken === inviteResult.token ? 'Copiado!' : 'Copiar'}
+              </button>
+            </div>
+          </div>
+        )}
+        {inviteResult?.emailSent && (
+          <p className="mt-3 text-green-400 text-sm">
+            Convite enviado por email com sucesso!
+          </p>
+        )}
       </div>
 
       {/* Members list */}
