@@ -37,6 +37,11 @@ export class PaymentsController {
     return this.paymentsService.adminListUsers();
   }
 
+  @Get('billing')
+  async getBilling(@CurrentUser() user: JwtPayload) {
+    return this.paymentsService.getBillingInfo(user.sub);
+  }
+
   /**
    * Verify and sync payment status for the current user.
    * Called by frontend after redirect from Mercado Pago as a fallback

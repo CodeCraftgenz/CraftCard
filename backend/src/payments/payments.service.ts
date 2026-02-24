@@ -116,9 +116,13 @@ export class PaymentsService {
   }
 
   async createCheckoutPreference(userId: string, email: string, plan: 'PRO' | 'BUSINESS' = 'PRO'): Promise<{ url: string }> {
-    const subscription = await this.getActiveSubscription(userId);
-    if (subscription.active) {
-      throw AppException.conflict('Voce ja possui uma assinatura ativa');
+    const planInfo = await this.getUserPlanInfo(userId);
+    const planHierarchy: Record<string, number> = { FREE: 0, PRO: 1, BUSINESS: 2, ENTERPRISE: 3 };
+    const currentLevel = planHierarchy[planInfo.plan] ?? 0;
+    const targetLevel = planHierarchy[plan] ?? 0;
+
+    if (currentLevel >= targetLevel && planInfo.plan !== 'FREE') {
+      throw AppException.conflict('Voce ja possui este plano ou superior ativo');
     }
 
     const price = PLAN_PRICES[plan];
@@ -354,6 +358,41 @@ export class PaymentsService {
       email: targetEmail,
       plan: normalizedPlan,
       expiresAt: expiresAt?.toISOString() || null,
+    };
+  }
+
+  async getBillingInfo(userId: string) {
+    const planInfo = await this.getUserPlanInfo(userId);
+
+    const payments = await this.prisma.payment.findMany({
+      where: { userId },
+      select: { id: true, amount: true, status: true, plan: true, paidAt: true, expiresAt: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+
+    let daysRemaining: number | null = null;
+    if (planInfo.expiresAt) {
+      daysRemaining = Math.max(0, Math.ceil((planInfo.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+    }
+
+    const planHierarchy: Record<string, number> = { FREE: 0, PRO: 1, BUSINESS: 2, ENTERPRISE: 3 };
+    const currentLevel = planHierarchy[planInfo.plan] ?? 0;
+
+    return {
+      plan: planInfo.plan,
+      planLimits: planInfo.planLimits,
+      expiresAt: planInfo.expiresAt?.toISOString() ?? null,
+      daysRemaining,
+      payments: payments.map((p) => ({
+        ...p,
+        amount: Number(p.amount),
+        paidAt: p.paidAt?.toISOString() ?? null,
+        expiresAt: p.expiresAt?.toISOString() ?? null,
+        createdAt: p.createdAt.toISOString(),
+      })),
+      canUpgrade: currentLevel < 2,
+      canRenew: planInfo.plan !== 'FREE' && daysRemaining !== null && daysRemaining <= 30,
     };
   }
 

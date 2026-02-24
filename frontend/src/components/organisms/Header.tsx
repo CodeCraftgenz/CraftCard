@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Menu, X, LogOut, User, BookOpen } from 'lucide-react';
+import { Menu, X, LogOut, User, BookOpen, CreditCard } from 'lucide-react';
 import { Logo } from '@/components/atoms/Logo';
 import { useAuth } from '@/providers/AuthProvider';
 
@@ -109,6 +109,14 @@ export function Header() {
                     <BookOpen size={14} />
                     Tutorial
                   </Link>
+                  <Link
+                    to="/billing"
+                    onClick={() => setShowDropdown(false)}
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-white/70 hover:bg-white/5 transition-colors"
+                  >
+                    <CreditCard size={14} />
+                    Meu Plano
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-white/5 transition-colors"
@@ -192,6 +200,13 @@ export function Header() {
                   onClick={() => setIsOpen(false)}
                 >
                   Tutorial
+                </Link>
+                <Link
+                  to="/billing"
+                  className="text-sm text-white/70 py-2"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Meu Plano
                 </Link>
                 <button
                   onClick={() => { setIsOpen(false); handleLogout(); }}

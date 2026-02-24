@@ -11,6 +11,7 @@ import { PublicCardPage } from './pages/PublicCardPage';
 import { BillingSuccessPage } from './pages/BillingSuccessPage';
 import { OrgDashboardPage } from './pages/OrgDashboardPage';
 import { TutorialPage } from './pages/TutorialPage';
+import { BillingPage } from './pages/BillingPage';
 import { OrgJoinPage } from './pages/OrgJoinPage';
 import { WidgetPage } from './pages/WidgetPage';
 import { AdminPage } from './pages/AdminPage';
@@ -46,6 +47,14 @@ export function App() {
                 element={
                   <ProtectedRoute>
                     <TutorialPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/billing"
+                element={
+                  <ProtectedRoute>
+                    <BillingPage />
                   </ProtectedRoute>
                 }
               />
