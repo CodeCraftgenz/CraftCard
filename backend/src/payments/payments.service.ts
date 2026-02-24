@@ -38,6 +38,7 @@ const FREE_ACCESS_EMAILS = new Set([
   'paulommc@gmail.com',
   'mfacine@gmail.com',
   'gabriel.gondrone@gmail.com',
+  'codecraftgenz@gmail.com',
 ]);
 
 @Injectable()
