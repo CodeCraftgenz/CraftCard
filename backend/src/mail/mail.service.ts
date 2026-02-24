@@ -97,40 +97,24 @@ export class MailService {
 
   // --- Organization Invite ---
 
-  async sendOrgInvite(toEmail: string, orgName: string, inviterName: string, token: string) {
-    if (!this.transporter) return;
+  async sendOrgInvite(toEmail: string, orgName: string, inviterName: string, token: string): Promise<boolean> {
+    if (!this.transporter) {
+      this.logger.warn(`Org invite email NOT sent to ${toEmail} — mail transporter not configured`);
+      return false;
+    }
     const joinUrl = `${this.frontendUrl}/org/join/${token}`;
     try {
       await this.transporter.sendMail({
         from: `CraftCard <${this.from}>`,
         to: toEmail,
-        subject: `Voce foi convidado para ${orgName}`,
-        html: this.buildEmail({
-          preheader: `${inviterName} convidou voce para a organizacao ${orgName}`,
-          title: 'Convite de Organizacao',
-          icon: '🏢',
-          body: `
-            <p style="color:#e0e0e0;font-size:15px;line-height:1.6;margin:0 0 16px;">
-              <strong style="color:#fff;">${this.esc(inviterName)}</strong> convidou voce para fazer parte da organizacao
-              <strong style="color:#00E4F2;">${this.esc(orgName)}</strong> no CraftCard.
-            </p>
-            <p style="color:#999;font-size:14px;line-height:1.6;margin:0 0 8px;">
-              Com o CraftCard Business, voce tera um cartao digital profissional com:
-            </p>
-            <ul style="color:#ccc;font-size:14px;line-height:1.8;margin:0 0 20px;padding-left:20px;">
-              <li>Branding da empresa aplicado automaticamente</li>
-              <li>Analytics e metricas de visitas</li>
-              <li>Agendamento, galeria, servicos e mais</li>
-            </ul>
-            <p style="color:#666;font-size:13px;margin:0 0 4px;">O convite expira em 7 dias.</p>
-          `,
-          ctaText: 'Aceitar Convite',
-          ctaUrl: joinUrl,
-        }),
+        subject: `${inviterName} convidou voce para ${orgName}`,
+        html: this.buildInviteEmail(orgName, inviterName, joinUrl),
       });
       this.logger.log(`Org invite email sent to ${toEmail}`);
+      return true;
     } catch (err) {
-      this.logger.warn(`Failed to send org invite email: ${err}`);
+      this.logger.error(`FAILED to send org invite to ${toEmail}: ${(err as Error).message || err}`);
+      return false;
     }
   }
 
@@ -319,6 +303,138 @@ export class MailService {
               </p>
             </td>
           </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+  }
+
+  // ============================================================
+  // Org Invite — Light Elegant Template
+  // ============================================================
+
+  private buildInviteEmail(orgName: string, inviterName: string, joinUrl: string): string {
+    return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Convite para ${this.esc(orgName)}</title>
+</head>
+<body style="margin:0;padding:0;background:#f0f0f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#f0f0f5;">${this.esc(inviterName)} convidou voce para a organizacao ${this.esc(orgName)} no CraftCard</div>
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f0f5;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Gradient Top Bar -->
+          <tr><td style="height:5px;background:linear-gradient(90deg,#00E4F2,#8B5CF6,#D12BF2);"></td></tr>
+
+          <!-- Logo -->
+          <tr>
+            <td style="padding:32px 32px 0;text-align:center;">
+              <span style="font-size:24px;font-weight:800;letter-spacing:-0.5px;">
+                <span style="color:#00E4F2;">Craft</span><span style="color:#1a1a2e;">Card</span>
+              </span>
+            </td>
+          </tr>
+
+          <!-- Icon -->
+          <tr>
+            <td style="padding:28px 32px 0;text-align:center;">
+              <div style="display:inline-block;width:72px;height:72px;line-height:72px;font-size:36px;background:linear-gradient(135deg,#f0f4ff,#ede9fe);border-radius:50%;">🏢</div>
+            </td>
+          </tr>
+
+          <!-- Title -->
+          <tr>
+            <td style="padding:20px 32px 0;text-align:center;">
+              <h1 style="color:#1a1a2e;font-size:22px;font-weight:700;margin:0;line-height:1.3;">Voce foi convidado!</h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:16px 32px 0;">
+              <p style="color:#4a4a68;font-size:15px;line-height:1.7;margin:0 0 20px;text-align:center;">
+                <strong style="color:#1a1a2e;">${this.esc(inviterName)}</strong> convidou voce para fazer parte da organizacao
+              </p>
+
+              <!-- Org Name Card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+                <tr>
+                  <td style="background:linear-gradient(135deg,#f8f7ff,#f0edff);border:1px solid #e8e4f8;border-radius:14px;padding:20px;text-align:center;">
+                    <p style="color:#8B5CF6;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 8px;">Organizacao</p>
+                    <p style="color:#1a1a2e;font-size:22px;font-weight:800;margin:0;letter-spacing:-0.3px;">${this.esc(orgName)}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Benefits -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:10px 0;border-bottom:1px solid #f0f0f5;">
+                    <table cellpadding="0" cellspacing="0"><tr>
+                      <td style="width:32px;vertical-align:top;padding-top:2px;"><span style="font-size:16px;">✨</span></td>
+                      <td style="color:#4a4a68;font-size:14px;line-height:1.5;">Branding corporativo aplicado automaticamente</td>
+                    </tr></table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;border-bottom:1px solid #f0f0f5;">
+                    <table cellpadding="0" cellspacing="0"><tr>
+                      <td style="width:32px;vertical-align:top;padding-top:2px;"><span style="font-size:16px;">📊</span></td>
+                      <td style="color:#4a4a68;font-size:14px;line-height:1.5;">Analytics e metricas de visitas</td>
+                    </tr></table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;">
+                    <table cellpadding="0" cellspacing="0"><tr>
+                      <td style="width:32px;vertical-align:top;padding-top:2px;"><span style="font-size:16px;">🚀</span></td>
+                      <td style="color:#4a4a68;font-size:14px;line-height:1.5;">Agendamento, galeria, servicos e mais</td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CTA Button -->
+          <tr>
+            <td style="padding:0 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${joinUrl}" style="display:inline-block;background:linear-gradient(135deg,#00E4F2,#8B5CF6,#D12BF2);color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:16px 48px;border-radius:14px;box-shadow:0 4px 16px rgba(139,92,246,0.3);">Aceitar Convite</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Expiry note -->
+          <tr>
+            <td style="padding:16px 32px 0;text-align:center;">
+              <p style="color:#9ca3af;font-size:12px;margin:0;">Este convite expira em 7 dias</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 32px 32px;">
+              <hr style="border:none;border-top:1px solid #f0f0f5;margin:0 0 20px;" />
+              <p style="color:#9ca3af;font-size:12px;line-height:1.5;margin:0;text-align:center;">
+                <span style="font-weight:700;"><span style="color:#00E4F2;">Craft</span><span style="color:#6b7280;">Card</span></span> — Seu cartao digital profissional<br />
+                <a href="${this.frontendUrl}" style="color:#8B5CF6;text-decoration:none;">craftcardgenz.com</a>
+              </p>
+            </td>
+          </tr>
+
         </table>
       </td>
     </tr>

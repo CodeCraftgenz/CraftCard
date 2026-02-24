@@ -23,6 +23,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        importScripts: ['/push-sw.js'],
         navigateFallbackDenylist: [/^\/uploads\//],
         runtimeCaching: [
           {

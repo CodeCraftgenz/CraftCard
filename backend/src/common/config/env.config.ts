@@ -32,6 +32,10 @@ export const envSchema = z.object({
   MAIL_USER: z.string().optional(),
   MAIL_PASS: z.string().optional(),
   MAIL_FROM: z.string().optional(),
+
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().optional(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

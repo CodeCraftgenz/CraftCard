@@ -24,9 +24,9 @@ export function usePushNotifications() {
 
     setLoading(true);
     try {
-      // Get VAPID public key from backend
-      const { data } = await api.get('/notifications/vapid-key');
-      if (!data.publicKey) {
+      // Get VAPID public key from backend (api interceptor already unwraps response.data)
+      const vapidResult = await api.get('/notifications/vapid-key') as { publicKey: string | null };
+      if (!vapidResult.publicKey) {
         setLoading(false);
         return;
       }
@@ -43,7 +43,7 @@ export function usePushNotifications() {
       const reg = await navigator.serviceWorker.ready;
       const subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(data.publicKey) as BufferSource,
+        applicationServerKey: urlBase64ToUint8Array(vapidResult.publicKey) as BufferSource,
       });
 
       // Send subscription to backend

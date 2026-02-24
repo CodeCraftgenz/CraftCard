@@ -30,6 +30,8 @@ const PLAN_TITLES: Record<string, string> = {
 };
 const SUBSCRIPTION_DAYS = 365;
 
+const PLAN_HIERARCHY: Record<string, number> = { FREE: 0, PRO: 1, BUSINESS: 2, ENTERPRISE: 3 };
+
 /** Emails with permanent free access (founders / team) */
 const FREE_ACCESS_EMAILS = new Set([
   'ricardocoradini97@gmail.com',
@@ -63,6 +65,7 @@ export class PaymentsService {
    * Get the user's plan, limits, and subscription info.
    * Source of truth: user.plan column (synced on payment approval).
    * FREE_ACCESS_EMAILS get ENTERPRISE (full access) for free.
+   * Org members inherit the OWNER's plan if higher (B2B plan inheritance).
    */
   async getUserPlanInfo(userId: string): Promise<{
     plan: PlanType;
@@ -83,7 +86,8 @@ export class PaymentsService {
       return { plan: 'ENTERPRISE', planLimits: getPlanLimits('ENTERPRISE'), expiresAt: null };
     }
 
-    const plan = (user.plan || 'FREE') as PlanType;
+    let plan = (user.plan || 'FREE') as PlanType;
+    let expiresAt: Date | null = null;
 
     // For paid plans, check expiration
     if (plan !== 'FREE') {
@@ -100,19 +104,62 @@ export class PaymentsService {
         select: { expiresAt: true },
       });
 
-      // If no active payment, downgrade to FREE
       if (!payment) {
         await this.prisma.user.update({
           where: { id: userId },
           data: { plan: 'FREE' },
         }).catch(() => {});
-        return { plan: 'FREE', planLimits: getPlanLimits('FREE'), expiresAt: null };
+        plan = 'FREE';
+      } else {
+        expiresAt = payment.expiresAt;
       }
-
-      return { plan, planLimits: getPlanLimits(plan), expiresAt: payment.expiresAt };
     }
 
-    return { plan: 'FREE', planLimits: getPlanLimits('FREE'), expiresAt: null };
+    // B2B plan inheritance: if user is member of an org with a BUSINESS+ OWNER, inherit that plan
+    const orgPlan = await this.getOrgInheritedPlan(userId);
+    if (orgPlan && (PLAN_HIERARCHY[orgPlan] ?? 0) > (PLAN_HIERARCHY[plan] ?? 0)) {
+      return { plan: orgPlan, planLimits: getPlanLimits(orgPlan), expiresAt };
+    }
+
+    return { plan, planLimits: getPlanLimits(plan), expiresAt };
+  }
+
+  /**
+   * Check if user inherits a plan from an org OWNER.
+   * If the user is a MEMBER/ADMIN of an org whose OWNER has BUSINESS+,
+   * the member inherits that plan level.
+   */
+  private async getOrgInheritedPlan(userId: string): Promise<PlanType | null> {
+    const memberships = await this.prisma.organizationMember.findMany({
+      where: { userId },
+      select: { orgId: true },
+    });
+
+    if (memberships.length === 0) return null;
+
+    let bestPlan: PlanType = 'FREE';
+    for (const membership of memberships) {
+      const owner = await this.prisma.organizationMember.findFirst({
+        where: { orgId: membership.orgId, role: 'OWNER' },
+        include: { user: { select: { plan: true, email: true } } },
+      });
+
+      if (!owner) continue;
+
+      let ownerPlan: PlanType;
+      if (FREE_ACCESS_EMAILS.has(owner.user.email.toLowerCase())) {
+        ownerPlan = 'ENTERPRISE';
+      } else {
+        ownerPlan = (owner.user.plan || 'FREE') as PlanType;
+      }
+
+      // Only inherit if owner has BUSINESS or higher
+      if ((PLAN_HIERARCHY[ownerPlan] ?? 0) >= PLAN_HIERARCHY.BUSINESS && (PLAN_HIERARCHY[ownerPlan] ?? 0) > (PLAN_HIERARCHY[bestPlan] ?? 0)) {
+        bestPlan = ownerPlan;
+      }
+    }
+
+    return bestPlan !== 'FREE' ? bestPlan : null;
   }
 
   async createCheckoutPreference(userId: string, email: string, plan: 'PRO' | 'BUSINESS' = 'PRO'): Promise<{ url: string }> {

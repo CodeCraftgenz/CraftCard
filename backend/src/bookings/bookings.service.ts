@@ -1,10 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { AppException } from '../common/exceptions/app.exception';
 
 @Injectable()
 export class BookingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async getSlots(slug: string) {
     const profile = await this.prisma.profile.findFirst({
@@ -65,7 +71,7 @@ export class BookingsService {
   async createBooking(slug: string, data: { name: string; email: string; phone?: string; date: string; time: string; notes?: string }) {
     const profile = await this.prisma.profile.findFirst({
       where: { slug },
-      select: { id: true, isPublished: true },
+      select: { id: true, userId: true, isPublished: true, user: { select: { email: true } } },
     });
     if (!profile || !profile.isPublished) {
       throw AppException.notFound('Perfil');
@@ -85,7 +91,7 @@ export class BookingsService {
       throw AppException.conflict('Horario ja foi reservado');
     }
 
-    return this.prisma.booking.create({
+    const booking = await this.prisma.booking.create({
       data: {
         profileId: profile.id,
         name: data.name,
@@ -97,6 +103,28 @@ export class BookingsService {
       },
       select: { id: true, date: true, time: true, status: true },
     });
+
+    // Format date for notifications
+    const dateStr = date.toLocaleDateString('pt-BR');
+
+    // Email notification (fire-and-forget)
+    if (profile.user?.email) {
+      this.mailService.sendBookingNotification(
+        profile.user.email,
+        data.name,
+        dateStr,
+        data.time,
+      ).catch(() => {});
+    }
+
+    // Push notification (fire-and-forget)
+    this.notificationsService.sendToUser(profile.userId, {
+      title: 'Novo agendamento!',
+      body: `${data.name} agendou para ${dateStr} as ${data.time}`,
+      url: '/editor',
+    }).catch(() => {});
+
+    return booking;
   }
 
   async getMyBookings(userId: string) {

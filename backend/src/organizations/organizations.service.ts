@@ -219,9 +219,15 @@ export class OrganizationsService {
       },
     });
 
-    // Send invite email (fire-and-forget)
+    // Send invite email (non-blocking but logged)
     const inviter = await this.prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
-    this.mailService.sendOrgInvite(data.email, org.name, inviter?.name || 'Admin', token).catch(() => {});
+    this.mailService.sendOrgInvite(data.email, org.name, inviter?.name || 'Admin', token)
+      .then((sent) => {
+        if (!sent) this.logger.warn(`Invite created for ${data.email} but email was NOT delivered`);
+      })
+      .catch((err) => {
+        this.logger.error(`Invite email error for ${data.email}: ${err}`);
+      });
 
     return { id: invite.id, token: invite.token, expiresAt: invite.expiresAt };
   }

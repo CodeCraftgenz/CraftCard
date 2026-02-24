@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { AppException } from '../common/exceptions/app.exception';
 import type { CreateTestimonialDto } from './dto/create-testimonial.dto';
 
@@ -9,12 +10,13 @@ export class TestimonialsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async submit(slug: string, data: CreateTestimonialDto) {
     const profile = await this.prisma.profile.findFirst({
       where: { slug },
-      select: { id: true, isPublished: true, user: { select: { email: true } } },
+      select: { id: true, userId: true, isPublished: true, user: { select: { email: true } } },
     });
     if (!profile || !profile.isPublished) {
       throw AppException.notFound('Perfil');
@@ -29,7 +31,7 @@ export class TestimonialsService {
       },
     });
 
-    // Notify profile owner (fire-and-forget)
+    // Notify profile owner via email (fire-and-forget)
     if (profile.user?.email) {
       this.mailService.sendNewTestimonialNotification(
         profile.user.email,
@@ -37,6 +39,13 @@ export class TestimonialsService {
         data.text.substring(0, 200),
       ).catch(() => {});
     }
+
+    // Push notification (fire-and-forget)
+    this.notificationsService.sendToUser(profile.userId, {
+      title: 'Novo depoimento!',
+      body: `${data.authorName}: "${data.text.substring(0, 80)}"`,
+      url: '/editor',
+    }).catch(() => {});
 
     return { sent: true };
   }

@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/prisma/prisma.service';
 import type { EnvConfig } from '../common/config/env.config';
 import * as webPush from 'web-push';
-import { randomBytes } from 'crypto';
 
 @Injectable()
 export class NotificationsService {
@@ -18,9 +17,9 @@ export class NotificationsService {
   }
 
   private initVapid() {
-    const publicKey = process.env.VAPID_PUBLIC_KEY;
-    const privateKey = process.env.VAPID_PRIVATE_KEY;
-    const subject = process.env.VAPID_SUBJECT || 'mailto:contato@craftcardgenz.com';
+    const publicKey = this.configService.get('VAPID_PUBLIC_KEY', { infer: true });
+    const privateKey = this.configService.get('VAPID_PRIVATE_KEY', { infer: true });
+    const subject = this.configService.get('VAPID_SUBJECT', { infer: true }) || 'mailto:contato@craftcardgenz.com';
 
     if (publicKey && privateKey) {
       webPush.setVapidDetails(subject, publicKey, privateKey);
@@ -33,7 +32,7 @@ export class NotificationsService {
 
   /** Get the public VAPID key for the frontend */
   getPublicKey(): string | null {
-    return process.env.VAPID_PUBLIC_KEY || null;
+    return this.configService.get('VAPID_PUBLIC_KEY', { infer: true }) || null;
   }
 
   /** Subscribe a user to push notifications */
