@@ -14,6 +14,7 @@ model User {
   googleId  String   @unique @map("google_id")
   avatarUrl String?  @map("avatar_url")
   plan      String   @default("FREE") // FREE, PRO, BUSINESS, ENTERPRISE
+  role      String   @default("USER") @db.VarChar(20) // USER, ADMIN, SUPER_ADMIN
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

@@ -40,6 +40,7 @@ export class MeController {
         email: userData.email,
         name: userData.name,
         avatarUrl: userData.avatarUrl,
+        role: userData.role,
       },
       profile: primaryProfile,
       cards: userData.profiles.map((p) => ({ id: p.id, label: p.label, slug: p.slug, isPrimary: p.isPrimary, displayName: p.displayName })),

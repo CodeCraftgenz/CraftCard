@@ -6,6 +6,7 @@ interface User {
   email: string;
   name: string;
   avatarUrl: string | null;
+  role: string;
 }
 
 export interface CardSummary {
@@ -62,6 +63,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAdmin: boolean;
   hasPaid: boolean;
   paidUntil: string | null;
   cards: CardSummary[];
@@ -81,7 +83,7 @@ interface AuthContextType extends AuthState {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const EMPTY_STATE: AuthState = {
-  user: null, isAuthenticated: false, isLoading: false,
+  user: null, isAuthenticated: false, isLoading: false, isAdmin: false,
   hasPaid: false, paidUntil: null, cards: [],
   plan: 'FREE', planLimits: DEFAULT_LIMITS, organizations: [],
 };
@@ -103,10 +105,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         planLimits?: PlanLimits;
         organizations?: OrgMembership[];
       } = await api.get('/me');
+      const role = data.user.role || 'USER';
       setState({
         user: data.user,
         isAuthenticated: true,
         isLoading: false,
+        isAdmin: role === 'ADMIN' || role === 'SUPER_ADMIN',
         hasPaid: data.hasPaid,
         paidUntil: data.paidUntil,
         cards: data.cards || [],

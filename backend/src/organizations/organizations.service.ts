@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { AppException } from '../common/exceptions/app.exception';
-import { randomUUID, randomBytes } from 'crypto';
+import { randomBytes } from 'crypto';
 
 type OrgRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 
@@ -60,9 +60,7 @@ export class OrganizationsService {
     }));
   }
 
-  async getById(orgId: string, userId: string) {
-    await this.requireRole(orgId, userId, 'MEMBER');
-
+  async getById(orgId: string) {
     const org = await this.prisma.organization.findUnique({
       where: { id: orgId },
       include: { _count: { select: { members: true, profiles: true } } },
@@ -72,16 +70,14 @@ export class OrganizationsService {
     return { ...org, memberCount: org._count.members, profileCount: org._count.profiles };
   }
 
-  async update(orgId: string, userId: string, data: {
+  async update(orgId: string, data: {
     name?: string;
-    logoUrl?: string;
+    logoUrl?: string | null;
     primaryColor?: string;
     secondaryColor?: string;
     fontFamily?: string;
     brandingActive?: boolean;
   }) {
-    await this.requireRole(orgId, userId, 'ADMIN');
-
     return this.prisma.organization.update({
       where: { id: orgId },
       data: {
@@ -95,9 +91,7 @@ export class OrganizationsService {
     });
   }
 
-  async delete(orgId: string, userId: string) {
-    await this.requireRole(orgId, userId, 'OWNER');
-
+  async delete(orgId: string) {
     // Unlink profiles from org before deletion
     await this.prisma.profile.updateMany({
       where: { orgId },
@@ -110,9 +104,7 @@ export class OrganizationsService {
 
   // --- Members ---
 
-  async getMembers(orgId: string, userId: string) {
-    await this.requireRole(orgId, userId, 'MEMBER');
-
+  async getMembers(orgId: string) {
     return this.prisma.organizationMember.findMany({
       where: { orgId },
       include: {
@@ -122,18 +114,16 @@ export class OrganizationsService {
     });
   }
 
-  async updateMemberRole(orgId: string, memberId: string, userId: string, newRole: string) {
-    await this.requireRole(orgId, userId, 'ADMIN');
-
+  async updateMemberRole(orgId: string, memberId: string, callerUserId: string, newRole: string) {
     const member = await this.prisma.organizationMember.findUnique({ where: { id: memberId } });
     if (!member || member.orgId !== orgId) throw AppException.notFound('Membro');
 
     // Cannot change owner role (must transfer ownership explicitly)
     if (member.role === 'OWNER') throw AppException.badRequest('Nao e possivel alterar o role do proprietario');
 
-    // Only owner can promote to ADMIN
+    // Only owner can promote to ADMIN or OWNER
     if (newRole === 'ADMIN' || newRole === 'OWNER') {
-      await this.requireRole(orgId, userId, 'OWNER');
+      await this.requireRole(orgId, callerUserId, 'OWNER');
     }
 
     return this.prisma.organizationMember.update({
@@ -142,9 +132,7 @@ export class OrganizationsService {
     });
   }
 
-  async removeMember(orgId: string, memberId: string, userId: string) {
-    await this.requireRole(orgId, userId, 'ADMIN');
-
+  async removeMember(orgId: string, memberId: string) {
     const member = await this.prisma.organizationMember.findUnique({ where: { id: memberId } });
     if (!member || member.orgId !== orgId) throw AppException.notFound('Membro');
     if (member.role === 'OWNER') throw AppException.badRequest('Nao e possivel remover o proprietario');
@@ -162,8 +150,6 @@ export class OrganizationsService {
   // --- Invites ---
 
   async createInvite(orgId: string, userId: string, data: { email: string; role?: string }) {
-    await this.requireRole(orgId, userId, 'ADMIN');
-
     const org = await this.prisma.organization.findUnique({
       where: { id: orgId },
       include: { _count: { select: { members: true } } },
@@ -208,9 +194,7 @@ export class OrganizationsService {
     return { id: invite.id, token: invite.token, expiresAt: invite.expiresAt };
   }
 
-  async getPendingInvites(orgId: string, userId: string) {
-    await this.requireRole(orgId, userId, 'ADMIN');
-
+  async getPendingInvites(orgId: string) {
     return this.prisma.organizationInvite.findMany({
       where: { orgId, usedAt: null, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: 'desc' },
@@ -254,9 +238,7 @@ export class OrganizationsService {
     });
   }
 
-  async revokeInvite(orgId: string, inviteId: string, userId: string) {
-    await this.requireRole(orgId, userId, 'ADMIN');
-
+  async revokeInvite(orgId: string, inviteId: string) {
     const invite = await this.prisma.organizationInvite.findUnique({ where: { id: inviteId } });
     if (!invite || invite.orgId !== orgId) throw AppException.notFound('Convite');
 
@@ -266,9 +248,7 @@ export class OrganizationsService {
 
   // --- Consolidated Analytics ---
 
-  async getConsolidatedAnalytics(orgId: string, userId: string) {
-    await this.requireRole(orgId, userId, 'ADMIN');
-
+  async getConsolidatedAnalytics(orgId: string) {
     const profiles = await this.prisma.profile.findMany({
       where: { orgId },
       select: { id: true, displayName: true, slug: true, viewCount: true },
@@ -318,9 +298,7 @@ export class OrganizationsService {
 
   // --- Consolidated Leads ---
 
-  async getConsolidatedLeads(orgId: string, userId: string) {
-    await this.requireRole(orgId, userId, 'ADMIN');
-
+  async getConsolidatedLeads(orgId: string) {
     return this.prisma.contactMessage.findMany({
       where: { profile: { orgId } },
       include: {
@@ -331,9 +309,7 @@ export class OrganizationsService {
     });
   }
 
-  async exportLeadsCsv(orgId: string, userId: string): Promise<string> {
-    await this.requireRole(orgId, userId, 'ADMIN');
-
+  async exportLeadsCsv(orgId: string): Promise<string> {
     const messages = await this.prisma.contactMessage.findMany({
       where: { profile: { orgId } },
       include: {
@@ -358,9 +334,7 @@ export class OrganizationsService {
 
   // --- Link profiles to org ---
 
-  async linkProfile(orgId: string, userId: string, profileId: string) {
-    await this.requireRole(orgId, userId, 'ADMIN');
-
+  async linkProfile(orgId: string, profileId: string) {
     const profile = await this.prisma.profile.findFirst({
       where: { id: profileId },
       include: { user: { select: { id: true } } },
@@ -381,9 +355,7 @@ export class OrganizationsService {
     return { linked: true };
   }
 
-  async unlinkProfile(orgId: string, userId: string, profileId: string) {
-    await this.requireRole(orgId, userId, 'ADMIN');
-
+  async unlinkProfile(orgId: string, profileId: string) {
     await this.prisma.profile.update({
       where: { id: profileId },
       data: { orgId: null },

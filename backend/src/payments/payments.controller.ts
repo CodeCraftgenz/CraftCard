@@ -2,6 +2,7 @@ import { Controller, Post, Get, Body, Headers, Query, Logger } from '@nestjs/com
 import { SkipThrottle } from '@nestjs/throttler';
 import { PaymentsService } from './payments.service';
 import { Public } from '../common/decorators/public.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
 
 @Controller('payments')
@@ -20,6 +21,7 @@ export class PaymentsController {
   }
 
   /** Admin: activate a plan for any user by email */
+  @Roles('SUPER_ADMIN')
   @Post('admin/activate-plan')
   async adminActivatePlan(
     @CurrentUser() user: JwtPayload,
@@ -29,9 +31,10 @@ export class PaymentsController {
   }
 
   /** Admin: list all users with their plans */
+  @Roles('SUPER_ADMIN')
   @Get('admin/users')
-  async adminListUsers(@CurrentUser() user: JwtPayload) {
-    return this.paymentsService.adminListUsers(user.sub);
+  async adminListUsers() {
+    return this.paymentsService.adminListUsers();
   }
 
   /**

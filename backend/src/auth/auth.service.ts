@@ -58,7 +58,7 @@ export class AuthService {
       this.mailService.sendWelcome(user.email, user.name).catch(() => {});
     }
 
-    const accessToken = this.generateAccessToken(user.id, user.email);
+    const accessToken = this.generateAccessToken(user.id, user.email, user.role);
     const refreshToken = await this.generateRefreshToken(user.id);
 
     return {
@@ -103,7 +103,7 @@ export class AuthService {
     });
 
     // Generate new pair
-    const accessToken = this.generateAccessToken(storedToken.user.id, storedToken.user.email);
+    const accessToken = this.generateAccessToken(storedToken.user.id, storedToken.user.email, storedToken.user.role);
     const newRefreshToken = await this.generateRefreshToken(storedToken.userId);
 
     return {
@@ -139,9 +139,9 @@ export class AuthService {
     }
   }
 
-  private generateAccessToken(userId: string, email: string): string {
+  private generateAccessToken(userId: string, email: string, role: string = 'USER'): string {
     return this.jwtService.sign(
-      { sub: userId, email },
+      { sub: userId, email, role },
       {
         secret: this.configService.get('JWT_SECRET', { infer: true }),
         expiresIn: this.configService.get('JWT_EXPIRES_IN', { infer: true }) || '15m',
@@ -213,7 +213,7 @@ export class AuthService {
       this.logger.log(`Dev user created: ${email}`);
     }
 
-    const accessToken = this.generateAccessToken(user.id, user.email);
+    const accessToken = this.generateAccessToken(user.id, user.email, user.role);
     const refreshToken = await this.generateRefreshToken(user.id);
 
     return {

@@ -305,14 +305,8 @@ export class PaymentsService {
     return { synced: false, status: 'still_pending' };
   }
 
-  /** Admin-only: activate a plan for any user by email */
+  /** Admin-only: activate a plan for any user by email (protected by @Roles('SUPER_ADMIN') in controller) */
   async adminActivatePlan(adminUserId: string, targetEmail: string, plan: string, days?: number): Promise<{ activated: boolean; email: string; plan: string; expiresAt: string | null }> {
-    // Verify caller is admin
-    const admin = await this.prisma.user.findUnique({ where: { id: adminUserId }, select: { email: true } });
-    if (!admin || !FREE_ACCESS_EMAILS.has(admin.email.toLowerCase())) {
-      throw AppException.forbidden('Acesso restrito a administradores');
-    }
-
     const validPlans = ['FREE', 'PRO', 'BUSINESS', 'ENTERPRISE'];
     const normalizedPlan = plan.toUpperCase();
     if (!validPlans.includes(normalizedPlan)) {
@@ -353,7 +347,7 @@ export class PaymentsService {
       });
     }
 
-    this.logger.log(`Admin ${admin.email} activated ${normalizedPlan} for ${targetEmail} (expires: ${expiresAt?.toISOString() || 'never'})`);
+    this.logger.log(`Admin ${adminUserId} activated ${normalizedPlan} for ${targetEmail} (expires: ${expiresAt?.toISOString() || 'never'})`);
 
     return {
       activated: true,
@@ -363,15 +357,10 @@ export class PaymentsService {
     };
   }
 
-  /** Admin-only: list all users with their plans */
-  async adminListUsers(adminUserId: string): Promise<{ id: string; name: string | null; email: string; plan: string; createdAt: Date }[]> {
-    const admin = await this.prisma.user.findUnique({ where: { id: adminUserId }, select: { email: true } });
-    if (!admin || !FREE_ACCESS_EMAILS.has(admin.email.toLowerCase())) {
-      throw AppException.forbidden('Acesso restrito a administradores');
-    }
-
+  /** Admin-only: list all users with their plans (protected by @Roles('SUPER_ADMIN') in controller) */
+  async adminListUsers(): Promise<{ id: string; name: string | null; email: string; plan: string; role: string; createdAt: Date }[]> {
     return this.prisma.user.findMany({
-      select: { id: true, name: true, email: true, plan: true, createdAt: true },
+      select: { id: true, name: true, email: true, plan: true, role: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
       take: 100,
     });
