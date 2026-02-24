@@ -77,6 +77,11 @@ export class OrganizationsService {
     secondaryColor?: string;
     fontFamily?: string;
     brandingActive?: boolean;
+    cardTheme?: string;
+    linkStyle?: string;
+    linkAnimation?: string;
+    backgroundType?: string;
+    backgroundGradient?: string | null;
   }) {
     return this.prisma.organization.update({
       where: { id: orgId },
@@ -87,8 +92,35 @@ export class OrganizationsService {
         ...(data.secondaryColor !== undefined && { secondaryColor: data.secondaryColor }),
         ...(data.fontFamily !== undefined && { fontFamily: data.fontFamily }),
         ...(data.brandingActive !== undefined && { brandingActive: data.brandingActive }),
+        ...(data.cardTheme !== undefined && { cardTheme: data.cardTheme }),
+        ...(data.linkStyle !== undefined && { linkStyle: data.linkStyle }),
+        ...(data.linkAnimation !== undefined && { linkAnimation: data.linkAnimation }),
+        ...(data.backgroundType !== undefined && { backgroundType: data.backgroundType }),
+        ...(data.backgroundGradient !== undefined && { backgroundGradient: data.backgroundGradient }),
       },
     });
+  }
+
+  async bulkApplyBranding(orgId: string) {
+    const org = await this.prisma.organization.findUnique({ where: { id: orgId } });
+    if (!org) throw AppException.notFound('Organizacao');
+
+    const result = await this.prisma.profile.updateMany({
+      where: { orgId },
+      data: {
+        buttonColor: org.primaryColor,
+        cardTheme: org.cardTheme || 'default',
+        fontFamily: org.fontFamily,
+        fontSizeScale: 1.0,
+        linkStyle: org.linkStyle || 'rounded',
+        linkAnimation: org.linkAnimation || 'none',
+        backgroundType: org.backgroundType || 'theme',
+        backgroundGradient: org.backgroundGradient,
+      },
+    });
+
+    this.logger.log(`Bulk apply branding for org ${org.name}: ${result.count} profiles updated`);
+    return { applied: true, count: result.count };
   }
 
   async delete(orgId: string) {

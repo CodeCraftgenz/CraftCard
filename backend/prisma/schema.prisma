@@ -342,9 +342,14 @@ model Organization {
   fontFamily     String   @default("Inter") @map("font_family") @db.VarChar(50)
   domain         String?  @db.VarChar(200)
   maxMembers     Int      @default(50) @map("max_members")
-  brandingActive Boolean  @default(false) @map("branding_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  brandingActive     Boolean  @default(false) @map("branding_active")
+  cardTheme          String?  @default("default") @map("card_theme") @db.VarChar(20)
+  linkStyle          String?  @default("rounded") @map("link_style") @db.VarChar(20)
+  linkAnimation      String?  @default("none") @map("link_animation") @db.VarChar(20)
+  backgroundType     String?  @default("theme") @map("background_type") @db.VarChar(20)
+  backgroundGradient String?  @map("background_gradient") @db.VarChar(200)
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
   members  OrganizationMember[]
   invites  OrganizationInvite[]

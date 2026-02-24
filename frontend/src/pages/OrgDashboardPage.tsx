@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Users, BarChart3, Mail, Settings, Plus, Trash2, Copy, Check,
-  UserPlus, Shield, Crown, Download, Eye, MessageSquare, Calendar, ArrowLeft,
+  UserPlus, Shield, Crown, Download, Eye, MessageSquare, Calendar, ArrowLeft, Loader2,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
 import {
@@ -13,6 +13,7 @@ import {
   useOrgAnalytics,
   useOrgLeads,
   useUpdateOrganization,
+  useBulkApplyBranding,
   useInviteMember,
   useRevokeInvite,
   useRemoveMember,
@@ -273,22 +274,53 @@ function MembersTab({ orgId }: { orgId: string }) {
 }
 
 // --- Branding Tab ---
-function BrandingTab({ orgId, org }: { orgId: string; org: { primaryColor: string; secondaryColor: string; fontFamily: string; brandingActive: boolean } }) {
+
+const THEMES = ['default', 'gradient', 'minimal', 'bold', 'ocean', 'sunset', 'forest', 'neon', 'elegant', 'cosmic'] as const;
+const THEME_COLORS: Record<string, string> = {
+  default: '#1a1a2e', gradient: '#667eea', minimal: '#f5f5f5', bold: '#ef4444',
+  ocean: '#0ea5e9', sunset: '#f97316', forest: '#22c55e', neon: '#a855f7',
+  elegant: '#c9a84c', cosmic: '#6366f1',
+};
+const LINK_STYLES = ['rounded', 'pill', 'square', 'outline', 'ghost'] as const;
+const LINK_ANIMATIONS = ['none', 'scale', 'slide', 'glow'] as const;
+
+interface BrandingOrg {
+  primaryColor: string; secondaryColor: string; fontFamily: string; brandingActive: boolean;
+  cardTheme: string | null; linkStyle: string | null; linkAnimation: string | null;
+  backgroundType: string | null; backgroundGradient: string | null;
+}
+
+function BrandingTab({ orgId, org }: { orgId: string; org: BrandingOrg }) {
   const updateOrg = useUpdateOrganization(orgId);
+  const bulkApply = useBulkApplyBranding(orgId);
+
   const [primary, setPrimary] = useState(org.primaryColor);
   const [secondary, setSecondary] = useState(org.secondaryColor);
   const [font, setFont] = useState(org.fontFamily);
   const [active, setActive] = useState(org.brandingActive);
+  const [theme, setTheme] = useState(org.cardTheme || 'default');
+  const [linkStyle, setLinkStyle] = useState(org.linkStyle || 'rounded');
+  const [linkAnim, setLinkAnim] = useState(org.linkAnimation || 'none');
+  const [bgType, setBgType] = useState(org.backgroundType || 'theme');
+  const [bgGradient, setBgGradient] = useState(org.backgroundGradient || '');
+  const [showBulkConfirm, setShowBulkConfirm] = useState(false);
 
   const save = () => {
-    updateOrg.mutate({ primaryColor: primary, secondaryColor: secondary, fontFamily: font, brandingActive: active });
+    updateOrg.mutate({
+      primaryColor: primary, secondaryColor: secondary, fontFamily: font, brandingActive: active,
+      cardTheme: theme, linkStyle, linkAnimation: linkAnim,
+      backgroundType: bgType, backgroundGradient: bgGradient || null,
+    });
+  };
+
+  const handleBulkApply = () => {
+    bulkApply.mutate(undefined, { onSuccess: () => setShowBulkConfirm(false) });
   };
 
   return (
     <div className="space-y-6">
-      <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-5">
-        <h3 className="text-white font-semibold">Branding Corporativo</h3>
-
+      {/* Toggle branding */}
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -296,9 +328,16 @@ function BrandingTab({ orgId, org }: { orgId: string; org: { primaryColor: strin
             onChange={(e) => setActive(e.target.checked)}
             className="w-4 h-4 rounded bg-white/10 border-white/20 text-brand-cyan focus:ring-brand-cyan"
           />
-          <span className="text-white text-sm">Ativar branding (aplica visual da empresa nos cartoes dos membros)</span>
+          <div>
+            <span className="text-white text-sm font-medium">Ativar branding corporativo</span>
+            <p className="text-white/40 text-xs mt-0.5">Quando ativo, membros nao podem alterar o visual dos cartoes</p>
+          </div>
         </label>
+      </div>
 
+      {/* Colors */}
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-4">
+        <h3 className="text-white font-semibold text-sm">Cores</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-white/60 text-xs block mb-1">Cor Primaria</label>
@@ -315,7 +354,13 @@ function BrandingTab({ orgId, org }: { orgId: string; org: { primaryColor: strin
             </div>
           </div>
         </div>
+      </div>
 
+      {/* Visual settings */}
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-5">
+        <h3 className="text-white font-semibold text-sm">Visual</h3>
+
+        {/* Font */}
         <div>
           <label className="text-white/60 text-xs block mb-1">Fonte</label>
           <select
@@ -330,23 +375,199 @@ function BrandingTab({ orgId, org }: { orgId: string; org: { primaryColor: strin
           </select>
         </div>
 
-        {/* Preview */}
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-          <p className="text-white/40 text-xs mb-2">Preview</p>
-          <div className="flex items-center gap-3" style={{ fontFamily: font }}>
-            <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: primary }} />
-            <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: secondary }} />
-            <span className="text-white text-sm">Texto de exemplo</span>
+        {/* Card Theme */}
+        <div>
+          <label className="text-white/60 text-xs block mb-2">Tema do Cartao</label>
+          <div className="grid grid-cols-5 gap-2">
+            {THEMES.map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTheme(t)}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${
+                  theme === t ? 'border-brand-cyan bg-brand-cyan/10' : 'border-white/10 hover:border-white/20'
+                }`}
+              >
+                <div className="w-full h-6 rounded-lg" style={{ backgroundColor: THEME_COLORS[t] }} />
+                <span className="text-[10px] text-white/50 capitalize">{t}</span>
+              </button>
+            ))}
           </div>
         </div>
 
+        {/* Link Style */}
+        <div>
+          <label className="text-white/60 text-xs block mb-2">Estilo de Link</label>
+          <div className="flex gap-2">
+            {LINK_STYLES.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setLinkStyle(s)}
+                className={`flex-1 py-2 text-xs font-medium transition-all ${
+                  linkStyle === s
+                    ? 'bg-brand-cyan/20 text-brand-cyan border-brand-cyan'
+                    : 'bg-white/5 text-white/50 border-white/10 hover:text-white/70'
+                } border rounded-xl capitalize`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Link Animation */}
+        <div>
+          <label className="text-white/60 text-xs block mb-2">Animacao de Link</label>
+          <div className="flex gap-2">
+            {LINK_ANIMATIONS.map((a) => (
+              <button
+                key={a}
+                type="button"
+                onClick={() => setLinkAnim(a)}
+                className={`flex-1 py-2 text-xs font-medium transition-all ${
+                  linkAnim === a
+                    ? 'bg-brand-cyan/20 text-brand-cyan border-brand-cyan'
+                    : 'bg-white/5 text-white/50 border-white/10 hover:text-white/70'
+                } border rounded-xl capitalize`}
+              >
+                {a === 'none' ? 'Nenhuma' : a}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Background Type */}
+        <div>
+          <label className="text-white/60 text-xs block mb-2">Tipo de Fundo</label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setBgType('theme')}
+              className={`flex-1 py-2 text-xs font-medium transition-all border rounded-xl ${
+                bgType === 'theme' ? 'bg-brand-cyan/20 text-brand-cyan border-brand-cyan' : 'bg-white/5 text-white/50 border-white/10'
+              }`}
+            >
+              Tema
+            </button>
+            <button
+              type="button"
+              onClick={() => setBgType('gradient')}
+              className={`flex-1 py-2 text-xs font-medium transition-all border rounded-xl ${
+                bgType === 'gradient' ? 'bg-brand-cyan/20 text-brand-cyan border-brand-cyan' : 'bg-white/5 text-white/50 border-white/10'
+              }`}
+            >
+              Gradiente
+            </button>
+          </div>
+          {bgType === 'gradient' && (
+            <input
+              value={bgGradient}
+              onChange={(e) => setBgGradient(e.target.value)}
+              placeholder="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+              className="mt-2 w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50"
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Preview */}
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+        <p className="text-white/40 text-xs mb-3">Preview</p>
+        <div
+          className="rounded-xl p-4 border border-white/10"
+          style={{
+            fontFamily: font,
+            background: bgType === 'gradient' && bgGradient ? bgGradient : THEME_COLORS[theme] || '#1a1a2e',
+          }}
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full" style={{ backgroundColor: primary }} />
+            <div>
+              <p className="text-white text-sm font-semibold">Nome do Membro</p>
+              <p className="text-white/50 text-xs">Cargo na empresa</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div
+              className={`px-4 py-2 text-center text-xs text-white ${
+                linkStyle === 'pill' ? 'rounded-full' :
+                linkStyle === 'square' ? 'rounded-none' :
+                linkStyle === 'outline' ? 'rounded-xl bg-transparent border border-current' :
+                linkStyle === 'ghost' ? 'rounded-xl bg-transparent' :
+                'rounded-xl'
+              }`}
+              style={{
+                backgroundColor: linkStyle !== 'outline' && linkStyle !== 'ghost' ? primary : undefined,
+                borderColor: linkStyle === 'outline' ? primary : undefined,
+                color: linkStyle === 'outline' || linkStyle === 'ghost' ? primary : undefined,
+              }}
+            >
+              Link de exemplo
+            </div>
+            <div
+              className={`px-4 py-2 text-center text-xs ${
+                linkStyle === 'pill' ? 'rounded-full' :
+                linkStyle === 'square' ? 'rounded-none' :
+                linkStyle === 'outline' ? 'rounded-xl border border-white/20 bg-transparent text-white/70' :
+                linkStyle === 'ghost' ? 'rounded-xl bg-transparent text-white/70' :
+                'rounded-xl'
+              }`}
+              style={{
+                backgroundColor: linkStyle !== 'outline' && linkStyle !== 'ghost' ? `${secondary}40` : undefined,
+                color: linkStyle !== 'outline' && linkStyle !== 'ghost' ? 'white' : undefined,
+              }}
+            >
+              Outro link
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-4">
         <button
           onClick={save}
           disabled={updateOrg.isPending}
-          className="px-6 py-2 bg-brand-cyan text-brand-dark rounded-xl text-sm font-semibold hover:bg-brand-cyan/90 transition-colors disabled:opacity-50"
+          className="w-full py-2.5 bg-brand-cyan text-brand-dark rounded-xl text-sm font-semibold hover:bg-brand-cyan/90 transition-colors disabled:opacity-50"
         >
           {updateOrg.isPending ? 'Salvando...' : 'Salvar Branding'}
         </button>
+
+        <div className="border-t border-white/5 pt-4">
+          <p className="text-white/40 text-xs mb-3">
+            Aplica as configuracoes visuais acima em todos os cartoes linkados a organizacao.
+          </p>
+          {!showBulkConfirm ? (
+            <button
+              onClick={() => setShowBulkConfirm(true)}
+              className="w-full py-2.5 bg-white/10 text-white rounded-xl text-sm font-medium hover:bg-white/15 transition-colors"
+            >
+              Aplicar em todos os cartoes
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={handleBulkApply}
+                disabled={bulkApply.isPending}
+                className="flex-1 py-2.5 bg-amber-500/20 text-amber-400 rounded-xl text-sm font-medium hover:bg-amber-500/30 transition-colors disabled:opacity-50"
+              >
+                {bulkApply.isPending ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Confirmar'}
+              </button>
+              <button
+                onClick={() => setShowBulkConfirm(false)}
+                className="px-4 py-2.5 bg-white/5 text-white/50 rounded-xl text-sm hover:bg-white/10 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          )}
+          {bulkApply.isSuccess && (
+            <p className="text-green-400 text-xs mt-2">
+              Branding aplicado em {(bulkApply.data as { count: number })?.count || 0} cartoes!
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

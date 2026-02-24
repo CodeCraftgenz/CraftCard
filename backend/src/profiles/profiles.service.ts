@@ -131,7 +131,7 @@ export class ProfilesService {
         services: { orderBy: { order: 'asc' }, select: { id: true, title: true, description: true, price: true, order: true } },
         faqItems: { orderBy: { order: 'asc' }, select: { id: true, question: true, answer: true, order: true } },
         user: { select: { name: true, email: true, plan: true } },
-        organization: { select: { id: true, name: true, logoUrl: true, primaryColor: true, secondaryColor: true, fontFamily: true, brandingActive: true } },
+        organization: { select: { id: true, name: true, logoUrl: true, primaryColor: true, secondaryColor: true, fontFamily: true, brandingActive: true, cardTheme: true, linkStyle: true, linkAnimation: true, backgroundType: true, backgroundGradient: true } },
       },
     });
     if (!profile || !profile.isPublished) {
@@ -167,6 +167,11 @@ export class ProfilesService {
       orgPrimaryColor: profile.organization.primaryColor,
       orgSecondaryColor: profile.organization.secondaryColor,
       orgFontFamily: profile.organization.fontFamily,
+      orgCardTheme: profile.organization.cardTheme,
+      orgLinkStyle: profile.organization.linkStyle,
+      orgLinkAnimation: profile.organization.linkAnimation,
+      orgBackgroundType: profile.organization.backgroundType,
+      orgBackgroundGradient: profile.organization.backgroundGradient,
     } : null;
 
     return {

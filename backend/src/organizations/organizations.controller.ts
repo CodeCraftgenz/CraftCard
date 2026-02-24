@@ -111,6 +111,15 @@ export class OrganizationsController {
     return this.orgService.revokeInvite(orgId, inviteId);
   }
 
+  // --- Bulk apply branding ---
+
+  @UseGuards(OrgRoleGuard)
+  @RequiresOrgRole('ADMIN')
+  @Post(':orgId/bulk-apply')
+  async bulkApplyBranding(@Param('orgId') orgId: string) {
+    return this.orgService.bulkApplyBranding(orgId);
+  }
+
   // --- Analytics & Leads ---
 
   @UseGuards(OrgRoleGuard)

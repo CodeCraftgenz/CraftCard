@@ -23,6 +23,11 @@ export interface Organization {
   domain: string | null;
   maxMembers: number;
   brandingActive: boolean;
+  cardTheme: string | null;
+  linkStyle: string | null;
+  linkAnimation: string | null;
+  backgroundType: string | null;
+  backgroundGradient: string | null;
   memberCount: number;
   profileCount: number;
 }
@@ -205,6 +210,14 @@ export function useUnlinkProfile(orgId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (profileId: string) => api.delete(`/organizations/${orgId}/profiles/${profileId}`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['organization', orgId] }); },
+  });
+}
+
+export function useBulkApplyBranding(orgId: string) {
+  const qc = useQueryClient();
+  return useMutation<{ applied: boolean; count: number }>({
+    mutationFn: () => api.post(`/organizations/${orgId}/bulk-apply`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['organization', orgId] }); },
   });
 }
