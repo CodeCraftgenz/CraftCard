@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Users, BarChart3, Mail, Settings, Plus, Trash2, Copy, Check,
-  UserPlus, Shield, Crown, Download, Eye, MessageSquare, Calendar, ArrowLeft, Loader2,
+  UserPlus, Shield, Crown, Download, Eye, MessageSquare, Calendar, ArrowLeft, Loader2, AlertTriangle,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
 import {
@@ -13,6 +13,7 @@ import {
   useOrgAnalytics,
   useOrgLeads,
   useUpdateOrganization,
+  useDeleteOrganization,
   useBulkApplyBranding,
   useInviteMember,
   useRevokeInvite,
@@ -107,7 +108,17 @@ export function OrgDashboardPage() {
 
 // --- Overview Tab ---
 function OverviewTab({ orgId }: { orgId: string }) {
+  const navigate = useNavigate();
   const { data: analytics } = useOrgAnalytics(orgId);
+  const deleteOrg = useDeleteOrganization();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+
+  const handleDelete = () => {
+    deleteOrg.mutate(orgId, {
+      onSuccess: () => navigate('/editor'),
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -134,6 +145,52 @@ function OverviewTab({ orgId }: { orgId: string }) {
           </div>
         </div>
       )}
+
+      {/* Danger zone — Delete organization */}
+      <div className="bg-red-500/5 rounded-2xl p-6 border border-red-500/20">
+        <h3 className="text-red-400 font-semibold text-sm flex items-center gap-2 mb-2">
+          <AlertTriangle size={16} />
+          Zona de Perigo
+        </h3>
+        <p className="text-white/40 text-xs mb-4">
+          Excluir a organizacao remove todos os membros, convites e desvincula os cartoes. Esta acao nao pode ser desfeita.
+        </p>
+        {!showDeleteConfirm ? (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-sm font-medium hover:bg-red-500/20 transition-colors"
+          >
+            Excluir Organizacao
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-white/60 text-xs">
+              Digite <strong className="text-red-400">excluir</strong> para confirmar:
+            </p>
+            <input
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="excluir"
+              className="w-full bg-white/5 border border-red-500/20 rounded-xl px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-red-500/40"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleDelete}
+                disabled={confirmText !== 'excluir' || deleteOrg.isPending}
+                className="flex-1 py-2.5 bg-red-500/20 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                {deleteOrg.isPending ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Confirmar Exclusao'}
+              </button>
+              <button
+                onClick={() => { setShowDeleteConfirm(false); setConfirmText(''); }}
+                className="px-4 py-2.5 bg-white/5 text-white/50 rounded-xl text-sm hover:bg-white/10 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
