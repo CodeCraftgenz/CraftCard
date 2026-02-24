@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Users, BarChart3, Mail, Settings, Plus, Trash2, Copy, Check,
-  UserPlus, Shield, Crown, ChevronDown, Download, Eye, MessageSquare, Calendar,
+  UserPlus, Shield, Crown, Download, Eye, MessageSquare, Calendar,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
-import { useAuth } from '@/providers/AuthProvider';
 import {
   useOrganization,
   useOrgMembers,
@@ -16,7 +15,6 @@ import {
   useUpdateOrganization,
   useInviteMember,
   useRevokeInvite,
-  useUpdateMemberRole,
   useRemoveMember,
 } from '@/hooks/useOrganization';
 import { AVAILABLE_FONTS } from '@/lib/google-fonts';
@@ -150,7 +148,6 @@ function MembersTab({ orgId }: { orgId: string }) {
   const { data: invites } = useOrgInvites(orgId);
   const inviteMember = useInviteMember(orgId);
   const revokeInvite = useRevokeInvite(orgId);
-  const updateRole = useUpdateMemberRole(orgId);
   const removeMember = useRemoveMember(orgId);
   const [inviteEmail, setInviteEmail] = useState('');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);

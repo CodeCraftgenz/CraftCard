@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowRight, ArrowLeft, Check, User, FileText, Link2, Palette, Sparkles } from 'lucide-react';
+import { X, ArrowRight, ArrowLeft, Check, User, FileText, Link2, Sparkles } from 'lucide-react';
 
 interface OnboardingWizardProps {
   onComplete: (data: OnboardingData) => void;

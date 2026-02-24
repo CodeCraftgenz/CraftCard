@@ -37,7 +37,7 @@ import { useTestimonials, useApproveTestimonial, useRejectTestimonial } from '@/
 import { useGallery, useUploadGalleryImage, useDeleteGalleryImage } from '@/hooks/useGallery';
 import { useMySlots, useSaveSlots, useMyBookings, useUpdateBookingStatus } from '@/hooks/useBookings';
 import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, resolvePhotoUrl } from '@/lib/constants';
-import { StyleEditor, type VisualCustomization } from '@/components/organisms/StyleEditor';
+import { StyleEditor } from '@/components/organisms/StyleEditor';
 import { ServicesEditor } from '@/components/organisms/ServicesEditor';
 import { FaqEditor } from '@/components/organisms/FaqEditor';
 import { UpgradeBanner } from '@/components/organisms/UpgradeBanner';
@@ -1473,7 +1473,7 @@ export function EditorPage() {
                   linkStyle: form.linkStyle,
                   linkAnimation: form.linkAnimation,
                 }}
-                onChange={(key, val) => updateField(key, val)}
+                onChange={(key, val) => updateField(key as keyof typeof form, val as any)}
                 accent={form.buttonColor}
               />
             ) : (

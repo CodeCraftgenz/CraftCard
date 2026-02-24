@@ -9,6 +9,8 @@ interface SocialLink {
   order: number;
   startsAt?: string | null;
   endsAt?: string | null;
+  linkType?: string | null;
+  metadata?: string | null;
 }
 
 export interface Profile {
@@ -31,6 +33,13 @@ export interface Profile {
   videoUrl: string | null;
   leadCaptureEnabled: boolean;
   bookingEnabled: boolean;
+  fontFamily?: string | null;
+  fontSizeScale?: number | null;
+  backgroundType?: string | null;
+  backgroundGradient?: string | null;
+  backgroundPattern?: string | null;
+  linkStyle?: string | null;
+  linkAnimation?: string | null;
   socialLinks: SocialLink[];
 }
 

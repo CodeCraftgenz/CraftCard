@@ -16,7 +16,8 @@ export function OrgJoinPage() {
   useEffect(() => {
     if (!token) return;
     acceptInvite.mutateAsync(token)
-      .then((result: { joined: boolean; organization: { id: string; name: string; slug: string } | null }) => {
+      .then((res: any) => {
+        const result = res?.data ?? res;
         setStatus('success');
         setOrgName(result.organization?.name || '');
         setTimeout(() => {

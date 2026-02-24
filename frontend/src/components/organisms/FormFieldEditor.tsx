@@ -53,7 +53,7 @@ export function FormFieldEditor({ cardId }: FormFieldEditorProps) {
           <FieldRow
             key={field.id}
             field={field}
-            onUpdate={(data) => updateField.mutate({ id: field.id, ...data })}
+            onUpdate={(data) => updateField.mutate({ id: field.id, ...data, options: data.options ?? undefined })}
             onDelete={() => deleteField.mutate(field.id)}
           />
         ))}

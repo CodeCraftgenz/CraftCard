@@ -5,17 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import {
-  Instagram,
-  Linkedin,
-  Github,
-  Globe,
   Mail,
   MessageCircle,
-  Youtube,
-  Twitter,
-  Music2,
-  Link as LinkIcon,
-  ExternalLink,
   Share2,
   FileText,
   User,
@@ -40,7 +31,7 @@ import { GalleryGrid } from '@/components/organisms/GalleryGrid';
 import { LinkRenderer } from '@/components/organisms/LinkRenderer';
 import { BookingCalendar } from '@/components/organisms/BookingCalendar';
 import { api } from '@/lib/api';
-import { trackLinkClick, trackViewEvent } from '@/hooks/useAnalytics';
+import { trackViewEvent } from '@/hooks/useAnalytics';
 import { usePublicSlots } from '@/hooks/useBookings';
 import { useSendMessage } from '@/hooks/useContacts';
 import { useSubmitTestimonial } from '@/hooks/useTestimonials';
@@ -129,31 +120,6 @@ interface PublicProfile {
   } | null;
 }
 
-const platformIcons: Record<string, typeof Instagram> = {
-  instagram: Instagram,
-  linkedin: Linkedin,
-  github: Github,
-  twitter: Twitter,
-  youtube: Youtube,
-  tiktok: Music2,
-  website: Globe,
-  email: Mail,
-  whatsapp: MessageCircle,
-  other: LinkIcon,
-  custom: ExternalLink,
-};
-
-const platformColors: Record<string, string> = {
-  instagram: '#E4405F',
-  linkedin: '#0A66C2',
-  github: '#FFFFFF',
-  twitter: '#1DA1F2',
-  youtube: '#FF0000',
-  tiktok: '#000000',
-  whatsapp: '#25D366',
-  email: '#EA4335',
-};
-
 function getThemeBackground(theme: string, accent: string): string {
   switch (theme) {
     case 'gradient':
@@ -201,26 +167,6 @@ function getThemeCardStyle(theme: string): string {
       return 'backdrop-blur-xl bg-white/5 border border-purple-500/20 rounded-3xl shadow-2xl';
     default:
       return 'backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl';
-  }
-}
-
-function getLinkStyleClass(style: string, _accent: string): string {
-  switch (style) {
-    case 'pill': return 'rounded-full bg-white/5 border border-white/10 hover:bg-white/10';
-    case 'square': return 'rounded-none bg-white/5 border border-white/10 hover:bg-white/10';
-    case 'outline': return 'rounded-2xl bg-transparent border border-white/20 hover:bg-white/5';
-    case 'ghost': return 'rounded-2xl bg-transparent border-none hover:bg-white/5';
-    case 'rounded':
-    default: return 'rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10';
-  }
-}
-
-function getLinkHoverAnim(anim: string): Record<string, number> {
-  switch (anim) {
-    case 'scale': return { scale: 1.04 };
-    case 'slide': return { x: 6 };
-    case 'glow': return { scale: 1.02 };
-    default: return { scale: 1.02 };
   }
 }
 
