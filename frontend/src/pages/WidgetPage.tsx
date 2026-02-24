@@ -33,7 +33,7 @@ export function WidgetPage() {
 
   const { data: profile, isLoading, error } = useQuery<WidgetProfile>({
     queryKey: ['widget', slug],
-    queryFn: () => api.get(`/profile/${slug}`).then((r) => r.data),
+    queryFn: () => api.get(`/profile/${slug}`),
     enabled: !!slug,
   });
 
