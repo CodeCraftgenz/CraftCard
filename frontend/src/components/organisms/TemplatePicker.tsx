@@ -34,6 +34,7 @@ export function TemplatePicker({ open, onClose, onApply }: Props) {
               <button
                 type="button"
                 onClick={onClose}
+                aria-label="Fechar"
                 className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all"
               >
                 <X size={18} />

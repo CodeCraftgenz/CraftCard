@@ -179,6 +179,7 @@ function MembersTab({ orgId }: { orgId: string }) {
           <button
             onClick={handleInvite}
             disabled={inviteMember.isPending}
+            aria-label="Convidar membro"
             className="px-4 py-2 bg-brand-cyan/20 text-brand-cyan rounded-xl text-sm font-medium hover:bg-brand-cyan/30 transition-colors disabled:opacity-50"
           >
             <Plus size={16} />
@@ -212,6 +213,7 @@ function MembersTab({ orgId }: { orgId: string }) {
                 {m.role !== 'OWNER' && (
                   <button
                     onClick={() => removeMember.mutate(m.id)}
+                    aria-label="Remover membro"
                     className="text-red-400/50 hover:text-red-400 transition-colors"
                   >
                     <Trash2 size={14} />
@@ -247,6 +249,7 @@ function MembersTab({ orgId }: { orgId: string }) {
                 </button>
                 <button
                   onClick={() => revokeInvite.mutate(inv.id)}
+                  aria-label="Revogar convite"
                   className="text-red-400/50 hover:text-red-400 transition-colors"
                 >
                   <Trash2 size={14} />
@@ -291,15 +294,15 @@ function BrandingTab({ orgId, org }: { orgId: string; org: { primaryColor: strin
           <div>
             <label className="text-white/60 text-xs block mb-1">Cor Primaria</label>
             <div className="flex items-center gap-2">
-              <input type="color" value={primary} onChange={(e) => setPrimary(e.target.value)} className="w-8 h-8 rounded cursor-pointer" />
-              <input value={primary} onChange={(e) => setPrimary(e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm w-24" />
+              <input type="color" value={primary} onChange={(e) => setPrimary(e.target.value)} aria-label="Cor primaria" className="w-8 h-8 rounded cursor-pointer" />
+              <input value={primary} onChange={(e) => setPrimary(e.target.value)} aria-label="Hex cor primaria" className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm w-24" />
             </div>
           </div>
           <div>
             <label className="text-white/60 text-xs block mb-1">Cor Secundaria</label>
             <div className="flex items-center gap-2">
-              <input type="color" value={secondary} onChange={(e) => setSecondary(e.target.value)} className="w-8 h-8 rounded cursor-pointer" />
-              <input value={secondary} onChange={(e) => setSecondary(e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm w-24" />
+              <input type="color" value={secondary} onChange={(e) => setSecondary(e.target.value)} aria-label="Cor secundaria" className="w-8 h-8 rounded cursor-pointer" />
+              <input value={secondary} onChange={(e) => setSecondary(e.target.value)} aria-label="Hex cor secundaria" className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm w-24" />
             </div>
           </div>
         </div>
@@ -309,6 +312,7 @@ function BrandingTab({ orgId, org }: { orgId: string; org: { primaryColor: strin
           <select
             value={font}
             onChange={(e) => setFont(e.target.value)}
+            aria-label="Fonte da organizacao"
             className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm w-full focus:outline-none focus:border-brand-cyan/50"
           >
             {AVAILABLE_FONTS.map((f) => (
