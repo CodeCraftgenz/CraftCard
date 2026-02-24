@@ -73,6 +73,7 @@ export function FormFieldEditor({ cardId }: FormFieldEditorProps) {
           <select
             value={newType}
             onChange={(e) => setNewType(e.target.value)}
+            aria-label="Tipo do campo"
             className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:border-brand-cyan/50 focus:outline-none"
           >
             {FIELD_TYPES.map((t) => (
@@ -83,6 +84,7 @@ export function FormFieldEditor({ cardId }: FormFieldEditorProps) {
             type="button"
             onClick={handleAdd}
             disabled={!newLabel.trim() || createField.isPending}
+            aria-label="Adicionar campo"
             className="px-3 py-2 rounded-lg bg-brand-cyan/10 text-brand-cyan text-sm hover:bg-brand-cyan/20 transition-colors disabled:opacity-40"
           >
             <Plus size={16} />

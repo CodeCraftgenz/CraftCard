@@ -80,6 +80,7 @@ export function GalleryGrid({ images }: GalleryGridProps) {
             <button
               type="button"
               onClick={closeLightbox}
+              aria-label="Fechar"
               className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors z-10"
             >
               <X size={24} />
@@ -90,6 +91,7 @@ export function GalleryGrid({ images }: GalleryGridProps) {
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); goPrev(); }}
+                  aria-label="Anterior"
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors z-10"
                 >
                   <ChevronLeft size={32} />
@@ -97,6 +99,7 @@ export function GalleryGrid({ images }: GalleryGridProps) {
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); goNext(); }}
+                  aria-label="Proximo"
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors z-10"
                 >
                   <ChevronRight size={32} />

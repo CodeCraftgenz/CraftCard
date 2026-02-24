@@ -37,7 +37,7 @@ export function StyleEditor({ value, onChange, accent }: StyleEditorProps) {
       <div className="space-y-6">
         {/* Font Family */}
         <div>
-          <label className="text-xs font-medium text-white/50 mb-3 block uppercase tracking-wider flex items-center gap-1.5">
+          <label className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider flex items-center gap-1.5">
             <Type size={12} /> Fonte
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -78,6 +78,7 @@ export function StyleEditor({ value, onChange, accent }: StyleEditorProps) {
             step={0.05}
             value={value.fontSizeScale ?? 1}
             onChange={(e) => onChange('fontSizeScale', parseFloat(e.target.value))}
+            aria-label="Tamanho do texto"
             className="w-full accent-brand-cyan"
           />
           <div className="flex justify-between text-[10px] text-white/20 mt-1">
@@ -88,7 +89,7 @@ export function StyleEditor({ value, onChange, accent }: StyleEditorProps) {
 
         {/* Background Type */}
         <div>
-          <label className="text-xs font-medium text-white/50 mb-3 block uppercase tracking-wider flex items-center gap-1.5">
+          <label className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider flex items-center gap-1.5">
             <Layers size={12} /> Fundo
           </label>
           <div className="flex gap-2 mb-3">
@@ -155,7 +156,7 @@ export function StyleEditor({ value, onChange, accent }: StyleEditorProps) {
 
         {/* Link Style */}
         <div>
-          <label className="text-xs font-medium text-white/50 mb-3 block uppercase tracking-wider flex items-center gap-1.5">
+          <label className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider flex items-center gap-1.5">
             <MousePointerClick size={12} /> Estilo dos Links
           </label>
           <div className="grid grid-cols-5 gap-2">
