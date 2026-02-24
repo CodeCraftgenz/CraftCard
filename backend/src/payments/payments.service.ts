@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { AppException } from '../common/exceptions/app.exception';
 import type { EnvConfig } from '../common/config/env.config';
+import { getPlanLimits, type PlanType, type PlanLimits } from './plan-limits';
 
 const MP_STATUS_MAP: Record<string, string> = {
   approved: 'approved',
@@ -45,28 +46,64 @@ export class PaymentsService {
   }
 
   async getActiveSubscription(userId: string): Promise<{ active: boolean; expiresAt: Date | null }> {
-    // Check free-access whitelist first
-    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
-    if (user && FREE_ACCESS_EMAILS.has(user.email.toLowerCase())) {
-      return { active: true, expiresAt: null };
-    }
+    const planInfo = await this.getUserPlanInfo(userId);
+    return { active: planInfo.plan !== 'FREE', expiresAt: planInfo.expiresAt };
+  }
 
-    const payment = await this.prisma.payment.findFirst({
-      where: {
-        userId,
-        status: 'approved',
-        OR: [
-          { expiresAt: null },          // Legacy payments (lifetime)
-          { expiresAt: { gt: new Date() } }, // Active annual subscription
-        ],
-      },
-      orderBy: { paidAt: 'desc' },
+  /**
+   * Get the user's plan, limits, and subscription info.
+   * Source of truth: user.plan column (synced on payment approval).
+   * FREE_ACCESS_EMAILS get PRO for free.
+   */
+  async getUserPlanInfo(userId: string): Promise<{
+    plan: PlanType;
+    planLimits: PlanLimits;
+    expiresAt: Date | null;
+  }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, plan: true },
     });
 
-    return {
-      active: !!payment,
-      expiresAt: payment?.expiresAt ?? null,
-    };
+    if (!user) {
+      return { plan: 'FREE', planLimits: getPlanLimits('FREE'), expiresAt: null };
+    }
+
+    // Free-access whitelist → PRO regardless of DB
+    if (FREE_ACCESS_EMAILS.has(user.email.toLowerCase())) {
+      return { plan: 'PRO', planLimits: getPlanLimits('PRO'), expiresAt: null };
+    }
+
+    const plan = (user.plan || 'FREE') as PlanType;
+
+    // For paid plans, check expiration
+    if (plan !== 'FREE') {
+      const payment = await this.prisma.payment.findFirst({
+        where: {
+          userId,
+          status: 'approved',
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gt: new Date() } },
+          ],
+        },
+        orderBy: { paidAt: 'desc' },
+        select: { expiresAt: true },
+      });
+
+      // If no active payment, downgrade to FREE
+      if (!payment) {
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { plan: 'FREE' },
+        }).catch(() => {});
+        return { plan: 'FREE', planLimits: getPlanLimits('FREE'), expiresAt: null };
+      }
+
+      return { plan, planLimits: getPlanLimits(plan), expiresAt: payment.expiresAt };
+    }
+
+    return { plan: 'FREE', planLimits: getPlanLimits('FREE'), expiresAt: null };
   }
 
   async createCheckoutPreference(userId: string, email: string): Promise<{ url: string }> {
@@ -233,6 +270,12 @@ export class PaymentsService {
               },
             });
 
+            // Sync user plan
+            await this.prisma.user.update({
+              where: { id: userId },
+              data: { plan: 'PRO' },
+            }).catch(() => {});
+
             this.logger.log(`Payment verified and approved: ${payment.id} (MP: ${mpPayment.id})`);
             return { synced: true, status: 'approved' };
           }
@@ -294,6 +337,14 @@ export class PaymentsService {
         expiresAt: newStatus === 'approved' ? expiresAt : undefined,
       },
     });
+
+    // Sync user plan on approval
+    if (newStatus === 'approved') {
+      await this.prisma.user.update({
+        where: { id: existing.userId },
+        data: { plan: 'PRO' },
+      }).catch((err) => this.logger.error(`Failed to update user plan: ${err}`));
+    }
 
     this.logger.log(`Payment ${externalRef} → ${newStatus} (MP: ${mpPaymentId}, expires: ${expiresAt.toISOString()})`);
   }

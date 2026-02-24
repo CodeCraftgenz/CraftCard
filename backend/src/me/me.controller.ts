@@ -25,8 +25,14 @@ export class MeController {
 
     if (!userData) throw AppException.notFound('Usuario');
 
-    const subscription = await this.paymentsService.getActiveSubscription(user.sub);
+    const planInfo = await this.paymentsService.getUserPlanInfo(user.sub);
     const primaryProfile = userData.profiles.find((p) => p.isPrimary) || userData.profiles[0] || null;
+
+    // Get user's org memberships
+    const orgMemberships = await this.prisma.organizationMember.findMany({
+      where: { userId: user.sub },
+      include: { org: { select: { id: true, name: true, slug: true, brandingActive: true } } },
+    });
 
     return {
       user: {
@@ -37,8 +43,11 @@ export class MeController {
       },
       profile: primaryProfile,
       cards: userData.profiles.map((p) => ({ id: p.id, label: p.label, slug: p.slug, isPrimary: p.isPrimary, displayName: p.displayName })),
-      hasPaid: subscription.active,
-      paidUntil: subscription.expiresAt?.toISOString() ?? null,
+      hasPaid: planInfo.plan !== 'FREE',
+      paidUntil: planInfo.expiresAt?.toISOString() ?? null,
+      plan: planInfo.plan,
+      planLimits: planInfo.planLimits,
+      organizations: orgMemberships.map((m) => ({ ...m.org, role: m.role })),
     };
   }
 

@@ -1,12 +1,16 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
+import { SectionsService } from './sections.service';
 import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
 import { updateProfileSchema } from './dto/update-profile.dto';
 
 @Controller()
 export class ProfilesController {
-  constructor(private readonly profilesService: ProfilesService) {}
+  constructor(
+    private readonly profilesService: ProfilesService,
+    private readonly sectionsService: SectionsService,
+  ) {}
 
   @Get('me/profile')
   async getMyProfile(@CurrentUser() user: JwtPayload, @Query('cardId') cardId?: string) {
@@ -43,5 +47,118 @@ export class ProfilesController {
   @Get('profile/:slug')
   async getPublicProfile(@Param('slug') slug: string) {
     return this.profilesService.getBySlug(slug);
+  }
+
+  // --- Services CRUD ---
+  @Get('me/services')
+  async getServices(@CurrentUser() user: JwtPayload, @Query('cardId') cardId?: string) {
+    return this.sectionsService.getServices(user.sub, cardId);
+  }
+
+  @Post('me/services')
+  async createService(@CurrentUser() user: JwtPayload, @Body() body: { title: string; description?: string; price?: string }, @Query('cardId') cardId?: string) {
+    return this.sectionsService.createService(user.sub, body, cardId);
+  }
+
+  @Put('me/services/:id')
+  async updateService(@CurrentUser() user: JwtPayload, @Param('id') id: string, @Body() body: { title?: string; description?: string; price?: string }) {
+    return this.sectionsService.updateService(user.sub, id, body);
+  }
+
+  @Delete('me/services/:id')
+  async deleteService(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.sectionsService.deleteService(user.sub, id);
+  }
+
+  @Put('me/services-order')
+  async reorderServices(@CurrentUser() user: JwtPayload, @Body() body: { ids: string[] }) {
+    return this.sectionsService.reorderServices(user.sub, body.ids);
+  }
+
+  // --- FAQ CRUD ---
+  @Get('me/faq')
+  async getFaq(@CurrentUser() user: JwtPayload, @Query('cardId') cardId?: string) {
+    return this.sectionsService.getFaqItems(user.sub, cardId);
+  }
+
+  @Post('me/faq')
+  async createFaq(@CurrentUser() user: JwtPayload, @Body() body: { question: string; answer: string }, @Query('cardId') cardId?: string) {
+    return this.sectionsService.createFaqItem(user.sub, body, cardId);
+  }
+
+  @Put('me/faq/:id')
+  async updateFaq(@CurrentUser() user: JwtPayload, @Param('id') id: string, @Body() body: { question?: string; answer?: string }) {
+    return this.sectionsService.updateFaqItem(user.sub, id, body);
+  }
+
+  @Delete('me/faq/:id')
+  async deleteFaq(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.sectionsService.deleteFaqItem(user.sub, id);
+  }
+
+  @Put('me/faq-order')
+  async reorderFaq(@CurrentUser() user: JwtPayload, @Body() body: { ids: string[] }) {
+    return this.sectionsService.reorderFaqItems(user.sub, body.ids);
+  }
+
+  // --- Custom Domain ---
+  @Get('me/domain')
+  async getCustomDomain(@CurrentUser() user: JwtPayload, @Query('cardId') cardId?: string) {
+    return this.profilesService.getCustomDomain(user.sub, cardId);
+  }
+
+  @Post('me/domain')
+  async setCustomDomain(@CurrentUser() user: JwtPayload, @Body() body: { domain: string }, @Query('cardId') cardId?: string) {
+    return this.profilesService.setCustomDomain(user.sub, body.domain, cardId);
+  }
+
+  @Post('me/domain/verify')
+  async verifyCustomDomain(@CurrentUser() user: JwtPayload, @Query('cardId') cardId?: string) {
+    return this.profilesService.verifyCustomDomain(user.sub, cardId);
+  }
+
+  @Delete('me/domain')
+  async removeCustomDomain(@CurrentUser() user: JwtPayload, @Query('cardId') cardId?: string) {
+    return this.profilesService.removeCustomDomain(user.sub, cardId);
+  }
+
+  // --- Custom Form Fields ---
+  @Get('me/form-fields')
+  async getFormFields(@CurrentUser() user: JwtPayload, @Query('cardId') cardId?: string) {
+    return this.sectionsService.getFormFields(user.sub, cardId);
+  }
+
+  @Post('me/form-fields')
+  async createFormField(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: { label: string; type: string; options?: string; required?: boolean },
+    @Query('cardId') cardId?: string,
+  ) {
+    return this.sectionsService.createFormField(user.sub, body, cardId);
+  }
+
+  @Put('me/form-fields/:id')
+  async updateFormField(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() body: { label?: string; type?: string; options?: string; required?: boolean },
+  ) {
+    return this.sectionsService.updateFormField(user.sub, id, body);
+  }
+
+  @Delete('me/form-fields/:id')
+  async deleteFormField(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.sectionsService.deleteFormField(user.sub, id);
+  }
+
+  @Put('me/form-fields-order')
+  async reorderFormFields(@CurrentUser() user: JwtPayload, @Body() body: { ids: string[] }) {
+    return this.sectionsService.reorderFormFields(user.sub, body.ids);
+  }
+
+  @Public()
+  @Get('profile/:slug/form-fields')
+  async getPublicFormFields(@Param('slug') slug: string) {
+    return this.sectionsService.getPublicFormFields(slug);
   }
 }

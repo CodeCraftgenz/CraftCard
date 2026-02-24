@@ -15,6 +15,9 @@ import { ContactsModule } from './contacts/contacts.module';
 import { TestimonialsModule } from './testimonials/testimonials.module';
 import { GalleryModule } from './gallery/gallery.module';
 import { BookingsModule } from './bookings/bookings.module';
+import { OrganizationsModule } from './organizations/organizations.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 import { MailModule } from './mail/mail.module';
 import { AppController } from './app.controller';
 import configuration from './common/config/configuration';
@@ -41,6 +44,9 @@ import configuration from './common/config/configuration';
     TestimonialsModule,
     GalleryModule,
     BookingsModule,
+    OrganizationsModule,
+    NotificationsModule,
+    WebhooksModule,
     MailModule,
   ],
   controllers: [AppController],

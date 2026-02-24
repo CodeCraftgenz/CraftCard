@@ -16,6 +16,9 @@ interface AnalyticsData {
   totalViews: number;
   dailyViews: DailyView[];
   linkClicks: LinkClickStat[];
+  deviceBreakdown?: Record<string, number>;
+  referrerBreakdown?: Array<{ source: string; count: number }>;
+  conversionFunnel?: { views: number; clicks: number; messages: number; bookings: number };
 }
 
 export function useAnalytics(enabled: boolean) {
@@ -30,4 +33,15 @@ export function useAnalytics(enabled: boolean) {
 /** Fire-and-forget click tracking */
 export function trackLinkClick(socialLinkId: string) {
   api.post('/analytics/click', { socialLinkId }).catch(() => {});
+}
+
+/** Fire-and-forget view event tracking with UTM params */
+export function trackViewEvent(profileId: string) {
+  const params = new URLSearchParams(window.location.search);
+  api.post('/analytics/view', {
+    profileId,
+    utmSource: params.get('utm_source') || undefined,
+    utmMedium: params.get('utm_medium') || undefined,
+    utmCampaign: params.get('utm_campaign') || undefined,
+  }).catch(() => {});
 }

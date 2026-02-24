@@ -4,9 +4,16 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface GalleryImage {
   id: string;
-  imageData: string;
+  imageUrl?: string | null;
+  imageData?: string | null;
   caption: string | null;
   order: number;
+}
+
+function getImageSrc(img: GalleryImage): string {
+  if (img.imageUrl) return img.imageUrl;
+  if (img.imageData) return `data:image/webp;base64,${img.imageData}`;
+  return '';
 }
 
 interface GalleryGridProps {
@@ -46,8 +53,9 @@ export function GalleryGrid({ images }: GalleryGridProps) {
             className="relative aspect-square rounded-xl overflow-hidden group cursor-pointer"
           >
             <img
-              src={`data:image/webp;base64,${img.imageData}`}
+              src={getImageSrc(img)}
               alt={img.caption || 'Galeria'}
+              loading="lazy"
               className="w-full h-full object-cover transition-transform group-hover:scale-105"
             />
             {img.caption && (
@@ -105,7 +113,7 @@ export function GalleryGrid({ images }: GalleryGridProps) {
               className="max-w-2xl max-h-[80vh] flex flex-col items-center"
             >
               <img
-                src={`data:image/webp;base64,${images[lightboxIndex].imageData}`}
+                src={getImageSrc(images[lightboxIndex])}
                 alt={images[lightboxIndex].caption || 'Galeria'}
                 className="max-w-full max-h-[70vh] object-contain rounded-xl"
               />

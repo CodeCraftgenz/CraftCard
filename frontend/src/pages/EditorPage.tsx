@@ -14,7 +14,7 @@ import { Header } from '@/components/organisms/Header';
 import { SortableLinkItem } from '@/components/organisms/SortableLinkItem';
 import { TemplatePicker } from '@/components/organisms/TemplatePicker';
 import { CardPreview } from '@/components/organisms/CardPreview';
-import { CustomQrCode } from '@/components/organisms/CustomQrCode';
+import { CustomQrCode, DEFAULT_QR_SETTINGS, type QrCodeSettings } from '@/components/organisms/CustomQrCode';
 import { CardSwitcher } from '@/components/organisms/CardSwitcher';
 import { useAuth } from '@/providers/AuthProvider';
 import {
@@ -37,7 +37,16 @@ import { useTestimonials, useApproveTestimonial, useRejectTestimonial } from '@/
 import { useGallery, useUploadGalleryImage, useDeleteGalleryImage } from '@/hooks/useGallery';
 import { useMySlots, useSaveSlots, useMyBookings, useUpdateBookingStatus } from '@/hooks/useBookings';
 import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, resolvePhotoUrl } from '@/lib/constants';
+import { StyleEditor, type VisualCustomization } from '@/components/organisms/StyleEditor';
+import { ServicesEditor } from '@/components/organisms/ServicesEditor';
+import { FaqEditor } from '@/components/organisms/FaqEditor';
+import { UpgradeBanner } from '@/components/organisms/UpgradeBanner';
+import { useAchievements, useCheckAchievements } from '@/hooks/useAchievements';
+import { EmailSignature } from '@/components/organisms/EmailSignature';
+import { WidgetCodeGenerator } from '@/components/organisms/WidgetCodeGenerator';
+import { OnboardingWizard, type OnboardingData } from '@/components/organisms/OnboardingWizard';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import type { CardTemplate } from '@/lib/card-templates';
 
 const CARD_THEMES = [
@@ -54,7 +63,7 @@ const CARD_THEMES = [
 ];
 
 export function EditorPage() {
-  const { hasPaid, paidUntil, refreshAuth, cards: authCards } = useAuth();
+  const { hasPaid, paidUntil, refreshAuth, cards: authCards, hasFeature, organizations } = useAuth();
   const [activeCardId, setActiveCardId] = useState<string | undefined>(undefined);
 
   // Refresh auth state on mount to ensure hasPaid is up-to-date
@@ -97,9 +106,12 @@ export function EditorPage() {
   const saveSlots = useSaveSlots();
   const { data: myBookings } = useMyBookings();
   const updateBookingStatus = useUpdateBookingStatus();
+  const { data: achievements } = useAchievements();
+  const checkAchievements = useCheckAchievements();
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const { canInstall, isInstalled, install: installPwa } = usePwaInstall();
+  const pushNotifications = usePushNotifications();
   const [pwaDismissed, setPwaDismissed] = useState(false);
 
   const [form, setForm] = useState({
@@ -115,7 +127,14 @@ export function EditorPage() {
     coverPositionY: 50,
     leadCaptureEnabled: false,
     bookingEnabled: false,
-    socialLinks: [] as Array<{ platform: string; label: string; url: string; order: number; startsAt: string | null; endsAt: string | null }>,
+    fontFamily: null as string | null,
+    fontSizeScale: 1,
+    backgroundType: 'theme' as string,
+    backgroundGradient: null as string | null,
+    backgroundPattern: null as string | null,
+    linkStyle: 'rounded' as string,
+    linkAnimation: 'none' as string,
+    socialLinks: [] as Array<{ platform: string; label: string; url: string; order: number; startsAt: string | null; endsAt: string | null; linkType?: string | null; metadata?: string | null }>,
   });
 
   const [slugInput, setSlugInput] = useState('');
@@ -125,6 +144,8 @@ export function EditorPage() {
   const [coverVersion, setCoverVersion] = useState(Date.now());
   const [debouncedSlug, setDebouncedSlug] = useState('');
   const [showQrCode, setShowQrCode] = useState(false);
+  const [qrSettings, setQrSettings] = useState<QrCodeSettings>({ ...DEFAULT_QR_SETTINGS });
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const initializedRef = useRef(false);
 
@@ -150,6 +171,13 @@ export function EditorPage() {
         coverPositionY: profile.coverPositionY ?? 50,
         leadCaptureEnabled: profile.leadCaptureEnabled ?? false,
         bookingEnabled: profile.bookingEnabled ?? false,
+        fontFamily: profile.fontFamily ?? null,
+        fontSizeScale: profile.fontSizeScale ?? 1,
+        backgroundType: profile.backgroundType ?? 'theme',
+        backgroundGradient: profile.backgroundGradient ?? null,
+        backgroundPattern: profile.backgroundPattern ?? null,
+        linkStyle: profile.linkStyle ?? 'rounded',
+        linkAnimation: profile.linkAnimation ?? 'none',
         socialLinks: profile.socialLinks.map((l) => ({
           platform: l.platform,
           label: l.label,
@@ -157,9 +185,17 @@ export function EditorPage() {
           order: l.order,
           startsAt: l.startsAt || null,
           endsAt: l.endsAt || null,
+          linkType: l.linkType || 'link',
+          metadata: l.metadata || null,
         })),
       });
       setSlugInput(profile.slug || '');
+
+      // Show onboarding for new users (default displayName, no links)
+      const onboardingDone = localStorage.getItem('craftcard_onboarding_done');
+      if (!onboardingDone && profile.displayName === 'Novo Cartao' && profile.socialLinks.length === 0) {
+        setShowOnboarding(true);
+      }
     }
   }, [profile]);
 
@@ -213,17 +249,28 @@ export function EditorPage() {
     data.coverPositionY = form.coverPositionY;
     data.leadCaptureEnabled = form.leadCaptureEnabled;
     data.bookingEnabled = form.bookingEnabled;
+    data.fontFamily = form.fontFamily || null;
+    data.fontSizeScale = form.fontSizeScale;
+    data.backgroundType = form.backgroundType;
+    data.backgroundGradient = form.backgroundGradient || null;
+    data.backgroundPattern = form.backgroundPattern || null;
+    data.linkStyle = form.linkStyle;
+    data.linkAnimation = form.linkAnimation;
 
     // Only send slug if >= 3 chars
     if (slugInput.length >= 3) {
       data.slug = slugInput;
     }
 
-    // Filter social links - only include complete ones with valid URL
+    // Filter social links - only include complete ones
     const validLinks = form.socialLinks.filter((l) => {
       const hasLabel = l.label.trim().length > 0;
+      // Headers and Pix don't need a URL
+      if (l.platform === 'header' || l.platform === 'pix') return hasLabel;
+      // Phone links accept tel: prefix
+      if (l.platform === 'phone') return hasLabel && l.url.trim().length > 0;
       const hasUrl = l.url.trim().length > 0;
-      const isValidUrl = /^(https?:\/\/|mailto:).+/i.test(l.url.trim());
+      const isValidUrl = /^(https?:\/\/|mailto:|tel:).+/i.test(l.url.trim());
       return hasLabel && hasUrl && isValidUrl;
     });
     data.socialLinks = validLinks.map((l, i) => ({
@@ -233,6 +280,8 @@ export function EditorPage() {
       order: i,
       startsAt: l.startsAt || null,
       endsAt: l.endsAt || null,
+      linkType: l.linkType || 'link',
+      metadata: l.metadata || null,
     }));
 
     return data;
@@ -244,6 +293,8 @@ export function EditorPage() {
       await updateProfile.mutateAsync(data);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+      // Check achievements after save (fire-and-forget)
+      checkAchievements.mutate();
     } catch {
       // Silently fail on auto-save validation errors
     }
@@ -422,9 +473,53 @@ export function EditorPage() {
     );
   }
 
+  const handleOnboardingComplete = useCallback((data: OnboardingData) => {
+    setForm((prev) => ({
+      ...prev,
+      displayName: data.displayName,
+      bio: data.bio,
+      socialLinks: data.links.map((l, i) => ({
+        platform: l.platform,
+        label: SOCIAL_PLATFORMS.find((p) => p.value === l.platform)?.label || l.platform,
+        url: l.url,
+        order: i,
+        startsAt: null,
+        endsAt: null,
+        linkType: 'link',
+        metadata: null,
+      })),
+    }));
+    setShowOnboarding(false);
+    localStorage.setItem('craftcard_onboarding_done', '1');
+    // Trigger auto-save
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      updateProfile.mutateAsync({
+        displayName: data.displayName,
+        bio: data.bio,
+        socialLinks: data.links.map((l, i) => ({
+          platform: l.platform,
+          label: SOCIAL_PLATFORMS.find((p) => p.value === l.platform)?.label || l.platform,
+          url: l.url,
+          order: i,
+        })),
+      }).catch(() => {});
+    }, 500);
+  }, [updateProfile]);
+
+  const handleOnboardingSkip = useCallback(() => {
+    setShowOnboarding(false);
+    localStorage.setItem('craftcard_onboarding_done', '1');
+  }, []);
+
   return (
     <div className="min-h-screen bg-brand-bg-dark text-white">
       <Header />
+
+      {/* Onboarding Wizard */}
+      {showOnboarding && (
+        <OnboardingWizard onComplete={handleOnboardingComplete} onSkip={handleOnboardingSkip} />
+      )}
 
       {/* Subtle background glow */}
       <div className="fixed top-0 left-0 right-0 bottom-0 pointer-events-none overflow-hidden">
@@ -665,16 +760,50 @@ export function EditorPage() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="mt-4 pt-4 border-t border-white/10 flex flex-col items-center gap-3"
+                    className="mt-4 pt-4 border-t border-white/10 flex flex-col items-center gap-4"
                   >
                     <CustomQrCode
                       url={cardUrl}
-                      fgColor={form.buttonColor || '#00E4F2'}
-                      bgColor="#1A1A2E"
-                      logoUrl={resolvePhotoUrl(profile?.photoUrl) || null}
+                      fgColor={qrSettings.fgColor}
+                      bgColor={qrSettings.bgColor}
+                      logoUrl={qrSettings.showLogo ? (resolvePhotoUrl(profile?.photoUrl) || null) : null}
+                      showLogo={qrSettings.showLogo}
+                      frameText={qrSettings.frameText}
                       size={200}
                     />
-                    <p className="text-xs text-white/40">Escaneie para acessar seu cartao</p>
+
+                    {/* QR Customization Controls */}
+                    <div className="w-full grid grid-cols-2 gap-3">
+                      <label className="flex flex-col gap-1">
+                        <span className="text-[10px] text-white/40 uppercase tracking-wider">Cor QR</span>
+                        <div className="flex items-center gap-2">
+                          <input type="color" value={qrSettings.fgColor} onChange={(e) => setQrSettings((s) => ({ ...s, fgColor: e.target.value }))} className="w-7 h-7 rounded cursor-pointer bg-transparent border-0" />
+                          <span className="text-xs text-white/50 font-mono">{qrSettings.fgColor}</span>
+                        </div>
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className="text-[10px] text-white/40 uppercase tracking-wider">Fundo</span>
+                        <div className="flex items-center gap-2">
+                          <input type="color" value={qrSettings.bgColor} onChange={(e) => setQrSettings((s) => ({ ...s, bgColor: e.target.value }))} className="w-7 h-7 rounded cursor-pointer bg-transparent border-0" />
+                          <span className="text-xs text-white/50 font-mono">{qrSettings.bgColor}</span>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div className="w-full flex flex-col gap-2">
+                      <label className="flex items-center gap-2 text-xs text-white/60">
+                        <input type="checkbox" checked={qrSettings.showLogo} onChange={(e) => setQrSettings((s) => ({ ...s, showLogo: e.target.checked }))} className="rounded" />
+                        Mostrar logo no centro
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Texto da moldura (ex: Escaneie aqui)"
+                        value={qrSettings.frameText}
+                        onChange={(e) => setQrSettings((s) => ({ ...s, frameText: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/30 focus:border-brand-cyan/50 focus:outline-none"
+                        maxLength={30}
+                      />
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -731,6 +860,33 @@ export function EditorPage() {
           <div className="mb-8 flex items-center gap-2 text-xs text-green-400 bg-green-500/5 border border-green-500/10 rounded-xl px-4 py-2.5 w-fit">
             <Smartphone size={14} />
             App instalado no dispositivo
+          </div>
+        )}
+
+        {/* Push Notifications */}
+        {pushNotifications.isSupported && hasPaid && (
+          <div className="mb-8 flex items-center justify-between gap-4 bg-white/[0.02] border border-white/10 rounded-xl px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+                <Mail size={14} className="text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-white">Notificacoes Push</p>
+                <p className="text-[10px] text-white/40">Receba alertas de novas mensagens e agendamentos</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              disabled={pushNotifications.loading}
+              onClick={pushNotifications.isSubscribed ? pushNotifications.unsubscribe : pushNotifications.subscribe}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                pushNotifications.isSubscribed
+                  ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                  : 'bg-white/5 text-white/60 border border-white/10 hover:border-white/20'
+              }`}
+            >
+              {pushNotifications.loading ? '...' : pushNotifications.isSubscribed ? 'Ativado' : 'Ativar'}
+            </button>
           </div>
         )}
 
@@ -1305,6 +1461,25 @@ export function EditorPage() {
               </div>
             </div>
 
+            {/* Visual Customization (Pro+ only) */}
+            {hasFeature('customFonts') ? (
+              <StyleEditor
+                value={{
+                  fontFamily: form.fontFamily,
+                  fontSizeScale: form.fontSizeScale,
+                  backgroundType: form.backgroundType,
+                  backgroundGradient: form.backgroundGradient,
+                  backgroundPattern: form.backgroundPattern,
+                  linkStyle: form.linkStyle,
+                  linkAnimation: form.linkAnimation,
+                }}
+                onChange={(key, val) => updateField(key, val)}
+                accent={form.buttonColor}
+              />
+            ) : (
+              <UpgradeBanner feature="customFonts" compact />
+            )}
+
             {/* Analytics (paid users only) */}
             {hasPaid && analytics && (
               <div className="glass-card p-6 hover:border-white/20 transition-colors">
@@ -1345,7 +1520,7 @@ export function EditorPage() {
 
                 {/* Link Clicks */}
                 {analytics.linkClicks.length > 0 && (
-                  <div>
+                  <div className="mb-6">
                     <p className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider">Cliques nos links</p>
                     <div className="space-y-2">
                       {analytics.linkClicks.slice(0, 10).map((link, i) => (
@@ -1357,6 +1532,117 @@ export function EditorPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Device Breakdown */}
+                {analytics.deviceBreakdown && (
+                  <div className="mb-6">
+                    <p className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider">Dispositivos</p>
+                    <div className="flex gap-3">
+                      {Object.entries(analytics.deviceBreakdown).filter(([, v]) => v > 0).map(([device, count]) => (
+                        <div key={device} className="flex-1 bg-white/[0.03] rounded-xl p-3 text-center">
+                          <Smartphone size={16} className="mx-auto text-brand-cyan/60 mb-1" />
+                          <p className="text-white font-semibold text-sm">{count}</p>
+                          <p className="text-white/30 text-[10px] capitalize">{device}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Referrer Breakdown */}
+                {analytics.referrerBreakdown && analytics.referrerBreakdown.length > 0 && (
+                  <div className="mb-6">
+                    <p className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider">Origens de trafego</p>
+                    <div className="space-y-2">
+                      {analytics.referrerBreakdown.slice(0, 8).map((ref, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm p-2 rounded-lg bg-white/[0.03]">
+                          <span className="text-white/70 capitalize">{ref.source}</span>
+                          <span className="text-brand-cyan font-semibold">{ref.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Conversion Funnel */}
+                {analytics.conversionFunnel && analytics.conversionFunnel.views > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider">Funil de conversao</p>
+                    <div className="space-y-2">
+                      {[
+                        { label: 'Visualizacoes', value: analytics.conversionFunnel.views },
+                        { label: 'Cliques em links', value: analytics.conversionFunnel.clicks },
+                        { label: 'Mensagens', value: analytics.conversionFunnel.messages },
+                        { label: 'Agendamentos', value: analytics.conversionFunnel.bookings },
+                      ].map((step, i) => {
+                        const pct = analytics.conversionFunnel!.views > 0 ? (step.value / analytics.conversionFunnel!.views) * 100 : 0;
+                        return (
+                          <div key={i} className="flex items-center gap-3">
+                            <span className="text-white/50 text-xs w-28 text-right">{step.label}</span>
+                            <div className="flex-1 h-5 bg-white/5 rounded-full overflow-hidden">
+                              <div className="h-full bg-brand-cyan/40 rounded-full transition-all" style={{ width: `${Math.max(pct, 1)}%` }} />
+                            </div>
+                            <span className="text-white text-xs w-10 font-semibold">{step.value}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Achievements / Badges */}
+            {achievements && achievements.length > 0 && (
+              <div className="glass-card p-6 hover:border-white/20 transition-colors">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+                    <Star size={16} className="text-yellow-400" />
+                  </div>
+                  <h3 className="font-semibold">Conquistas</h3>
+                  <span className="text-xs text-white/30 ml-auto">
+                    {achievements.filter((a) => a.unlocked).length}/{achievements.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {achievements.map((ach) => (
+                    <div
+                      key={ach.type}
+                      className={`flex flex-col items-center gap-1 p-2 rounded-xl text-center transition-all ${
+                        ach.unlocked ? 'bg-white/5' : 'bg-white/[0.02] opacity-40'
+                      }`}
+                      title={`${ach.label}: ${ach.description}`}
+                    >
+                      <span className="text-xl">{ach.icon}</span>
+                      <span className="text-[9px] text-white/50 leading-tight">{ach.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sharing Tools (paid users only) */}
+            {hasPaid && profile && (
+              <div className="glass-card p-6 hover:border-white/20 transition-colors">
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                    <Sparkles size={16} className="text-indigo-400" />
+                  </div>
+                  <h3 className="font-semibold">Ferramentas</h3>
+                </div>
+                <div className="space-y-6">
+                  <EmailSignature
+                    displayName={form.displayName}
+                    bio={form.bio}
+                    photoUrl={profile.photoUrl}
+                    slug={slugInput || profile.slug}
+                    buttonColor={form.buttonColor}
+                    socialLinks={form.socialLinks}
+                  />
+                  <div className="border-t border-white/10 pt-5">
+                    <WidgetCodeGenerator slug={slugInput || profile.slug} />
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1455,7 +1741,7 @@ export function EditorPage() {
                     {galleryImages.map((img) => (
                       <div key={img.id} className="relative group aspect-square rounded-lg overflow-hidden">
                         <img
-                          src={`data:image/webp;base64,${img.imageData}`}
+                          src={img.imageUrl || (img.imageData ? `data:image/webp;base64,${img.imageData}` : '')}
                           alt={img.caption || 'Galeria'}
                           className="w-full h-full object-cover"
                         />
@@ -1501,6 +1787,36 @@ export function EditorPage() {
                   <Plus size={16} />
                   {uploadGalleryImage.isPending ? 'Enviando...' : 'Adicionar Imagem'}
                 </button>
+              </div>
+            )}
+
+            {/* Services (paid users only) */}
+            {hasPaid && <ServicesEditor />}
+
+            {/* FAQ (paid users only) */}
+            {hasPaid && <FaqEditor />}
+
+            {/* Organization links */}
+            {organizations.length > 0 && (
+              <div className="glass-card p-6 hover:border-white/20 transition-colors">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <UserPlus size={16} className="text-purple-400" />
+                  </div>
+                  <h3 className="text-white font-semibold text-sm">Organizacoes</h3>
+                </div>
+                <div className="space-y-2">
+                  {organizations.map((org) => (
+                    <a
+                      key={org.id}
+                      href={`/org/${org.id}`}
+                      className="flex items-center justify-between px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                    >
+                      <span className="text-white text-sm">{org.name}</span>
+                      <span className="text-white/30 text-xs bg-white/5 px-2 py-0.5 rounded">{org.role}</span>
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
 

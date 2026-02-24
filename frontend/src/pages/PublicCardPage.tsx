@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -31,19 +31,24 @@ import {
   BadgeCheck,
   ImageIcon,
   CalendarDays,
+  Briefcase,
+  HelpCircle,
 } from 'lucide-react';
 import { CustomQrCode } from '@/components/organisms/CustomQrCode';
 import { AnimatedBackground } from '@/components/atoms/AnimatedBackground';
 import { GalleryGrid } from '@/components/organisms/GalleryGrid';
+import { LinkRenderer } from '@/components/organisms/LinkRenderer';
 import { BookingCalendar } from '@/components/organisms/BookingCalendar';
 import { api } from '@/lib/api';
-import { trackLinkClick } from '@/hooks/useAnalytics';
+import { trackLinkClick, trackViewEvent } from '@/hooks/useAnalytics';
 import { usePublicSlots } from '@/hooks/useBookings';
 import { useSendMessage } from '@/hooks/useContacts';
 import { useSubmitTestimonial } from '@/hooks/useTestimonials';
-import { APP_NAME, resolvePhotoUrl } from '@/lib/constants';
+import { API_BASE, APP_NAME, resolvePhotoUrl } from '@/lib/constants';
+import { loadGoogleFont } from '@/lib/google-fonts';
 
 interface PublicProfile {
+  id: string;
   displayName: string;
   bio: string | null;
   photoUrl: string | null;
@@ -57,7 +62,17 @@ interface PublicProfile {
   availabilityMessage: string | null;
   viewCount: number;
   isVerified?: boolean;
+  plan?: string;
   videoUrl?: string | null;
+  fontFamily?: string | null;
+  fontSizeScale?: number | null;
+  backgroundType?: string | null;
+  backgroundGradient?: string | null;
+  backgroundImageUrl?: string | null;
+  backgroundOverlay?: number | null;
+  backgroundPattern?: string | null;
+  linkStyle?: string | null;
+  linkAnimation?: string | null;
   leadCaptureEnabled?: boolean;
   bookingEnabled?: boolean;
   socialLinks: Array<{
@@ -66,6 +81,8 @@ interface PublicProfile {
     label: string;
     url: string;
     order: number;
+    linkType?: string | null;
+    metadata?: string | null;
   }>;
   testimonials?: Array<{
     id: string;
@@ -76,14 +93,40 @@ interface PublicProfile {
   }>;
   galleryImages?: Array<{
     id: string;
-    imageData: string;
+    imageUrl?: string | null;
+    imageData?: string | null;
     caption: string | null;
     order: number;
   }>;
+  services?: Array<{
+    id: string;
+    title: string;
+    description: string | null;
+    price: string | null;
+    order: number;
+  }>;
+  faqItems?: Array<{
+    id: string;
+    question: string;
+    answer: string;
+    order: number;
+  }>;
+  location?: string | null;
+  pronouns?: string | null;
+  workingHours?: string | null;
+  tagline?: string | null;
+  sectionsOrder?: string | null;
   user?: {
     name: string;
     email: string;
   };
+  orgBranding?: {
+    orgName: string;
+    orgLogoUrl: string | null;
+    orgPrimaryColor: string;
+    orgSecondaryColor: string;
+    orgFontFamily: string;
+  } | null;
 }
 
 const platformIcons: Record<string, typeof Instagram> = {
@@ -159,6 +202,107 @@ function getThemeCardStyle(theme: string): string {
     default:
       return 'backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl';
   }
+}
+
+function getLinkStyleClass(style: string, _accent: string): string {
+  switch (style) {
+    case 'pill': return 'rounded-full bg-white/5 border border-white/10 hover:bg-white/10';
+    case 'square': return 'rounded-none bg-white/5 border border-white/10 hover:bg-white/10';
+    case 'outline': return 'rounded-2xl bg-transparent border border-white/20 hover:bg-white/5';
+    case 'ghost': return 'rounded-2xl bg-transparent border-none hover:bg-white/5';
+    case 'rounded':
+    default: return 'rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10';
+  }
+}
+
+function getLinkHoverAnim(anim: string): Record<string, number> {
+  switch (anim) {
+    case 'scale': return { scale: 1.04 };
+    case 'slide': return { x: 6 };
+    case 'glow': return { scale: 1.02 };
+    default: return { scale: 1.02 };
+  }
+}
+
+function PatternOverlay({ pattern, color }: { pattern: string; color: string }) {
+  const c = `${color}30`;
+  switch (pattern) {
+    case 'dots':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="bg-dots" width="20" height="20" patternUnits="userSpaceOnUse">
+            <circle cx="3" cy="3" r="1.5" fill={c} />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#bg-dots)" />
+        </svg>
+      );
+    case 'grid':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="bg-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke={c} strokeWidth="0.5" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#bg-grid)" />
+        </svg>
+      );
+    case 'waves':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="bg-waves" width="40" height="20" patternUnits="userSpaceOnUse">
+            <path d="M0 10 Q10 0 20 10 T40 10" fill="none" stroke={c} strokeWidth="1" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#bg-waves)" />
+        </svg>
+      );
+    case 'circles':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="bg-circles" width="30" height="30" patternUnits="userSpaceOnUse">
+            <circle cx="15" cy="15" r="8" fill="none" stroke={c} strokeWidth="0.5" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#bg-circles)" />
+        </svg>
+      );
+    case 'diagonal':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="bg-diag" width="12" height="12" patternUnits="userSpaceOnUse">
+            <path d="M0 12 L12 0" stroke={c} strokeWidth="0.5" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#bg-diag)" />
+        </svg>
+      );
+    case 'cross':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="bg-cross" width="16" height="16" patternUnits="userSpaceOnUse">
+            <path d="M8 0 V16 M0 8 H16" stroke={c} strokeWidth="0.5" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#bg-cross)" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+function FaqAccordion({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => setOpen(!open)}
+      className="w-full text-left p-4 rounded-2xl bg-white/5 border border-white/10 transition-all hover:bg-white/[0.07]"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm font-medium text-white">{question}</span>
+        <ChevronDown size={14} className={`text-white/30 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </div>
+      {open && (
+        <p className="text-xs text-white/50 mt-2 leading-relaxed">{answer}</p>
+      )}
+    </button>
+  );
 }
 
 function generateVCard(profile: PublicProfile): string {
@@ -354,8 +498,32 @@ export function PublicCardPage() {
     );
   }
 
-  const accent = profile.buttonColor || '#00E4F2';
+  // Org branding overrides visual settings
+  const orgB = profile.orgBranding;
+  const accent = orgB?.orgPrimaryColor || profile.buttonColor || '#00E4F2';
   const theme = profile.cardTheme || 'default';
+  const fontFamily = orgB?.orgFontFamily || profile.fontFamily || 'Inter';
+  const fontScale = profile.fontSizeScale ?? 1;
+  const bgType = profile.backgroundType || 'theme';
+  const linkStyle = profile.linkStyle || 'rounded';
+  const linkAnim = profile.linkAnimation || 'none';
+
+  // Load custom Google Font
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadGoogleFont(fontFamily); }, [fontFamily]);
+
+  // Track view event with device/referrer info (fire once)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { trackViewEvent(profile.id); }, [profile.id]);
+
+  // Compute background based on backgroundType
+  const computedBackground = (() => {
+    if (bgType === 'gradient' && profile.backgroundGradient) {
+      const parts = profile.backgroundGradient.split(',');
+      if (parts.length >= 3) return `linear-gradient(${parts[0]},${parts[1]},${parts[2]})`;
+    }
+    return getThemeBackground(theme, accent);
+  })();
 
   // Lead capture gate
   if (profile.leadCaptureEnabled && !leadGatePassed) {
@@ -425,17 +593,26 @@ export function PublicCardPage() {
         <meta property="og:description" content={profile.bio || `Cartao digital de ${profile.displayName}`} />
         <meta property="og:type" content="profile" />
         <meta property="og:url" content={pageUrl} />
-        {profile.photoUrl && <meta property="og:image" content={resolvePhotoUrl(profile.photoUrl) || ''} />}
+        <meta property="og:image" content={`${API_BASE}/api/og/image/${slug}`} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={`${profile.displayName} — ${APP_NAME}`} />
         <meta name="twitter:description" content={profile.bio || `Cartao digital de ${profile.displayName}`} />
+        <meta name="twitter:image" content={`${API_BASE}/api/og/image/${slug}`} />
       </Helmet>
 
       <div
         ref={cardRef}
         className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12"
-        style={{ background: getThemeBackground(theme, accent) }}
+        style={{ background: computedBackground, fontFamily: `'${fontFamily}', sans-serif`, fontSize: `${fontScale}rem` }}
       >
+        {/* Background pattern overlay */}
+        {bgType === 'pattern' && profile.backgroundPattern && (
+          <div className="absolute inset-0 pointer-events-none opacity-20">
+            <PatternOverlay pattern={profile.backgroundPattern} color={accent} />
+          </div>
+        )}
         <AnimatedBackground theme={theme} />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -517,54 +694,51 @@ export function PublicCardPage() {
               <p className="text-xs text-white/40 mt-1">{profile.availabilityMessage}</p>
             )}
 
+            {profile.tagline && (
+              <p className="text-xs text-white/40 text-center mt-1 italic">{profile.tagline}</p>
+            )}
+
             {profile.bio && (
               <p className="text-sm text-white/60 text-center mt-2 max-w-sm leading-relaxed">
                 {profile.bio}
               </p>
             )}
+
+            {/* Expanded bio info */}
+            {(profile.location || profile.pronouns || profile.workingHours) && (
+              <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
+                {profile.pronouns && (
+                  <span className="text-[10px] text-white/30 px-2 py-0.5 rounded-full bg-white/5">{profile.pronouns}</span>
+                )}
+                {profile.location && (
+                  <span className="text-[10px] text-white/30 px-2 py-0.5 rounded-full bg-white/5">{profile.location}</span>
+                )}
+                {profile.workingHours && (
+                  <span className="text-[10px] text-white/30 px-2 py-0.5 rounded-full bg-white/5">{profile.workingHours}</span>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Social Links */}
+          {/* Links (all types rendered via LinkRenderer) */}
           <div className="space-y-3">
             {(() => {
-              const socialOnly = profile.socialLinks.filter(l => l.platform !== 'custom');
-              const visibleLinks = showAllLinks ? socialOnly : socialOnly.slice(0, 3);
-              const hiddenCount = socialOnly.length - 3;
+              const allLinks = profile.socialLinks;
+              const visibleLinks = showAllLinks ? allLinks : allLinks.slice(0, 5);
+              const hiddenCount = allLinks.length - 5;
 
               return (
                 <>
-                  {visibleLinks.map((link, i) => {
-                    const Icon = platformIcons[link.platform] || Globe;
-                    const bgColor = platformColors[link.platform] || accent;
-                    const isMailto = link.url.startsWith('mailto:');
-
-                    return (
-                      <motion.a
-                        key={link.id}
-                        href={link.url}
-                        {...(!isMailto && { target: '_blank', rel: 'noopener noreferrer' })}
-                        onClick={() => trackLinkClick(link.id)}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.08 }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="flex items-center gap-4 px-5 py-3.5 rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all group"
-                        style={{ borderLeft: `3px solid ${accent}` }}
-                      >
-                        <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                          style={{ backgroundColor: `${accent}20` }}
-                        >
-                          <Icon size={20} style={{ color: bgColor }} />
-                        </div>
-                        <span className="font-medium text-sm">{link.label}</span>
-                        <span className="ml-auto text-white/20 group-hover:text-white/40 transition-colors">
-                          &rsaquo;
-                        </span>
-                      </motion.a>
-                    );
-                  })}
+                  {visibleLinks.map((link, i) => (
+                    <LinkRenderer
+                      key={link.id}
+                      link={link}
+                      index={i}
+                      accent={accent}
+                      linkStyle={linkStyle}
+                      linkAnim={linkAnim}
+                    />
+                  ))}
                   {hiddenCount > 0 && (
                     <motion.button
                       type="button"
@@ -584,33 +758,6 @@ export function PublicCardPage() {
             })()}
           </div>
 
-          {/* Custom Links (Link-in-bio style) */}
-          {profile.socialLinks.filter(l => l.platform === 'custom').length > 0 && (
-            <div className="mt-4 space-y-3">
-              {profile.socialLinks.filter(l => l.platform === 'custom').map((link, i) => (
-                <motion.a
-                  key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => trackLinkClick(link.id)}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: (profile.socialLinks.filter(l => l.platform !== 'custom').length + i) * 0.08 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="block w-full text-center px-5 py-3.5 rounded-2xl font-semibold text-sm text-white transition-all hover:opacity-90"
-                  style={{ backgroundColor: `${accent}30`, borderLeft: `3px solid ${accent}` }}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <ExternalLink size={16} style={{ color: accent }} />
-                    <span>{link.label}</span>
-                  </div>
-                </motion.a>
-              ))}
-            </div>
-          )}
-
           {/* Gallery / Portfolio */}
           {profile.galleryImages && profile.galleryImages.length > 0 && (
             <div className="mt-6">
@@ -619,6 +766,46 @@ export function PublicCardPage() {
                 <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">Portfolio</span>
               </div>
               <GalleryGrid images={profile.galleryImages} />
+            </div>
+          )}
+
+          {/* Services */}
+          {profile.services && profile.services.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-3 px-1">
+                <Briefcase size={14} className="text-amber-400/60" />
+                <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">Servicos</span>
+              </div>
+              <div className="space-y-2">
+                {profile.services.map((s) => (
+                  <div key={s.id} className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-white">{s.title}</h4>
+                        {s.description && <p className="text-xs text-white/50 mt-1">{s.description}</p>}
+                      </div>
+                      {s.price && (
+                        <span className="text-sm font-semibold shrink-0" style={{ color: accent }}>{s.price}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* FAQ */}
+          {profile.faqItems && profile.faqItems.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-3 px-1">
+                <HelpCircle size={14} className="text-indigo-400/60" />
+                <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">Perguntas Frequentes</span>
+              </div>
+              <div className="space-y-2">
+                {profile.faqItems.map((item) => (
+                  <FaqAccordion key={item.id} question={item.question} answer={item.answer} />
+                ))}
+              </div>
             </div>
           )}
 
@@ -727,7 +914,22 @@ export function PublicCardPage() {
           <div className="mt-6 flex justify-center">
             <button
               type="button"
-              onClick={() => setShowShareModal(true)}
+              onClick={async () => {
+                // Try Web Share API first (mobile)
+                if (navigator.share) {
+                  try {
+                    await navigator.share({
+                      title: `${displayName} — CraftCard`,
+                      text: `Confira o cartao digital de ${displayName}`,
+                      url: pageUrl,
+                    });
+                    return;
+                  } catch {
+                    // User cancelled or share failed — fallback to modal
+                  }
+                }
+                setShowShareModal(true);
+              }}
               className="flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors"
             >
               <Share2 size={14} />
@@ -735,15 +937,28 @@ export function PublicCardPage() {
             </button>
           </div>
 
-          {/* Brand Badge */}
-          <div className="mt-12 text-center">
-            <Link
-              to="/"
-              className="text-xs text-white/20 hover:text-white/40 transition-colors"
-            >
-              Feito com {APP_NAME}
-            </Link>
-          </div>
+          {/* Org branding badge */}
+          {orgB && (
+            <div className="mt-8 flex justify-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white/40">
+                {orgB.orgLogoUrl && <img src={orgB.orgLogoUrl} alt="" className="w-4 h-4 rounded" />}
+                <span>{orgB.orgName}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Watermark — only shown for free tier */}
+          {(!profile.plan || profile.plan === 'FREE') && (
+            <div className="mt-12 flex justify-center">
+              <Link
+                to="/"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white/40 hover:text-white/60 hover:bg-white/10 transition-all"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-cyan/60" />
+                Feito com {APP_NAME}
+              </Link>
+            </div>
+          )}
         </motion.div>
       </div>
 

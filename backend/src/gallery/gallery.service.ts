@@ -1,20 +1,41 @@
 import { Injectable } from '@nestjs/common';
 import * as sharp from 'sharp';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { AppException } from '../common/exceptions/app.exception';
 
 const MAX_GALLERY_IMAGES = 12;
 
 @Injectable()
 export class GalleryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
 
   async getByProfileId(profileId: string) {
-    return this.prisma.galleryImage.findMany({
+    const images = await this.prisma.galleryImage.findMany({
       where: { profileId },
       orderBy: { order: 'asc' },
-      select: { id: true, caption: true, order: true, imageData: true, createdAt: true },
+      select: {
+        id: true,
+        imageUrl: true,
+        imageData: true,
+        caption: true,
+        order: true,
+        createdAt: true,
+      },
     });
+
+    // Return imageUrl if available, otherwise fallback to base64 imageData
+    return images.map((img) => ({
+      id: img.id,
+      imageUrl: img.imageUrl || null,
+      imageData: img.imageUrl ? null : img.imageData,
+      caption: img.caption,
+      order: img.order,
+      createdAt: img.createdAt,
+    }));
   }
 
   async getMine(userId: string) {
@@ -45,16 +66,23 @@ export class GalleryService {
       .webp({ quality: 80 })
       .toBuffer();
 
-    const imageData = processed.toString('base64');
+    // Upload to FTP
+    const imageUrl = await this.storageService.uploadFile(
+      processed,
+      'gallery',
+      profile.id,
+      'webp',
+    );
 
     return this.prisma.galleryImage.create({
       data: {
         profileId: profile.id,
-        imageData,
+        imageUrl,
+        imageData: null,
         caption: caption || null,
         order: count,
       },
-      select: { id: true, caption: true, order: true, createdAt: true },
+      select: { id: true, imageUrl: true, caption: true, order: true, createdAt: true },
     });
   }
 
@@ -63,7 +91,7 @@ export class GalleryService {
     return this.prisma.galleryImage.update({
       where: { id: image.id },
       data: { caption },
-      select: { id: true, caption: true, order: true, createdAt: true },
+      select: { id: true, imageUrl: true, caption: true, order: true, createdAt: true },
     });
   }
 
@@ -88,6 +116,12 @@ export class GalleryService {
 
   async delete(userId: string, imageId: string) {
     const image = await this.findOwnedImage(userId, imageId);
+
+    // Delete FTP file if exists
+    if (image.imageUrl) {
+      this.storageService.deleteFile(image.imageUrl).catch(() => {});
+    }
+
     await this.prisma.galleryImage.delete({ where: { id: image.id } });
     return { deleted: true };
   }

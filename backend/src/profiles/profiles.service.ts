@@ -117,8 +117,11 @@ export class ProfilesService {
       include: {
         socialLinks: { orderBy: { order: 'asc' } },
         testimonials: { where: { isApproved: true }, orderBy: { createdAt: 'desc' }, take: 10 },
-        galleryImages: { orderBy: { order: 'asc' }, select: { id: true, imageData: true, caption: true, order: true } },
-        user: { select: { name: true, email: true } },
+        galleryImages: { orderBy: { order: 'asc' }, select: { id: true, imageUrl: true, imageData: true, caption: true, order: true } },
+        services: { orderBy: { order: 'asc' }, select: { id: true, title: true, description: true, price: true, order: true } },
+        faqItems: { orderBy: { order: 'asc' }, select: { id: true, question: true, answer: true, order: true } },
+        user: { select: { name: true, email: true, plan: true } },
+        organization: { select: { id: true, name: true, logoUrl: true, primaryColor: true, secondaryColor: true, fontFamily: true, brandingActive: true } },
       },
     });
     if (!profile || !profile.isPublished) {
@@ -146,14 +149,44 @@ export class ProfilesService {
     const subscription = await this.paymentsService.getActiveSubscription(profile.userId);
 
     const { photoData: _, coverPhotoData: _c, resumeData: _r, ...rest } = profile;
-    return { ...rest, resumeUrl: this.resolveApiUrl(this.migrateUrl(rest.resumeUrl)), socialLinks: activeLinks, isVerified: subscription.active };
+
+    // Apply org branding overrides if active
+    const orgBranding = profile.organization?.brandingActive ? {
+      orgName: profile.organization.name,
+      orgLogoUrl: profile.organization.logoUrl,
+      orgPrimaryColor: profile.organization.primaryColor,
+      orgSecondaryColor: profile.organization.secondaryColor,
+      orgFontFamily: profile.organization.fontFamily,
+    } : null;
+
+    return {
+      ...rest,
+      resumeUrl: this.resolveApiUrl(this.migrateUrl(rest.resumeUrl)),
+      socialLinks: activeLinks,
+      isVerified: subscription.active,
+      plan: profile.user?.plan || 'FREE',
+      orgBranding,
+    };
   }
 
   async update(userId: string, data: UpdateProfileDto, profileId?: string) {
     const profile = profileId
-      ? await this.prisma.profile.findFirst({ where: { id: profileId, userId } })
-      : await this.prisma.profile.findFirst({ where: { userId, isPrimary: true } });
+      ? await this.prisma.profile.findFirst({ where: { id: profileId, userId }, include: { organization: { select: { brandingActive: true } } } })
+      : await this.prisma.profile.findFirst({ where: { userId, isPrimary: true }, include: { organization: { select: { brandingActive: true } } } });
     if (!profile) throw AppException.notFound('Perfil');
+
+    // If org branding is active, strip visual customization fields
+    if (profile.organization?.brandingActive) {
+      delete data.buttonColor;
+      delete data.cardTheme;
+      delete data.fontFamily;
+      delete data.fontSizeScale;
+      delete data.backgroundType;
+      delete data.backgroundGradient;
+      delete data.backgroundPattern;
+      delete data.linkStyle;
+      delete data.linkAnimation;
+    }
 
     // Validate slug uniqueness
     if (data.slug && data.slug !== profile.slug) {
@@ -182,10 +215,12 @@ export class ProfilesService {
               profileId: profile.id,
               platform: link.platform,
               label: link.label,
-              url: link.url,
+              url: link.url || '',
               order: link.order,
               startsAt: link.startsAt ?? null,
               endsAt: link.endsAt ?? null,
+              linkType: link.linkType ?? 'link',
+              metadata: link.metadata ?? null,
             })),
           });
         }
@@ -196,6 +231,93 @@ export class ProfilesService {
         include: { socialLinks: { orderBy: { order: 'asc' } } },
       });
     });
+  }
+
+  /** Custom domain management */
+  async setCustomDomain(userId: string, domain: string, profileId?: string) {
+    const profile = profileId
+      ? await this.prisma.profile.findFirst({ where: { id: profileId, userId } })
+      : await this.prisma.profile.findFirst({ where: { userId, isPrimary: true } });
+    if (!profile) throw AppException.notFound('Perfil');
+
+    const cleanDomain = domain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const verifyToken = `craftcard-verify-${randomUUID().slice(0, 12)}`;
+
+    const existing = await this.prisma.customDomain.findUnique({
+      where: { profileId: profile.id },
+    });
+
+    if (existing) {
+      return this.prisma.customDomain.update({
+        where: { id: existing.id },
+        data: { domain: cleanDomain, verifyToken, verified: false },
+      });
+    }
+
+    return this.prisma.customDomain.create({
+      data: { profileId: profile.id, domain: cleanDomain, verifyToken },
+    });
+  }
+
+  async verifyCustomDomain(userId: string, profileId?: string) {
+    const profile = profileId
+      ? await this.prisma.profile.findFirst({ where: { id: profileId, userId } })
+      : await this.prisma.profile.findFirst({ where: { userId, isPrimary: true } });
+    if (!profile) throw AppException.notFound('Perfil');
+
+    const customDomain = await this.prisma.customDomain.findUnique({
+      where: { profileId: profile.id },
+    });
+    if (!customDomain) throw AppException.notFound('Dominio');
+
+    // Try DNS TXT record verification
+    try {
+      const dns = await import('dns');
+      const records = await new Promise<string[][]>((resolve, reject) => {
+        dns.resolveTxt(customDomain.domain, (err, records) => {
+          if (err) reject(err);
+          else resolve(records);
+        });
+      });
+
+      const flatRecords = records.flat();
+      const verified = flatRecords.some((r) => r.includes(customDomain.verifyToken));
+
+      if (verified) {
+        await this.prisma.customDomain.update({
+          where: { id: customDomain.id },
+          data: { verified: true },
+        });
+        return { verified: true, domain: customDomain.domain };
+      }
+
+      return { verified: false, domain: customDomain.domain, token: customDomain.verifyToken };
+    } catch {
+      return { verified: false, domain: customDomain.domain, token: customDomain.verifyToken };
+    }
+  }
+
+  async getCustomDomain(userId: string, profileId?: string) {
+    const profile = profileId
+      ? await this.prisma.profile.findFirst({ where: { id: profileId, userId } })
+      : await this.prisma.profile.findFirst({ where: { userId, isPrimary: true } });
+    if (!profile) return null;
+
+    return this.prisma.customDomain.findUnique({
+      where: { profileId: profile.id },
+    });
+  }
+
+  async removeCustomDomain(userId: string, profileId?: string) {
+    const profile = profileId
+      ? await this.prisma.profile.findFirst({ where: { id: profileId, userId } })
+      : await this.prisma.profile.findFirst({ where: { userId, isPrimary: true } });
+    if (!profile) throw AppException.notFound('Perfil');
+
+    await this.prisma.customDomain.deleteMany({
+      where: { profileId: profile.id },
+    });
+    return { deleted: true };
   }
 
   private async trackDailyView(profileId: string) {

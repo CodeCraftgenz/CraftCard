@@ -8,6 +8,9 @@ import { LoginPage } from './pages/LoginPage';
 import { EditorPage } from './pages/EditorPage';
 import { PublicCardPage } from './pages/PublicCardPage';
 import { BillingSuccessPage } from './pages/BillingSuccessPage';
+import { OrgDashboardPage } from './pages/OrgDashboardPage';
+import { OrgJoinPage } from './pages/OrgJoinPage';
+import { WidgetPage } from './pages/WidgetPage';
 import { NotFound } from './pages/NotFound';
 
 export function App() {
@@ -35,6 +38,23 @@ export function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/org/:orgId"
+                element={
+                  <ProtectedRoute>
+                    <OrgDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/org/join/:token"
+                element={
+                  <ProtectedRoute>
+                    <OrgJoinPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/widget/:slug" element={<WidgetPage />} />
               {/* Public card page - catch-all must be last */}
               <Route path="/:slug" element={<PublicCardPage />} />
               <Route path="*" element={<NotFound />} />

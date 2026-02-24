@@ -13,12 +13,17 @@ model User {
   name      String
   googleId  String   @unique @map("google_id")
   avatarUrl String?  @map("avatar_url")
+  plan      String   @default("FREE") // FREE, PRO, BUSINESS, ENTERPRISE
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  profiles      Profile[]
-  payments      Payment[]
-  refreshTokens RefreshToken[]
+  profiles       Profile[]
+  payments       Payment[]
+  refreshTokens  RefreshToken[]
+  orgMemberships OrganizationMember[]
+  achievements      Achievement[]
+  pushSubscriptions PushSubscription[]
+  webhooks          Webhook[]
 
   @@map("users")
 }
@@ -56,7 +61,29 @@ model Profile {
   leadCaptureEnabled  Boolean  @default(false) @map("lead_capture_enabled")
   bookingEnabled      Boolean  @default(false) @map("booking_enabled")
 
+  // Visual Customization (Sprint 4)
+  fontFamily          String?  @map("font_family")        @db.VarChar(50)
+  fontSizeScale       Float?   @default(1.0) @map("font_size_scale")
+  backgroundType      String?  @default("theme") @map("background_type") @db.VarChar(20)
+  backgroundGradient  String?  @map("background_gradient") @db.VarChar(200)
+  backgroundImageUrl  String?  @map("background_image_url") @db.VarChar(500)
+  backgroundOverlay   Float?   @default(0.7) @map("background_overlay")
+  backgroundPattern   String?  @map("background_pattern") @db.VarChar(30)
+  linkStyle           String?  @default("rounded") @map("link_style") @db.VarChar(20)
+  linkAnimation       String?  @default("none") @map("link_animation") @db.VarChar(20)
+
+  // Bio expandida (Sprint 6)
+  location        String?  @db.VarChar(100)
+  pronouns        String?  @db.VarChar(30)
+  workingHours    String?  @map("working_hours") @db.VarChar(100)
+  tagline         String?  @db.VarChar(200)
+  sectionsOrder   String?  @map("sections_order") @db.Text
+
+  // B2B - Organization (Sprint 7)
+  orgId           String?  @map("org_id")
+
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization    Organization?     @relation(fields: [orgId], references: [id], onDelete: SetNull)
   socialLinks     SocialLink[]
   profileViews    ProfileView[]
   contactMessages ContactMessage[]
@@ -64,6 +91,11 @@ model Profile {
   galleryImages   GalleryImage[]
   availableSlots  AvailableSlot[]
   bookings        Booking[]
+  services        Service[]
+  faqItems        FaqItem[]
+  viewEvents      ViewEvent[]
+  customFormFields CustomFormField[]
+  customDomain    CustomDomain?
 
   @@index([userId])
   @@map("profiles")
@@ -78,6 +110,8 @@ model SocialLink {
   order     Int       @default(0)
   startsAt  DateTime? @map("starts_at")
   endsAt    DateTime? @map("ends_at")
+  linkType  String?   @default("link") @map("link_type") @db.VarChar(20)
+  metadata  String?   @db.Text
   createdAt DateTime  @default(now()) @map("created_at")
 
   profile    Profile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
@@ -169,7 +203,8 @@ model ContactMessage {
 model GalleryImage {
   id        String   @id @default(uuid())
   profileId String   @map("profile_id")
-  imageData String   @map("image_data") @db.MediumText
+  imageUrl  String?  @map("image_url")
+  imageData String?  @map("image_data") @db.MediumText
   caption   String?  @db.VarChar(200)
   order     Int      @default(0)
   createdAt DateTime @default(now()) @map("created_at")
@@ -226,4 +261,180 @@ model Booking {
 
   @@index([profileId, date])
   @@map("bookings")
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  profileId   String   @map("profile_id")
+  title       String   @db.VarChar(150)
+  description String?  @db.Text
+  price       String?  @db.VarChar(50)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("services")
+}
+
+model FaqItem {
+  id        String   @id @default(uuid())
+  profileId String   @map("profile_id")
+  question  String   @db.VarChar(300)
+  answer    String   @db.Text
+  order     Int      @default(0)
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("faq_items")
+}
+
+// --- Gamification: Achievements (Sprint 9) ---
+
+model Achievement {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  type       String   @db.VarChar(50)
+  unlockedAt DateTime @default(now()) @map("unlocked_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@index([userId])
+  @@map("achievements")
+}
+
+// --- Analytics: View Events (Sprint 8) ---
+
+model ViewEvent {
+  id         String   @id @default(uuid())
+  profileId  String   @map("profile_id")
+  timestamp  DateTime @default(now())
+  country    String?  @db.VarChar(50)
+  city       String?  @db.VarChar(100)
+  device     String?  @db.VarChar(20)  // mobile, desktop, tablet
+  browser    String?  @db.VarChar(30)
+  referrer   String?  @db.VarChar(100)
+  utmSource  String?  @map("utm_source") @db.VarChar(100)
+  utmMedium  String?  @map("utm_medium") @db.VarChar(100)
+  utmCampaign String? @map("utm_campaign") @db.VarChar(100)
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, timestamp])
+  @@index([profileId, referrer])
+  @@map("view_events")
+}
+
+// --- B2B: Organizations (Sprint 7) ---
+
+model Organization {
+  id             String   @id @default(uuid())
+  name           String   @db.VarChar(150)
+  slug           String   @unique @db.VarChar(100)
+  logoUrl        String?  @map("logo_url") @db.VarChar(500)
+  primaryColor   String   @default("#00E4F2") @map("primary_color") @db.VarChar(9)
+  secondaryColor String   @default("#D12BF2") @map("secondary_color") @db.VarChar(9)
+  fontFamily     String   @default("Inter") @map("font_family") @db.VarChar(50)
+  domain         String?  @db.VarChar(200)
+  maxMembers     Int      @default(50) @map("max_members")
+  brandingActive Boolean  @default(false) @map("branding_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  members  OrganizationMember[]
+  invites  OrganizationInvite[]
+  profiles Profile[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id       String   @id @default(uuid())
+  orgId    String   @map("org_id")
+  userId   String   @map("user_id")
+  role     String   @default("MEMBER") @db.VarChar(20) // OWNER, ADMIN, MEMBER
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+model OrganizationInvite {
+  id        String    @id @default(uuid())
+  orgId     String    @map("org_id")
+  email     String    @db.VarChar(255)
+  role      String    @default("MEMBER") @db.VarChar(20)
+  token     String    @unique @db.VarChar(100)
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@map("organization_invites")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  endpoint  String   @unique @db.VarChar(500)
+  p256dh    String   @db.VarChar(200)
+  auth      String   @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+model Webhook {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  url       String   @db.VarChar(500)
+  events    String   @db.Text // JSON array: ["new_message","new_booking","new_testimonial","new_view"]
+  secret    String   @db.VarChar(100)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("webhooks")
+}
+
+model CustomFormField {
+  id        String   @id @default(uuid())
+  profileId String   @map("profile_id")
+  label     String   @db.VarChar(100)
+  type      String   @db.VarChar(20) // text, email, phone, select, textarea, date
+  options   String?  @db.Text // JSON for select options
+  required  Boolean  @default(false)
+  order     Int      @default(0)
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("custom_form_fields")
+}
+
+model CustomDomain {
+  id          String   @id @default(uuid())
+  profileId   String   @unique @map("profile_id")
+  domain      String   @unique @db.VarChar(255)
+  verified    Boolean  @default(false)
+  verifyToken String   @map("verify_token") @db.VarChar(100)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("custom_domains")
 }

@@ -16,6 +16,48 @@ export interface CardSummary {
   displayName: string;
 }
 
+export interface OrgMembership {
+  id: string;
+  name: string;
+  slug: string;
+  brandingActive: boolean;
+  role: string;
+}
+
+export type PlanType = 'FREE' | 'PRO' | 'BUSINESS' | 'ENTERPRISE';
+
+export interface PlanLimits {
+  maxCards: number;
+  maxLinks: number;
+  maxThemes: number | 'all';
+  canPublish: boolean;
+  analytics: boolean;
+  gallery: boolean;
+  bookings: boolean;
+  testimonials: boolean;
+  contacts: boolean;
+  services: boolean;
+  faq: boolean;
+  resume: boolean;
+  video: boolean;
+  watermark: boolean;
+  customFonts: boolean;
+  customBg: boolean;
+  leadsExport: boolean;
+  orgDashboard: boolean;
+  branding: boolean;
+  customDomain: boolean;
+  webhooks: boolean;
+}
+
+const DEFAULT_LIMITS: PlanLimits = {
+  maxCards: 1, maxLinks: 5, maxThemes: 3, canPublish: true,
+  analytics: false, gallery: false, bookings: false, testimonials: false,
+  contacts: false, services: false, faq: false, resume: false, video: false,
+  watermark: true, customFonts: false, customBg: false, leadsExport: false,
+  orgDashboard: false, branding: false, customDomain: false, webhooks: false,
+};
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -23,6 +65,9 @@ interface AuthState {
   hasPaid: boolean;
   paidUntil: string | null;
   cards: CardSummary[];
+  plan: PlanType;
+  planLimits: PlanLimits;
+  organizations: OrgMembership[];
 }
 
 interface AuthContextType extends AuthState {
@@ -30,23 +75,34 @@ interface AuthContextType extends AuthState {
   devLogin: (email?: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
+  hasFeature: (feature: keyof PlanLimits) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const EMPTY_STATE: AuthState = {
+  user: null, isAuthenticated: false, isLoading: false,
+  hasPaid: false, paidUntil: null, cards: [],
+  plan: 'FREE', planLimits: DEFAULT_LIMITS, organizations: [],
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
-    user: null,
-    isAuthenticated: false,
+    ...EMPTY_STATE,
     isLoading: true,
-    hasPaid: false,
-    paidUntil: null,
-    cards: [],
   });
 
   const fetchMe = useCallback(async () => {
     try {
-      const data: { user: User; hasPaid: boolean; paidUntil: string | null; cards: CardSummary[] } = await api.get('/me');
+      const data: {
+        user: User;
+        hasPaid: boolean;
+        paidUntil: string | null;
+        cards: CardSummary[];
+        plan?: PlanType;
+        planLimits?: PlanLimits;
+        organizations?: OrgMembership[];
+      } = await api.get('/me');
       setState({
         user: data.user,
         isAuthenticated: true,
@@ -54,9 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hasPaid: data.hasPaid,
         paidUntil: data.paidUntil,
         cards: data.cards || [],
+        plan: data.plan || (data.hasPaid ? 'PRO' : 'FREE'),
+        planLimits: data.planLimits || DEFAULT_LIMITS,
+        organizations: data.organizations || [],
       });
     } catch {
-      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false, paidUntil: null, cards: [] });
+      setState(EMPTY_STATE);
     }
   }, []);
 
@@ -67,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const handleLogout = () => {
       clearAccessToken();
-      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false, paidUntil: null, cards: [] });
+      setState(EMPTY_STATE);
     };
     window.addEventListener('auth:logout', handleLogout);
     return () => window.removeEventListener('auth:logout', handleLogout);
@@ -92,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await api.post('/auth/logout');
     } finally {
       clearAccessToken();
-      setState({ user: null, isAuthenticated: false, isLoading: false, hasPaid: false, paidUntil: null, cards: [] });
+      setState(EMPTY_STATE);
     }
   }, []);
 
@@ -100,8 +159,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await fetchMe();
   }, [fetchMe]);
 
+  const hasFeature = useCallback((feature: keyof PlanLimits): boolean => {
+    const value = state.planLimits[feature];
+    if (typeof value === 'boolean') return value;
+    return true;
+  }, [state.planLimits]);
+
   return (
-    <AuthContext.Provider value={{ ...state, login, devLogin, logout, refreshAuth }}>
+    <AuthContext.Provider value={{ ...state, login, devLogin, logout, refreshAuth, hasFeature }}>
       {children}
     </AuthContext.Provider>
   );

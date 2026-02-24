@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Res, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { ContactsService } from './contacts.service';
 import { Public } from '../common/decorators/public.decorator';
@@ -22,6 +23,15 @@ export class ContactsController {
   @Get('me')
   async getMyMessages(@CurrentUser() user: JwtPayload) {
     return this.contactsService.getMessages(user.sub);
+  }
+
+  @UseGuards(PaidUserGuard)
+  @Get('me/export')
+  async exportMessages(@CurrentUser() user: JwtPayload, @Res() res: Response) {
+    const csv = await this.contactsService.exportMessagesCsv(user.sub);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="leads.csv"');
+    res.send(csv);
   }
 
   @Patch(':id/read')

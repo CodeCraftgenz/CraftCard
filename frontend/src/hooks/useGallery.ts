@@ -3,10 +3,18 @@ import { api } from '@/lib/api';
 
 export interface GalleryImage {
   id: string;
-  imageData: string;
+  imageUrl: string | null;
+  imageData: string | null;
   caption: string | null;
   order: number;
   createdAt: string;
+}
+
+/** Get the displayable image source (FTP URL or base64 data URI) */
+export function getGalleryImageSrc(image: GalleryImage): string {
+  if (image.imageUrl) return image.imageUrl;
+  if (image.imageData) return `data:image/webp;base64,${image.imageData}`;
+  return '';
 }
 
 export function useGallery() {

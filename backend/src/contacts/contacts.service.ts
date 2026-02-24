@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { AppException } from '../common/exceptions/app.exception';
 import type { SendMessageDto } from './dto/send-message.dto';
 
@@ -9,12 +10,13 @@ export class ContactsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async sendMessage(slug: string, data: SendMessageDto) {
     const profile = await this.prisma.profile.findFirst({
       where: { slug },
-      select: { id: true, isPublished: true, user: { select: { email: true } } },
+      select: { id: true, userId: true, isPublished: true, user: { select: { email: true } } },
     });
     if (!profile || !profile.isPublished) {
       throw AppException.notFound('Perfil');
@@ -29,7 +31,7 @@ export class ContactsService {
       },
     });
 
-    // Notify profile owner (fire-and-forget)
+    // Notify profile owner via email (fire-and-forget)
     if (profile.user?.email) {
       this.mailService.sendNewMessageNotification(
         profile.user.email,
@@ -37,6 +39,13 @@ export class ContactsService {
         data.message.substring(0, 200),
       ).catch(() => {});
     }
+
+    // Push notification (fire-and-forget)
+    this.notificationsService.sendToUser(profile.userId, {
+      title: 'Nova mensagem!',
+      body: `${data.senderName}: ${data.message.substring(0, 80)}`,
+      url: '/editor',
+    }).catch(() => {});
 
     return { sent: true };
   }
@@ -75,6 +84,33 @@ export class ContactsService {
     });
   }
 
+  async exportMessagesCsv(userId: string): Promise<string> {
+    const profiles = await this.prisma.profile.findMany({
+      where: { userId },
+      select: { id: true, displayName: true },
+    });
+    const profileIds = profiles.map((p) => p.id);
+    const profileMap = new Map(profiles.map((p) => [p.id, p.displayName]));
+
+    const messages = await this.prisma.contactMessage.findMany({
+      where: { profileId: { in: profileIds } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const header = 'Nome,Email,Mensagem,Cartao,Lido,Data\n';
+    const rows = messages.map((m) => {
+      const name = csvEscape(m.senderName);
+      const email = csvEscape(m.senderEmail || '');
+      const msg = csvEscape(m.message);
+      const card = csvEscape(profileMap.get(m.profileId) || '');
+      const read = m.isRead ? 'Sim' : 'Nao';
+      const date = m.createdAt.toISOString();
+      return `${name},${email},${msg},${card},${read},${date}`;
+    }).join('\n');
+
+    return header + rows;
+  }
+
   async getUnreadCount(userId: string) {
     const profile = await this.prisma.profile.findFirst({
       where: { userId, isPrimary: true },
@@ -87,4 +123,11 @@ export class ContactsService {
     });
     return { count };
   }
+}
+
+function csvEscape(value: string): string {
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
 }

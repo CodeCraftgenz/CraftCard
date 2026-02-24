@@ -30,6 +30,7 @@ export class StorageController {
     private readonly prisma: PrismaService,
   ) {}
 
+  // ── Serve photo (legacy base64 fallback) ──────────────────────────
   @Public()
   @Get('photos/:userId')
   async servePhoto(@Param('userId') userId: string, @Res() res: Response) {
@@ -49,6 +50,7 @@ export class StorageController {
     res.send(buffer);
   }
 
+  // ── Upload photo → FTP ────────────────────────────────────────────
   @Post('me/photo-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadPhoto(
@@ -63,32 +65,34 @@ export class StorageController {
     )
     file: Express.Multer.File,
   ) {
-    // Resize to 400x400 and convert to WebP with good quality
     const processed = await sharp(file.buffer)
       .resize(400, 400, { fit: 'cover' })
       .webp({ quality: 80 })
       .toBuffer();
 
-    const base64 = processed.toString('base64');
-
-    // Build a short URL that serves the photo via API
-    const photoUrl = `/api/photos/${user.sub}`;
-
-    // Find primary profile then update
     const profile = await this.prisma.profile.findFirst({
       where: { userId: user.sub, isPrimary: true },
-      select: { id: true },
+      select: { id: true, photoUrl: true },
     });
     if (!profile) throw AppException.notFound('Perfil');
 
+    // Delete old FTP photo if exists
+    if (profile.photoUrl?.startsWith('http')) {
+      this.storageService.deleteFile(profile.photoUrl).catch(() => {});
+    }
+
+    // Upload to FTP
+    const photoUrl = await this.storageService.uploadFile(processed, 'photos', user.sub, 'webp');
+
     await this.prisma.profile.update({
       where: { id: profile.id },
-      data: { photoUrl, photoData: base64 },
+      data: { photoUrl, photoData: null },
     });
 
     return { url: photoUrl };
   }
 
+  // ── Serve cover (legacy base64 fallback) ──────────────────────────
   @Public()
   @Get('covers/:userId')
   async serveCover(@Param('userId') userId: string, @Res() res: Response) {
@@ -108,6 +112,7 @@ export class StorageController {
     res.send(buffer);
   }
 
+  // ── Upload cover → FTP ────────────────────────────────────────────
   @Post('me/cover-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadCover(
@@ -127,23 +132,33 @@ export class StorageController {
       .webp({ quality: 80 })
       .toBuffer();
 
-    const base64 = processed.toString('base64');
-    const coverPhotoUrl = `/api/covers/${user.sub}`;
-
     const profile = await this.prisma.profile.findFirst({
       where: { userId: user.sub, isPrimary: true },
-      select: { id: true },
+      select: { id: true, coverPhotoUrl: true },
     });
     if (!profile) throw AppException.notFound('Perfil');
 
+    // Delete old FTP cover if exists
+    if (profile.coverPhotoUrl?.startsWith('http')) {
+      this.storageService.deleteFile(profile.coverPhotoUrl).catch(() => {});
+    }
+
+    const coverPhotoUrl = await this.storageService.uploadFile(
+      processed,
+      'covers',
+      user.sub,
+      'webp',
+    );
+
     await this.prisma.profile.update({
       where: { id: profile.id },
-      data: { coverPhotoUrl, coverPhotoData: base64 },
+      data: { coverPhotoUrl, coverPhotoData: null },
     });
 
     return { url: coverPhotoUrl };
   }
 
+  // ── Serve resume (legacy base64 fallback) ─────────────────────────
   @Public()
   @Get('resume/:slug')
   async serveResume(@Param('slug') slug: string, @Res() res: Response) {
@@ -165,6 +180,7 @@ export class StorageController {
     res.send(buffer);
   }
 
+  // ── Upload resume → FTP ───────────────────────────────────────────
   @Post('me/resume-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadResume(
@@ -181,21 +197,31 @@ export class StorageController {
   ) {
     const profile = await this.prisma.profile.findFirst({
       where: { userId: user.sub, isPrimary: true },
-      select: { id: true, slug: true },
+      select: { id: true, slug: true, resumeUrl: true },
     });
     if (!profile) throw AppException.notFound('Perfil');
 
-    const base64 = file.buffer.toString('base64');
-    const resumeUrl = `/api/resume/${profile.slug}`;
+    // Delete old FTP resume if exists
+    if (profile.resumeUrl?.startsWith('http')) {
+      this.storageService.deleteFile(profile.resumeUrl).catch(() => {});
+    }
+
+    const resumeUrl = await this.storageService.uploadFile(
+      file.buffer,
+      'resumes',
+      profile.slug,
+      'pdf',
+    );
 
     await this.prisma.profile.update({
       where: { id: profile.id },
-      data: { resumeUrl, resumeData: base64, resumeType: 'pdf' },
+      data: { resumeUrl, resumeData: null, resumeType: 'pdf' },
     });
 
     return { url: resumeUrl };
   }
 
+  // ── Upload video → FTP (unchanged) ───────────────────────────────
   @Post('me/video-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadVideo(
@@ -210,7 +236,6 @@ export class StorageController {
     )
     file: Express.Multer.File,
   ) {
-    // Delete old video
     const profile = await this.prisma.profile.findFirst({
       where: { userId: user.sub, isPrimary: true },
       select: { videoUrl: true },
@@ -219,10 +244,8 @@ export class StorageController {
       await this.storageService.deleteFile(profile.videoUrl);
     }
 
-    // Upload new video
     const url = await this.storageService.uploadFile(file.buffer, 'videos', user.sub, 'mp4');
 
-    // Update profile
     const currentProfile = await this.prisma.profile.findFirst({
       where: { userId: user.sub, isPrimary: true },
       select: { id: true },
