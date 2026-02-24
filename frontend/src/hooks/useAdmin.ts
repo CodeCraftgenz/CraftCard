@@ -1,0 +1,135 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+
+// --- Types ---
+
+export interface DashboardStats {
+  totalUsers: number;
+  totalProfiles: number;
+  totalOrgs: number;
+  usersByPlan: Record<string, number>;
+  newUsersLast30Days: { date: string; count: number }[];
+  revenue: { total: number; last30Days: number };
+}
+
+export interface AdminUser {
+  id: string;
+  name: string | null;
+  email: string;
+  avatarUrl: string | null;
+  plan: string;
+  role: string;
+  createdAt: string;
+  _count: { profiles: number; orgMemberships: number };
+}
+
+export interface AdminUserDetail {
+  id: string;
+  name: string | null;
+  email: string;
+  avatarUrl: string | null;
+  plan: string;
+  role: string;
+  createdAt: string;
+  profiles: { id: string; displayName: string; slug: string; isPrimary: boolean; viewCount: number }[];
+  payments: { id: string; amount: number; status: string; plan: string | null; paidAt: string | null; expiresAt: string | null; createdAt: string }[];
+  orgMemberships: { id: string; role: string; org: { id: string; name: string; slug: string } }[];
+}
+
+export interface AdminPayment {
+  id: string;
+  amount: number;
+  status: string;
+  plan: string | null;
+  payerEmail: string | null;
+  paidAt: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+  user: { id: string; name: string | null; email: string };
+}
+
+export interface AdminOrg {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: string;
+  _count: { members: number; profiles: number };
+}
+
+// --- Queries ---
+
+export function useAdminDashboard() {
+  return useQuery<DashboardStats>({
+    queryKey: ['admin', 'dashboard'],
+    queryFn: () => api.get('/admin/dashboard'),
+  });
+}
+
+export function useAdminUsers(search: string, plan: string, role: string) {
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (plan) params.set('plan', plan);
+  if (role) params.set('role', role);
+  const qs = params.toString();
+
+  return useQuery<AdminUser[]>({
+    queryKey: ['admin', 'users', search, plan, role],
+    queryFn: () => api.get(`/admin/users${qs ? `?${qs}` : ''}`),
+  });
+}
+
+export function useAdminUserDetail(userId: string | null) {
+  return useQuery<AdminUserDetail>({
+    queryKey: ['admin', 'users', userId],
+    queryFn: () => api.get(`/admin/users/${userId}`),
+    enabled: !!userId,
+  });
+}
+
+export function useAdminPayments(status: string, plan: string) {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (plan) params.set('plan', plan);
+  const qs = params.toString();
+
+  return useQuery<AdminPayment[]>({
+    queryKey: ['admin', 'payments', status, plan],
+    queryFn: () => api.get(`/admin/payments${qs ? `?${qs}` : ''}`),
+  });
+}
+
+export function useAdminOrgs(search: string) {
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  const qs = params.toString();
+
+  return useQuery<AdminOrg[]>({
+    queryKey: ['admin', 'organizations', search],
+    queryFn: () => api.get(`/admin/organizations${qs ? `?${qs}` : ''}`),
+  });
+}
+
+// --- Mutations ---
+
+export function useUpdateAdminUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, data }: { userId: string; data: { role?: string; plan?: string } }) =>
+      api.put(`/admin/users/${userId}`, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'users'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+    },
+  });
+}
+
+export function useDeleteAdminUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => api.delete(`/admin/users/${userId}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'users'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+    },
+  });
+}

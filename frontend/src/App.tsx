@@ -3,6 +3,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { QueryProvider } from './providers/QueryProvider';
 import { AuthProvider } from './providers/AuthProvider';
 import { ProtectedRoute } from './components/organisms/ProtectedRoute';
+import { AdminRoute } from './components/organisms/AdminRoute';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { EditorPage } from './pages/EditorPage';
@@ -12,6 +13,7 @@ import { OrgDashboardPage } from './pages/OrgDashboardPage';
 import { TutorialPage } from './pages/TutorialPage';
 import { OrgJoinPage } from './pages/OrgJoinPage';
 import { WidgetPage } from './pages/WidgetPage';
+import { AdminPage } from './pages/AdminPage';
 import { NotFound } from './pages/NotFound';
 
 export function App() {
@@ -61,6 +63,14 @@ export function App() {
                   <ProtectedRoute>
                     <OrgJoinPage />
                   </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <AdminPage />
+                  </AdminRoute>
                 }
               />
               <Route path="/widget/:slug" element={<WidgetPage />} />
