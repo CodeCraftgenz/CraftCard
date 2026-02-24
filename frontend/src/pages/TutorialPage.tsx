@@ -5,7 +5,7 @@ import {
   Palette, ImageIcon, Briefcase, HelpCircle,
   CalendarDays, BarChart3, MessageSquare, FileText,
   Download, Building2, Users, Settings,
-  Eye, Webhook, Sparkles, BookOpen,
+  Eye, Webhook, Sparkles, BookOpen, Copy,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
 import { UpgradeBanner } from '@/components/organisms/UpgradeBanner';
@@ -118,9 +118,16 @@ const PRO_FEATURES: TutorialCard[] = [
     feature: 'leadsExport',
     link: '/editor',
   },
+  {
+    icon: <Copy size={20} />,
+    title: 'Multiplos cartoes',
+    description: 'Crie ate 5 cartoes diferentes (Pro) ou 50 (Business). Use o seletor no topo do editor para alternar, criar ou excluir cartoes.',
+    feature: 'canPublish',
+    link: '/editor',
+  },
 ];
 
-const ENTERPRISE_FEATURES: TutorialCard[] = [
+const BUSINESS_FEATURES: TutorialCard[] = [
   {
     icon: <Building2 size={20} />,
     title: 'Dashboard da organizacao',
@@ -245,7 +252,7 @@ export function TutorialPage() {
 
         {/* Pro Features */}
         <section className="mb-12">
-          <div className="flex items-center gap-2 mb-5">
+          <div className="flex items-center gap-2 mb-1">
             <Palette size={16} className="text-brand-cyan" />
             <h2 className="text-lg font-semibold text-white">Recursos Pro</h2>
             {showPro ? (
@@ -254,6 +261,7 @@ export function TutorialPage() {
               <span className="text-xs text-white/30 bg-white/5 px-2 py-0.5 rounded-full">Requer upgrade</span>
             )}
           </div>
+          <p className="text-xs text-white/30 mb-5 ml-7">Para profissionais individuais · R$30/ano</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {PRO_FEATURES.map((card) => (
               <TutorialCardComponent
@@ -266,19 +274,20 @@ export function TutorialPage() {
           </div>
         </section>
 
-        {/* Enterprise Features */}
+        {/* Business / Enterprise Features */}
         <section className="mb-12">
-          <div className="flex items-center gap-2 mb-5">
-            <Building2 size={16} className="text-purple-400" />
-            <h2 className="text-lg font-semibold text-white">Recursos Enterprise</h2>
+          <div className="flex items-center gap-2 mb-1">
+            <Building2 size={16} className="text-brand-magenta" />
+            <h2 className="text-lg font-semibold text-white">Recursos Business</h2>
             {showEnterprise ? (
               <span className="text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">Ativo</span>
             ) : (
               <span className="text-xs text-white/30 bg-white/5 px-2 py-0.5 rounded-full">Requer upgrade</span>
             )}
           </div>
+          <p className="text-xs text-white/30 mb-5 ml-7">Inclui tudo do Pro + gestao de equipe e branding · R$299/ano</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {ENTERPRISE_FEATURES.map((card) => (
+            {BUSINESS_FEATURES.map((card) => (
               <TutorialCardComponent
                 key={card.title}
                 card={card}

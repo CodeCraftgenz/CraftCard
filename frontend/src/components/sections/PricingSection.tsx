@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, X, ArrowRight, Building2, MessageCircle } from 'lucide-react';
+import { Check, X, ArrowRight, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
+import { api } from '@/lib/api';
 
 interface PlanFeature {
   label: string;
@@ -57,8 +59,21 @@ function FeatureRow({ label, value }: { label: string; value: boolean | string }
 
 export function PricingSection() {
   const { isAuthenticated } = useAuth();
+  const [businessLoading, setBusinessLoading] = useState(false);
 
-  const whatsappUrl = 'https://wa.me/5535999358856?text=Ol%C3%A1!%20Tenho%20interesse%20no%20plano%20Business%20do%20CraftCard.';
+  const handleBusinessCheckout = async () => {
+    if (!isAuthenticated) {
+      window.location.href = '/login';
+      return;
+    }
+    setBusinessLoading(true);
+    try {
+      const data: { url: string } = await api.post('/payments/checkout', { plan: 'BUSINESS' });
+      window.location.href = data.url;
+    } catch {
+      setBusinessLoading(false);
+    }
+  };
 
   return (
     <section id="preco" className="py-24 relative">
@@ -126,7 +141,8 @@ export function PricingSection() {
               </div>
 
               <div className="mb-6">
-                <p className="text-sm text-brand-cyan font-semibold uppercase tracking-wider mb-3">Pro</p>
+                <p className="text-sm text-brand-cyan font-semibold uppercase tracking-wider mb-1">Pro</p>
+                <p className="text-xs text-white/30 mb-3">Para profissionais individuais</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-lg text-white/30 line-through">R$99,90</span>
                   <span className="text-5xl font-extrabold gradient-text">R$30</span>
@@ -169,10 +185,10 @@ export function PricingSection() {
             <div className="mb-6">
               <p className="text-sm text-brand-magenta font-semibold uppercase tracking-wider mb-3">Business</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-extrabold text-white">R$199</span>
+                <span className="text-5xl font-extrabold text-white">R$299</span>
                 <span className="text-sm text-white/40">/ano</span>
               </div>
-              <p className="text-sm text-white/40 mt-2">Ate 10 usuarios · ~R$16,58/mes</p>
+              <p className="text-sm text-white/40 mt-2">Ate 10 usuarios · ~R$24,92/mes</p>
             </div>
 
             <div className="space-y-3 mb-8 flex-1">
@@ -181,15 +197,15 @@ export function PricingSection() {
               ))}
             </div>
 
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-brand-magenta/40 text-white font-semibold hover:bg-brand-magenta/10 transition-all"
+            <button
+              type="button"
+              onClick={handleBusinessCheckout}
+              disabled={businessLoading}
+              className="group w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-brand-magenta to-brand-purple text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-brand-magenta/20 disabled:opacity-50"
             >
-              <MessageCircle size={16} />
-              Falar com vendas
-            </a>
+              {businessLoading ? 'Redirecionando...' : 'Assinar Business'}
+              {!businessLoading && <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />}
+            </button>
           </motion.div>
         </div>
       </div>

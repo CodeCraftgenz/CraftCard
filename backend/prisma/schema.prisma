@@ -157,6 +157,7 @@ model Payment {
   amount         Decimal   @db.Decimal(10, 2)
   currency       String    @default("BRL")
   status         String    @default("pending")
+  plan           String?   @db.VarChar(20)
   payerEmail     String?   @map("payer_email")
   mpResponseJson String?   @map("mp_response_json") @db.Text
   paidAt         DateTime? @map("paid_at")

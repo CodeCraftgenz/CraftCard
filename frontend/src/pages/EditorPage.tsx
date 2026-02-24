@@ -64,7 +64,7 @@ const CARD_THEMES = [
 ];
 
 export function EditorPage() {
-  const { hasPaid, paidUntil, refreshAuth, cards: authCards, hasFeature, organizations, plan } = useAuth();
+  const { hasPaid, paidUntil, refreshAuth, cards: authCards, hasFeature, organizations, plan, planLimits } = useAuth();
   const [activeCardId, setActiveCardId] = useState<string | undefined>(undefined);
   const createOrg = useCreateOrganization();
   const [showCreateOrg, setShowCreateOrg] = useState(false);
@@ -407,7 +407,7 @@ export function EditorPage() {
   };
 
   const handleCheckout = async () => {
-    const data: { url: string } = await api.post('/payments/checkout');
+    const data: { url: string } = await api.post('/payments/checkout', { plan: 'PRO' });
     window.location.href = data.url;
   };
 
@@ -568,6 +568,7 @@ export function EditorPage() {
               onSuccess: () => refreshAuth(),
             })}
             hasPaid={hasPaid}
+            maxCards={typeof planLimits.maxCards === 'number' ? planLimits.maxCards : 5}
           />
         )}
 
@@ -1814,52 +1815,72 @@ export function EditorPage() {
                     <a
                       key={org.id}
                       href={`/org/${org.id}`}
-                      className="flex items-center justify-between px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                      className="group flex items-center justify-between px-4 py-3 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30 transition-all"
                     >
-                      <span className="text-white text-sm">{org.name}</span>
-                      <span className="text-white/30 text-xs bg-white/5 px-2 py-0.5 rounded">{org.role}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                          <UserPlus size={14} className="text-purple-400" />
+                        </div>
+                        <div>
+                          <span className="text-white text-sm font-medium">{org.name}</span>
+                          <span className="block text-white/30 text-xs">{org.role}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-purple-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                          Gerenciar
+                        </span>
+                        <ExternalLink size={14} className="text-purple-400 group-hover:translate-x-0.5 transition-transform" />
+                      </div>
                     </a>
                   ))}
-                  {!showCreateOrg ? (
-                    <button
-                      onClick={() => setShowCreateOrg(true)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-white/20 text-white/50 text-sm hover:bg-white/5 hover:text-white/70 transition-colors"
-                    >
-                      <UserPlus size={14} />
-                      Criar organizacao
-                    </button>
-                  ) : (
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={newOrgName}
-                        onChange={(e) => setNewOrgName(e.target.value)}
-                        placeholder="Nome da organizacao"
-                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50"
-                      />
-                      <div className="flex gap-2">
+                  {(plan === 'BUSINESS' || plan === 'ENTERPRISE') && (
+                    <>
+                      {!showCreateOrg ? (
                         <button
-                          onClick={async () => {
-                            if (!newOrgName.trim()) return;
-                            const slug = newOrgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-                            await createOrg.mutateAsync({ name: newOrgName.trim(), slug });
-                            setNewOrgName('');
-                            setShowCreateOrg(false);
-                            refreshAuth();
-                          }}
-                          disabled={createOrg.isPending || !newOrgName.trim()}
-                          className="flex-1 px-4 py-2 rounded-xl bg-brand-cyan text-black text-sm font-semibold hover:bg-brand-cyan/90 transition-colors disabled:opacity-50"
+                          type="button"
+                          onClick={() => setShowCreateOrg(true)}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-white/20 text-white/50 text-sm hover:bg-white/5 hover:text-white/70 transition-colors"
                         >
-                          {createOrg.isPending ? '...' : 'Criar'}
+                          <UserPlus size={14} />
+                          Criar organizacao
                         </button>
-                        <button
-                          onClick={() => { setShowCreateOrg(false); setNewOrgName(''); }}
-                          className="px-4 py-2 rounded-xl bg-white/5 text-white/50 text-sm hover:bg-white/10 transition-colors"
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={newOrgName}
+                            onChange={(e) => setNewOrgName(e.target.value)}
+                            placeholder="Nome da organizacao"
+                            className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (!newOrgName.trim()) return;
+                                const slug = newOrgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                                await createOrg.mutateAsync({ name: newOrgName.trim(), slug });
+                                setNewOrgName('');
+                                setShowCreateOrg(false);
+                                refreshAuth();
+                              }}
+                              disabled={createOrg.isPending || !newOrgName.trim()}
+                              className="flex-1 px-4 py-2 rounded-xl bg-brand-cyan text-black text-sm font-semibold hover:bg-brand-cyan/90 transition-colors disabled:opacity-50"
+                            >
+                              {createOrg.isPending ? '...' : 'Criar'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setShowCreateOrg(false); setNewOrgName(''); }}
+                              className="px-4 py-2 rounded-xl bg-white/5 text-white/50 text-sm hover:bg-white/10 transition-colors"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

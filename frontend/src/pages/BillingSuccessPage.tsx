@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 
 export function BillingSuccessPage() {
   const navigate = useNavigate();
-  const { refreshAuth } = useAuth();
+  const { refreshAuth, plan } = useAuth();
   const [verifying, setVerifying] = useState(true);
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export function BillingSuccessPage() {
             </motion.div>
             <h1 className="text-2xl font-bold mb-2">Pagamento confirmado!</h1>
             <p className="text-white/50 text-sm mb-4">
-              Sua assinatura anual foi ativada com sucesso.
+              Seu plano <span className="text-brand-cyan font-semibold">{plan === 'BUSINESS' ? 'Business' : 'Pro'}</span> foi ativado com sucesso.
             </p>
             <div className="flex items-center justify-center gap-2 text-brand-cyan text-sm">
               <Sparkles size={16} />

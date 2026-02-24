@@ -11,8 +11,12 @@ export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Post('checkout')
-  async createCheckout(@CurrentUser() user: JwtPayload) {
-    return this.paymentsService.createCheckoutPreference(user.sub, user.email);
+  async createCheckout(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: { plan?: string },
+  ) {
+    const plan = (body?.plan?.toUpperCase() === 'BUSINESS' ? 'BUSINESS' : 'PRO') as 'PRO' | 'BUSINESS';
+    return this.paymentsService.createCheckoutPreference(user.sub, user.email, plan);
   }
 
   /** Admin: activate a plan for any user by email */

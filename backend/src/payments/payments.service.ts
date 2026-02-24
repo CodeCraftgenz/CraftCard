@@ -20,7 +20,14 @@ const MP_STATUS_MAP: Record<string, string> = {
   charged_back: 'refunded',
 };
 
-const SUBSCRIPTION_PRICE = 30.0;
+const PLAN_PRICES: Record<string, number> = {
+  PRO: 30.0,
+  BUSINESS: 299.0,
+};
+const PLAN_TITLES: Record<string, string> = {
+  PRO: 'CraftCard Pro - Cartao Digital Profissional (Anual)',
+  BUSINESS: 'CraftCard Business - Plano Empresarial (Anual)',
+};
 const SUBSCRIPTION_DAYS = 365;
 
 /** Emails with permanent free access (founders / team) */
@@ -108,10 +115,16 @@ export class PaymentsService {
     return { plan: 'FREE', planLimits: getPlanLimits('FREE'), expiresAt: null };
   }
 
-  async createCheckoutPreference(userId: string, email: string): Promise<{ url: string }> {
+  async createCheckoutPreference(userId: string, email: string, plan: 'PRO' | 'BUSINESS' = 'PRO'): Promise<{ url: string }> {
     const subscription = await this.getActiveSubscription(userId);
     if (subscription.active) {
       throw AppException.conflict('Voce ja possui uma assinatura ativa');
+    }
+
+    const price = PLAN_PRICES[plan];
+    const title = PLAN_TITLES[plan];
+    if (!price || !title) {
+      throw AppException.badRequest('Plano invalido. Use PRO ou BUSINESS.');
     }
 
     const frontendUrl = this.configService.get('FRONTEND_URL', { infer: true });
@@ -120,9 +133,10 @@ export class PaymentsService {
     const payment = await this.prisma.payment.create({
       data: {
         userId,
-        amount: SUBSCRIPTION_PRICE,
+        amount: price,
         currency: 'BRL',
         status: 'pending',
+        plan,
         payerEmail: email,
       },
     });
@@ -134,11 +148,11 @@ export class PaymentsService {
         items: [
           {
             id: payment.id,
-            title: 'CraftCard - Cartao Digital Profissional (Anual)',
-            description: 'Assinatura anual para criar e publicar seu cartao digital',
+            title,
+            description: `Assinatura anual CraftCard ${plan}`,
             quantity: 1,
             currency_id: 'BRL',
-            unit_price: SUBSCRIPTION_PRICE,
+            unit_price: price,
           },
         ],
         back_urls: {
@@ -167,7 +181,7 @@ export class PaymentsService {
     const checkoutUrl =
       nodeEnv === 'production' ? mpResponse.init_point! : mpResponse.sandbox_init_point!;
 
-    this.logger.log(`Checkout preference created for user ${userId}: ${mpResponse.id}`);
+    this.logger.log(`Checkout preference created for user ${userId} (${plan}): ${mpResponse.id}`);
 
     return { url: checkoutUrl };
   }
@@ -272,13 +286,14 @@ export class PaymentsService {
               },
             });
 
-            // Sync user plan
+            // Sync user plan (use plan from payment record, fallback PRO for old records)
+            const targetPlan = payment.plan || 'PRO';
             await this.prisma.user.update({
               where: { id: userId },
-              data: { plan: 'PRO' },
+              data: { plan: targetPlan },
             }).catch(() => {});
 
-            this.logger.log(`Payment verified and approved: ${payment.id} (MP: ${mpPayment.id})`);
+            this.logger.log(`Payment verified and approved: ${payment.id} (MP: ${mpPayment.id}, plan: ${targetPlan})`);
             return { synced: true, status: 'approved' };
           }
         }
@@ -330,6 +345,7 @@ export class PaymentsService {
           amount: 0,
           currency: 'BRL',
           status: 'approved',
+          plan: normalizedPlan,
           payerEmail: targetEmail,
           paidAt: now,
           expiresAt,
@@ -411,17 +427,18 @@ export class PaymentsService {
       },
     });
 
-    // Sync user plan on approval
+    // Sync user plan on approval (use plan from payment record, fallback PRO for old records)
     if (newStatus === 'approved') {
+      const targetPlan = existing.plan || 'PRO';
       await this.prisma.user.update({
         where: { id: existing.userId },
-        data: { plan: 'PRO' },
+        data: { plan: targetPlan },
       }).catch((err) => this.logger.error(`Failed to update user plan: ${err}`));
 
       // Send payment confirmation email (fire-and-forget)
       const user = await this.prisma.user.findUnique({ where: { id: existing.userId }, select: { email: true, name: true } });
       if (user) {
-        this.mailService.sendPaymentConfirmation(user.email, user.name, 'PRO').catch(() => {});
+        this.mailService.sendPaymentConfirmation(user.email, user.name, targetPlan).catch(() => {});
       }
     }
 

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Users, BarChart3, Mail, Settings, Plus, Trash2, Copy, Check,
-  UserPlus, Shield, Crown, Download, Eye, MessageSquare, Calendar,
+  UserPlus, Shield, Crown, Download, Eye, MessageSquare, Calendar, ArrowLeft,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
 import {
@@ -51,6 +51,15 @@ export function OrgDashboardPage() {
     <div className="min-h-screen bg-brand-dark">
       <Header />
       <div className="max-w-5xl mx-auto px-4 pt-24 pb-8">
+        {/* Back to editor */}
+        <Link
+          to="/editor"
+          className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-white/70 transition-colors mb-4"
+        >
+          <ArrowLeft size={16} />
+          Voltar ao Editor
+        </Link>
+
         {/* Org header */}
         <div className="flex items-center gap-4 mb-8">
           {org.logoUrl ? (

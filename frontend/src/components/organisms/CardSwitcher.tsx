@@ -29,12 +29,12 @@ export function CardSwitcher({
   onDelete,
   onSetPrimary,
   hasPaid,
-  maxCards = 5,
+  maxCards = 1,
 }: CardSwitcherProps) {
   const [isOpen, setIsOpen] = useState(false);
   const activeCard = cards.find((c) => c.id === activeCardId) || cards.find((c) => c.isPrimary) || cards[0];
 
-  if (!hasPaid || cards.length <= 1) {
+  if (!hasPaid || cards.length === 0) {
     return null;
   }
 
@@ -55,7 +55,10 @@ export function CardSwitcher({
             <p className="text-xs text-white/40">{activeCard?.slug ? `/${activeCard.slug}` : ''}</p>
           </div>
         </div>
-        <ChevronDown size={16} className={`text-white/40 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-white/30">{cards.length}/{maxCards}</span>
+          <ChevronDown size={16} className={`text-white/40 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </div>
       </button>
 
       <AnimatePresence>
