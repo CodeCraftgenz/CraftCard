@@ -331,6 +331,22 @@ export function PublicCardPage() {
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
   });
 
+  // Derive visual settings (safe even when profile is null)
+  const orgB = profile?.orgBranding;
+  const accent = orgB?.orgPrimaryColor || profile?.buttonColor || '#00E4F2';
+  const theme = profile?.cardTheme || 'default';
+  const fontFamily = orgB?.orgFontFamily || profile?.fontFamily || 'Inter';
+  const fontScale = profile?.fontSizeScale ?? 1;
+  const bgType = profile?.backgroundType || 'theme';
+  const linkStyle = profile?.linkStyle || 'rounded';
+  const linkAnim = profile?.linkAnimation || 'none';
+
+  // Load custom Google Font (must be before conditional returns — Rules of Hooks)
+  useEffect(() => { if (profile) loadGoogleFont(fontFamily); }, [fontFamily, profile]);
+
+  // Track view event with device/referrer info (fire once)
+  useEffect(() => { if (profile?.id) trackViewEvent(profile.id); }, [profile?.id]);
+
   const handleSendMessage = async () => {
     if (!slug) return;
     try {
@@ -443,24 +459,6 @@ export function PublicCardPage() {
       </div>
     );
   }
-
-  // Org branding overrides visual settings
-  const orgB = profile.orgBranding;
-  const accent = orgB?.orgPrimaryColor || profile.buttonColor || '#00E4F2';
-  const theme = profile.cardTheme || 'default';
-  const fontFamily = orgB?.orgFontFamily || profile.fontFamily || 'Inter';
-  const fontScale = profile.fontSizeScale ?? 1;
-  const bgType = profile.backgroundType || 'theme';
-  const linkStyle = profile.linkStyle || 'rounded';
-  const linkAnim = profile.linkAnimation || 'none';
-
-  // Load custom Google Font
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { loadGoogleFont(fontFamily); }, [fontFamily]);
-
-  // Track view event with device/referrer info (fire once)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { trackViewEvent(profile.id); }, [profile.id]);
 
   // Compute background based on backgroundType
   const computedBackground = (() => {

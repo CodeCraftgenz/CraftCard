@@ -45,6 +45,7 @@ import { useAchievements, useCheckAchievements } from '@/hooks/useAchievements';
 import { EmailSignature } from '@/components/organisms/EmailSignature';
 import { WidgetCodeGenerator } from '@/components/organisms/WidgetCodeGenerator';
 import { OnboardingWizard, type OnboardingData } from '@/components/organisms/OnboardingWizard';
+import { useCreateOrganization } from '@/hooks/useOrganization';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import type { CardTemplate } from '@/lib/card-templates';
@@ -63,8 +64,11 @@ const CARD_THEMES = [
 ];
 
 export function EditorPage() {
-  const { hasPaid, paidUntil, refreshAuth, cards: authCards, hasFeature, organizations } = useAuth();
+  const { hasPaid, paidUntil, refreshAuth, cards: authCards, hasFeature, organizations, plan } = useAuth();
   const [activeCardId, setActiveCardId] = useState<string | undefined>(undefined);
+  const createOrg = useCreateOrganization();
+  const [showCreateOrg, setShowCreateOrg] = useState(false);
+  const [newOrgName, setNewOrgName] = useState('');
 
   // Refresh auth state on mount to ensure hasPaid is up-to-date
   useEffect(() => {
@@ -1797,7 +1801,7 @@ export function EditorPage() {
             {hasPaid && <FaqEditor />}
 
             {/* Organization links */}
-            {organizations.length > 0 && (
+            {(organizations.length > 0 || plan === 'BUSINESS' || plan === 'ENTERPRISE') && (
               <div className="glass-card p-6 hover:border-white/20 transition-colors">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
@@ -1816,6 +1820,47 @@ export function EditorPage() {
                       <span className="text-white/30 text-xs bg-white/5 px-2 py-0.5 rounded">{org.role}</span>
                     </a>
                   ))}
+                  {!showCreateOrg ? (
+                    <button
+                      onClick={() => setShowCreateOrg(true)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-white/20 text-white/50 text-sm hover:bg-white/5 hover:text-white/70 transition-colors"
+                    >
+                      <UserPlus size={14} />
+                      Criar organizacao
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={newOrgName}
+                        onChange={(e) => setNewOrgName(e.target.value)}
+                        placeholder="Nome da organizacao"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={async () => {
+                            if (!newOrgName.trim()) return;
+                            const slug = newOrgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                            await createOrg.mutateAsync({ name: newOrgName.trim(), slug });
+                            setNewOrgName('');
+                            setShowCreateOrg(false);
+                            refreshAuth();
+                          }}
+                          disabled={createOrg.isPending || !newOrgName.trim()}
+                          className="flex-1 px-4 py-2 rounded-xl bg-brand-cyan text-black text-sm font-semibold hover:bg-brand-cyan/90 transition-colors disabled:opacity-50"
+                        >
+                          {createOrg.isPending ? '...' : 'Criar'}
+                        </button>
+                        <button
+                          onClick={() => { setShowCreateOrg(false); setNewOrgName(''); }}
+                          className="px-4 py-2 rounded-xl bg-white/5 text-white/50 text-sm hover:bg-white/10 transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

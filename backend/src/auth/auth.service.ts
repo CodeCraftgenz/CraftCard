@@ -5,6 +5,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { createHash, randomBytes } from 'crypto';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { UsersService } from '../users/users.service';
+import { MailService } from '../mail/mail.service';
 import { AppException } from '../common/exceptions/app.exception';
 import type { EnvConfig } from '../common/config/env.config';
 
@@ -16,6 +17,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
+    private readonly mailService: MailService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<EnvConfig>,
   ) {
@@ -51,6 +53,9 @@ export class AuthService {
       });
 
       this.logger.log(`New user created: ${user.email}`);
+
+      // Send welcome email (fire-and-forget)
+      this.mailService.sendWelcome(user.email, user.name).catch(() => {});
     }
 
     const accessToken = this.generateAccessToken(user.id, user.email);

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import { AppException } from '../common/exceptions/app.exception';
 import { randomUUID, randomBytes } from 'crypto';
 
@@ -9,7 +10,10 @@ type OrgRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 export class OrganizationsService {
   private readonly logger = new Logger(OrganizationsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   // --- Organization CRUD ---
 
@@ -196,6 +200,10 @@ export class OrganizationsService {
         expiresAt,
       },
     });
+
+    // Send invite email (fire-and-forget)
+    const inviter = await this.prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+    this.mailService.sendOrgInvite(data.email, org.name, inviter?.name || 'Admin', token).catch(() => {});
 
     return { id: invite.id, token: invite.token, expiresAt: invite.expiresAt };
   }

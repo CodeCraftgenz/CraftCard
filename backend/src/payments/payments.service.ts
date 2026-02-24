@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import * as crypto from 'crypto';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import { AppException } from '../common/exceptions/app.exception';
 import type { EnvConfig } from '../common/config/env.config';
 import { getPlanLimits, type PlanType, type PlanLimits } from './plan-limits';
@@ -38,6 +39,7 @@ export class PaymentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService<EnvConfig>,
+    private readonly mailService: MailService,
   ) {
     const mpClient = new MercadoPagoConfig({
       accessToken: this.configService.get('MP_ACCESS_TOKEN', { infer: true })!,
@@ -415,6 +417,12 @@ export class PaymentsService {
         where: { id: existing.userId },
         data: { plan: 'PRO' },
       }).catch((err) => this.logger.error(`Failed to update user plan: ${err}`));
+
+      // Send payment confirmation email (fire-and-forget)
+      const user = await this.prisma.user.findUnique({ where: { id: existing.userId }, select: { email: true, name: true } });
+      if (user) {
+        this.mailService.sendPaymentConfirmation(user.email, user.name, 'PRO').catch(() => {});
+      }
     }
 
     this.logger.log(`Payment ${externalRef} → ${newStatus} (MP: ${mpPaymentId}, expires: ${expiresAt.toISOString()})`);

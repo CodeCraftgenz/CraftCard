@@ -29,7 +29,7 @@ export function BillingSuccessPage() {
 
       // Wait a bit then redirect
       setTimeout(() => {
-        if (!cancelled) navigate('/editor');
+        if (!cancelled) navigate('/tutorial');
       }, 2000);
     }
 
@@ -67,7 +67,7 @@ export function BillingSuccessPage() {
             </p>
             <div className="flex items-center justify-center gap-2 text-brand-cyan text-sm">
               <Sparkles size={16} />
-              <span>Redirecionando para o editor...</span>
+              <span>Redirecionando para o tutorial...</span>
             </div>
           </>
         )}

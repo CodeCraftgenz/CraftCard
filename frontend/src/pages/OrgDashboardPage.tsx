@@ -32,7 +32,7 @@ export function OrgDashboardPage() {
     return (
       <div className="min-h-screen bg-brand-dark">
         <Header />
-        <div className="flex items-center justify-center h-[60vh]">
+        <div className="flex items-center justify-center h-[60vh] pt-20">
           <div className="animate-pulse text-white/50">Carregando...</div>
         </div>
       </div>
@@ -50,7 +50,7 @@ export function OrgDashboardPage() {
   return (
     <div className="min-h-screen bg-brand-dark">
       <Header />
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-4 pt-24 pb-8">
         {/* Org header */}
         <div className="flex items-center gap-4 mb-8">
           {org.logoUrl ? (

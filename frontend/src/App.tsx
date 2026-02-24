@@ -9,6 +9,7 @@ import { EditorPage } from './pages/EditorPage';
 import { PublicCardPage } from './pages/PublicCardPage';
 import { BillingSuccessPage } from './pages/BillingSuccessPage';
 import { OrgDashboardPage } from './pages/OrgDashboardPage';
+import { TutorialPage } from './pages/TutorialPage';
 import { OrgJoinPage } from './pages/OrgJoinPage';
 import { WidgetPage } from './pages/WidgetPage';
 import { NotFound } from './pages/NotFound';
@@ -35,6 +36,14 @@ export function App() {
                 element={
                   <ProtectedRoute>
                     <BillingSuccessPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tutorial"
+                element={
+                  <ProtectedRoute>
+                    <TutorialPage />
                   </ProtectedRoute>
                 }
               />
