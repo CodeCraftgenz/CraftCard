@@ -11,7 +11,7 @@ interface PlanFeature {
 }
 
 const features: PlanFeature[] = [
-  { label: 'Cartoes digitais', free: '1', pro: '5', business: '50 por membro' },
+  { label: 'Cartoes digitais', free: '1', pro: '5', business: '50/membro' },
   { label: 'Links personalizados', free: '5', pro: '20', business: '50' },
   { label: 'Temas visuais', free: '3', pro: 'Todos', business: 'Todos' },
   { label: 'Analytics de visitas e cliques', free: false, pro: true, business: true },
@@ -20,7 +20,7 @@ const features: PlanFeature[] = [
   { label: 'Depoimentos', free: false, pro: true, business: true },
   { label: 'Servicos e FAQ', free: false, pro: true, business: true },
   { label: 'Curriculo e video', free: false, pro: true, business: true },
-  { label: 'Visual personalizado (fonte, fundo, estilo)', free: false, pro: true, business: true },
+  { label: 'Customizacao visual completa', free: false, pro: true, business: true },
   { label: 'Export de leads (CSV)', free: false, pro: true, business: true },
   { label: 'Dashboard da organizacao', free: false, pro: false, business: true },
   { label: 'Branding centralizado', free: false, pro: false, business: true },
@@ -28,20 +28,37 @@ const features: PlanFeature[] = [
   { label: 'Marca d\'agua CraftCard', free: 'Sim', pro: 'Nao', business: 'Nao' },
 ];
 
-function FeatureValue({ value }: { value: boolean | string }) {
+function FeatureRow({ label, value }: { label: string; value: boolean | string }) {
+  const isIncluded = value === true || (typeof value === 'string' && value !== 'false');
+
   if (typeof value === 'string') {
-    return <span className="text-sm text-white/70">{value}</span>;
+    return (
+      <div className="flex items-center gap-3">
+        <Check size={14} className="text-emerald-400 shrink-0" />
+        <span className="text-sm text-white/70 flex-1">{label}</span>
+        <span className="text-xs font-semibold text-brand-cyan bg-brand-cyan/10 px-2 py-0.5 rounded-full shrink-0">
+          {value}
+        </span>
+      </div>
+    );
   }
-  if (value) {
-    return <Check size={16} className="text-emerald-400" />;
-  }
-  return <X size={16} className="text-white/20" />;
+
+  return (
+    <div className="flex items-center gap-3">
+      {isIncluded ? (
+        <Check size={14} className="text-emerald-400 shrink-0" />
+      ) : (
+        <X size={14} className="text-white/15 shrink-0" />
+      )}
+      <span className={`text-sm ${isIncluded ? 'text-white/70' : 'text-white/25'}`}>{label}</span>
+    </div>
+  );
 }
 
 export function PricingSection() {
   const { isAuthenticated } = useAuth();
 
-  const whatsappUrl = 'https://wa.me/5511999999999?text=Ol%C3%A1!%20Tenho%20interesse%20no%20plano%20Business%20do%20CraftCard.';
+  const whatsappUrl = 'https://wa.me/5535999358856?text=Ol%C3%A1!%20Tenho%20interesse%20no%20plano%20Business%20do%20CraftCard.';
 
   return (
     <section id="preco" className="py-24 relative">
@@ -55,7 +72,7 @@ export function PricingSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-start">
           {/* FREE */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -74,12 +91,7 @@ export function PricingSection() {
 
             <div className="space-y-3 mb-8 flex-1">
               {features.map((f, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-5 flex justify-center shrink-0">
-                    <FeatureValue value={f.free} />
-                  </div>
-                  <span className={`text-sm ${f.free ? 'text-white/70' : 'text-white/30'}`}>{f.label}</span>
-                </div>
+                <FeatureRow key={i} label={f.label} value={f.free} />
               ))}
             </div>
 
@@ -125,12 +137,7 @@ export function PricingSection() {
 
               <div className="space-y-3 mb-8 flex-1">
                 {features.map((f, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-5 flex justify-center shrink-0">
-                      <FeatureValue value={f.pro} />
-                    </div>
-                    <span className={`text-sm ${f.pro ? 'text-white/70' : 'text-white/30'}`}>{f.label}</span>
-                  </div>
+                  <FeatureRow key={i} label={f.label} value={f.pro} />
                 ))}
               </div>
 
@@ -170,12 +177,7 @@ export function PricingSection() {
 
             <div className="space-y-3 mb-8 flex-1">
               {features.map((f, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-5 flex justify-center shrink-0">
-                    <FeatureValue value={f.business} />
-                  </div>
-                  <span className={`text-sm ${f.business ? 'text-white/70' : 'text-white/30'}`}>{f.label}</span>
-                </div>
+                <FeatureRow key={i} label={f.label} value={f.business} />
               ))}
             </div>
 

@@ -69,9 +69,9 @@ export class PaymentsService {
       return { plan: 'FREE', planLimits: getPlanLimits('FREE'), expiresAt: null };
     }
 
-    // Free-access whitelist → PRO regardless of DB
+    // Free-access whitelist → ENTERPRISE (full access) regardless of DB
     if (FREE_ACCESS_EMAILS.has(user.email.toLowerCase())) {
-      return { plan: 'PRO', planLimits: getPlanLimits('PRO'), expiresAt: null };
+      return { plan: 'ENTERPRISE', planLimits: getPlanLimits('ENTERPRISE'), expiresAt: null };
     }
 
     const plan = (user.plan || 'FREE') as PlanType;
