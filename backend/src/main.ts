@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
+import * as compression from 'compression';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/exceptions/all-exceptions.filter';
@@ -15,6 +16,9 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   app.setGlobalPrefix('api');
+
+  // Gzip/Brotli compression
+  app.use(compression());
 
   // Helmet security headers
   app.use(

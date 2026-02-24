@@ -544,6 +544,18 @@ export function PublicCardPage() {
         <meta name="twitter:title" content={`${profile.displayName} — ${APP_NAME}`} />
         <meta name="twitter:description" content={profile.bio || `Cartao digital de ${profile.displayName}`} />
         <meta name="twitter:image" content={`${API_BASE}/api/og/image/${slug}`} />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Person',
+            name: profile.displayName,
+            ...(profile.bio && { description: profile.bio }),
+            image: profile.photoUrl ? resolvePhotoUrl(profile.photoUrl) : `${API_BASE}/api/og/image/${slug}`,
+            url: pageUrl,
+            ...(profile.tagline && { jobTitle: profile.tagline }),
+            sameAs: profile.socialLinks.map(l => l.url),
+          })}
+        </script>
       </Helmet>
 
       <div
