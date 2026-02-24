@@ -1,6 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, SetMetadata } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PrismaService } from '../../common/prisma/prisma.service';
+import { PaymentsService } from '../payments.service';
 import { AppException } from '../../common/exceptions/app.exception';
 import { hasFeature, type PlanLimits } from '../plan-limits';
 
@@ -17,7 +17,7 @@ export const RequiresFeature = (feature: keyof PlanLimits) =>
 export class PlanGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly prisma: PrismaService,
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -36,18 +36,12 @@ export class PlanGuard implements CanActivate {
       throw AppException.unauthorized();
     }
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { plan: true },
-    });
+    // Uses getUserPlanInfo() which respects org inheritance, FREE_ACCESS_EMAILS, and expiration
+    const planInfo = await this.paymentsService.getUserPlanInfo(userId);
 
-    if (!user) {
-      throw AppException.unauthorized();
-    }
-
-    if (!hasFeature(user.plan, feature)) {
+    if (!hasFeature(planInfo.plan, feature)) {
       throw AppException.forbidden(
-        `Recurso disponivel a partir do plano Pro. Faca upgrade para acessar.`,
+        `Recurso disponivel a partir do plano Pro. Faca upgrade ou junte-se a uma organizacao para acessar.`,
       );
     }
 
