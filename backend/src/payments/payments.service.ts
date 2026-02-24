@@ -53,7 +53,7 @@ export class PaymentsService {
   /**
    * Get the user's plan, limits, and subscription info.
    * Source of truth: user.plan column (synced on payment approval).
-   * FREE_ACCESS_EMAILS get PRO for free.
+   * FREE_ACCESS_EMAILS get ENTERPRISE (full access) for free.
    */
   async getUserPlanInfo(userId: string): Promise<{
     plan: PlanType;

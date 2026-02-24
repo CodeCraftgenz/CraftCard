@@ -137,6 +137,15 @@ function getLinkClasses(style: string): string {
   }
 }
 
+function getHoverAnim(anim: string): Record<string, number> {
+  switch (anim) {
+    case 'scale': return { scale: 1.06 };
+    case 'slide': return { x: 6 };
+    case 'glow': return { scale: 1.03 };
+    default: return { scale: 1.02 };
+  }
+}
+
 export function CardPreview({
   displayName,
   bio,
@@ -154,6 +163,7 @@ export function CardPreview({
   backgroundGradient,
   backgroundPattern,
   linkStyle = 'rounded',
+  linkAnimation = 'none',
   socialLinks,
   demo,
 }: CardPreviewProps) {
@@ -286,9 +296,9 @@ export function CardPreview({
               return (
                 <motion.div
                   key={i}
-                  whileHover={{ scale: 1.02 }}
+                  whileHover={getHoverAnim(linkAnimation)}
                   whileTap={{ scale: 0.98 }}
-                  className={`flex items-center gap-3 px-4 py-3 text-white font-medium text-sm transition-all ${linkClass}`}
+                  className={`flex items-center gap-3 px-4 py-3 text-white font-medium text-sm transition-all cursor-pointer ${linkClass} ${linkAnimation === 'glow' ? 'hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]' : ''}`}
                   style={{
                     backgroundColor: isGhost ? 'transparent' : isOutline ? 'transparent' : `${accent}20`,
                     borderColor: isOutline ? `${accent}60` : undefined,
