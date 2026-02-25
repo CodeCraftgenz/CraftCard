@@ -202,6 +202,7 @@ function UsersTab() {
           />
         </div>
         <select
+          aria-label="Filtrar por plano"
           value={planFilter}
           onChange={(e) => setPlanFilter(e.target.value)}
           className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-cyan/50"
@@ -213,6 +214,7 @@ function UsersTab() {
           <option value="ENTERPRISE">ENTERPRISE</option>
         </select>
         <select
+          aria-label="Filtrar por role"
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
           className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-cyan/50"
@@ -256,6 +258,7 @@ function UsersTab() {
             {/* Plan badge */}
             {editingUser === user.id ? (
               <select
+                aria-label="Alterar plano do usuario"
                 value={user.plan}
                 onChange={(e) => handlePlanChange(user, e.target.value)}
                 onBlur={() => setEditingUser(null)}
@@ -327,6 +330,7 @@ function PaymentsTab() {
     <div className="space-y-4">
       <div className="flex gap-3">
         <select
+          aria-label="Filtrar por status"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-cyan/50"
@@ -339,6 +343,7 @@ function PaymentsTab() {
           <option value="refunded">Reembolsado</option>
         </select>
         <select
+          aria-label="Filtrar por plano"
           value={planFilter}
           onChange={(e) => setPlanFilter(e.target.value)}
           className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-cyan/50"
