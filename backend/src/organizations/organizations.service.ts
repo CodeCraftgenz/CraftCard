@@ -267,6 +267,12 @@ export class OrganizationsService {
         data: { orgId: invite.orgId, userId, role: invite.role },
       });
 
+      // Link all user's profiles to the organization
+      await tx.profile.updateMany({
+        where: { userId, orgId: null },
+        data: { orgId: invite.orgId },
+      });
+
       const org = await tx.organization.findUnique({
         where: { id: invite.orgId },
         select: { id: true, name: true, slug: true },

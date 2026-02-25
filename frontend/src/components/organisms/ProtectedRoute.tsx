@@ -1,10 +1,11 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
 import { LoadingSpinner } from '@/components/atoms/LoadingSpinner';
 import { type ReactNode } from 'react';
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -15,7 +16,8 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    const returnTo = location.pathname + location.search;
+    return <Navigate to={`/login?redirect=${encodeURIComponent(returnTo)}`} replace />;
   }
 
   return <>{children}</>;

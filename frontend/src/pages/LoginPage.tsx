@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/providers/AuthProvider';
 import { GOOGLE_CLIENT_ID } from '@/lib/constants';
@@ -87,6 +87,8 @@ function ConstellationBg() {
 export function LoginPage() {
   const { login, devLogin, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/editor';
   const buttonRef = useRef<HTMLDivElement>(null);
   const [sdkFailed, setSdkFailed] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -96,18 +98,18 @@ export function LoginPage() {
     try {
       setLoginError('');
       await login(response.credential);
-      navigate('/editor');
+      navigate(redirectTo);
     } catch (err: any) {
       console.error('Google login failed:', err);
       setLoginError(err?.message || 'Erro ao fazer login. Tente novamente.');
     }
-  }, [login, navigate]);
+  }, [login, navigate, redirectTo]);
 
   useEffect(() => {
     if (isLoading) return;
 
     if (isAuthenticated) {
-      navigate('/editor');
+      navigate(redirectTo);
       return;
     }
 
@@ -245,7 +247,7 @@ export function LoginPage() {
               onClick={async () => {
                 try {
                   await devLogin();
-                  navigate('/editor');
+                  navigate(redirectTo);
                 } catch (err) {
                   console.error('Dev login failed:', err);
                 }
