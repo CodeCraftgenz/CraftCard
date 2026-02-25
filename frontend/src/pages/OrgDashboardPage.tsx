@@ -71,9 +71,22 @@ export function OrgDashboardPage() {
               {org.name[0]}
             </div>
           )}
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-bold text-white">{org.name}</h1>
-            <p className="text-white/50 text-sm">{org.memberCount} membros · {org.profileCount} cartoes</p>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="text-white/50 text-sm">{org.memberCount}/{org.maxMembers} membros</span>
+              <div className="flex-1 max-w-[120px] h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${Math.min((org.memberCount / org.maxMembers) * 100, 100)}%`,
+                    background: org.memberCount >= org.maxMembers ? '#ef4444' : 'linear-gradient(90deg, #00E4F2, #8B5CF6)',
+                  }}
+                />
+              </div>
+              <span className="text-white/30 text-xs">·</span>
+              <span className="text-white/50 text-sm">{org.profileCount} cartoes</span>
+            </div>
           </div>
         </div>
 

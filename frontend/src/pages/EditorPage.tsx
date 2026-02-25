@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus,
-  Camera, FileText, Palette, Link2, Sparkles, Eye, Smartphone,
+  Camera, FileText, Palette, Link2, Sparkles, Eye, Smartphone, Building2,
   QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, Star, Video, UserPlus,
 } from 'lucide-react';
 import {
@@ -903,6 +903,24 @@ export function EditorPage() {
             transition={{ delay: 0.1 }}
             className="space-y-5"
           >
+            {/* Org membership banner */}
+            {organizations.filter(o => o.brandingActive).map((org) => (
+              <a
+                key={org.id}
+                href={`/org/${org.id}`}
+                className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/15 transition-all"
+              >
+                <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+                  <Building2 size={14} className="text-purple-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium truncate">Membro de {org.name}</p>
+                  <p className="text-white/30 text-xs">Branding corporativo ativo · {org.role}</p>
+                </div>
+                <ExternalLink size={14} className="text-purple-400 shrink-0" />
+              </a>
+            ))}
+
             {/* Photo Section */}
             <div className="glass-card p-6 group hover:border-white/20 transition-colors">
               <div className="flex items-center gap-2 mb-5">

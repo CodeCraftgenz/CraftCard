@@ -901,9 +901,15 @@ export function PublicCardPage() {
           {/* Org branding badge */}
           {orgB && (
             <div className="mt-8 flex justify-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white/40">
-                {orgB.orgLogoUrl && <img src={orgB.orgLogoUrl} alt="" className="w-4 h-4 rounded" />}
-                <span>{orgB.orgName}</span>
+              <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-2xl border text-sm" style={{ backgroundColor: `${orgB.orgPrimaryColor}15`, borderColor: `${orgB.orgPrimaryColor}30` }}>
+                {orgB.orgLogoUrl ? (
+                  <img src={orgB.orgLogoUrl} alt="" className="w-6 h-6 rounded-lg object-cover" />
+                ) : (
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: orgB.orgPrimaryColor }}>
+                    {orgB.orgName[0]}
+                  </div>
+                )}
+                <span className="text-white/70 font-medium">Membro de <strong className="text-white">{orgB.orgName}</strong></span>
               </div>
             </div>
           )}
