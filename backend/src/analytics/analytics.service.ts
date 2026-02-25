@@ -73,7 +73,7 @@ export class AnalyticsService {
     }
   }
 
-  /** Track a granular view event with device/referrer info */
+  /** Track a granular view event with device/referrer info + increment viewCount */
   async trackViewEvent(profileId: string, meta: {
     userAgent?: string;
     referrer?: string;
@@ -96,6 +96,15 @@ export class AnalyticsService {
           utmCampaign: meta.utmCampaign || null,
         },
       });
+
+      // Increment profile viewCount
+      this.prisma.profile.update({
+        where: { id: profileId },
+        data: { viewCount: { increment: 1 } },
+      }).catch(() => {});
+
+      // Track daily view aggregate
+      this.trackView(profileId).catch(() => {});
     } catch (err) {
       this.logger.warn(`Failed to track view event: ${err}`);
     }

@@ -303,7 +303,7 @@ function handleDownloadVCard(profile: PublicProfile) {
 
 export function PublicCardPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { cards } = useAuth();
+  const { cards, isLoading: authLoading } = useAuth();
   const [showContactForm, setShowContactForm] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [contactForm, setContactForm] = useState({ senderName: '', senderEmail: '', message: '' });
@@ -349,8 +349,8 @@ export function PublicCardPage() {
   // Load custom Google Font (must be before conditional returns — Rules of Hooks)
   useEffect(() => { if (profile) loadGoogleFont(fontFamily); }, [fontFamily, profile]);
 
-  // Track view event — skip if viewer is the card owner
-  useEffect(() => { if (profile?.id && !isOwner) trackViewEvent(profile.id); }, [profile?.id, isOwner]);
+  // Track view event — wait for auth to settle, then skip if viewer is the card owner
+  useEffect(() => { if (profile?.id && !authLoading && !isOwner) trackViewEvent(profile.id); }, [profile?.id, authLoading, isOwner]);
 
   const handleSendMessage = async () => {
     if (!slug) return;
