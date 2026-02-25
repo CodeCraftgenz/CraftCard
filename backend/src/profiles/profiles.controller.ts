@@ -49,10 +49,12 @@ export class ProfilesController {
   @Public()
   @Get('profile/:slug')
   async getPublicProfile(@Param('slug') slug: string, @Req() req: Request) {
-    // Try to extract viewer user ID from JWT cookie (optional, for skipping owner views)
+    // Try to extract viewer user ID from JWT (cookie or Authorization header)
     let viewerUserId: string | undefined;
     try {
-      const token = (req as any).cookies?.accessToken;
+      const token =
+        (req as any).cookies?.accessToken ||
+        req.headers.authorization?.replace('Bearer ', '');
       if (token) {
         const payload = this.jwtService.verify<{ sub: string }>(token);
         viewerUserId = payload.sub;

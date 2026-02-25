@@ -243,7 +243,12 @@ function UsersTab() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-white text-sm font-medium truncate">{user.name || '—'}</span>
-                {user.role === 'SUPER_ADMIN' && <Crown size={12} className="text-amber-400 flex-shrink-0" />}
+                {user.role === 'SUPER_ADMIN' && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-400 text-[10px] font-bold flex-shrink-0">
+                    <Crown size={10} />
+                    SUPER ADMIN
+                  </span>
+                )}
               </div>
               <p className="text-white/40 text-xs truncate">{user.email}</p>
             </div>

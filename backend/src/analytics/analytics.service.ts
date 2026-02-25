@@ -40,6 +40,14 @@ export class AnalyticsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Get the owner userId for a profile (for skipping owner views) */
+  async getProfileOwner(profileId: string) {
+    return this.prisma.profile.findUnique({
+      where: { id: profileId },
+      select: { userId: true },
+    });
+  }
+
   /** Upsert daily view count for a profile (fire-and-forget) */
   async trackView(profileId: string) {
     const today = new Date();
