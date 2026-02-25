@@ -3,6 +3,7 @@ import type { Response } from 'express';
 import { OrganizationsService } from './organizations.service';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
 import { RequiresOrgRole } from '../common/decorators/org-role.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { OrgRoleGuard } from '../common/guards/org-role.guard';
 import { createOrgSchema } from './dto/create-org.dto';
 import { updateOrgSchema } from './dto/update-org.dto';
@@ -97,6 +98,12 @@ export class OrganizationsController {
   @Get(':orgId/invites')
   async getPendingInvites(@Param('orgId') orgId: string) {
     return this.orgService.getPendingInvites(orgId);
+  }
+
+  @Public()
+  @Get('invite/:token')
+  async previewInvite(@Param('token') token: string) {
+    return this.orgService.previewInvite(token);
   }
 
   @Post('join/:token')

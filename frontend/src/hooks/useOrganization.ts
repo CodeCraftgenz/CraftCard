@@ -167,6 +167,15 @@ export function useRevokeInvite(orgId: string) {
   });
 }
 
+export function usePreviewInvite(token: string | undefined) {
+  return useQuery({
+    queryKey: ['invite-preview', token],
+    queryFn: () => api.get(`/organizations/invite/${token}`),
+    enabled: !!token,
+    retry: 1,
+  });
+}
+
 export function useAcceptInvite() {
   const qc = useQueryClient();
   return useMutation({

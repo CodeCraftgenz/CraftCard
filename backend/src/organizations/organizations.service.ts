@@ -239,6 +239,25 @@ export class OrganizationsService {
     });
   }
 
+  async previewInvite(token: string) {
+    const invite = await this.prisma.organizationInvite.findUnique({
+      where: { token },
+      include: { org: { select: { name: true, logoUrl: true, primaryColor: true } } },
+    });
+    if (!invite) throw AppException.notFound('Convite');
+    if (invite.usedAt) throw AppException.badRequest('Convite ja foi utilizado');
+    if (invite.expiresAt < new Date()) throw AppException.badRequest('Convite expirado');
+
+    return {
+      email: invite.email,
+      role: invite.role,
+      orgName: invite.org.name,
+      orgLogoUrl: invite.org.logoUrl,
+      orgColor: invite.org.primaryColor,
+      expiresAt: invite.expiresAt,
+    };
+  }
+
   async acceptInvite(token: string, userId: string) {
     const invite = await this.prisma.organizationInvite.findUnique({ where: { token } });
     if (!invite) throw AppException.notFound('Convite');
