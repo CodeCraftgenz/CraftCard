@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Menu, X, LogOut, User, BookOpen, CreditCard } from 'lucide-react';
+import { Menu, X, LogOut, User, BookOpen, CreditCard, Shield } from 'lucide-react';
 import { Logo } from '@/components/atoms/Logo';
 import { useAuth } from '@/providers/AuthProvider';
 
@@ -9,7 +9,7 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, isAdmin } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -117,6 +117,16 @@ export function Header() {
                     <CreditCard size={14} />
                     Meu Plano
                   </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setShowDropdown(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-brand-cyan hover:bg-white/5 transition-colors"
+                    >
+                      <Shield size={14} />
+                      Painel Admin
+                    </Link>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-white/5 transition-colors"
@@ -208,6 +218,15 @@ export function Header() {
                 >
                   Meu Plano
                 </Link>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="text-sm text-brand-cyan py-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Painel Admin
+                  </Link>
+                )}
                 <button
                   onClick={() => { setIsOpen(false); handleLogout(); }}
                   className="text-sm text-red-400 py-2 text-left"
