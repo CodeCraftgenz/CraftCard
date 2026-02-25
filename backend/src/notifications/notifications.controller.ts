@@ -1,11 +1,15 @@
-import { Controller, Post, Delete, Get, Body } from '@nestjs/common';
+import { Controller, Post, Delete, Get, Put, Param, Body } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
+import { InAppNotificationsService } from './in-app-notifications.service';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 
 @Controller('notifications')
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly notificationsService: NotificationsService,
+    private readonly inAppService: InAppNotificationsService,
+  ) {}
 
   /** Get public VAPID key (public, needed before auth) */
   @Public()
@@ -30,5 +34,24 @@ export class NotificationsController {
     @Body() body: { endpoint: string },
   ) {
     return this.notificationsService.unsubscribe(user.sub, body.endpoint);
+  }
+
+  // --- In-app notifications ---
+
+  @Get()
+  async getNotifications(@CurrentUser() user: JwtPayload) {
+    return this.inAppService.getForUser(user.sub);
+  }
+
+  @Put('read-all')
+  async markAllAsRead(@CurrentUser() user: JwtPayload) {
+    await this.inAppService.markAllAsRead(user.sub);
+    return { ok: true };
+  }
+
+  @Put(':id/read')
+  async markAsRead(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    await this.inAppService.markAsRead(id, user.sub);
+    return { ok: true };
   }
 }

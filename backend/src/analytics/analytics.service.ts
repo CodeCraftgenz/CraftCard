@@ -146,7 +146,7 @@ export class AnalyticsService {
       where: { userId, isPrimary: true },
       select: { id: true, viewCount: true },
     });
-    if (!profile) return { totalViews: 0, dailyViews: [], linkClicks: [], deviceBreakdown: {}, referrerBreakdown: [], conversionFunnel: { views: 0, clicks: 0, messages: 0, bookings: 0 } };
+    if (!profile) return { totalViews: 0, dailyViews: [], linkClicks: [], deviceBreakdown: {}, referrerBreakdown: [], browserBreakdown: [], utmBreakdown: { sources: [], mediums: [], campaigns: [] }, geoBreakdown: { countries: [], cities: [] }, conversionFunnel: { views: 0, clicks: 0, messages: 0, bookings: 0 } };
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -189,11 +189,17 @@ export class AnalyticsService {
     // Advanced: device breakdown and referrer from ViewEvent
     const viewEvents = await this.prisma.viewEvent.findMany({
       where: { profileId: profile.id, timestamp: { gte: thirtyDaysAgo } },
-      select: { device: true, browser: true, referrer: true },
+      select: { device: true, browser: true, referrer: true, utmSource: true, utmMedium: true, utmCampaign: true, country: true, city: true },
     });
 
     const deviceBreakdown: Record<string, number> = { mobile: 0, desktop: 0, tablet: 0 };
     const referrerMap = new Map<string, number>();
+    const browserMap = new Map<string, number>();
+    const utmSourceMap = new Map<string, number>();
+    const utmMediumMap = new Map<string, number>();
+    const utmCampaignMap = new Map<string, number>();
+    const countryMap = new Map<string, number>();
+    const cityMap = new Map<string, number>();
 
     for (const ev of viewEvents) {
       if (ev.device && deviceBreakdown[ev.device] !== undefined) {
@@ -202,11 +208,44 @@ export class AnalyticsService {
       if (ev.referrer) {
         referrerMap.set(ev.referrer, (referrerMap.get(ev.referrer) || 0) + 1);
       }
+      if (ev.browser && ev.browser !== 'unknown') {
+        browserMap.set(ev.browser, (browserMap.get(ev.browser) || 0) + 1);
+      }
+      if (ev.utmSource) {
+        utmSourceMap.set(ev.utmSource, (utmSourceMap.get(ev.utmSource) || 0) + 1);
+      }
+      if (ev.utmMedium) {
+        utmMediumMap.set(ev.utmMedium, (utmMediumMap.get(ev.utmMedium) || 0) + 1);
+      }
+      if (ev.utmCampaign) {
+        utmCampaignMap.set(ev.utmCampaign, (utmCampaignMap.get(ev.utmCampaign) || 0) + 1);
+      }
+      if (ev.country) {
+        countryMap.set(ev.country, (countryMap.get(ev.country) || 0) + 1);
+      }
+      if (ev.city) {
+        cityMap.set(ev.city, (cityMap.get(ev.city) || 0) + 1);
+      }
     }
 
     const referrerBreakdown = Array.from(referrerMap.entries())
       .map(([source, count]) => ({ source, count }))
       .sort((a, b) => b.count - a.count);
+
+    const browserBreakdown = Array.from(browserMap.entries())
+      .map(([browser, count]) => ({ browser, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const utmBreakdown = {
+      sources: Array.from(utmSourceMap.entries()).map(([source, count]) => ({ source, count })).sort((a, b) => b.count - a.count).slice(0, 10),
+      mediums: Array.from(utmMediumMap.entries()).map(([medium, count]) => ({ medium, count })).sort((a, b) => b.count - a.count).slice(0, 10),
+      campaigns: Array.from(utmCampaignMap.entries()).map(([campaign, count]) => ({ campaign, count })).sort((a, b) => b.count - a.count).slice(0, 10),
+    };
+
+    const geoBreakdown = {
+      countries: Array.from(countryMap.entries()).map(([country, count]) => ({ country, count })).sort((a, b) => b.count - a.count).slice(0, 10),
+      cities: Array.from(cityMap.entries()).map(([city, count]) => ({ city, count })).sort((a, b) => b.count - a.count).slice(0, 10),
+    };
 
     // Conversion funnel
     const totalClicks = Array.from(clicksByLink.values()).reduce((s, c) => s + c.totalClicks, 0);
@@ -226,6 +265,9 @@ export class AnalyticsService {
       linkClicks: Array.from(clicksByLink.values()).sort((a, b) => b.totalClicks - a.totalClicks),
       deviceBreakdown,
       referrerBreakdown,
+      browserBreakdown,
+      utmBreakdown,
+      geoBreakdown,
       conversionFunnel: {
         views: profile.viewCount,
         clicks: totalClicks,

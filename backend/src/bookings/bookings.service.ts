@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { InAppNotificationsService } from '../notifications/in-app-notifications.service';
 import { AppException } from '../common/exceptions/app.exception';
 
 @Injectable()
@@ -10,6 +11,7 @@ export class BookingsService {
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService,
+    private readonly inAppService: InAppNotificationsService,
   ) {}
 
   async getSlots(slug: string) {
@@ -122,6 +124,14 @@ export class BookingsService {
       title: 'Novo agendamento!',
       body: `${data.name} agendou para ${dateStr} as ${data.time}`,
       url: '/editor',
+    }).catch(() => {});
+
+    // In-app notification (fire-and-forget)
+    this.inAppService.create(profile.userId, {
+      type: 'new_booking',
+      title: 'Novo agendamento!',
+      message: `${data.name} agendou para ${dateStr} as ${data.time}`,
+      metadata: { bookingId: booking.id, name: data.name, date: dateStr, time: data.time },
     }).catch(() => {});
 
     return booking;

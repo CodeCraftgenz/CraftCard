@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
 
@@ -26,6 +26,11 @@ export function CtaSection() {
           forma moderna e elegante.
         </p>
         <div className="mt-10">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-brand-cyan/10 text-brand-cyan text-xs font-semibold mb-4">
+            <Sparkles size={12} />
+            70% OFF - Oferta de lancamento
+          </span>
+          <br />
           <Link
             to={isAuthenticated ? '/editor' : '/login'}
             className="group inline-flex items-center gap-2 px-10 py-4 rounded-xl gradient-bg text-white font-bold text-lg hover:opacity-90 transition-all shadow-xl shadow-brand-cyan/20"
@@ -34,7 +39,7 @@ export function CtaSection() {
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </Link>
           <p className="mt-4 text-sm text-white/30">
-            Comece gratis &middot; Planos a partir de R$30/ano
+            Comece gratis &middot; Preco promocional de R$30/ano por tempo limitado
           </p>
         </div>
       </motion.div>

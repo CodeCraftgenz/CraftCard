@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { InAppNotificationsService } from '../notifications/in-app-notifications.service';
 import { AppException } from '../common/exceptions/app.exception';
 import type { CreateTestimonialDto } from './dto/create-testimonial.dto';
 
@@ -11,6 +12,7 @@ export class TestimonialsService {
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService,
+    private readonly inAppService: InAppNotificationsService,
   ) {}
 
   async submit(slug: string, data: CreateTestimonialDto) {
@@ -45,6 +47,14 @@ export class TestimonialsService {
       title: 'Novo depoimento!',
       body: `${data.authorName}: "${data.text.substring(0, 80)}"`,
       url: '/editor',
+    }).catch(() => {});
+
+    // In-app notification (fire-and-forget)
+    this.inAppService.create(profile.userId, {
+      type: 'new_testimonial',
+      title: 'Novo depoimento!',
+      message: `${data.authorName}: "${data.text.substring(0, 80)}"`,
+      metadata: { authorName: data.authorName },
     }).catch(() => {});
 
     return { sent: true };

@@ -1,9 +1,11 @@
 import { Header } from '@/components/organisms/Header';
 import { Footer } from '@/components/organisms/Footer';
 import { HeroSection } from '@/components/sections/HeroSection';
+import { TrustedBySection } from '@/components/sections/TrustedBySection';
 import { BenefitsSection } from '@/components/sections/BenefitsSection';
 import { HowItWorksSection } from '@/components/sections/HowItWorksSection';
 import { UseCasesSection } from '@/components/sections/UseCasesSection';
+import { SocialProofSection } from '@/components/sections/SocialProofSection';
 import { PricingSection } from '@/components/sections/PricingSection';
 import { FaqSection } from '@/components/sections/FaqSection';
 import { CtaSection } from '@/components/sections/CtaSection';
@@ -14,9 +16,11 @@ export function LandingPage() {
       <Header />
       <main>
         <HeroSection />
+        <TrustedBySection />
         <BenefitsSection />
         <HowItWorksSection />
         <UseCasesSection />
+        <SocialProofSection />
         <PricingSection />
         <FaqSection />
         <CtaSection />

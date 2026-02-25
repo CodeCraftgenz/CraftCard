@@ -1635,6 +1635,51 @@ export function EditorPage() {
                   </div>
                 )}
 
+                {/* Browser Breakdown */}
+                {analytics.browserBreakdown && analytics.browserBreakdown.length > 0 && (
+                  <div className="mb-6">
+                    <p className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider">Navegadores</p>
+                    <div className="space-y-2">
+                      {analytics.browserBreakdown.slice(0, 6).map((b, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm p-2 rounded-lg bg-white/[0.03]">
+                          <span className="text-white/70 capitalize">{b.browser}</span>
+                          <span className="text-brand-cyan font-semibold">{b.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* UTM Sources */}
+                {analytics.utmBreakdown && analytics.utmBreakdown.sources.length > 0 && (
+                  <div className="mb-6">
+                    <p className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider">Campanhas UTM</p>
+                    <div className="space-y-2">
+                      {analytics.utmBreakdown.sources.map((u, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm p-2 rounded-lg bg-white/[0.03]">
+                          <span className="text-white/70">{u.source}</span>
+                          <span className="text-brand-cyan font-semibold">{u.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Geographic Breakdown */}
+                {analytics.geoBreakdown && analytics.geoBreakdown.countries.length > 0 && (
+                  <div className="mb-6">
+                    <p className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider">Paises</p>
+                    <div className="space-y-2">
+                      {analytics.geoBreakdown.countries.slice(0, 8).map((g, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm p-2 rounded-lg bg-white/[0.03]">
+                          <span className="text-white/70">{g.country}</span>
+                          <span className="text-brand-cyan font-semibold">{g.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Conversion Funnel */}
                 {analytics.conversionFunnel && analytics.conversionFunnel.views > 0 && (
                   <div>

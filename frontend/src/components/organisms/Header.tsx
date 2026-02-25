@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Menu, X, LogOut, User, BookOpen, CreditCard, Shield } from 'lucide-react';
 import { Logo } from '@/components/atoms/Logo';
+import { NotificationBell } from '@/components/organisms/NotificationBell';
 import { useAuth } from '@/providers/AuthProvider';
 
 export function Header() {
@@ -63,7 +64,9 @@ export function Header() {
           )}
 
           {isAuthenticated && user ? (
-            <div className="relative" ref={dropdownRef}>
+            <div className="flex items-center gap-3">
+              <NotificationBell />
+              <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 hover:bg-white/5 transition-colors"
@@ -136,6 +139,7 @@ export function Header() {
                   </button>
                 </motion.div>
               )}
+              </div>
             </div>
           ) : (
             <Link
@@ -184,7 +188,8 @@ export function Header() {
 
             {isAuthenticated && user ? (
               <>
-                <div className="flex items-center gap-3 py-2 border-t border-white/5">
+                <div className="flex items-center justify-between py-2 border-t border-white/5">
+                  <div className="flex items-center gap-3">
                   {user.avatarUrl ? (
                     <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full" referrerPolicy="no-referrer" />
                   ) : (
@@ -196,6 +201,8 @@ export function Header() {
                     <p className="text-sm font-medium text-white">{user.name}</p>
                     <p className="text-xs text-white/40">{user.email}</p>
                   </div>
+                  </div>
+                  <NotificationBell />
                 </div>
                 <Link
                   to="/editor"

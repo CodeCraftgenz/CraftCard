@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { InAppNotificationsService } from '../notifications/in-app-notifications.service';
 import { AppException } from '../common/exceptions/app.exception';
 import type { SendMessageDto } from './dto/send-message.dto';
 
@@ -11,6 +12,7 @@ export class ContactsService {
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService,
+    private readonly inAppService: InAppNotificationsService,
   ) {}
 
   async sendMessage(slug: string, data: SendMessageDto) {
@@ -46,6 +48,14 @@ export class ContactsService {
       title: 'Nova mensagem!',
       body: `${data.senderName}: ${data.message.substring(0, 80)}`,
       url: '/editor',
+    }).catch(() => {});
+
+    // In-app notification (fire-and-forget)
+    this.inAppService.create(profile.userId, {
+      type: 'new_message',
+      title: 'Nova mensagem!',
+      message: `${data.senderName}: ${data.message.substring(0, 80)}`,
+      metadata: { senderName: data.senderName, senderEmail: data.senderEmail },
     }).catch(() => {});
 
     return { sent: true };

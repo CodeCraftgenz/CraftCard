@@ -18,6 +18,16 @@ interface AnalyticsData {
   linkClicks: LinkClickStat[];
   deviceBreakdown?: Record<string, number>;
   referrerBreakdown?: Array<{ source: string; count: number }>;
+  browserBreakdown?: Array<{ browser: string; count: number }>;
+  utmBreakdown?: {
+    sources: Array<{ source: string; count: number }>;
+    mediums: Array<{ medium: string; count: number }>;
+    campaigns: Array<{ campaign: string; count: number }>;
+  };
+  geoBreakdown?: {
+    countries: Array<{ country: string; count: number }>;
+    cities: Array<{ city: string; count: number }>;
+  };
   conversionFunnel?: { views: number; clicks: number; messages: number; bookings: number };
 }
 

@@ -25,6 +25,7 @@ model User {
   achievements      Achievement[]
   pushSubscriptions PushSubscription[]
   webhooks          Webhook[]
+  notifications     Notification[]
 
   @@map("users")
 }
@@ -444,4 +445,21 @@ model CustomDomain {
   profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@map("custom_domains")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String   @db.VarChar(30)
+  title     String   @db.VarChar(200)
+  message   String   @db.Text
+  metadata  String?  @db.Text
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }
