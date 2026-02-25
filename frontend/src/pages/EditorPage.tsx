@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus,
-  Camera, FileText, Palette, Link2, Sparkles, Eye, Smartphone, Building2,
+  Camera, FileText, Palette, Link2, Sparkles, Eye, Smartphone, Building2, Shield,
   QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, Star, Video, UserPlus,
 } from 'lucide-react';
 import {
@@ -64,7 +64,7 @@ const CARD_THEMES = [
 ];
 
 export function EditorPage() {
-  const { hasPaid, paidUntil, refreshAuth, cards: authCards, hasFeature, organizations, plan, planLimits } = useAuth();
+  const { hasPaid, paidUntil, refreshAuth, cards: authCards, hasFeature, organizations, plan, planLimits, isAdmin } = useAuth();
   const [activeCardId, setActiveCardId] = useState<string | undefined>(undefined);
   const createOrg = useCreateOrganization();
   const [showCreateOrg, setShowCreateOrg] = useState(false);
@@ -627,6 +627,54 @@ export function EditorPage() {
                 </p>
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {/* Super Admin quick access */}
+        {isAdmin && (
+          <motion.a
+            href="/admin"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 flex items-center gap-4 p-5 rounded-2xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition-all cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+              <Shield size={20} className="text-amber-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-amber-400 text-sm">Painel Super Admin</h3>
+              <p className="text-xs text-white/40 mt-0.5">Gerenciar usuarios, pagamentos e organizacoes da plataforma</p>
+            </div>
+            <ExternalLink size={16} className="text-amber-400 shrink-0" />
+          </motion.a>
+        )}
+
+        {/* Org dashboards quick access */}
+        {organizations.filter(o => o.role === 'OWNER' || o.role === 'ADMIN').length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 space-y-2"
+          >
+            {organizations.filter(o => o.role === 'OWNER' || o.role === 'ADMIN').map((org) => (
+              <a
+                key={org.id}
+                href={`/org/${org.id}`}
+                className="flex items-center gap-4 p-4 rounded-2xl border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 transition-all"
+              >
+                <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center shrink-0">
+                  <Building2 size={18} className="text-purple-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-purple-400 text-sm">{org.name}</h3>
+                  <p className="text-xs text-white/40 mt-0.5">
+                    Dashboard da organizacao · {org.role === 'OWNER' ? 'Proprietario' : 'Admin'}
+                    {org.brandingActive && ' · Branding ativo'}
+                  </p>
+                </div>
+                <ExternalLink size={16} className="text-purple-400 shrink-0" />
+              </a>
+            ))}
           </motion.div>
         )}
 
