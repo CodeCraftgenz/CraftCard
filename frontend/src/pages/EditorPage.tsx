@@ -517,7 +517,7 @@ export function EditorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-bg-dark text-white">
+    <div className="min-h-screen bg-brand-bg-dark text-white overflow-x-hidden">
       <Header />
 
       {/* Onboarding Wizard */}
@@ -1096,7 +1096,7 @@ export function EditorPage() {
             </div>
 
             {/* Social Links */}
-            <div className="glass-card p-6 hover:border-white/20 transition-colors">
+            <div className="glass-card p-6 hover:border-white/20 transition-colors overflow-hidden">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
@@ -1128,12 +1128,12 @@ export function EditorPage() {
                         if (link.platform === 'custom') return null;
                         return (
                           <SortableLinkItem key={i} id={i} onRemove={() => removeSocialLink(i)}>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                               <select
                                 value={link.platform}
                                 onChange={(e) => updateSocialLink(i, 'platform', e.target.value)}
                                 title="Plataforma"
-                                className="px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-brand-cyan/50 transition-all"
+                                className="w-full sm:w-auto px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-brand-cyan/50 transition-all"
                               >
                                 {SOCIAL_PLATFORMS.filter(p => p.value !== 'custom').map((p) => (
                                   <option key={p.value} value={p.value} className="bg-brand-bg-dark">
@@ -1146,7 +1146,7 @@ export function EditorPage() {
                                 value={link.label}
                                 onChange={(e) => updateSocialLink(i, 'label', e.target.value)}
                                 placeholder="Label"
-                                className="flex-1 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
+                                className="flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
                               />
                             </div>
                             <input
@@ -1225,7 +1225,7 @@ export function EditorPage() {
             </div>
 
             {/* Custom Links (Link-in-bio) */}
-            <div className="glass-card p-6 hover:border-white/20 transition-colors">
+            <div className="glass-card p-6 hover:border-white/20 transition-colors overflow-hidden">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-brand-cyan/10 flex items-center justify-center">

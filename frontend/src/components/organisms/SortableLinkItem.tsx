@@ -22,7 +22,7 @@ export function SortableLinkItem({ id, children, onRemove }: Props) {
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/5"
+      className="flex items-start gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/5 min-w-0 overflow-hidden"
     >
       <button
         type="button"
@@ -32,7 +32,7 @@ export function SortableLinkItem({ id, children, onRemove }: Props) {
       >
         <GripVertical size={16} className="text-white/15" />
       </button>
-      <div className="flex-1 space-y-2">
+      <div className="flex-1 min-w-0 space-y-2">
         {children}
       </div>
       <button
