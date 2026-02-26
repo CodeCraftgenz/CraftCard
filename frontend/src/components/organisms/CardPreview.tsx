@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Instagram,
@@ -146,7 +147,7 @@ function getHoverAnim(anim: string): Record<string, number> {
   }
 }
 
-export function CardPreview({
+export const CardPreview = memo(function CardPreview({
   displayName,
   bio,
   photoUrl,
@@ -318,4 +319,4 @@ export function CardPreview({
       </div>
     </motion.div>
   );
-}
+});

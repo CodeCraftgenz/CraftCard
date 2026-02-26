@@ -4,6 +4,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { SlugsService } from '../slugs/slugs.service';
 import { PaymentsService } from '../payments/payments.service';
 import { AppException } from '../common/exceptions/app.exception';
+import { MemoryCache } from '../common/cache/memory-cache';
 import { getPlanLimits, FREE_THEMES } from '../payments/plan-limits';
 import { randomUUID } from 'crypto';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
@@ -17,6 +18,7 @@ export class ProfilesService {
   private readonly logger = new Logger(ProfilesService.name);
   private readonly uploadsPublicUrl: string;
   private readonly backendUrl: string;
+  private readonly slugCache = new MemoryCache<unknown>(5 * 60 * 1000); // 5min TTL
 
   constructor(
     private readonly prisma: PrismaService,
@@ -46,10 +48,10 @@ export class ProfilesService {
 
   async getByUserId(userId: string, profileId?: string) {
     const include = {
-      socialLinks: { orderBy: { order: 'asc' } as const },
+      socialLinks: { orderBy: { order: 'asc' } as const, select: { id: true, platform: true, label: true, url: true, order: true, startsAt: true, endsAt: true, linkType: true, metadata: true } },
       services: { orderBy: { order: 'asc' } as const, select: { id: true, title: true, description: true, price: true, order: true } },
       faqItems: { orderBy: { order: 'asc' } as const, select: { id: true, question: true, answer: true, order: true } },
-      testimonials: { where: { isApproved: true }, orderBy: { createdAt: 'desc' } as const, take: 10 },
+      testimonials: { where: { isApproved: true }, orderBy: { createdAt: 'desc' } as const, take: 10, select: { id: true, authorName: true, authorRole: true, text: true, createdAt: true } },
       galleryImages: { orderBy: { order: 'asc' } as const, select: { id: true, imageUrl: true, imageData: true, caption: true, order: true } },
     };
     const profile = profileId
@@ -122,11 +124,14 @@ export class ProfilesService {
   }
 
   async getBySlug(slug: string, viewerUserId?: string) {
+    const cached = this.slugCache.get(slug);
+    if (cached) return cached;
+
     const profile = await this.prisma.profile.findUnique({
       where: { slug },
       include: {
-        socialLinks: { orderBy: { order: 'asc' } },
-        testimonials: { where: { isApproved: true }, orderBy: { createdAt: 'desc' }, take: 10 },
+        socialLinks: { orderBy: { order: 'asc' }, select: { id: true, platform: true, label: true, url: true, order: true, startsAt: true, endsAt: true, linkType: true, metadata: true } },
+        testimonials: { where: { isApproved: true }, orderBy: { createdAt: 'desc' }, take: 10, select: { id: true, authorName: true, authorRole: true, text: true, createdAt: true } },
         galleryImages: { orderBy: { order: 'asc' }, select: { id: true, imageUrl: true, imageData: true, caption: true, order: true } },
         services: { orderBy: { order: 'asc' }, select: { id: true, title: true, description: true, price: true, order: true } },
         faqItems: { orderBy: { order: 'asc' }, select: { id: true, question: true, answer: true, order: true } },
@@ -168,7 +173,7 @@ export class ProfilesService {
       orgBackgroundGradient: profile.organization.backgroundGradient,
     } : null;
 
-    return {
+    const result = {
       ...rest,
       resumeUrl: this.resolveApiUrl(this.migrateUrl(rest.resumeUrl)),
       socialLinks: activeLinks,
@@ -176,6 +181,9 @@ export class ProfilesService {
       plan: profile.user?.plan || 'FREE',
       orgBranding,
     };
+
+    this.slugCache.set(slug, result);
+    return result;
   }
 
   async update(userId: string, data: UpdateProfileDto, profileId?: string) {
@@ -223,7 +231,7 @@ export class ProfilesService {
 
     const { socialLinks, ...profileData } = data;
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       // Update profile fields
       const updated = await tx.profile.update({
         where: { id: profile.id },
@@ -256,6 +264,11 @@ export class ProfilesService {
         include: { socialLinks: { orderBy: { order: 'asc' } } },
       });
     });
+
+    // Invalidate public page cache after update
+    this.slugCache.invalidate(profile.slug);
+
+    return result;
   }
 
   /** Custom domain management */

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Type, Paintbrush, MousePointerClick, Layers } from 'lucide-react';
 import { AVAILABLE_FONTS, loadGoogleFont } from '@/lib/google-fonts';
 import {
@@ -23,7 +24,7 @@ interface StyleEditorProps {
   accent: string;
 }
 
-export function StyleEditor({ value, onChange, accent }: StyleEditorProps) {
+export const StyleEditor = memo(function StyleEditor({ value, onChange, accent }: StyleEditorProps) {
   return (
     <div className="glass-card p-6 hover:border-white/20 transition-colors">
       <div className="flex items-center gap-2 mb-5">
@@ -200,7 +201,7 @@ export function StyleEditor({ value, onChange, accent }: StyleEditorProps) {
       </div>
     </div>
   );
-}
+});
 
 function getLinkStylePreviewClass(style: string): string {
   switch (style) {

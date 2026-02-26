@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus,
@@ -312,10 +312,10 @@ export function EditorPage() {
     }, 1500);
   }, [handleSave]);
 
-  const updateField = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
+  const updateField = useCallback(<K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     triggerAutoSave();
-  };
+  }, [triggerAutoSave]);
 
   const [uploadError, setUploadError] = useState('');
 
@@ -386,32 +386,47 @@ export function EditorPage() {
     );
   };
 
-  const updateSocialLink = (index: number, field: string, value: string) => {
-    const links = [...form.socialLinks];
-    links[index] = { ...links[index], [field]: value };
-    if (field === 'platform') {
-      const platform = SOCIAL_PLATFORMS.find((p) => p.value === value);
-      if (platform) {
-        if (!links[index].label) {
-          links[index].label = platform.label;
-        }
-        // Pre-fill URL with platform prefix if URL is empty or still has old prefix
-        const oldPlatform = SOCIAL_PLATFORMS.find((p) => p.value === form.socialLinks[index]?.platform);
-        const currentUrl = links[index].url;
-        if (!currentUrl || currentUrl === oldPlatform?.urlPrefix) {
-          links[index].url = platform.urlPrefix;
+  const updateSocialLink = useCallback((index: number, field: string, value: string) => {
+    setForm((prev) => {
+      const links = [...prev.socialLinks];
+      links[index] = { ...links[index], [field]: value };
+      if (field === 'platform') {
+        const platform = SOCIAL_PLATFORMS.find((p) => p.value === value);
+        if (platform) {
+          if (!links[index].label) {
+            links[index].label = platform.label;
+          }
+          const oldPlatform = SOCIAL_PLATFORMS.find((p) => p.value === prev.socialLinks[index]?.platform);
+          const currentUrl = links[index].url;
+          if (!currentUrl || currentUrl === oldPlatform?.urlPrefix) {
+            links[index].url = platform.urlPrefix;
+          }
         }
       }
-    }
-    updateField('socialLinks', links);
-  };
+      return { ...prev, socialLinks: links };
+    });
+    triggerAutoSave();
+  }, [triggerAutoSave]);
 
   const handleCheckout = async () => {
     const data: { url: string } = await api.post('/payments/checkout', { plan: 'PRO' });
     window.location.href = data.url;
   };
 
-  // handleDownloadQr is now handled by CustomQrCode component
+  // Memoized props for StyleEditor to prevent re-renders
+  const styleEditorValue = useMemo(() => ({
+    fontFamily: form.fontFamily,
+    fontSizeScale: form.fontSizeScale,
+    backgroundType: form.backgroundType,
+    backgroundGradient: form.backgroundGradient,
+    backgroundPattern: form.backgroundPattern,
+    linkStyle: form.linkStyle,
+    linkAnimation: form.linkAnimation,
+  }), [form.fontFamily, form.fontSizeScale, form.backgroundType, form.backgroundGradient, form.backgroundPattern, form.linkStyle, form.linkAnimation]);
+
+  const handleStyleChange = useCallback((key: string, val: string | number | null) => {
+    updateField(key as keyof typeof form, val as never);
+  }, [updateField]);
 
   const applyTemplate = (template: CardTemplate) => {
     setForm((prev) => ({
@@ -1535,16 +1550,8 @@ export function EditorPage() {
             {/* Visual Customization (Pro+ only) */}
             {hasFeature('customFonts') ? (
               <StyleEditor
-                value={{
-                  fontFamily: form.fontFamily,
-                  fontSizeScale: form.fontSizeScale,
-                  backgroundType: form.backgroundType,
-                  backgroundGradient: form.backgroundGradient,
-                  backgroundPattern: form.backgroundPattern,
-                  linkStyle: form.linkStyle,
-                  linkAnimation: form.linkAnimation,
-                }}
-                onChange={(key, val) => updateField(key as keyof typeof form, val as any)}
+                value={styleEditorValue}
+                onChange={handleStyleChange}
                 accent={form.buttonColor}
               />
             ) : (

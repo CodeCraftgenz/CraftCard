@@ -138,15 +138,15 @@ export class PaymentsService {
 
     if (memberships.length === 0) return null;
 
+    // Batch query: fetch all org owners in one query instead of N queries
+    const orgIds = memberships.map((m) => m.orgId);
+    const owners = await this.prisma.organizationMember.findMany({
+      where: { orgId: { in: orgIds }, role: 'OWNER' },
+      include: { user: { select: { plan: true, email: true } } },
+    });
+
     let bestPlan: PlanType = 'FREE';
-    for (const membership of memberships) {
-      const owner = await this.prisma.organizationMember.findFirst({
-        where: { orgId: membership.orgId, role: 'OWNER' },
-        include: { user: { select: { plan: true, email: true } } },
-      });
-
-      if (!owner) continue;
-
+    for (const owner of owners) {
       let ownerPlan: PlanType;
       if (FREE_ACCESS_EMAILS.has(owner.user.email.toLowerCase())) {
         ownerPlan = 'ENTERPRISE';

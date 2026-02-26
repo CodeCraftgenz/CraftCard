@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from 'lucide-react';
@@ -8,7 +9,7 @@ interface Props {
   onRemove: () => void;
 }
 
-export function SortableLinkItem({ id, children, onRemove }: Props) {
+export const SortableLinkItem = memo(function SortableLinkItem({ id, children, onRemove }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style = {
@@ -45,4 +46,4 @@ export function SortableLinkItem({ id, children, onRemove }: Props) {
       </button>
     </div>
   );
-}
+});
