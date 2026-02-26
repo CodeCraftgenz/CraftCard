@@ -69,7 +69,7 @@ export function UpgradeBanner({ feature, compact }: UpgradeBannerProps) {
             {label ? `${label} — disponivel no plano Pro` : 'Desbloqueie todas as funcionalidades'}
           </p>
           <p className="text-xs text-white/50 mt-0.5">
-            Analytics, galeria, agendamento, servicos, fontes customizadas e muito mais por apenas R$30/ano.
+            Ate 3 cartoes pessoais, analytics, galeria, agendamento, servicos, fontes customizadas e muito mais por apenas R$30/ano.
           </p>
         </div>
         <button

@@ -285,7 +285,7 @@ export function TutorialPage() {
               <span className="text-xs text-white/30 bg-white/5 px-2 py-0.5 rounded-full">Requer upgrade</span>
             )}
           </div>
-          <p className="text-xs text-white/30 mb-5 ml-7">Inclui tudo do Pro + gestao de equipe e branding · R$299/ano</p>
+          <p className="text-xs text-white/30 mb-5 ml-7">Inclui tudo do Pro + gestao de equipe e branding · R$189,90/ano</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {BUSINESS_FEATURES.map((card) => (
               <TutorialCardComponent

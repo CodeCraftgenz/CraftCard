@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Star, Trash2, ChevronDown } from 'lucide-react';
+import { Plus, Star, Trash2, ChevronDown, Lock } from 'lucide-react';
 
 interface Card {
   id: string;
@@ -56,7 +56,9 @@ export function CardSwitcher({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-white/30">{cards.length}/{maxCards}</span>
+          <span className={`text-xs ${cards.length >= maxCards ? 'text-yellow-400/70' : 'text-white/30'}`}>
+            {cards.length}/{maxCards} {cards.length >= maxCards ? '(limite)' : ''}
+          </span>
           <ChevronDown size={16} className={`text-white/40 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </div>
       </button>
@@ -107,7 +109,7 @@ export function CardSwitcher({
               </div>
             ))}
 
-            {cards.length < maxCards && (
+            {cards.length < maxCards ? (
               <button
                 type="button"
                 onClick={() => {
@@ -119,6 +121,18 @@ export function CardSwitcher({
                 <Plus size={14} />
                 Novo Cartao
               </button>
+            ) : (
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                <div className="flex items-center gap-2 text-sm text-white/30">
+                  <Lock size={14} />
+                  <span>Limite de {maxCards} {maxCards === 1 ? 'cartao' : 'cartoes'} atingido</span>
+                </div>
+                {maxCards < 3 && (
+                  <p className="text-xs text-brand-cyan/60 mt-1 ml-6">
+                    Faca upgrade para o Pro e tenha ate 3 cartoes
+                  </p>
+                )}
+              </div>
             )}
           </motion.div>
         )}

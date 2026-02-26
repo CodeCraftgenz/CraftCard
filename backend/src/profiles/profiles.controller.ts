@@ -32,8 +32,8 @@ export class ProfilesController {
   }
 
   @Post('me/cards')
-  async createCard(@CurrentUser() user: JwtPayload, @Body('label') label: string) {
-    return this.profilesService.createCard(user.sub, label || 'Novo Cartao');
+  async createCard(@CurrentUser() user: JwtPayload, @Body('label') label: string, @Body('orgId') orgId?: string) {
+    return this.profilesService.createCard(user.sub, label || 'Novo Cartao', orgId);
   }
 
   @Delete('me/cards/:id')

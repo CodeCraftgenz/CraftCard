@@ -49,7 +49,7 @@ const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     webhooks: false,
   },
   PRO: {
-    maxCards: 5,
+    maxCards: 3,
     maxLinks: 20,
     maxThemes: 'all',
     canPublish: true,
@@ -72,7 +72,7 @@ const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     webhooks: false,
   },
   BUSINESS: {
-    maxCards: 50,
+    maxCards: 1,
     maxLinks: 50,
     maxThemes: 'all',
     canPublish: true,
@@ -95,7 +95,7 @@ const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     webhooks: true,
   },
   ENTERPRISE: {
-    maxCards: 50,
+    maxCards: 1,
     maxLinks: 50,
     maxThemes: 'all',
     canPublish: true,

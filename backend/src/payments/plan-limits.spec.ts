@@ -13,7 +13,7 @@ describe('plan-limits', () => {
 
     it('should return PRO limits for PRO plan', () => {
       const limits = getPlanLimits('PRO');
-      expect(limits.maxCards).toBe(5);
+      expect(limits.maxCards).toBe(3);
       expect(limits.maxLinks).toBe(20);
       expect(limits.maxThemes).toBe('all');
       expect(limits.analytics).toBe(true);
@@ -24,7 +24,7 @@ describe('plan-limits', () => {
 
     it('should return BUSINESS limits for BUSINESS plan', () => {
       const limits = getPlanLimits('BUSINESS');
-      expect(limits.maxCards).toBe(50);
+      expect(limits.maxCards).toBe(1);
       expect(limits.maxLinks).toBe(50);
       expect(limits.orgDashboard).toBe(true);
       expect(limits.branding).toBe(true);

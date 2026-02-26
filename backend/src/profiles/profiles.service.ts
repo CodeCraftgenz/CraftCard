@@ -77,12 +77,35 @@ export class ProfilesService {
     return profiles;
   }
 
-  async createCard(userId: string, label: string) {
+  async createCard(userId: string, label: string, orgId?: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
     const limits = getPlanLimits(user?.plan || 'FREE');
-    const count = await this.prisma.profile.count({ where: { userId } });
-    if (count >= limits.maxCards) {
-      throw AppException.badRequest(`Maximo de ${limits.maxCards} ${limits.maxCards === 1 ? 'cartao' : 'cartoes'} no plano ${user?.plan || 'FREE'}`);
+
+    if (orgId) {
+      // B2B: validate org membership and seat limit
+      const org = await this.prisma.organization.findUnique({
+        where: { id: orgId },
+        select: { maxMembers: true },
+      });
+      if (!org) throw AppException.notFound('Organizacao');
+
+      const member = await this.prisma.organizationMember.findUnique({
+        where: { orgId_userId: { orgId, userId } },
+      });
+      if (!member) throw AppException.forbidden('Voce nao e membro desta organizacao');
+
+      const orgProfileCount = await this.prisma.profile.count({ where: { orgId } });
+      if (orgProfileCount >= org.maxMembers) {
+        throw AppException.badRequest(`Limite de ${org.maxMembers} ${org.maxMembers === 1 ? 'assento' : 'assentos'} na organizacao atingido`);
+      }
+    } else {
+      // B2C: validate personal card limit
+      const personalCount = await this.prisma.profile.count({
+        where: { userId, orgId: null },
+      });
+      if (personalCount >= limits.maxCards) {
+        throw AppException.badRequest(`Maximo de ${limits.maxCards} ${limits.maxCards === 1 ? 'cartao pessoal' : 'cartoes pessoais'} no plano ${user?.plan || 'FREE'}`);
+      }
     }
 
     const slug = `card-${Date.now().toString(36)}`;
@@ -93,6 +116,7 @@ export class ProfilesService {
         label,
         slug,
         isPrimary: false,
+        ...(orgId ? { orgId } : {}),
       },
       select: { id: true, displayName: true, slug: true, label: true, isPrimary: true },
     });

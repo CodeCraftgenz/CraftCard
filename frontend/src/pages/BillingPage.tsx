@@ -128,15 +128,15 @@ export function BillingPage() {
                     name="PRO"
                     price="R$ 30"
                     period="/ano"
-                    features={['5 cartoes', '20 links', 'Todos temas', 'Analytics', 'Sem marca dagua']}
+                    features={['3 cartoes', '20 links', 'Todos temas', 'Analytics', 'Sem marca dagua']}
                     onSelect={() => checkout.mutate({ plan: 'PRO' })}
                     loading={checkout.isPending}
                   />
                   <PlanCard
                     name="BUSINESS"
-                    price="R$ 299"
+                    price="R$ 189,90"
                     period="/ano"
-                    features={['50 cartoes', '50 links', 'Dashboard org', 'Branding', 'Webhooks']}
+                    features={['Ate 10 membros', '50 links', 'Dashboard org', 'Branding', 'Webhooks']}
                     onSelect={() => checkout.mutate({ plan: 'BUSINESS' })}
                     loading={checkout.isPending}
                     highlight
@@ -146,9 +146,9 @@ export function BillingPage() {
               {billing.canUpgrade && billing.plan === 'PRO' && (
                 <PlanCard
                   name="BUSINESS"
-                  price="R$ 299"
+                  price="R$ 189,90"
                   period="/ano"
-                  features={['50 cartoes', '50 links', 'Dashboard org', 'Branding', 'Webhooks']}
+                  features={['Ate 10 membros', '50 links', 'Dashboard org', 'Branding', 'Webhooks']}
                   onSelect={() => checkout.mutate({ plan: 'BUSINESS' })}
                   loading={checkout.isPending}
                   highlight
@@ -157,7 +157,7 @@ export function BillingPage() {
               {billing.canRenew && (
                 <PlanCard
                   name={billing.plan}
-                  price={billing.plan === 'PRO' ? 'R$ 30' : 'R$ 299'}
+                  price={billing.plan === 'PRO' ? 'R$ 30' : 'R$ 189,90'}
                   period="/ano"
                   features={['Renovar por mais 1 ano']}
                   onSelect={() => checkout.mutate({ plan: billing.plan })}

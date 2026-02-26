@@ -13,7 +13,8 @@ interface PlanFeature {
 }
 
 const features: PlanFeature[] = [
-  { label: 'Cartoes digitais', free: '1', pro: '5', business: '50/membro' },
+  { label: 'Cartoes pessoais', free: '1', pro: '3', business: '1' },
+  { label: 'Assentos na organizacao', free: false, pro: false, business: 'Ate 10' },
   { label: 'Links personalizados', free: '5', pro: '20', business: '50' },
   { label: 'Temas visuais', free: '3', pro: 'Todos', business: 'Todos' },
   { label: 'Analytics de visitas e cliques', free: false, pro: true, business: true },
@@ -185,10 +186,10 @@ export function PricingSection() {
             <div className="mb-6">
               <p className="text-sm text-brand-magenta font-semibold uppercase tracking-wider mb-3">Business</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-extrabold text-white">R$299</span>
+                <span className="text-5xl font-extrabold text-white">R$189,90</span>
                 <span className="text-sm text-white/40">/ano</span>
               </div>
-              <p className="text-sm text-white/40 mt-2">Ate 10 usuarios · ~R$24,92/mes</p>
+              <p className="text-sm text-white/40 mt-2">Ate 10 usuarios · ~R$15,83/mes</p>
             </div>
 
             <div className="space-y-3 mb-8 flex-1">

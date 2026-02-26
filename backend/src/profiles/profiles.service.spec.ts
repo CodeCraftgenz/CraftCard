@@ -19,6 +19,8 @@ describe('ProfilesService', () => {
       updateMany: jest.Mock;
     };
     user: { findUnique: jest.Mock };
+    organization: { findUnique: jest.Mock };
+    organizationMember: { findUnique: jest.Mock };
     socialLink: { deleteMany: jest.Mock; createMany: jest.Mock };
     profileView: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock };
     $transaction: jest.Mock;
@@ -39,6 +41,8 @@ describe('ProfilesService', () => {
         updateMany: jest.fn(),
       },
       user: { findUnique: jest.fn() },
+      organization: { findUnique: jest.fn() },
+      organizationMember: { findUnique: jest.fn() },
       socialLink: { deleteMany: jest.fn(), createMany: jest.fn() },
       profileView: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
       $transaction: jest.fn(),
@@ -70,8 +74,8 @@ describe('ProfilesService', () => {
     service = module.get<ProfilesService>(ProfilesService);
   });
 
-  describe('createCard', () => {
-    it('should create a card when under the plan limit', async () => {
+  describe('createCard — personal (B2C)', () => {
+    it('should create a personal card when under plan limit', async () => {
       prisma.user.findUnique.mockResolvedValue({ plan: 'PRO' });
       prisma.profile.count.mockResolvedValue(2);
       prisma.profile.create.mockResolvedValue({
@@ -85,39 +89,82 @@ describe('ProfilesService', () => {
       const result = await service.createCard('user-1', 'Trabalho');
       expect(result.displayName).toBe('Novo Cartao');
       expect(result.label).toBe('Trabalho');
+      expect(prisma.profile.count).toHaveBeenCalledWith({ where: { userId: 'user-1', orgId: null } });
     });
 
-    it('should throw when FREE user tries to create second card', async () => {
+    it('should throw when FREE user tries to create second personal card', async () => {
       prisma.user.findUnique.mockResolvedValue({ plan: 'FREE' });
       prisma.profile.count.mockResolvedValue(1);
 
       await expect(service.createCard('user-1', 'Extra')).rejects.toThrow(
-        'Maximo de 1 cartao no plano FREE',
+        'Maximo de 1 cartao pessoal no plano FREE',
       );
     });
 
-    it('should throw when PRO user exceeds 5 cards', async () => {
+    it('should throw when PRO user exceeds 3 personal cards', async () => {
       prisma.user.findUnique.mockResolvedValue({ plan: 'PRO' });
-      prisma.profile.count.mockResolvedValue(5);
+      prisma.profile.count.mockResolvedValue(3);
 
       await expect(service.createCard('user-1', 'Extra')).rejects.toThrow(
-        'Maximo de 5 cartoes no plano PRO',
+        'Maximo de 3 cartoes pessoais no plano PRO',
       );
     });
 
-    it('should allow BUSINESS user to create up to 50 cards', async () => {
+    it('should allow BUSINESS user only 1 personal card', async () => {
       prisma.user.findUnique.mockResolvedValue({ plan: 'BUSINESS' });
-      prisma.profile.count.mockResolvedValue(49);
+      prisma.profile.count.mockResolvedValue(1);
+
+      await expect(service.createCard('user-1', 'Extra')).rejects.toThrow(
+        'Maximo de 1 cartao pessoal no plano BUSINESS',
+      );
+    });
+  });
+
+  describe('createCard — org (B2B)', () => {
+    it('should create an org card when under seat limit', async () => {
+      prisma.user.findUnique.mockResolvedValue({ plan: 'BUSINESS' });
+      prisma.organization.findUnique.mockResolvedValue({ maxMembers: 10 });
+      prisma.organizationMember.findUnique.mockResolvedValue({ id: 'member-1', role: 'MEMBER' });
+      prisma.profile.count.mockResolvedValue(5);
       prisma.profile.create.mockResolvedValue({
         id: 'new-id',
         displayName: 'Novo Cartao',
         slug: 'card-test',
-        label: '50th',
+        label: 'Corp',
         isPrimary: false,
       });
 
-      const result = await service.createCard('user-1', '50th');
-      expect(result).toBeDefined();
+      const result = await service.createCard('user-1', 'Corp', 'org-1');
+      expect(result.displayName).toBe('Novo Cartao');
+      expect(prisma.profile.count).toHaveBeenCalledWith({ where: { orgId: 'org-1' } });
+    });
+
+    it('should throw when org not found', async () => {
+      prisma.user.findUnique.mockResolvedValue({ plan: 'BUSINESS' });
+      prisma.organization.findUnique.mockResolvedValue(null);
+
+      await expect(service.createCard('user-1', 'Corp', 'org-invalid')).rejects.toThrow('Organizacao');
+    });
+
+    it('should throw when user is not org member', async () => {
+      prisma.user.findUnique.mockResolvedValue({ plan: 'BUSINESS' });
+      prisma.organization.findUnique.mockResolvedValue({ maxMembers: 10 });
+      prisma.organizationMember.findUnique.mockResolvedValue(null);
+
+      await expect(service.createCard('user-1', 'Corp', 'org-1')).rejects.toThrow(
+        'Voce nao e membro desta organizacao',
+      );
+    });
+
+    it('should throw when org seat limit reached', async () => {
+      prisma.user.findUnique.mockResolvedValue({ plan: 'BUSINESS' });
+      prisma.organization.findUnique.mockResolvedValue({ maxMembers: 5 });
+      prisma.organizationMember.findUnique.mockResolvedValue({ id: 'member-1', role: 'MEMBER' });
+      prisma.profile.count.mockResolvedValue(5);
+
+      await expect(service.createCard('user-1', 'Corp', 'org-1')).rejects.toThrow(
+        'Limite de 5 assentos na organizacao atingido',
+      );
     });
   });
 
