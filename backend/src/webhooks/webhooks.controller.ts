@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { WebhooksService } from './webhooks.service';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
+import { PlanGuard, RequiresFeature } from '../payments/guards/plan.guard';
 
+@UseGuards(PlanGuard)
+@RequiresFeature('webhooks')
 @Controller('webhooks')
 export class WebhooksController {
   constructor(private readonly webhooksService: WebhooksService) {}

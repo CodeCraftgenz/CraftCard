@@ -3,7 +3,7 @@ import { Throttle } from '@nestjs/throttler';
 import { TestimonialsService } from './testimonials.service';
 import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
-import { PaidUserGuard } from '../payments/guards/paid-user.guard';
+import { PlanGuard, RequiresFeature } from '../payments/guards/plan.guard';
 import { createTestimonialSchema } from './dto/create-testimonial.dto';
 
 @Controller('testimonials')
@@ -18,17 +18,22 @@ export class TestimonialsController {
     return this.testimonialsService.submit(slug, data);
   }
 
-  @UseGuards(PaidUserGuard)
+  @UseGuards(PlanGuard)
+  @RequiresFeature('testimonials')
   @Get('me')
   async getMine(@CurrentUser() user: JwtPayload) {
     return this.testimonialsService.getMine(user.sub);
   }
 
+  @UseGuards(PlanGuard)
+  @RequiresFeature('testimonials')
   @Patch(':id/approve')
   async approve(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.testimonialsService.approve(id, user.sub);
   }
 
+  @UseGuards(PlanGuard)
+  @RequiresFeature('testimonials')
   @Delete(':id')
   async reject(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.testimonialsService.reject(id, user.sub);

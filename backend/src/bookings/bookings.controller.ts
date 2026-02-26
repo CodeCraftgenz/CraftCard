@@ -3,7 +3,7 @@ import { Throttle } from '@nestjs/throttler';
 import { BookingsService } from './bookings.service';
 import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
-import { PaidUserGuard } from '../payments/guards/paid-user.guard';
+import { PlanGuard, RequiresFeature } from '../payments/guards/plan.guard';
 
 @Controller('bookings')
 export class BookingsController {
@@ -28,24 +28,29 @@ export class BookingsController {
     return this.bookingsService.createBooking(slug, body);
   }
 
-  @UseGuards(PaidUserGuard)
+  @UseGuards(PlanGuard)
+  @RequiresFeature('bookings')
   @Get('me/list')
   async getMyBookings(@CurrentUser() user: JwtPayload) {
     return this.bookingsService.getMyBookings(user.sub);
   }
 
-  @UseGuards(PaidUserGuard)
+  @UseGuards(PlanGuard)
+  @RequiresFeature('bookings')
   @Get('me/slots')
   async getMySlots(@CurrentUser() user: JwtPayload) {
     return this.bookingsService.getMySlots(user.sub);
   }
 
-  @UseGuards(PaidUserGuard)
+  @UseGuards(PlanGuard)
+  @RequiresFeature('bookings')
   @Put('me/slots')
   async saveSlots(@CurrentUser() user: JwtPayload, @Body('slots') slots: Array<{ dayOfWeek: number; startTime: string; endTime: string; duration: number }>) {
     return this.bookingsService.saveSlots(user.sub, slots);
   }
 
+  @UseGuards(PlanGuard)
+  @RequiresFeature('bookings')
   @Put('me/:id/status')
   async updateStatus(@CurrentUser() user: JwtPayload, @Param('id') id: string, @Body('status') status: string) {
     return this.bookingsService.updateBookingStatus(user.sub, id, status);

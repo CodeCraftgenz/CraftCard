@@ -6,7 +6,7 @@ import { AnalyticsService } from './analytics.service';
 import { AchievementsService } from './achievements.service';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
-import { PaidUserGuard } from '../payments/guards/paid-user.guard';
+import { PlanGuard, RequiresFeature } from '../payments/guards/plan.guard';
 
 @Controller('analytics')
 export class AnalyticsController {
@@ -16,7 +16,8 @@ export class AnalyticsController {
     private readonly jwtService: JwtService,
   ) {}
 
-  @UseGuards(PaidUserGuard)
+  @UseGuards(PlanGuard)
+  @RequiresFeature('analytics')
   @Get('me')
   async getMyAnalytics(@CurrentUser() user: JwtPayload) {
     return this.analyticsService.getAnalytics(user.sub);

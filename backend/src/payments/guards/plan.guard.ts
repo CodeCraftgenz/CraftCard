@@ -6,6 +6,26 @@ import { hasFeature, type PlanLimits } from '../plan-limits';
 
 export const REQUIRED_FEATURE_KEY = 'requiredFeature';
 
+/** Maps features to the minimum plan that unlocks them */
+const FEATURE_MIN_PLAN: Partial<Record<keyof PlanLimits, string>> = {
+  analytics: 'Pro',
+  gallery: 'Pro',
+  bookings: 'Pro',
+  testimonials: 'Pro',
+  contacts: 'Pro',
+  services: 'Pro',
+  faq: 'Pro',
+  resume: 'Pro',
+  video: 'Pro',
+  customFonts: 'Pro',
+  customBg: 'Pro',
+  leadsExport: 'Pro',
+  orgDashboard: 'Business',
+  branding: 'Business',
+  webhooks: 'Business',
+  customDomain: 'Enterprise',
+};
+
 /**
  * Decorator: require a specific plan feature to access this endpoint.
  * Usage: @RequiresFeature('analytics')
@@ -36,12 +56,12 @@ export class PlanGuard implements CanActivate {
       throw AppException.unauthorized();
     }
 
-    // Uses getUserPlanInfo() which respects org inheritance, FREE_ACCESS_EMAILS, and expiration
     const planInfo = await this.paymentsService.getUserPlanInfo(userId);
 
     if (!hasFeature(planInfo.plan, feature)) {
+      const minPlan = FEATURE_MIN_PLAN[feature] || 'Pro';
       throw AppException.forbidden(
-        `Recurso disponivel a partir do plano Pro. Faca upgrade ou junte-se a uma organizacao para acessar.`,
+        `Recurso disponivel a partir do plano ${minPlan}. Faca upgrade para acessar.`,
       );
     }
 

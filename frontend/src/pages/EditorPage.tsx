@@ -41,6 +41,7 @@ import { StyleEditor } from '@/components/organisms/StyleEditor';
 import { ServicesEditor } from '@/components/organisms/ServicesEditor';
 import { FaqEditor } from '@/components/organisms/FaqEditor';
 import { UpgradeBanner } from '@/components/organisms/UpgradeBanner';
+import { FeatureLock } from '@/components/organisms/FeatureLock';
 import { useAchievements, useCheckAchievements } from '@/hooks/useAchievements';
 import { EmailSignature } from '@/components/organisms/EmailSignature';
 import { WidgetCodeGenerator } from '@/components/organisms/WidgetCodeGenerator';
@@ -1190,13 +1191,19 @@ export function EditorPage() {
                     </span>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={addSocialLink}
-                  className="flex items-center gap-1.5 text-sm text-brand-cyan hover:text-brand-cyan/80 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-brand-cyan/5"
-                >
-                  <Plus size={16} /> Adicionar
-                </button>
+                {form.socialLinks.length >= planLimits.maxLinks ? (
+                  <span className="text-xs text-white/30 px-3 py-1.5" title={`Maximo de ${planLimits.maxLinks} links no plano ${plan}`}>
+                    {form.socialLinks.length}/{planLimits.maxLinks} links
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={addSocialLink}
+                    className="flex items-center gap-1.5 text-sm text-brand-cyan hover:text-brand-cyan/80 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-brand-cyan/5"
+                  >
+                    <Plus size={16} /> Adicionar
+                  </button>
+                )}
               </div>
               <div className="space-y-3">
                 <div className={`space-y-3 ${form.socialLinks.filter(l => l.platform !== 'custom').length > 3 ? 'max-h-[480px] overflow-y-auto pr-1 scrollbar-thin' : ''}`}>
@@ -1319,13 +1326,19 @@ export function EditorPage() {
                     </span>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={addCustomLink}
-                  className="flex items-center gap-1.5 text-sm text-brand-cyan hover:text-brand-cyan/80 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-brand-cyan/5"
-                >
-                  <Plus size={16} /> Adicionar
-                </button>
+                {form.socialLinks.length >= planLimits.maxLinks ? (
+                  <span className="text-xs text-white/30 px-3 py-1.5" title={`Maximo de ${planLimits.maxLinks} links no plano ${plan}`}>
+                    {form.socialLinks.length}/{planLimits.maxLinks} links
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={addCustomLink}
+                    className="flex items-center gap-1.5 text-sm text-brand-cyan hover:text-brand-cyan/80 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-brand-cyan/5"
+                  >
+                    <Plus size={16} /> Adicionar
+                  </button>
+                )}
               </div>
               <p className="text-xs text-white/30 mb-4">Links exibidos como botoes no seu cartao (estilo Linktree)</p>
               <div className="space-y-3">
@@ -1419,6 +1432,11 @@ export function EditorPage() {
                   </div>
                 )}
               </div>
+              {form.socialLinks.length >= planLimits.maxLinks && (
+                <div className="mt-4">
+                  <UpgradeBanner compact />
+                </div>
+              )}
             </div>
 
             {/* Resume */}
@@ -1558,8 +1576,9 @@ export function EditorPage() {
               <UpgradeBanner feature="customFonts" compact />
             )}
 
-            {/* Analytics (paid users only) */}
-            {hasPaid && analytics && (
+            {/* Analytics (PRO+) */}
+            <FeatureLock feature="analytics">
+            {analytics && (
               <div className="glass-card p-6 hover:border-white/20 transition-colors">
                 <div className="flex items-center gap-2 mb-5">
                   <div className="w-8 h-8 rounded-lg bg-brand-cyan/10 flex items-center justify-center">
@@ -1743,9 +1762,11 @@ export function EditorPage() {
                 </div>
               </div>
             )}
+            </FeatureLock>
 
-            {/* Sharing Tools (paid users only) */}
-            {hasPaid && profile && (
+            {/* Sharing Tools (PRO+) */}
+            <FeatureLock feature="analytics">
+            {profile && (
               <div className="glass-card p-6 hover:border-white/20 transition-colors">
                 <div className="flex items-center gap-2 mb-5">
                   <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
@@ -1768,9 +1789,10 @@ export function EditorPage() {
                 </div>
               </div>
             )}
+            </FeatureLock>
 
-            {/* Messages / Leads Inbox (paid users only) */}
-            {hasPaid && (
+            {/* Messages / Leads Inbox (PRO+) */}
+            <FeatureLock feature="contacts">{(
               <div className="glass-card p-6 hover:border-white/20 transition-colors">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-2">
@@ -1875,9 +1897,10 @@ export function EditorPage() {
                 )}
               </div>
             )}
+            </FeatureLock>
 
-            {/* Gallery (paid users only) */}
-            {hasPaid && (
+            {/* Gallery (PRO+) */}
+            <FeatureLock feature="gallery">{(
               <div className="glass-card p-6 hover:border-white/20 transition-colors">
                 <div className="flex items-center gap-2 mb-5">
                   <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
@@ -1941,12 +1964,17 @@ export function EditorPage() {
                 </button>
               </div>
             )}
+            </FeatureLock>
 
-            {/* Services (paid users only) */}
-            {hasPaid && <ServicesEditor />}
+            {/* Services (PRO+) */}
+            <FeatureLock feature="services">
+              <ServicesEditor />
+            </FeatureLock>
 
-            {/* FAQ (paid users only) */}
-            {hasPaid && <FaqEditor />}
+            {/* FAQ (PRO+) */}
+            <FeatureLock feature="faq">
+              <FaqEditor />
+            </FeatureLock>
 
             {/* Organization links */}
             {(organizations.length > 0 || plan === 'BUSINESS' || plan === 'ENTERPRISE') && (
@@ -2033,8 +2061,8 @@ export function EditorPage() {
               </div>
             )}
 
-            {/* Video Intro (paid users only) */}
-            {hasPaid && (
+            {/* Video Intro (PRO+) */}
+            <FeatureLock feature="video">{(
               <div className="glass-card p-6 hover:border-white/20 transition-colors">
                 <div className="flex items-center gap-2 mb-5">
                   <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center">
@@ -2087,9 +2115,10 @@ export function EditorPage() {
                 </button>
               </div>
             )}
+            </FeatureLock>
 
-            {/* Lead Capture (paid users only) */}
-            {hasPaid && (
+            {/* Lead Capture (PRO+) */}
+            <FeatureLock feature="contacts">{(
               <div className="glass-card p-6 hover:border-white/20 transition-colors">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
@@ -2110,9 +2139,10 @@ export function EditorPage() {
                 </div>
               </div>
             )}
+            </FeatureLock>
 
-            {/* Bookings / Scheduling (paid users only) */}
-            {hasPaid && (
+            {/* Bookings / Scheduling (PRO+) */}
+            <FeatureLock feature="bookings">{(
               <div className="glass-card p-6 hover:border-white/20 transition-colors">
                 <div className="flex items-center gap-2 mb-5">
                   <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
@@ -2227,9 +2257,10 @@ export function EditorPage() {
                 )}
               </div>
             )}
+            </FeatureLock>
 
-            {/* Testimonials (paid users only) */}
-            {hasPaid && (
+            {/* Testimonials (PRO+) */}
+            <FeatureLock feature="testimonials">{(
               <div className="glass-card p-6 hover:border-white/20 transition-colors">
                 <div className="flex items-center gap-2 mb-5">
                   <div className="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center">
@@ -2301,6 +2332,7 @@ export function EditorPage() {
                 )}
               </div>
             )}
+            </FeatureLock>
 
             {/* Actions Bar */}
             <motion.div

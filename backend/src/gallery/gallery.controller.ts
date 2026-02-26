@@ -16,15 +16,16 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GalleryService } from './gallery.service';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
-import { PaidUserGuard } from '../payments/guards/paid-user.guard';
+import { PlanGuard, RequiresFeature } from '../payments/guards/plan.guard';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
+@UseGuards(PlanGuard)
+@RequiresFeature('gallery')
 @Controller()
 export class GalleryController {
   constructor(private readonly galleryService: GalleryService) {}
 
-  @UseGuards(PaidUserGuard)
   @Post('me/gallery')
   @UseInterceptors(FileInterceptor('file'))
   async upload(
@@ -43,7 +44,6 @@ export class GalleryController {
     return this.galleryService.upload(user.sub, file.buffer, caption);
   }
 
-  @UseGuards(PaidUserGuard)
   @Get('me/gallery')
   async getMine(@CurrentUser() user: JwtPayload) {
     return this.galleryService.getMine(user.sub);
