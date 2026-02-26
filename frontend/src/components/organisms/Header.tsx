@@ -197,9 +197,9 @@ export function Header() {
                       <User size={14} className="text-brand-cyan" />
                     </div>
                   )}
-                  <div>
-                    <p className="text-sm font-medium text-white">{user.name}</p>
-                    <p className="text-xs text-white/40">{user.email}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-white truncate">{user.name}</p>
+                    <p className="text-xs text-white/40 truncate">{user.email}</p>
                   </div>
                   </div>
                   <NotificationBell />

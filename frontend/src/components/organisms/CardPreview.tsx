@@ -250,7 +250,7 @@ export const CardPreview = memo(function CardPreview({
           </div>
 
           {/* Name */}
-          <h3 className="font-bold text-white mb-1 flex items-center justify-center gap-1" style={{ fontSize: '1.25em' }}>
+          <h3 className="font-bold text-white mb-1 flex items-center justify-center gap-1 max-w-full truncate" style={{ fontSize: '1.25em' }}>
             {card.displayName || 'Seu Nome'}
             {card.isVerified && (
               <BadgeCheck size={18} className="text-blue-400 shrink-0" />
@@ -284,7 +284,7 @@ export const CardPreview = memo(function CardPreview({
               // Header separator
               if (link.platform === 'header' || link.linkType === 'header') {
                 return (
-                  <div key={i} className="font-semibold text-white/40 uppercase tracking-wider mt-2 mb-1 text-left px-1" style={{ fontSize: '0.75em' }}>
+                  <div key={i} className="font-semibold text-white/40 uppercase tracking-wider mt-2 mb-1 text-left px-1 truncate" style={{ fontSize: '0.75em' }}>
                     {link.label}
                   </div>
                 );
@@ -308,8 +308,8 @@ export const CardPreview = memo(function CardPreview({
                     borderLeft: !isOutline && !isGhost ? `3px solid ${accent}` : undefined,
                   }}
                 >
-                  <Icon size={18} style={{ color: accent }} />
-                  <span>{link.label || 'Link'}</span>
+                  <Icon size={18} className="shrink-0" style={{ color: accent }} />
+                  <span className="truncate min-w-0">{link.label || 'Link'}</span>
                   <span className="ml-auto text-white/30">&rsaquo;</span>
                 </motion.div>
               );

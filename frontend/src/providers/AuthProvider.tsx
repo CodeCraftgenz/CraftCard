@@ -110,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: data.user,
         isAuthenticated: true,
         isLoading: false,
-        isAdmin: role === 'ADMIN' || role === 'SUPER_ADMIN',
+        isAdmin: role === 'SUPER_ADMIN',
         hasPaid: data.hasPaid,
         paidUntil: data.paidUntil,
         cards: data.cards || [],

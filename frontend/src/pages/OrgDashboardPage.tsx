@@ -6,6 +6,7 @@ import {
   UserPlus, Shield, Crown, Download, Eye, MessageSquare, Calendar, ArrowLeft, Loader2, AlertTriangle,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
+import { useAuth } from '@/providers/AuthProvider';
 import {
   useOrganization,
   useOrgMembers,
@@ -18,6 +19,7 @@ import {
   useInviteMember,
   useRevokeInvite,
   useRemoveMember,
+  useUpdateMemberRole,
 } from '@/hooks/useOrganization';
 import { AVAILABLE_FONTS } from '@/lib/google-fonts';
 import { API_URL } from '@/lib/constants';
@@ -27,8 +29,10 @@ type Tab = 'overview' | 'members' | 'branding' | 'analytics' | 'leads';
 export function OrgDashboardPage() {
   const { orgId } = useParams<{ orgId: string }>();
   const [tab, setTab] = useState<Tab>('overview');
+  const { organizations } = useAuth();
 
   const { data: org } = useOrganization(orgId);
+  const myRole = organizations.find((o) => o.id === orgId)?.role || 'MEMBER';
 
   if (!org) {
     return (
@@ -109,8 +113,8 @@ export function OrgDashboardPage() {
         </div>
 
         {/* Tab content */}
-        {tab === 'overview' && <OverviewTab orgId={orgId!} />}
-        {tab === 'members' && <MembersTab orgId={orgId!} />}
+        {tab === 'overview' && <OverviewTab orgId={orgId!} myRole={myRole} />}
+        {tab === 'members' && <MembersTab orgId={orgId!} myRole={myRole} />}
         {tab === 'branding' && <BrandingTab orgId={orgId!} org={org} />}
         {tab === 'analytics' && <AnalyticsTab orgId={orgId!} />}
         {tab === 'leads' && <LeadsTab orgId={orgId!} />}
@@ -120,7 +124,7 @@ export function OrgDashboardPage() {
 }
 
 // --- Overview Tab ---
-function OverviewTab({ orgId }: { orgId: string }) {
+function OverviewTab({ orgId, myRole }: { orgId: string; myRole: string }) {
   const navigate = useNavigate();
   const { data: analytics } = useOrgAnalytics(orgId);
   const deleteOrg = useDeleteOrganization();
@@ -159,51 +163,53 @@ function OverviewTab({ orgId }: { orgId: string }) {
         </div>
       )}
 
-      {/* Danger zone — Delete organization */}
-      <div className="bg-red-500/5 rounded-2xl p-6 border border-red-500/20">
-        <h3 className="text-red-400 font-semibold text-sm flex items-center gap-2 mb-2">
-          <AlertTriangle size={16} />
-          Zona de Perigo
-        </h3>
-        <p className="text-white/40 text-xs mb-4">
-          Excluir a organizacao remove todos os membros, convites e desvincula os cartoes. Esta acao nao pode ser desfeita.
-        </p>
-        {!showDeleteConfirm ? (
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-sm font-medium hover:bg-red-500/20 transition-colors"
-          >
-            Excluir Organizacao
-          </button>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-white/60 text-xs">
-              Digite <strong className="text-red-400">excluir</strong> para confirmar:
-            </p>
-            <input
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value)}
-              placeholder="excluir"
-              className="w-full bg-white/5 border border-red-500/20 rounded-xl px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-red-500/40"
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={handleDelete}
-                disabled={confirmText !== 'excluir' || deleteOrg.isPending}
-                className="flex-1 py-2.5 bg-red-500/20 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                {deleteOrg.isPending ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Confirmar Exclusao'}
-              </button>
-              <button
-                onClick={() => { setShowDeleteConfirm(false); setConfirmText(''); }}
-                className="px-4 py-2.5 bg-white/5 text-white/50 rounded-xl text-sm hover:bg-white/10 transition-colors"
-              >
-                Cancelar
-              </button>
+      {/* Danger zone — Delete organization (OWNER only) */}
+      {myRole === 'OWNER' && (
+        <div className="bg-red-500/5 rounded-2xl p-6 border border-red-500/20">
+          <h3 className="text-red-400 font-semibold text-sm flex items-center gap-2 mb-2">
+            <AlertTriangle size={16} />
+            Zona de Perigo
+          </h3>
+          <p className="text-white/40 text-xs mb-4">
+            Excluir a organizacao remove todos os membros, convites e desvincula os cartoes. Esta acao nao pode ser desfeita.
+          </p>
+          {!showDeleteConfirm ? (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-sm font-medium hover:bg-red-500/20 transition-colors"
+            >
+              Excluir Organizacao
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-white/60 text-xs">
+                Digite <strong className="text-red-400">excluir</strong> para confirmar:
+              </p>
+              <input
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="excluir"
+                className="w-full bg-white/5 border border-red-500/20 rounded-xl px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-red-500/40"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDelete}
+                  disabled={confirmText !== 'excluir' || deleteOrg.isPending}
+                  className="flex-1 py-2.5 bg-red-500/20 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  {deleteOrg.isPending ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Confirmar Exclusao'}
+                </button>
+                <button
+                  onClick={() => { setShowDeleteConfirm(false); setConfirmText(''); }}
+                  className="px-4 py-2.5 bg-white/5 text-white/50 rounded-xl text-sm hover:bg-white/10 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -223,19 +229,21 @@ function StatCard({ icon: Icon, label, value }: { icon: typeof Eye; label: strin
 }
 
 // --- Members Tab ---
-function MembersTab({ orgId }: { orgId: string }) {
+function MembersTab({ orgId, myRole }: { orgId: string; myRole: string }) {
   const { data: members } = useOrgMembers(orgId);
   const { data: invites } = useOrgInvites(orgId);
   const inviteMember = useInviteMember(orgId);
   const revokeInvite = useRevokeInvite(orgId);
   const removeMember = useRemoveMember(orgId);
+  const updateRole = useUpdateMemberRole(orgId);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'MEMBER' | 'ADMIN'>('MEMBER');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [inviteResult, setInviteResult] = useState<{ emailSent: boolean; token: string } | null>(null);
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
-    const result = await inviteMember.mutateAsync({ email: inviteEmail.trim() });
+    const result = await inviteMember.mutateAsync({ email: inviteEmail.trim(), role: inviteRole });
     const res = result as { token?: string; emailSent?: boolean };
     if (res.token && !res.emailSent) {
       setInviteResult({ emailSent: false, token: res.token });
@@ -244,6 +252,9 @@ function MembersTab({ orgId }: { orgId: string }) {
     }
     setInviteEmail('');
   };
+
+  const isOwner = myRole === 'OWNER';
+  const canManageMembers = myRole === 'OWNER' || myRole === 'ADMIN';
 
   const roleIcons: Record<string, typeof Crown> = { OWNER: Crown, ADMIN: Shield, MEMBER: Users };
 
@@ -263,6 +274,15 @@ function MembersTab({ orgId }: { orgId: string }) {
             className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50"
             onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
           />
+          <select
+            value={inviteRole}
+            onChange={(e) => setInviteRole(e.target.value as 'MEMBER' | 'ADMIN')}
+            aria-label="Cargo do convidado"
+            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-cyan/50 appearance-none cursor-pointer"
+          >
+            <option value="MEMBER">Membro</option>
+            <option value="ADMIN">Admin</option>
+          </select>
           <button
             onClick={handleInvite}
             disabled={inviteMember.isPending}
@@ -315,6 +335,7 @@ function MembersTab({ orgId }: { orgId: string }) {
         <div className="space-y-3">
           {members?.map((m) => {
             const RoleIcon = roleIcons[m.role] || Users;
+            const canChangeRole = isOwner && m.role !== 'OWNER';
             return (
               <div key={m.id} className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
                 {m.user.avatarUrl ? (
@@ -328,11 +349,23 @@ function MembersTab({ orgId }: { orgId: string }) {
                   <p className="text-white text-sm font-medium truncate">{m.user.name}</p>
                   <p className="text-white/40 text-xs truncate">{m.user.email}</p>
                 </div>
-                <span className="flex items-center gap-1 text-xs text-white/50 bg-white/5 px-2 py-1 rounded-lg">
-                  <RoleIcon size={12} />
-                  {m.role}
-                </span>
-                {m.role !== 'OWNER' && (
+                {canChangeRole ? (
+                  <select
+                    value={m.role}
+                    onChange={(e) => updateRole.mutate({ memberId: m.id, role: e.target.value })}
+                    aria-label={`Cargo de ${m.user.name}`}
+                    className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white/70 focus:outline-none focus:border-brand-cyan/50 appearance-none cursor-pointer"
+                  >
+                    <option value="MEMBER">Membro</option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs text-white/50 bg-white/5 px-2 py-1 rounded-lg">
+                    <RoleIcon size={12} />
+                    {m.role}
+                  </span>
+                )}
+                {m.role !== 'OWNER' && canManageMembers && (
                   <button
                     onClick={() => removeMember.mutate(m.id)}
                     aria-label="Remover membro"
@@ -357,7 +390,9 @@ function MembersTab({ orgId }: { orgId: string }) {
                 <Mail size={16} className="text-white/30" />
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm truncate">{inv.email}</p>
-                  <p className="text-white/30 text-xs">Expira em {new Date(inv.expiresAt).toLocaleDateString()}</p>
+                  <p className="text-white/30 text-xs">
+                    {inv.role === 'ADMIN' ? 'Admin' : 'Membro'} · Expira em {new Date(inv.expiresAt).toLocaleDateString()}
+                  </p>
                 </div>
                 <button
                   onClick={() => {

@@ -3,6 +3,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { AppException } from '../common/exceptions/app.exception';
 import { randomBytes } from 'crypto';
+import type { PrismaClient } from '@prisma/client';
 
 type OrgRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 
@@ -292,6 +293,24 @@ export class OrganizationsService {
         data: { orgId: invite.orgId },
       });
 
+      // If user has no profile at all, create a default one linked to the org
+      const profileCount = await tx.profile.count({ where: { userId } });
+      if (profileCount === 0) {
+        const slug = await this.generateUniqueSlug(user.name, tx);
+        await tx.profile.create({
+          data: {
+            userId,
+            displayName: user.name,
+            slug,
+            photoUrl: user.avatarUrl,
+            label: 'Principal',
+            isPrimary: true,
+            orgId: invite.orgId,
+          },
+        });
+        this.logger.log(`Created default profile for invited user ${user.email} (slug: ${slug})`);
+      }
+
       const org = await tx.organization.findUnique({
         where: { id: invite.orgId },
         select: { id: true, name: true, slug: true },
@@ -428,6 +447,34 @@ export class OrganizationsService {
   }
 
   // --- Helpers ---
+
+  private slugifyName(name: string): string {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 40);
+  }
+
+  private async generateUniqueSlug(name: string, tx: Pick<PrismaClient, 'profile'>): Promise<string> {
+    let slug = this.slugifyName(name) || 'user';
+    if (slug.length < 3) slug = slug + '-card';
+
+    const existing = await tx.profile.findUnique({ where: { slug } });
+    if (!existing) return slug;
+
+    for (let i = 2; i <= 100; i++) {
+      const candidate = `${slug}-${i}`;
+      const exists = await tx.profile.findUnique({ where: { slug: candidate } });
+      if (!exists) return candidate;
+    }
+
+    return `${slug}-${randomBytes(3).toString('hex')}`;
+  }
 
   private async requireRole(orgId: string, userId: string, minRole: OrgRole) {
     const member = await this.prisma.organizationMember.findUnique({

@@ -625,7 +625,7 @@ export function PublicCardPage() {
               {!profile.photoUrl && <User className="w-12 h-12 text-white" />}
             </div>
 
-            <h1 className="font-bold text-white text-center flex items-center justify-center gap-1.5" style={{ fontSize: '1.5em' }}>
+            <h1 className="font-bold text-white text-center flex items-center justify-center gap-1.5 max-w-full truncate" style={{ fontSize: '1.5em' }}>
               {profile.displayName}
               {profile.isVerified && (
                 <span title="Perfil verificado" className="inline-flex">
@@ -652,11 +652,11 @@ export function PublicCardPage() {
               </div>
             )}
             {profile.availabilityMessage && profile.availabilityStatus && (
-              <p className="text-white/40 mt-1" style={{ fontSize: '0.75em' }}>{profile.availabilityMessage}</p>
+              <p className="text-white/40 mt-1 break-words" style={{ fontSize: '0.75em' }}>{profile.availabilityMessage}</p>
             )}
 
             {profile.tagline && (
-              <p className="text-white/40 text-center mt-1 italic" style={{ fontSize: '0.75em' }}>{profile.tagline}</p>
+              <p className="text-white/40 text-center mt-1 italic line-clamp-2" style={{ fontSize: '0.75em' }}>{profile.tagline}</p>
             )}
 
             {profile.bio && (
@@ -669,13 +669,13 @@ export function PublicCardPage() {
             {(profile.location || profile.pronouns || profile.workingHours) && (
               <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
                 {profile.pronouns && (
-                  <span className="text-white/30 px-2 py-0.5 rounded-full bg-white/5" style={{ fontSize: '0.625em' }}>{profile.pronouns}</span>
+                  <span className="text-white/30 px-2 py-0.5 rounded-full bg-white/5 truncate max-w-[200px]" style={{ fontSize: '0.625em' }}>{profile.pronouns}</span>
                 )}
                 {profile.location && (
-                  <span className="text-white/30 px-2 py-0.5 rounded-full bg-white/5" style={{ fontSize: '0.625em' }}>{profile.location}</span>
+                  <span className="text-white/30 px-2 py-0.5 rounded-full bg-white/5 truncate max-w-[200px]" style={{ fontSize: '0.625em' }}>{profile.location}</span>
                 )}
                 {profile.workingHours && (
-                  <span className="text-white/30 px-2 py-0.5 rounded-full bg-white/5" style={{ fontSize: '0.625em' }}>{profile.workingHours}</span>
+                  <span className="text-white/30 px-2 py-0.5 rounded-full bg-white/5 truncate max-w-[200px]" style={{ fontSize: '0.625em' }}>{profile.workingHours}</span>
                 )}
               </div>
             )}
@@ -742,7 +742,7 @@ export function PublicCardPage() {
                   <div key={s.id} className="p-4 rounded-2xl bg-white/5 border border-white/10">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
-                        <h4 className="text-sm font-medium text-white">{s.title}</h4>
+                        <h4 className="text-sm font-medium text-white truncate">{s.title}</h4>
                         {s.description && <p className="text-xs text-white/50 mt-1">{s.description}</p>}
                       </div>
                       {s.price && (
@@ -790,9 +790,9 @@ export function PublicCardPage() {
                       <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center">
                         <span className="text-[10px] font-bold text-white/60">{t.authorName.charAt(0).toUpperCase()}</span>
                       </div>
-                      <div>
-                        <span className="text-xs font-medium text-white/80">{t.authorName}</span>
-                        {t.authorRole && <span className="text-xs text-white/30 ml-1">· {t.authorRole}</span>}
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs font-medium text-white/80 truncate block">{t.authorName}</span>
+                        {t.authorRole && <span className="text-xs text-white/30 truncate block">· {t.authorRole}</span>}
                       </div>
                     </div>
                   </motion.div>
