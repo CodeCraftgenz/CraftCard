@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ProfilesService } from './profiles.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { SlugsService } from '../slugs/slugs.service';
@@ -67,6 +68,17 @@ describe('ProfilesService', () => {
         { provide: SlugsService, useValue: slugsService },
         { provide: PaymentsService, useValue: paymentsService },
         { provide: ConfigService, useValue: configMock },
+        {
+          provide: CACHE_MANAGER,
+          useValue: (() => {
+            const store = new Map();
+            return {
+              get: jest.fn((key: string) => store.get(key)),
+              set: jest.fn((key: string, val: unknown) => { store.set(key, val); }),
+              del: jest.fn((key: string) => { store.delete(key); }),
+            };
+          })(),
+        },
       ],
     }).compile();
 
@@ -147,7 +159,7 @@ describe('ProfilesService', () => {
 
     it('should throw when user is not org member', async () => {
       prisma.user.findUnique.mockResolvedValue({ plan: 'BUSINESS' });
-      prisma.organization.findUnique.mockResolvedValue({ maxMembers: 10 });
+      prisma.organization.findUnique.mockResolvedValue({ maxMembers: 10, extraSeats: 0 });
       prisma.organizationMember.findUnique.mockResolvedValue(null);
 
       await expect(service.createCard('user-1', 'Corp', 'org-1')).rejects.toThrow(
@@ -157,7 +169,7 @@ describe('ProfilesService', () => {
 
     it('should throw when org seat limit reached', async () => {
       prisma.user.findUnique.mockResolvedValue({ plan: 'BUSINESS' });
-      prisma.organization.findUnique.mockResolvedValue({ maxMembers: 5 });
+      prisma.organization.findUnique.mockResolvedValue({ maxMembers: 5, extraSeats: 0 });
       prisma.organizationMember.findUnique.mockResolvedValue({ id: 'member-1', role: 'MEMBER' });
       prisma.profile.count.mockResolvedValue(5);
 

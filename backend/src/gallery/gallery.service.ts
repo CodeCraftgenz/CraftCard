@@ -66,7 +66,7 @@ export class GalleryService {
       .webp({ quality: 80 })
       .toBuffer();
 
-    // Upload to FTP
+    // Upload to R2
     const imageUrl = await this.storageService.uploadFile(
       processed,
       'gallery',
@@ -117,7 +117,7 @@ export class GalleryService {
   async delete(userId: string, imageId: string) {
     const image = await this.findOwnedImage(userId, imageId);
 
-    // Delete FTP file if exists
+    // Delete R2 file if exists
     if (image.imageUrl) {
       this.storageService.deleteFile(image.imageUrl).catch(() => {});
     }

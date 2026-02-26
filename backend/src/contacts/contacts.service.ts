@@ -3,6 +3,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { InAppNotificationsService } from '../notifications/in-app-notifications.service';
+import { WebhooksService } from '../webhooks/webhooks.service';
 import { AppException } from '../common/exceptions/app.exception';
 import type { SendMessageDto } from './dto/send-message.dto';
 
@@ -13,6 +14,7 @@ export class ContactsService {
     private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService,
     private readonly inAppService: InAppNotificationsService,
+    private readonly webhooksService: WebhooksService,
   ) {}
 
   async sendMessage(slug: string, data: SendMessageDto) {
@@ -56,6 +58,13 @@ export class ContactsService {
       title: 'Nova mensagem!',
       message: `${data.senderName}: ${data.message.substring(0, 80)}`,
       metadata: { senderName: data.senderName, senderEmail: data.senderEmail },
+    }).catch(() => {});
+
+    // Webhook dispatch for CRM integration (fire-and-forget)
+    this.webhooksService.dispatch(profile.userId, 'new_message', {
+      senderName: data.senderName,
+      senderEmail: data.senderEmail || null,
+      message: data.message,
     }).catch(() => {});
 
     return { sent: true };

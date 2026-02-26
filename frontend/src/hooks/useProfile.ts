@@ -40,6 +40,7 @@ export interface Profile {
   backgroundPattern?: string | null;
   linkStyle?: string | null;
   linkAnimation?: string | null;
+  orgId?: string | null;
   socialLinks: SocialLink[];
 }
 

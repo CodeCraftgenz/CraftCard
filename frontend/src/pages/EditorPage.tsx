@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus,
+  Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus, Lock,
   Camera, FileText, Palette, Link2, Sparkles, Eye, Smartphone, Building2, Shield,
   QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, Star, Video, UserPlus,
 } from 'lucide-react';
@@ -91,6 +91,11 @@ export function EditorPage() {
   const cards = cardsData || authCards;
 
   const { data: profile, isLoading } = useProfile(activeCardId);
+  // Check if org branding is active for this card — locks visual customization
+  const isBrandingLocked = useMemo(() => {
+    if (!profile?.orgId) return false;
+    return organizations.some((o) => o.id === profile.orgId && o.brandingActive);
+  }, [profile?.orgId, organizations]);
   const updateProfile = useUpdateProfile(activeCardId);
   const uploadPhoto = useUploadPhoto();
   const uploadCover = useUploadCover();
@@ -1472,7 +1477,17 @@ export function EditorPage() {
             </div>
 
             {/* Appearance */}
-            <div className="glass-card p-6 hover:border-white/20 transition-colors">
+            <div className="glass-card p-6 hover:border-white/20 transition-colors relative">
+              {isBrandingLocked && (
+                <div className="absolute inset-0 z-10 bg-dark-card/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 p-6">
+                  <div className="w-12 h-12 rounded-xl bg-yellow-500/10 flex items-center justify-center">
+                    <Lock size={24} className="text-yellow-400" />
+                  </div>
+                  <p className="text-sm text-white/70 text-center max-w-xs">
+                    Visual controlado pela organizacao. Contacte o administrador para alterar cores, tema ou fontes.
+                  </p>
+                </div>
+              )}
               <div className="flex items-center gap-2 mb-5">
                 <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
                   <Palette size={16} className="text-purple-400" />
@@ -1566,7 +1581,7 @@ export function EditorPage() {
             </div>
 
             {/* Visual Customization (Pro+ only) */}
-            {hasFeature('customFonts') ? (
+            {isBrandingLocked ? null : hasFeature('customFonts') ? (
               <StyleEditor
                 value={styleEditorValue}
                 onChange={handleStyleChange}

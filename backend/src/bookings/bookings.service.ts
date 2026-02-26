@@ -3,6 +3,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { InAppNotificationsService } from '../notifications/in-app-notifications.service';
+import { WebhooksService } from '../webhooks/webhooks.service';
 import { AppException } from '../common/exceptions/app.exception';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class BookingsService {
     private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService,
     private readonly inAppService: InAppNotificationsService,
+    private readonly webhooksService: WebhooksService,
   ) {}
 
   async getSlots(slug: string) {
@@ -132,6 +134,17 @@ export class BookingsService {
       title: 'Novo agendamento!',
       message: `${data.name} agendou para ${dateStr} as ${data.time}`,
       metadata: { bookingId: booking.id, name: data.name, date: dateStr, time: data.time },
+    }).catch(() => {});
+
+    // Webhook dispatch for CRM integration (fire-and-forget)
+    this.webhooksService.dispatch(profile.userId, 'new_booking', {
+      bookingId: booking.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone || null,
+      date: dateStr,
+      time: data.time,
+      notes: data.notes || null,
     }).catch(() => {});
 
     return booking;

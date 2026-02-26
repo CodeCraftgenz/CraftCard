@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Throttle } from '@nestjs/throttler';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { ProfilesService } from './profiles.service';
 import { SectionsService } from './sections.service';
 import { Public } from '../common/decorators/public.decorator';
@@ -51,7 +51,11 @@ export class ProfilesController {
   @Public()
   @Throttle({ medium: { limit: 60, ttl: 60000 } })
   @Get('profile/:slug')
-  async getPublicProfile(@Param('slug') slug: string, @Req() req: Request) {
+  async getPublicProfile(
+    @Param('slug') slug: string,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     let viewerUserId: string | undefined;
     try {
       const token =
@@ -62,6 +66,9 @@ export class ProfilesController {
         viewerUserId = payload.sub;
       }
     } catch { /* ignore invalid/expired tokens */ }
+
+    // Edge caching: allow CDN to cache public profiles for 5 min
+    res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=60');
     return this.profilesService.getBySlug(slug, viewerUserId);
   }
 

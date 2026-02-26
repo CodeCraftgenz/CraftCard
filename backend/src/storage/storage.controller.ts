@@ -1,9 +1,7 @@
 import {
   Controller,
-  Get,
   Post,
-  Param,
-  Res,
+  UseGuards,
   UseInterceptors,
   UploadedFile,
   ParseFilePipe,
@@ -11,13 +9,12 @@ import {
   FileTypeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Response } from 'express';
 import * as sharp from 'sharp';
 import { StorageService } from './storage.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
-import { Public } from '../common/decorators/public.decorator';
 import { AppException } from '../common/exceptions/app.exception';
+import { PlanGuard, RequiresFeature } from '../payments/guards/plan.guard';
 
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_RESUME_SIZE = 10 * 1024 * 1024; // 10MB
@@ -29,26 +26,6 @@ export class StorageController {
     private readonly storageService: StorageService,
     private readonly prisma: PrismaService,
   ) {}
-
-  // ── Serve photo (legacy base64 fallback) ──────────────────────────
-  @Public()
-  @Get('photos/:userId')
-  async servePhoto(@Param('userId') userId: string, @Res() res: Response) {
-    const profile = await this.prisma.profile.findFirst({
-      where: { userId, isPrimary: true },
-      select: { photoData: true },
-    });
-    if (!profile?.photoData) {
-      throw AppException.notFound('Foto');
-    }
-    const buffer = Buffer.from(profile.photoData, 'base64');
-    res.set({
-      'Content-Type': 'image/webp',
-      'Content-Length': buffer.length.toString(),
-      'Cache-Control': 'public, max-age=86400',
-    });
-    res.send(buffer);
-  }
 
   // ── Upload photo → R2 ────────────────────────────────────────────
   @Post('me/photo-upload')
@@ -76,12 +53,10 @@ export class StorageController {
     });
     if (!profile) throw AppException.notFound('Perfil');
 
-    // Delete old R2 photo if exists
     if (profile.photoUrl?.startsWith('http')) {
       this.storageService.deleteFile(profile.photoUrl).catch(() => {});
     }
 
-    // Upload to R2
     const photoUrl = await this.storageService.uploadFile(processed, 'photos', user.sub, 'webp');
 
     await this.prisma.profile.update({
@@ -90,26 +65,6 @@ export class StorageController {
     });
 
     return { url: photoUrl };
-  }
-
-  // ── Serve cover (legacy base64 fallback) ──────────────────────────
-  @Public()
-  @Get('covers/:userId')
-  async serveCover(@Param('userId') userId: string, @Res() res: Response) {
-    const profile = await this.prisma.profile.findFirst({
-      where: { userId, isPrimary: true },
-      select: { coverPhotoData: true },
-    });
-    if (!profile?.coverPhotoData) {
-      throw AppException.notFound('Capa');
-    }
-    const buffer = Buffer.from(profile.coverPhotoData, 'base64');
-    res.set({
-      'Content-Type': 'image/webp',
-      'Content-Length': buffer.length.toString(),
-      'Cache-Control': 'public, max-age=86400',
-    });
-    res.send(buffer);
   }
 
   // ── Upload cover → R2 ────────────────────────────────────────────
@@ -138,7 +93,6 @@ export class StorageController {
     });
     if (!profile) throw AppException.notFound('Perfil');
 
-    // Delete old R2 cover if exists
     if (profile.coverPhotoUrl?.startsWith('http')) {
       this.storageService.deleteFile(profile.coverPhotoUrl).catch(() => {});
     }
@@ -158,29 +112,9 @@ export class StorageController {
     return { url: coverPhotoUrl };
   }
 
-  // ── Serve resume (legacy base64 fallback) ─────────────────────────
-  @Public()
-  @Get('resume/:slug')
-  async serveResume(@Param('slug') slug: string, @Res() res: Response) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { slug },
-      select: { resumeData: true, resumeType: true, displayName: true },
-    });
-    if (!profile?.resumeData) {
-      throw AppException.notFound('Curriculo');
-    }
-    const buffer = Buffer.from(profile.resumeData, 'base64');
-    const fileName = `${(profile.displayName || 'curriculo').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Length': buffer.length.toString(),
-      'Content-Disposition': `inline; filename="${fileName}"`,
-      'Cache-Control': 'no-cache, must-revalidate',
-    });
-    res.send(buffer);
-  }
-
-  // ── Upload resume → R2 ───────────────────────────────────────────
+  // ── Upload resume → R2 (PRO+) ──────────────────────────────────
+  @UseGuards(PlanGuard)
+  @RequiresFeature('resume')
   @Post('me/resume-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadResume(
@@ -201,7 +135,6 @@ export class StorageController {
     });
     if (!profile) throw AppException.notFound('Perfil');
 
-    // Delete old R2 resume if exists
     if (profile.resumeUrl?.startsWith('http')) {
       this.storageService.deleteFile(profile.resumeUrl).catch(() => {});
     }
@@ -221,7 +154,9 @@ export class StorageController {
     return { url: resumeUrl };
   }
 
-  // ── Upload video → R2 (unchanged) ───────────────────────────────
+  // ── Upload video → R2 (PRO+) ──────────────────────────────────
+  @UseGuards(PlanGuard)
+  @RequiresFeature('video')
   @Post('me/video-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadVideo(
@@ -238,25 +173,21 @@ export class StorageController {
   ) {
     const profile = await this.prisma.profile.findFirst({
       where: { userId: user.sub, isPrimary: true },
-      select: { videoUrl: true },
+      select: { id: true, videoUrl: true },
     });
-    if (profile?.videoUrl) {
-      await this.storageService.deleteFile(profile.videoUrl);
+    if (!profile) throw AppException.notFound('Perfil');
+
+    if (profile.videoUrl) {
+      this.storageService.deleteFile(profile.videoUrl).catch(() => {});
     }
 
-    const url = await this.storageService.uploadFile(file.buffer, 'videos', user.sub, 'mp4');
-
-    const currentProfile = await this.prisma.profile.findFirst({
-      where: { userId: user.sub, isPrimary: true },
-      select: { id: true },
-    });
-    if (!currentProfile) throw AppException.notFound('Perfil');
+    const videoUrl = await this.storageService.uploadFile(file.buffer, 'videos', user.sub, 'mp4');
 
     await this.prisma.profile.update({
-      where: { id: currentProfile.id },
-      data: { videoUrl: url },
+      where: { id: profile.id },
+      data: { videoUrl },
     });
 
-    return { url };
+    return { url: videoUrl };
   }
 }

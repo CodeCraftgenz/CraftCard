@@ -344,6 +344,7 @@ model Organization {
   fontFamily     String   @default("Inter") @map("font_family") @db.VarChar(50)
   domain         String?  @db.VarChar(200)
   maxMembers     Int      @default(10) @map("max_members")
+  extraSeats     Int      @default(0) @map("extra_seats")
   brandingActive     Boolean  @default(false) @map("branding_active")
   cardTheme          String?  @default("default") @map("card_theme") @db.VarChar(20)
   linkStyle          String?  @default("rounded") @map("link_style") @db.VarChar(20)

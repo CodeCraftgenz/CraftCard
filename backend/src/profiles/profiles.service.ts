@@ -1,10 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { SlugsService } from '../slugs/slugs.service';
 import { PaymentsService } from '../payments/payments.service';
 import { AppException } from '../common/exceptions/app.exception';
-import { MemoryCache } from '../common/cache/memory-cache';
 import { getPlanLimits, FREE_THEMES } from '../payments/plan-limits';
 import { randomUUID } from 'crypto';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
@@ -18,13 +19,13 @@ const HOSTINGER_UPLOADS_URL = 'https://craftcardgenz.com/uploads';
 export class ProfilesService {
   private readonly logger = new Logger(ProfilesService.name);
   private readonly backendUrl: string;
-  private readonly slugCache = new MemoryCache<unknown>(5 * 60 * 1000); // 5min TTL
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly slugsService: SlugsService,
     private readonly paymentsService: PaymentsService,
     private readonly configService: ConfigService<EnvConfig>,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {
     this.backendUrl = this.configService.get('BACKEND_URL', { infer: true }) || '';
   }
@@ -84,7 +85,7 @@ export class ProfilesService {
       // B2B: validate org membership and seat limit
       const org = await this.prisma.organization.findUnique({
         where: { id: orgId },
-        select: { maxMembers: true },
+        select: { maxMembers: true, extraSeats: true },
       });
       if (!org) throw AppException.notFound('Organizacao');
 
@@ -93,9 +94,10 @@ export class ProfilesService {
       });
       if (!member) throw AppException.forbidden('Voce nao e membro desta organizacao');
 
+      const totalSeats = org.maxMembers + org.extraSeats;
       const orgProfileCount = await this.prisma.profile.count({ where: { orgId } });
-      if (orgProfileCount >= org.maxMembers) {
-        throw AppException.badRequest(`Limite de ${org.maxMembers} ${org.maxMembers === 1 ? 'assento' : 'assentos'} na organizacao atingido`);
+      if (orgProfileCount >= totalSeats) {
+        throw AppException.badRequest(`Limite de ${totalSeats} ${totalSeats === 1 ? 'assento' : 'assentos'} na organizacao atingido`);
       }
     } else {
       // B2C: validate personal card limit
@@ -147,7 +149,8 @@ export class ProfilesService {
   }
 
   async getBySlug(slug: string, viewerUserId?: string) {
-    const cached = this.slugCache.get(slug);
+    const cacheKey = `profile:${slug}`;
+    const cached = await this.cache.get(cacheKey);
     if (cached) return cached;
 
     const profile = await this.prisma.profile.findUnique({
@@ -205,7 +208,7 @@ export class ProfilesService {
       orgBranding,
     };
 
-    this.slugCache.set(slug, result);
+    await this.cache.set(cacheKey, result, 300000); // 5 min TTL
     return result;
   }
 
@@ -289,7 +292,7 @@ export class ProfilesService {
     });
 
     // Invalidate public page cache after update
-    this.slugCache.invalidate(profile.slug);
+    await this.cache.del(`profile:${profile.slug}`);
 
     return result;
   }

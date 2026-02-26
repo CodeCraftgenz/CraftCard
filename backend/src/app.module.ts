@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { CacheModule } from '@nestjs/cache-manager';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -35,6 +36,7 @@ import configuration from './common/config/configuration';
       { name: 'short', ttl: 1000, limit: 3 },
       { name: 'medium', ttl: 60000, limit: 100 },
     ]),
+    CacheModule.register({ isGlobal: true, ttl: 300000 }), // 5 min default TTL
     ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,

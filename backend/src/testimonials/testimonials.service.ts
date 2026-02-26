@@ -3,6 +3,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { InAppNotificationsService } from '../notifications/in-app-notifications.service';
+import { WebhooksService } from '../webhooks/webhooks.service';
 import { AppException } from '../common/exceptions/app.exception';
 import type { CreateTestimonialDto } from './dto/create-testimonial.dto';
 
@@ -13,6 +14,7 @@ export class TestimonialsService {
     private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService,
     private readonly inAppService: InAppNotificationsService,
+    private readonly webhooksService: WebhooksService,
   ) {}
 
   async submit(slug: string, data: CreateTestimonialDto) {
@@ -55,6 +57,13 @@ export class TestimonialsService {
       title: 'Novo depoimento!',
       message: `${data.authorName}: "${data.text.substring(0, 80)}"`,
       metadata: { authorName: data.authorName },
+    }).catch(() => {});
+
+    // Webhook dispatch for CRM integration (fire-and-forget)
+    this.webhooksService.dispatch(profile.userId, 'new_testimonial', {
+      authorName: data.authorName,
+      authorRole: data.authorRole || null,
+      text: data.text,
     }).catch(() => {});
 
     return { sent: true };

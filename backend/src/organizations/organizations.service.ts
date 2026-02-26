@@ -202,8 +202,9 @@ export class OrganizationsService {
       include: { _count: { select: { members: true } } },
     });
     if (!org) throw AppException.notFound('Organizacao');
-    if (org._count.members >= org.maxMembers) {
-      throw AppException.badRequest(`Limite de ${org.maxMembers} membros atingido`);
+    const totalSeats = org.maxMembers + org.extraSeats;
+    if (org._count.members >= totalSeats) {
+      throw AppException.badRequest(`Limite de ${totalSeats} membros atingido`);
     }
 
     // Check if already a member
