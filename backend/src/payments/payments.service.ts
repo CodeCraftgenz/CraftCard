@@ -22,11 +22,13 @@ const MP_STATUS_MAP: Record<string, string> = {
 
 const PLAN_PRICES: Record<string, number> = {
   PRO: 30.0,
-  BUSINESS: 299.0,
+  BUSINESS: 189.9,
+  ENTERPRISE: 299.9,
 };
 const PLAN_TITLES: Record<string, string> = {
   PRO: 'CraftCard Pro - Cartao Digital Profissional (Anual)',
   BUSINESS: 'CraftCard Business - Plano Empresarial (Anual)',
+  ENTERPRISE: 'CraftCard Enterprise - Plano Completo (Anual)',
 };
 const SUBSCRIPTION_DAYS = 365;
 
@@ -163,7 +165,7 @@ export class PaymentsService {
     return bestPlan !== 'FREE' ? bestPlan : null;
   }
 
-  async createCheckoutPreference(userId: string, email: string, plan: 'PRO' | 'BUSINESS' = 'PRO'): Promise<{ url: string }> {
+  async createCheckoutPreference(userId: string, email: string, plan: 'PRO' | 'BUSINESS' | 'ENTERPRISE' = 'PRO'): Promise<{ url: string }> {
     const planInfo = await this.getUserPlanInfo(userId);
     const planHierarchy: Record<string, number> = { FREE: 0, PRO: 1, BUSINESS: 2, ENTERPRISE: 3 };
     const currentLevel = planHierarchy[planInfo.plan] ?? 0;
@@ -176,7 +178,7 @@ export class PaymentsService {
     const price = PLAN_PRICES[plan];
     const title = PLAN_TITLES[plan];
     if (!price || !title) {
-      throw AppException.badRequest('Plano invalido. Use PRO ou BUSINESS.');
+      throw AppException.badRequest('Plano invalido. Use PRO, BUSINESS ou ENTERPRISE.');
     }
 
     const frontendUrl = this.configService.get('FRONTEND_URL', { infer: true });

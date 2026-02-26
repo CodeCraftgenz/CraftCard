@@ -24,7 +24,7 @@ describe('plan-limits', () => {
 
     it('should return BUSINESS limits for BUSINESS plan', () => {
       const limits = getPlanLimits('BUSINESS');
-      expect(limits.maxCards).toBe(1);
+      expect(limits.maxCards).toBe(3);
       expect(limits.maxLinks).toBe(50);
       expect(limits.orgDashboard).toBe(true);
       expect(limits.branding).toBe(true);

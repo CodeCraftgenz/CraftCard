@@ -139,17 +139,46 @@ export function BillingPage() {
                     features={['Ate 10 membros', '50 links', 'Dashboard org', 'Branding', 'Webhooks']}
                     onSelect={() => checkout.mutate({ plan: 'BUSINESS' })}
                     loading={checkout.isPending}
+                  />
+                  <PlanCard
+                    name="ENTERPRISE"
+                    price="R$ 299,90"
+                    period="/ano"
+                    features={['Tudo do Business', 'Dominio customizado', 'Ate 10 membros']}
+                    onSelect={() => checkout.mutate({ plan: 'ENTERPRISE' })}
+                    loading={checkout.isPending}
                     highlight
                   />
                 </>
               )}
               {billing.canUpgrade && billing.plan === 'PRO' && (
+                <>
+                  <PlanCard
+                    name="BUSINESS"
+                    price="R$ 189,90"
+                    period="/ano"
+                    features={['Ate 10 membros', '50 links', 'Dashboard org', 'Branding', 'Webhooks']}
+                    onSelect={() => checkout.mutate({ plan: 'BUSINESS' })}
+                    loading={checkout.isPending}
+                  />
+                  <PlanCard
+                    name="ENTERPRISE"
+                    price="R$ 299,90"
+                    period="/ano"
+                    features={['Tudo do Business', 'Dominio customizado', 'Ate 10 membros']}
+                    onSelect={() => checkout.mutate({ plan: 'ENTERPRISE' })}
+                    loading={checkout.isPending}
+                    highlight
+                  />
+                </>
+              )}
+              {billing.canUpgrade && billing.plan === 'BUSINESS' && (
                 <PlanCard
-                  name="BUSINESS"
-                  price="R$ 189,90"
+                  name="ENTERPRISE"
+                  price="R$ 299,90"
                   period="/ano"
-                  features={['Ate 10 membros', '50 links', 'Dashboard org', 'Branding', 'Webhooks']}
-                  onSelect={() => checkout.mutate({ plan: 'BUSINESS' })}
+                  features={['Tudo do Business', 'Dominio customizado']}
+                  onSelect={() => checkout.mutate({ plan: 'ENTERPRISE' })}
                   loading={checkout.isPending}
                   highlight
                 />
@@ -157,7 +186,7 @@ export function BillingPage() {
               {billing.canRenew && (
                 <PlanCard
                   name={billing.plan}
-                  price={billing.plan === 'PRO' ? 'R$ 30' : 'R$ 189,90'}
+                  price={billing.plan === 'PRO' ? 'R$ 30' : billing.plan === 'BUSINESS' ? 'R$ 189,90' : 'R$ 299,90'}
                   period="/ano"
                   features={['Renovar por mais 1 ano']}
                   onSelect={() => checkout.mutate({ plan: billing.plan })}

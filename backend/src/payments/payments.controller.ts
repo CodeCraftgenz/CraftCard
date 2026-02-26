@@ -16,7 +16,8 @@ export class PaymentsController {
     @CurrentUser() user: JwtPayload,
     @Body() body: { plan?: string },
   ) {
-    const plan = (body?.plan?.toUpperCase() === 'BUSINESS' ? 'BUSINESS' : 'PRO') as 'PRO' | 'BUSINESS';
+    const upperPlan = body?.plan?.toUpperCase();
+    const plan = (upperPlan === 'BUSINESS' ? 'BUSINESS' : upperPlan === 'ENTERPRISE' ? 'ENTERPRISE' : 'PRO') as 'PRO' | 'BUSINESS' | 'ENTERPRISE';
     return this.paymentsService.createCheckoutPreference(user.sub, user.email, plan);
   }
 

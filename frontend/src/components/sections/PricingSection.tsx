@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, X, ArrowRight, Building2 } from 'lucide-react';
+import { Check, X, ArrowRight, Building2, Crown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
 import { api } from '@/lib/api';
@@ -10,25 +10,27 @@ interface PlanFeature {
   free: boolean | string;
   pro: boolean | string;
   business: boolean | string;
+  enterprise: boolean | string;
 }
 
 const features: PlanFeature[] = [
-  { label: 'Cartoes pessoais', free: '1', pro: '3', business: '1' },
-  { label: 'Assentos na organizacao', free: false, pro: false, business: 'Ate 10' },
-  { label: 'Links personalizados', free: '5', pro: '20', business: '50' },
-  { label: 'Temas visuais', free: '3', pro: 'Todos', business: 'Todos' },
-  { label: 'Analytics de visitas e cliques', free: false, pro: true, business: true },
-  { label: 'Galeria de fotos', free: false, pro: true, business: true },
-  { label: 'Agendamentos online', free: false, pro: true, business: true },
-  { label: 'Depoimentos', free: false, pro: true, business: true },
-  { label: 'Servicos e FAQ', free: false, pro: true, business: true },
-  { label: 'Curriculo e video', free: false, pro: true, business: true },
-  { label: 'Customizacao visual completa', free: false, pro: true, business: true },
-  { label: 'Export de leads (CSV)', free: false, pro: true, business: true },
-  { label: 'Dashboard da organizacao', free: false, pro: false, business: true },
-  { label: 'Branding centralizado', free: false, pro: false, business: true },
-  { label: 'Webhooks e integracoes', free: false, pro: false, business: true },
-  { label: 'Marca d\'agua CraftCard', free: 'Sim', pro: 'Nao', business: 'Nao' },
+  { label: 'Cartoes pessoais', free: '1', pro: '3', business: '3', enterprise: '3' },
+  { label: 'Assentos na organizacao', free: false, pro: false, business: 'Ate 10', enterprise: 'Ate 10' },
+  { label: 'Links personalizados', free: '5', pro: '20', business: '50', enterprise: '50' },
+  { label: 'Temas visuais', free: '3', pro: 'Todos', business: 'Todos', enterprise: 'Todos' },
+  { label: 'Analytics de visitas e cliques', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Galeria de fotos', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Agendamentos online', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Depoimentos', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Servicos e FAQ', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Curriculo e video', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Customizacao visual completa', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Export de leads (CSV)', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Dashboard da organizacao', free: false, pro: false, business: true, enterprise: true },
+  { label: 'Branding centralizado', free: false, pro: false, business: true, enterprise: true },
+  { label: 'Webhooks e integracoes', free: false, pro: false, business: true, enterprise: true },
+  { label: 'Dominio customizado', free: false, pro: false, business: false, enterprise: true },
+  { label: 'Marca d\'agua CraftCard', free: 'Sim', pro: 'Nao', business: 'Nao', enterprise: 'Nao' },
 ];
 
 function FeatureRow({ label, value }: { label: string; value: boolean | string }) {
@@ -60,19 +62,19 @@ function FeatureRow({ label, value }: { label: string; value: boolean | string }
 
 export function PricingSection() {
   const { isAuthenticated } = useAuth();
-  const [businessLoading, setBusinessLoading] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
-  const handleBusinessCheckout = async () => {
+  const handleCheckout = async (plan: 'BUSINESS' | 'ENTERPRISE') => {
     if (!isAuthenticated) {
       window.location.href = '/login';
       return;
     }
-    setBusinessLoading(true);
+    setLoadingPlan(plan);
     try {
-      const data: { url: string } = await api.post('/payments/checkout', { plan: 'BUSINESS' });
+      const data: { url: string } = await api.post('/payments/checkout', { plan });
       window.location.href = data.url;
     } catch {
-      setBusinessLoading(false);
+      setLoadingPlan(null);
     }
   };
 
@@ -88,24 +90,24 @@ export function PricingSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6 items-start">
           {/* FREE */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0 }}
-            className="glass-card p-6 sm:p-8 relative flex flex-col"
+            className="glass-card p-6 relative flex flex-col"
           >
             <div className="mb-6">
               <p className="text-sm text-white/50 font-semibold uppercase tracking-wider mb-3">Free</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-extrabold text-white">R$0</span>
+                <span className="text-4xl font-extrabold text-white">R$0</span>
               </div>
               <p className="text-sm text-white/40 mt-2">Gratis para sempre</p>
             </div>
 
-            <div className="space-y-3 mb-8 flex-1">
+            <div className="space-y-2.5 mb-8 flex-1">
               {features.map((f, i) => (
                 <FeatureRow key={i} label={f.label} value={f.free} />
               ))}
@@ -113,10 +115,10 @@ export function PricingSection() {
 
             <Link
               to={isAuthenticated ? '/editor' : '/login'}
-              className="group w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-white/20 text-white font-semibold hover:bg-white/5 transition-all"
+              className="group w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-white/20 text-white font-semibold hover:bg-white/5 transition-all text-sm"
             >
               Comecar gratis
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </motion.div>
 
@@ -128,10 +130,8 @@ export function PricingSection() {
             transition={{ delay: 0.1 }}
             className="relative flex flex-col"
           >
-            {/* Gradient border effect */}
             <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-br from-brand-cyan via-brand-magenta to-brand-purple opacity-60" />
-            <div className="relative glass-card p-6 sm:p-8 flex flex-col flex-1 rounded-2xl">
-              {/* Badges */}
+            <div className="relative glass-card p-6 flex flex-col flex-1 rounded-2xl">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xs font-bold bg-gradient-to-r from-brand-cyan to-brand-magenta text-white px-2.5 py-0.5 rounded-full">
                   Mais popular
@@ -145,14 +145,14 @@ export function PricingSection() {
                 <p className="text-sm text-brand-cyan font-semibold uppercase tracking-wider mb-1">Pro</p>
                 <p className="text-xs text-white/30 mb-3">Para profissionais individuais</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-lg text-white/30 line-through">R$99,90</span>
-                  <span className="text-5xl font-extrabold gradient-text">R$30</span>
+                  <span className="text-base text-white/30 line-through">R$99,90</span>
+                  <span className="text-4xl font-extrabold gradient-text">R$30</span>
                   <span className="text-sm text-white/40">/ano</span>
                 </div>
                 <p className="text-sm text-white/40 mt-2">Menos de R$2,50 por mes</p>
               </div>
 
-              <div className="space-y-3 mb-8 flex-1">
+              <div className="space-y-2.5 mb-8 flex-1">
                 {features.map((f, i) => (
                   <FeatureRow key={i} label={f.label} value={f.pro} />
                 ))}
@@ -160,10 +160,10 @@ export function PricingSection() {
 
               <Link
                 to={isAuthenticated ? '/editor' : '/login'}
-                className="group w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl gradient-bg text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-brand-cyan/20"
+                className="group w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl gradient-bg text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-brand-cyan/20 text-sm"
               >
                 Assinar Pro
-                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           </motion.div>
@@ -174,25 +174,26 @@ export function PricingSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="glass-card p-6 sm:p-8 relative flex flex-col"
+            className="glass-card p-6 relative flex flex-col"
           >
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xs font-bold bg-white/10 text-brand-magenta px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
                 <Building2 size={12} />
-                Para empresas
+                Para equipas
               </span>
             </div>
 
             <div className="mb-6">
-              <p className="text-sm text-brand-magenta font-semibold uppercase tracking-wider mb-3">Business</p>
+              <p className="text-sm text-brand-magenta font-semibold uppercase tracking-wider mb-1">Business</p>
+              <p className="text-xs text-white/30 mb-3">Gestao de equipa centralizada</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-extrabold text-white">R$189,90</span>
+                <span className="text-4xl font-extrabold text-white">R$189,90</span>
                 <span className="text-sm text-white/40">/ano</span>
               </div>
-              <p className="text-sm text-white/40 mt-2">Ate 10 usuarios · ~R$15,83/mes</p>
+              <p className="text-sm text-white/40 mt-2">Ate 10 membros · ~R$15,83/mes</p>
             </div>
 
-            <div className="space-y-3 mb-8 flex-1">
+            <div className="space-y-2.5 mb-8 flex-1">
               {features.map((f, i) => (
                 <FeatureRow key={i} label={f.label} value={f.business} />
               ))}
@@ -200,12 +201,54 @@ export function PricingSection() {
 
             <button
               type="button"
-              onClick={handleBusinessCheckout}
-              disabled={businessLoading}
-              className="group w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-brand-magenta to-brand-purple text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-brand-magenta/20 disabled:opacity-50"
+              onClick={() => handleCheckout('BUSINESS')}
+              disabled={loadingPlan !== null}
+              className="group w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-brand-magenta to-brand-purple text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-brand-magenta/20 disabled:opacity-50 text-sm"
             >
-              {businessLoading ? 'Redirecionando...' : 'Assinar Business'}
-              {!businessLoading && <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />}
+              {loadingPlan === 'BUSINESS' ? 'Redirecionando...' : 'Assinar Business'}
+              {loadingPlan !== 'BUSINESS' && <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />}
+            </button>
+          </motion.div>
+
+          {/* ENTERPRISE */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="glass-card p-6 relative flex flex-col border-yellow-500/20"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs font-bold bg-yellow-500/10 text-yellow-400 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                <Crown size={12} />
+                Plano completo
+              </span>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-sm text-yellow-400 font-semibold uppercase tracking-wider mb-1">Enterprise</p>
+              <p className="text-xs text-white/30 mb-3">Tudo + dominio customizado</p>
+              <div className="flex items-baseline gap-1">
+                <span className="text-4xl font-extrabold text-white">R$299,90</span>
+                <span className="text-sm text-white/40">/ano</span>
+              </div>
+              <p className="text-sm text-white/40 mt-2">Ate 10 membros · ~R$24,99/mes</p>
+            </div>
+
+            <div className="space-y-2.5 mb-8 flex-1">
+              {features.map((f, i) => (
+                <FeatureRow key={i} label={f.label} value={f.enterprise} />
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleCheckout('ENTERPRISE')}
+              disabled={loadingPlan !== null}
+              className="group w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-semibold hover:opacity-90 transition-all shadow-lg shadow-yellow-500/20 disabled:opacity-50 text-sm"
+            >
+              {loadingPlan === 'ENTERPRISE' ? 'Redirecionando...' : 'Assinar Enterprise'}
+              {loadingPlan !== 'ENTERPRISE' && <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />}
             </button>
           </motion.div>
         </div>

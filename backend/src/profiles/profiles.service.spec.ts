@@ -110,12 +110,12 @@ describe('ProfilesService', () => {
       );
     });
 
-    it('should allow BUSINESS user only 1 personal card', async () => {
+    it('should throw when BUSINESS user exceeds 3 personal cards', async () => {
       prisma.user.findUnique.mockResolvedValue({ plan: 'BUSINESS' });
-      prisma.profile.count.mockResolvedValue(1);
+      prisma.profile.count.mockResolvedValue(3);
 
       await expect(service.createCard('user-1', 'Extra')).rejects.toThrow(
-        'Maximo de 1 cartao pessoal no plano BUSINESS',
+        'Maximo de 3 cartoes pessoais no plano BUSINESS',
       );
     });
   });
