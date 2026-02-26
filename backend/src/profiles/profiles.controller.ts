@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { ProfilesService } from './profiles.service';
 import { SectionsService } from './sections.service';
@@ -48,6 +49,7 @@ export class ProfilesController {
   }
 
   @Public()
+  @Throttle({ medium: { limit: 60, ttl: 60000 } })
   @Get('profile/:slug')
   async getPublicProfile(@Param('slug') slug: string, @Req() req: Request) {
     let viewerUserId: string | undefined;
@@ -209,6 +211,7 @@ export class ProfilesController {
   }
 
   @Public()
+  @Throttle({ medium: { limit: 60, ttl: 60000 } })
   @Get('profile/:slug/form-fields')
   async getPublicFormFields(@Param('slug') slug: string) {
     return this.sectionsService.getPublicFormFields(slug);

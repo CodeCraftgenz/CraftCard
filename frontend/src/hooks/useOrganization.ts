@@ -43,6 +43,7 @@ export interface OrgMember {
     name: string;
     email: string;
     avatarUrl: string | null;
+    profileSlug: string | null;
   };
 }
 

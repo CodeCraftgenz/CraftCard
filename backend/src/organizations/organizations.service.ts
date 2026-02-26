@@ -138,13 +138,27 @@ export class OrganizationsService {
   // --- Members ---
 
   async getMembers(orgId: string) {
-    return this.prisma.organizationMember.findMany({
+    const members = await this.prisma.organizationMember.findMany({
       where: { orgId },
       include: {
-        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        user: {
+          select: {
+            id: true, name: true, email: true, avatarUrl: true,
+            profiles: { where: { orgId }, select: { slug: true }, take: 1 },
+          },
+        },
       },
       orderBy: { joinedAt: 'asc' },
     });
+
+    return members.map((m) => ({
+      ...m,
+      user: {
+        ...m.user,
+        profileSlug: m.user.profiles[0]?.slug || null,
+        profiles: undefined,
+      },
+    }));
   }
 
   async updateMemberRole(orgId: string, memberId: string, callerUserId: string, newRole: string) {

@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, X, ArrowRight, Building2, Crown } from 'lucide-react';
+import { Check, X, ArrowRight, Building2, Crown, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
 import { api } from '@/lib/api';
 
 interface PlanFeature {
   label: string;
+  hint?: string;
   free: boolean | string;
   pro: boolean | string;
   business: boolean | string;
@@ -16,7 +17,7 @@ interface PlanFeature {
 const features: PlanFeature[] = [
   { label: 'Cartoes pessoais', free: '1', pro: '3', business: '3', enterprise: '3' },
   { label: 'Assentos na organizacao', free: false, pro: false, business: 'Ate 10', enterprise: 'Ate 10' },
-  { label: 'Links personalizados', free: '5', pro: '20', business: '50', enterprise: '50' },
+  { label: 'Botoes de links no cartao', hint: 'Redes sociais e links personalizados exibidos no seu cartao digital', free: '5', pro: '20', business: '50', enterprise: '50' },
   { label: 'Temas visuais', free: '3', pro: 'Todos', business: 'Todos', enterprise: 'Todos' },
   { label: 'Analytics de visitas e cliques', free: false, pro: true, business: true, enterprise: true },
   { label: 'Galeria de fotos', free: false, pro: true, business: true, enterprise: true },
@@ -29,18 +30,21 @@ const features: PlanFeature[] = [
   { label: 'Dashboard da organizacao', free: false, pro: false, business: true, enterprise: true },
   { label: 'Branding centralizado', free: false, pro: false, business: true, enterprise: true },
   { label: 'Webhooks e integracoes', free: false, pro: false, business: true, enterprise: true },
-  { label: 'Dominio customizado', free: false, pro: false, business: false, enterprise: true },
+  { label: 'Dominio customizado', hint: 'Use o endereco da sua empresa, ex: cartoes.suaempresa.com.br', free: false, pro: false, business: false, enterprise: true },
   { label: 'Marca d\'agua CraftCard', free: 'Sim', pro: 'Nao', business: 'Nao', enterprise: 'Nao' },
 ];
 
-function FeatureRow({ label, value }: { label: string; value: boolean | string }) {
+function FeatureRow({ label, hint, value }: { label: string; hint?: string; value: boolean | string }) {
   const isIncluded = value === true || (typeof value === 'string' && value !== 'false');
 
   if (typeof value === 'string') {
     return (
       <div className="flex items-center gap-3">
         <Check size={14} className="text-emerald-400 shrink-0" />
-        <span className="text-sm text-white/70 flex-1">{label}</span>
+        <span className="text-sm text-white/70 flex-1 inline-flex items-center gap-1">
+          {label}
+          {hint && <span title={hint}><Info size={12} className="text-white/25 shrink-0 cursor-help" /></span>}
+        </span>
         <span className="text-xs font-semibold text-brand-cyan bg-brand-cyan/10 px-2 py-0.5 rounded-full shrink-0">
           {value}
         </span>
@@ -55,7 +59,10 @@ function FeatureRow({ label, value }: { label: string; value: boolean | string }
       ) : (
         <X size={14} className="text-white/15 shrink-0" />
       )}
-      <span className={`text-sm ${isIncluded ? 'text-white/70' : 'text-white/25'}`}>{label}</span>
+      <span className={`text-sm inline-flex items-center gap-1 ${isIncluded ? 'text-white/70' : 'text-white/25'}`}>
+        {label}
+        {hint && <span title={hint}><Info size={12} className="text-white/25 shrink-0 cursor-help" /></span>}
+      </span>
     </div>
   );
 }
@@ -109,7 +116,7 @@ export function PricingSection() {
 
             <div className="space-y-2.5 mb-8 flex-1">
               {features.map((f, i) => (
-                <FeatureRow key={i} label={f.label} value={f.free} />
+                <FeatureRow key={i} label={f.label} hint={f.hint} value={f.free} />
               ))}
             </div>
 
@@ -154,7 +161,7 @@ export function PricingSection() {
 
               <div className="space-y-2.5 mb-8 flex-1">
                 {features.map((f, i) => (
-                  <FeatureRow key={i} label={f.label} value={f.pro} />
+                  <FeatureRow key={i} label={f.label} hint={f.hint} value={f.pro} />
                 ))}
               </div>
 
@@ -195,7 +202,7 @@ export function PricingSection() {
 
             <div className="space-y-2.5 mb-8 flex-1">
               {features.map((f, i) => (
-                <FeatureRow key={i} label={f.label} value={f.business} />
+                <FeatureRow key={i} label={f.label} hint={f.hint} value={f.business} />
               ))}
             </div>
 
@@ -237,7 +244,7 @@ export function PricingSection() {
 
             <div className="space-y-2.5 mb-8 flex-1">
               {features.map((f, i) => (
-                <FeatureRow key={i} label={f.label} value={f.enterprise} />
+                <FeatureRow key={i} label={f.label} hint={f.hint} value={f.enterprise} />
               ))}
             </div>
 

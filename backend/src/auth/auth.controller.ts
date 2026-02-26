@@ -20,7 +20,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
-  @Throttle({ short: { ttl: 60000, limit: 5 } })
+  @Throttle({ medium: { limit: 5, ttl: 60000 } })
   @Post('google')
   async googleLogin(@Body() body: unknown, @Res({ passthrough: true }) res: Response) {
     const { credential } = googleAuthSchema.parse(body);
@@ -50,7 +50,7 @@ export class AuthController {
   }
 
   @Public()
-  @Throttle({ short: { ttl: 60000, limit: 5 } })
+  @Throttle({ medium: { limit: 5, ttl: 60000 } })
   @Post('refresh')
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const currentToken = req.cookies?.[REFRESH_COOKIE];

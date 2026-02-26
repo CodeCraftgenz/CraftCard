@@ -4,8 +4,10 @@ import { motion } from 'framer-motion';
 import {
   Users, BarChart3, Mail, Settings, Plus, Trash2, Copy, Check,
   UserPlus, Shield, Crown, Download, Eye, MessageSquare, Calendar, ArrowLeft, Loader2, AlertTriangle,
+  ExternalLink, Globe,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
+import { FeatureLock } from '@/components/organisms/FeatureLock';
 import { useAuth } from '@/providers/AuthProvider';
 import {
   useOrganization,
@@ -24,7 +26,7 @@ import {
 import { AVAILABLE_FONTS } from '@/lib/google-fonts';
 import { API_URL } from '@/lib/constants';
 
-type Tab = 'overview' | 'members' | 'branding' | 'analytics' | 'leads';
+type Tab = 'overview' | 'members' | 'branding' | 'domain' | 'analytics' | 'leads';
 
 export function OrgDashboardPage() {
   const { orgId } = useParams<{ orgId: string }>();
@@ -49,6 +51,7 @@ export function OrgDashboardPage() {
     { key: 'overview', label: 'Visao Geral', icon: BarChart3 },
     { key: 'members', label: 'Membros', icon: Users },
     { key: 'branding', label: 'Branding', icon: Settings },
+    { key: 'domain', label: 'Dominio', icon: Globe },
     { key: 'analytics', label: 'Analytics', icon: Eye },
     { key: 'leads', label: 'Leads', icon: Mail },
   ];
@@ -116,6 +119,7 @@ export function OrgDashboardPage() {
         {tab === 'overview' && <OverviewTab orgId={orgId!} myRole={myRole} />}
         {tab === 'members' && <MembersTab orgId={orgId!} myRole={myRole} />}
         {tab === 'branding' && <BrandingTab orgId={orgId!} org={org} />}
+        {tab === 'domain' && <DomainTab orgId={orgId!} org={org} />}
         {tab === 'analytics' && <AnalyticsTab orgId={orgId!} />}
         {tab === 'leads' && <LeadsTab orgId={orgId!} />}
       </div>
@@ -255,6 +259,13 @@ function MembersTab({ orgId, myRole }: { orgId: string; myRole: string }) {
 
   const isOwner = myRole === 'OWNER';
   const canManageMembers = myRole === 'OWNER' || myRole === 'ADMIN';
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+
+  const copyCardLink = (slug: string) => {
+    navigator.clipboard.writeText(`${window.location.origin}/${slug}`);
+    setCopiedSlug(slug);
+    setTimeout(() => setCopiedSlug(null), 2000);
+  };
 
   const roleIcons: Record<string, typeof Crown> = { OWNER: Crown, ADMIN: Shield, MEMBER: Users };
 
@@ -349,6 +360,22 @@ function MembersTab({ orgId, myRole }: { orgId: string; myRole: string }) {
                   <p className="text-white text-sm font-medium truncate">{m.user.name}</p>
                   <p className="text-white/40 text-xs truncate">{m.user.email}</p>
                 </div>
+                {m.user.profileSlug ? (
+                  <button
+                    type="button"
+                    onClick={() => copyCardLink(m.user.profileSlug!)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-white/50 hover:text-brand-cyan hover:border-brand-cyan/30 transition-colors shrink-0"
+                    title={`${window.location.origin}/${m.user.profileSlug}`}
+                  >
+                    {copiedSlug === m.user.profileSlug ? (
+                      <><Check size={12} className="text-green-400" /> Copiado</>
+                    ) : (
+                      <><ExternalLink size={12} /> /{m.user.profileSlug}</>
+                    )}
+                  </button>
+                ) : (
+                  <span className="text-xs text-white/20 shrink-0">Sem cartao</span>
+                )}
                 {canChangeRole ? (
                   <select
                     value={m.role}
@@ -716,6 +743,122 @@ function BrandingTab({ orgId, org }: { orgId: string; org: BrandingOrg }) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// --- Domain Tab ---
+function DomainTab({ orgId, org }: { orgId: string; org: { domain: string | null } }) {
+  const { hasFeature } = useAuth();
+  const updateOrg = useUpdateOrganization(orgId);
+  const [domain, setDomain] = useState(org.domain || '');
+  const [saved, setSaved] = useState(false);
+
+  if (!hasFeature('customDomain')) {
+    return (
+      <div className="max-w-lg mx-auto">
+        <FeatureLock feature="customDomain">
+          <div />
+        </FeatureLock>
+      </div>
+    );
+  }
+
+  const handleSave = () => {
+    updateOrg.mutate({ domain: domain.trim() || null }, {
+      onSuccess: () => {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      },
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Domain input */}
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+        <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
+          <Globe size={18} className="text-brand-cyan" />
+          Dominio Customizado
+        </h3>
+        <p className="text-white/40 text-xs mb-4">
+          Use o endereco da sua empresa para seus cartoes digitais (ex: cartoes.suaempresa.com.br)
+        </p>
+        <div className="flex gap-2">
+          <input
+            value={domain}
+            onChange={(e) => setDomain(e.target.value)}
+            placeholder="cartoes.suaempresa.com.br"
+            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50"
+          />
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={updateOrg.isPending}
+            className="px-5 py-2.5 bg-brand-cyan/20 text-brand-cyan rounded-xl text-sm font-medium hover:bg-brand-cyan/30 transition-colors disabled:opacity-50"
+          >
+            {updateOrg.isPending ? 'Salvando...' : saved ? 'Salvo!' : 'Salvar'}
+          </button>
+        </div>
+      </div>
+
+      {/* DNS instructions */}
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+        <h3 className="text-white font-semibold mb-1">Configuracao DNS</h3>
+        <p className="text-white/40 text-xs mb-4">
+          Para apontar o dominio da sua empresa para a nossa plataforma, adicione o registro abaixo no painel DNS do seu provedor:
+        </p>
+
+        <div className="bg-black/30 rounded-xl p-4 border border-white/5 space-y-3">
+          <div className="grid grid-cols-3 gap-4 text-xs">
+            <div>
+              <p className="text-white/30 mb-1">Tipo</p>
+              <p className="text-brand-cyan font-mono font-semibold">CNAME</p>
+            </div>
+            <div>
+              <p className="text-white/30 mb-1">Nome / Host</p>
+              <p className="text-white font-mono">{domain || 'cartoes'}</p>
+            </div>
+            <div>
+              <p className="text-white/30 mb-1">Valor / Aponta para</p>
+              <p className="text-white font-mono">craftcardgenz.com</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-2">
+          <p className="text-white/50 text-xs flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-brand-cyan/10 text-brand-cyan flex items-center justify-center text-[10px] font-bold shrink-0">1</span>
+            Acesse o painel de DNS do seu provedor (Hostinger, GoDaddy, Cloudflare, etc.)
+          </p>
+          <p className="text-white/50 text-xs flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-brand-cyan/10 text-brand-cyan flex items-center justify-center text-[10px] font-bold shrink-0">2</span>
+            Adicione um registro CNAME com os valores acima
+          </p>
+          <p className="text-white/50 text-xs flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-brand-cyan/10 text-brand-cyan flex items-center justify-center text-[10px] font-bold shrink-0">3</span>
+            Aguarde ate 24h para a propagacao DNS completar
+          </p>
+          <p className="text-white/50 text-xs flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-brand-cyan/10 text-brand-cyan flex items-center justify-center text-[10px] font-bold shrink-0">4</span>
+            Os cartoes da equipe ficarao acessiveis em {domain ? `https://${domain}/slug` : 'https://seudominio.com/slug'}
+          </p>
+        </div>
+      </div>
+
+      {/* Status */}
+      {org.domain && (
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h3 className="text-white font-semibold mb-3 text-sm">Status</h3>
+          <div className="flex items-center gap-3">
+            <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" />
+            <div>
+              <p className="text-white text-sm font-medium">{org.domain}</p>
+              <p className="text-white/40 text-xs">Aguardando verificacao de DNS</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
