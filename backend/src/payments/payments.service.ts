@@ -327,8 +327,9 @@ export class PaymentsService {
             const now = new Date();
             const expiresAt = new Date(now.getTime() + SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000);
 
-            await this.prisma.payment.update({
-              where: { id: payment.id },
+            // Atomic update to prevent race with concurrent webhook processing
+            const { count } = await this.prisma.payment.updateMany({
+              where: { id: payment.id, status: { not: 'approved' } },
               data: {
                 status: 'approved',
                 mpPaymentId: String(mpPayment.id),
@@ -337,6 +338,11 @@ export class PaymentsService {
                 expiresAt,
               },
             });
+
+            if (count === 0) {
+              this.logger.log(`Payment already approved by concurrent process: ${payment.id}`);
+              return { synced: true, status: 'approved' };
+            }
 
             // Sync user plan (use plan from payment record, fallback PRO for old records)
             const targetPlan = payment.plan || 'PRO';
@@ -474,7 +480,7 @@ export class PaymentsService {
 
     const newStatus = MP_STATUS_MAP[mpPayment.status] || 'pending';
 
-    // Idempotency check
+    // Deduplication: skip if we already processed this exact MP payment ID
     const existing = await this.prisma.payment.findUnique({
       where: { id: externalRef },
     });
@@ -485,15 +491,25 @@ export class PaymentsService {
     }
 
     if (existing.status === 'approved') {
-      this.logger.log(`Payment already approved: ${externalRef}`);
+      this.logger.log(`Payment already approved, skipping: ${externalRef} (MP: ${mpPaymentId})`);
+      return;
+    }
+
+    if (existing.mpPaymentId === String(mpPaymentId) && existing.status === newStatus) {
+      this.logger.log(`Duplicate webhook for same MP payment and status, skipping: ${externalRef}`);
       return;
     }
 
     const now = new Date();
     const expiresAt = new Date(now.getTime() + SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000);
 
-    await this.prisma.payment.update({
-      where: { id: externalRef },
+    // Atomic update: only update if status has NOT been set to 'approved' by a concurrent request.
+    // This prevents race conditions when duplicate webhooks arrive simultaneously.
+    const { count } = await this.prisma.payment.updateMany({
+      where: {
+        id: externalRef,
+        status: { not: 'approved' },
+      },
       data: {
         status: newStatus,
         mpPaymentId: String(mpPaymentId),
@@ -502,6 +518,11 @@ export class PaymentsService {
         expiresAt: newStatus === 'approved' ? expiresAt : undefined,
       },
     });
+
+    if (count === 0) {
+      this.logger.log(`Payment already approved by concurrent request, skipping: ${externalRef}`);
+      return;
+    }
 
     // Sync user plan on approval (use plan from payment record, fallback PRO for old records)
     if (newStatus === 'approved') {

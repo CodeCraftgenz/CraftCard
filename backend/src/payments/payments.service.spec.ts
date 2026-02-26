@@ -6,16 +6,17 @@ import { MailService } from '../mail/mail.service';
 
 describe('PaymentsService', () => {
   let service: PaymentsService;
+  let mailMock: { sendPaymentConfirmation: jest.Mock };
   let prisma: {
     user: { findUnique: jest.Mock; findFirst: jest.Mock; findMany: jest.Mock; update: jest.Mock };
-    payment: { findFirst: jest.Mock; findMany: jest.Mock; create: jest.Mock; update: jest.Mock; findUnique: jest.Mock };
+    payment: { findFirst: jest.Mock; findMany: jest.Mock; create: jest.Mock; update: jest.Mock; updateMany: jest.Mock; findUnique: jest.Mock };
     organizationMember: { findMany: jest.Mock };
   };
 
   beforeEach(async () => {
     prisma = {
       user: { findUnique: jest.fn(), findFirst: jest.fn(), findMany: jest.fn(), update: jest.fn() },
-      payment: { findFirst: jest.fn(), findMany: jest.fn(), create: jest.fn(), update: jest.fn(), findUnique: jest.fn() },
+      payment: { findFirst: jest.fn(), findMany: jest.fn(), create: jest.fn(), update: jest.fn(), updateMany: jest.fn(), findUnique: jest.fn() },
       organizationMember: { findMany: jest.fn() },
     };
 
@@ -34,7 +35,7 @@ describe('PaymentsService', () => {
       }),
     };
 
-    const mailMock = {
+    mailMock = {
       sendPaymentConfirmation: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -48,6 +49,10 @@ describe('PaymentsService', () => {
     }).compile();
 
     service = module.get<PaymentsService>(PaymentsService);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('getUserPlanInfo', () => {
@@ -168,6 +173,160 @@ describe('PaymentsService', () => {
         { xSignature: undefined, xRequestId: undefined },
       );
       expect(prisma.payment.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('webhook idempotency', () => {
+    const mpPaymentId = 'mp-pay-123';
+    const paymentId = 'pay-uuid-1';
+    const mockMpResponse = (status: string) => ({
+      ok: true,
+      json: () => Promise.resolve({
+        id: mpPaymentId,
+        status,
+        external_reference: paymentId,
+        transaction_amount: 30,
+      }),
+    });
+
+    beforeEach(() => {
+      // Default: MP API returns approved payment
+      jest.spyOn(global, 'fetch').mockResolvedValue(mockMpResponse('approved') as unknown as Response);
+    });
+
+    it('should skip if payment record is already approved', async () => {
+      prisma.payment.findUnique.mockResolvedValue({
+        id: paymentId, userId: 'user-1', status: 'approved', plan: 'PRO', mpPaymentId: null,
+      });
+
+      await service.handleWebhook(
+        { type: 'payment', data: { id: mpPaymentId } },
+        { xSignature: undefined, xRequestId: undefined },
+      );
+
+      expect(prisma.payment.updateMany).not.toHaveBeenCalled();
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('should skip duplicate webhook with same mpPaymentId and status', async () => {
+      jest.spyOn(global, 'fetch').mockResolvedValue(mockMpResponse('pending') as unknown as Response);
+      prisma.payment.findUnique.mockResolvedValue({
+        id: paymentId, userId: 'user-1', status: 'pending', plan: 'PRO', mpPaymentId: mpPaymentId,
+      });
+
+      await service.handleWebhook(
+        { type: 'payment', data: { id: mpPaymentId } },
+        { xSignature: undefined, xRequestId: undefined },
+      );
+
+      expect(prisma.payment.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('should approve payment atomically (updateMany with status guard)', async () => {
+      prisma.payment.findUnique.mockResolvedValue({
+        id: paymentId, userId: 'user-1', status: 'pending', plan: 'PRO', mpPaymentId: null,
+      });
+      prisma.payment.updateMany.mockResolvedValue({ count: 1 });
+      prisma.user.update.mockResolvedValue({});
+      prisma.user.findUnique.mockResolvedValue({ email: 'user@test.com', name: 'Test' });
+
+      await service.handleWebhook(
+        { type: 'payment', data: { id: mpPaymentId } },
+        { xSignature: undefined, xRequestId: undefined },
+      );
+
+      // Verify atomic update was called with status guard
+      expect(prisma.payment.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: paymentId, status: { not: 'approved' } },
+          data: expect.objectContaining({ status: 'approved' }),
+        }),
+      );
+
+      // Verify user plan was updated
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { plan: 'PRO' },
+      });
+
+      // Verify email was sent
+      expect(mailMock.sendPaymentConfirmation).toHaveBeenCalledWith('user@test.com', 'Test', 'PRO');
+    });
+
+    it('should NOT activate plan when atomic update returns count=0 (concurrent race)', async () => {
+      prisma.payment.findUnique.mockResolvedValue({
+        id: paymentId, userId: 'user-1', status: 'pending', plan: 'PRO', mpPaymentId: null,
+      });
+      // Simulate: another concurrent request already approved it
+      prisma.payment.updateMany.mockResolvedValue({ count: 0 });
+
+      await service.handleWebhook(
+        { type: 'payment', data: { id: mpPaymentId } },
+        { xSignature: undefined, xRequestId: undefined },
+      );
+
+      // User plan should NOT be updated (concurrent request handled it)
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(mailMock.sendPaymentConfirmation).not.toHaveBeenCalled();
+    });
+
+    it('should handle non-approved status without activating plan', async () => {
+      jest.spyOn(global, 'fetch').mockResolvedValue(mockMpResponse('pending') as unknown as Response);
+      prisma.payment.findUnique.mockResolvedValue({
+        id: paymentId, userId: 'user-1', status: 'pending', plan: 'PRO', mpPaymentId: null,
+      });
+      prisma.payment.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.handleWebhook(
+        { type: 'payment', data: { id: mpPaymentId } },
+        { xSignature: undefined, xRequestId: undefined },
+      );
+
+      // Status update should happen, but no plan activation
+      expect(prisma.payment.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'pending' }),
+        }),
+      );
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(mailMock.sendPaymentConfirmation).not.toHaveBeenCalled();
+    });
+
+    it('should handle MP API failure gracefully', async () => {
+      jest.spyOn(global, 'fetch').mockResolvedValue({ ok: false, status: 500 } as Response);
+
+      await service.handleWebhook(
+        { type: 'payment', data: { id: mpPaymentId } },
+        { xSignature: undefined, xRequestId: undefined },
+      );
+
+      expect(prisma.payment.findUnique).not.toHaveBeenCalled();
+      expect(prisma.payment.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('should handle missing external_reference in MP response', async () => {
+      jest.spyOn(global, 'fetch').mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ id: mpPaymentId, status: 'approved' }),
+      } as unknown as Response);
+
+      await service.handleWebhook(
+        { type: 'payment', data: { id: mpPaymentId } },
+        { xSignature: undefined, xRequestId: undefined },
+      );
+
+      expect(prisma.payment.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('should handle payment record not found in database', async () => {
+      prisma.payment.findUnique.mockResolvedValue(null);
+
+      await service.handleWebhook(
+        { type: 'payment', data: { id: mpPaymentId } },
+        { xSignature: undefined, xRequestId: undefined },
+      );
+
+      expect(prisma.payment.updateMany).not.toHaveBeenCalled();
     });
   });
 
