@@ -10,13 +10,13 @@ import { randomUUID } from 'crypto';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
 import type { EnvConfig } from '../common/config/env.config';
 
-/** Old Hostinger subdomain — URLs stored before domain migration */
+/** Legacy Hostinger URLs — files still served from there, new uploads go to R2 */
 const OLD_UPLOAD_HOST = 'https://azure-eagle-617866.hostingersite.com/uploads';
+const HOSTINGER_UPLOADS_URL = 'https://craftcardgenz.com/uploads';
 
 @Injectable()
 export class ProfilesService {
   private readonly logger = new Logger(ProfilesService.name);
-  private readonly uploadsPublicUrl: string;
   private readonly backendUrl: string;
   private readonly slugCache = new MemoryCache<unknown>(5 * 60 * 1000); // 5min TTL
 
@@ -26,15 +26,14 @@ export class ProfilesService {
     private readonly paymentsService: PaymentsService,
     private readonly configService: ConfigService<EnvConfig>,
   ) {
-    this.uploadsPublicUrl = this.configService.get('UPLOADS_PUBLIC_URL', { infer: true }) || '';
     this.backendUrl = this.configService.get('BACKEND_URL', { infer: true }) || '';
   }
 
   /** Rewrite URLs that still reference the old Hostinger subdomain */
   private migrateUrl(url: string | null): string | null {
-    if (!url || !this.uploadsPublicUrl) return url;
+    if (!url) return url;
     if (url.startsWith(OLD_UPLOAD_HOST)) {
-      return url.replace(OLD_UPLOAD_HOST, this.uploadsPublicUrl);
+      return url.replace(OLD_UPLOAD_HOST, HOSTINGER_UPLOADS_URL);
     }
     return url;
   }

@@ -50,7 +50,7 @@ export class StorageController {
     res.send(buffer);
   }
 
-  // ── Upload photo → FTP ────────────────────────────────────────────
+  // ── Upload photo → R2 ────────────────────────────────────────────
   @Post('me/photo-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadPhoto(
@@ -76,12 +76,12 @@ export class StorageController {
     });
     if (!profile) throw AppException.notFound('Perfil');
 
-    // Delete old FTP photo if exists
+    // Delete old R2 photo if exists
     if (profile.photoUrl?.startsWith('http')) {
       this.storageService.deleteFile(profile.photoUrl).catch(() => {});
     }
 
-    // Upload to FTP
+    // Upload to R2
     const photoUrl = await this.storageService.uploadFile(processed, 'photos', user.sub, 'webp');
 
     await this.prisma.profile.update({
@@ -112,7 +112,7 @@ export class StorageController {
     res.send(buffer);
   }
 
-  // ── Upload cover → FTP ────────────────────────────────────────────
+  // ── Upload cover → R2 ────────────────────────────────────────────
   @Post('me/cover-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadCover(
@@ -138,7 +138,7 @@ export class StorageController {
     });
     if (!profile) throw AppException.notFound('Perfil');
 
-    // Delete old FTP cover if exists
+    // Delete old R2 cover if exists
     if (profile.coverPhotoUrl?.startsWith('http')) {
       this.storageService.deleteFile(profile.coverPhotoUrl).catch(() => {});
     }
@@ -180,7 +180,7 @@ export class StorageController {
     res.send(buffer);
   }
 
-  // ── Upload resume → FTP ───────────────────────────────────────────
+  // ── Upload resume → R2 ───────────────────────────────────────────
   @Post('me/resume-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadResume(
@@ -201,7 +201,7 @@ export class StorageController {
     });
     if (!profile) throw AppException.notFound('Perfil');
 
-    // Delete old FTP resume if exists
+    // Delete old R2 resume if exists
     if (profile.resumeUrl?.startsWith('http')) {
       this.storageService.deleteFile(profile.resumeUrl).catch(() => {});
     }
@@ -221,7 +221,7 @@ export class StorageController {
     return { url: resumeUrl };
   }
 
-  // ── Upload video → FTP (unchanged) ───────────────────────────────
+  // ── Upload video → R2 (unchanged) ───────────────────────────────
   @Post('me/video-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadVideo(

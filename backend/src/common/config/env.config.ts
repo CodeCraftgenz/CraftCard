@@ -17,11 +17,11 @@ export const envSchema = z.object({
   MP_WEBHOOK_SECRET: z.string().min(1),
   MP_PUBLIC_KEY: z.string().min(1),
 
-  FTP_HOST: z.string().min(1),
-  FTP_USER: z.string().min(1),
-  FTP_PASSWORD: z.string().min(1),
-  FTP_BASE_PATH: z.string().default('/public_html/uploads'),
-  UPLOADS_PUBLIC_URL: z.string().url(),
+  R2_ACCOUNT_ID: z.string().min(1),
+  R2_ACCESS_KEY_ID: z.string().min(1),
+  R2_SECRET_ACCESS_KEY: z.string().min(1),
+  R2_BUCKET_NAME: z.string().min(1),
+  R2_PUBLIC_URL: z.string().url(),
 
   BACKEND_URL: z.string().default('http://localhost:3000'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),

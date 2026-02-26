@@ -54,7 +54,6 @@ describe('ProfilesService', () => {
     const configMock = {
       get: jest.fn((key: string) => {
         const values: Record<string, string> = {
-          UPLOADS_PUBLIC_URL: 'https://craftcardgenz.com/uploads',
           BACKEND_URL: 'https://craftcard.onrender.com',
         };
         return values[key];
