@@ -10,6 +10,26 @@ export interface DashboardStats {
   usersByPlan: Record<string, number>;
   newUsersLast30Days: { date: string; count: number }[];
   revenue: { total: number; last30Days: number };
+  totalViews: number;
+  totalMessages: number;
+  conversionRate: number;
+  expiringSubscriptions: number;
+  revenueLast30Days: { date: string; amount: number }[];
+  topProfiles: { displayName: string; slug: string; viewCount: number }[];
+  featureAdoption: {
+    published: { count: number; pct: number };
+    leadCapture: { count: number; pct: number };
+    booking: { count: number; pct: number };
+  };
+  deviceDistribution: { device: string; count: number }[];
+  recentLeads: {
+    id: string;
+    senderName: string;
+    senderEmail: string | null;
+    createdAt: string;
+    profile: { displayName: string; slug: string };
+  }[];
+  recentActivity: { type: 'signup' | 'payment' | 'message'; label: string; date: string }[];
 }
 
 export interface AdminUser {

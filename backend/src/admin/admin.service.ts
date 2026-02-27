@@ -11,33 +11,110 @@ export class AdminService {
   // --- Dashboard ---
 
   async getDashboardStats() {
-    const [totalUsers, totalProfiles, totalOrgs] = await Promise.all([
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
+    const [
+      totalUsers,
+      totalProfiles,
+      totalOrgs,
+      planCounts,
+      recentUsers,
+      revenueAgg,
+      revenueLastMonth,
+      // New queries
+      totalViewsAgg,
+      totalMessages,
+      expiringSubscriptions,
+      recentPayments,
+      topProfiles,
+      publishedCount,
+      leadCaptureCount,
+      bookingEnabledCount,
+      deviceCounts,
+      recentLeads,
+      recentNewUsers,
+      recentApprovedPayments,
+      recentContactMessages,
+    ] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.profile.count(),
       this.prisma.organization.count(),
+      this.prisma.user.groupBy({ by: ['plan'], _count: true }),
+      this.prisma.user.findMany({
+        where: { createdAt: { gte: thirtyDaysAgo } },
+        select: { createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.payment.aggregate({ where: { status: 'approved' }, _sum: { amount: true } }),
+      this.prisma.payment.aggregate({ where: { status: 'approved', paidAt: { gte: thirtyDaysAgo } }, _sum: { amount: true } }),
+      // Total views
+      this.prisma.profile.aggregate({ _sum: { viewCount: true } }),
+      // Total messages
+      this.prisma.contactMessage.count(),
+      // Expiring subscriptions (next 7 days)
+      this.prisma.payment.count({
+        where: { status: 'approved', expiresAt: { gte: new Date(), lte: sevenDaysFromNow } },
+      }),
+      // Recent payments for daily revenue chart
+      this.prisma.payment.findMany({
+        where: { status: 'approved', paidAt: { gte: thirtyDaysAgo } },
+        select: { amount: true, paidAt: true },
+        orderBy: { paidAt: 'asc' },
+      }),
+      // Top 5 most viewed profiles
+      this.prisma.profile.findMany({
+        where: { isPublished: true },
+        select: { displayName: true, slug: true, viewCount: true },
+        orderBy: { viewCount: 'desc' },
+        take: 5,
+      }),
+      // Feature adoption counts
+      this.prisma.profile.count({ where: { isPublished: true } }),
+      this.prisma.profile.count({ where: { leadCaptureEnabled: true } }),
+      this.prisma.profile.count({ where: { bookingEnabled: true } }),
+      // Device distribution
+      this.prisma.viewEvent.groupBy({ by: ['device'], _count: true, where: { device: { not: null } } }),
+      // 5 most recent unread leads
+      this.prisma.contactMessage.findMany({
+        where: { isRead: false },
+        select: {
+          id: true, senderName: true, senderEmail: true, createdAt: true,
+          profile: { select: { displayName: true, slug: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+      // Recent activity data
+      this.prisma.user.findMany({
+        select: { name: true, email: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
+      this.prisma.payment.findMany({
+        where: { status: 'approved' },
+        select: { amount: true, plan: true, paidAt: true, user: { select: { name: true } } },
+        orderBy: { paidAt: 'desc' },
+        take: 10,
+      }),
+      this.prisma.contactMessage.findMany({
+        select: { senderName: true, createdAt: true, profile: { select: { displayName: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
     ]);
 
     // Users by plan
-    const planCounts = await this.prisma.user.groupBy({
-      by: ['plan'],
-      _count: true,
-    });
     const usersByPlan: Record<string, number> = { FREE: 0, PRO: 0, BUSINESS: 0, ENTERPRISE: 0 };
     for (const row of planCounts) {
       usersByPlan[row.plan] = row._count;
     }
 
     // New users last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    thirtyDaysAgo.setHours(0, 0, 0, 0);
-
-    const recentUsers = await this.prisma.user.findMany({
-      where: { createdAt: { gte: thirtyDaysAgo } },
-      select: { createdAt: true },
-      orderBy: { createdAt: 'asc' },
-    });
-
     const dailyMap = new Map<string, number>();
     for (const u of recentUsers) {
       const key = u.createdAt.toISOString().split('T')[0];
@@ -45,15 +122,50 @@ export class AdminService {
     }
     const newUsersLast30Days = Array.from(dailyMap.entries()).map(([date, count]) => ({ date, count }));
 
-    // Revenue
-    const revenueAgg = await this.prisma.payment.aggregate({
-      where: { status: 'approved' },
-      _sum: { amount: true },
-    });
-    const revenueLastMonth = await this.prisma.payment.aggregate({
-      where: { status: 'approved', paidAt: { gte: thirtyDaysAgo } },
-      _sum: { amount: true },
-    });
+    // Conversion rate
+    const conversionRate = totalProfiles > 0 ? (publishedCount / totalProfiles) * 100 : 0;
+
+    // Revenue daily chart
+    const revenueDailyMap = new Map<string, number>();
+    for (const p of recentPayments) {
+      if (p.paidAt) {
+        const key = p.paidAt.toISOString().split('T')[0];
+        revenueDailyMap.set(key, (revenueDailyMap.get(key) || 0) + Number(p.amount));
+      }
+    }
+    const revenueLast30Days = Array.from(revenueDailyMap.entries()).map(([date, amount]) => ({ date, amount }));
+
+    // Feature adoption
+    const featureAdoption = {
+      published: { count: publishedCount, pct: totalProfiles > 0 ? Math.round((publishedCount / totalProfiles) * 100) : 0 },
+      leadCapture: { count: leadCaptureCount, pct: totalProfiles > 0 ? Math.round((leadCaptureCount / totalProfiles) * 100) : 0 },
+      booking: { count: bookingEnabledCount, pct: totalProfiles > 0 ? Math.round((bookingEnabledCount / totalProfiles) * 100) : 0 },
+    };
+
+    // Device distribution
+    const deviceDistribution = deviceCounts.map((d) => ({
+      device: d.device || 'unknown',
+      count: d._count,
+    }));
+
+    // Activity feed (merge + sort by date, take 10)
+    const recentActivity = [
+      ...recentNewUsers.map((u) => ({ type: 'signup' as const, label: u.name || u.email, date: u.createdAt })),
+      ...recentApprovedPayments
+        .filter((p) => p.paidAt)
+        .map((p) => ({
+          type: 'payment' as const,
+          label: `${p.user.name || 'Usuario'} — R$${Number(p.amount).toFixed(2)} (${p.plan})`,
+          date: p.paidAt!,
+        })),
+      ...recentContactMessages.map((m) => ({
+        type: 'message' as const,
+        label: `${m.senderName} → ${m.profile.displayName}`,
+        date: m.createdAt,
+      })),
+    ]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 10);
 
     return {
       totalUsers,
@@ -65,6 +177,16 @@ export class AdminService {
         total: Number(revenueAgg._sum.amount || 0),
         last30Days: Number(revenueLastMonth._sum.amount || 0),
       },
+      totalViews: Number(totalViewsAgg._sum.viewCount || 0),
+      totalMessages,
+      conversionRate: Math.round(conversionRate * 10) / 10,
+      expiringSubscriptions,
+      revenueLast30Days,
+      topProfiles,
+      featureAdoption,
+      deviceDistribution,
+      recentLeads,
+      recentActivity,
     };
   }
 

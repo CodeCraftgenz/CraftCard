@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Users, CreditCard, Building2, ArrowLeft,
   Search, Trash2, Crown, Shield, ChevronRight, Save, X,
+  Eye, MessageSquare, TrendingUp, Clock, Smartphone, Monitor, Tablet,
+  UserPlus, DollarSign, Mail,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
 import { Pagination } from '@/components/atoms/Pagination';
@@ -92,6 +94,18 @@ export function AdminPage() {
 
 // --- Dashboard Tab ---
 
+const DEVICE_ICONS: Record<string, typeof Monitor> = {
+  desktop: Monitor,
+  mobile: Smartphone,
+  tablet: Tablet,
+};
+
+const ACTIVITY_STYLES: Record<string, { icon: typeof UserPlus; color: string }> = {
+  signup: { icon: UserPlus, color: 'text-green-400' },
+  payment: { icon: DollarSign, color: 'text-blue-400' },
+  message: { icon: Mail, color: 'text-yellow-400' },
+};
+
 function DashboardTab() {
   const { data: stats } = useAdminDashboard();
 
@@ -101,11 +115,20 @@ function DashboardTab() {
 
   return (
     <div className="space-y-6">
+      {/* KPI Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Total Usuarios" value={stats.totalUsers} />
+        <StatCard label="Total Usuarios" value={stats.totalUsers} icon={Users} />
         <StatCard label="Total Perfis" value={stats.totalProfiles} />
-        <StatCard label="Total Organizacoes" value={stats.totalOrgs} />
-        <StatCard label="Receita Total" value={`R$ ${stats.revenue.total.toFixed(2)}`} />
+        <StatCard label="Total Organizacoes" value={stats.totalOrgs} icon={Building2} />
+        <StatCard label="Receita Total" value={`R$ ${stats.revenue.total.toFixed(2)}`} icon={CreditCard} />
+      </div>
+
+      {/* KPI Row 2 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard label="Total Views" value={stats.totalViews} icon={Eye} />
+        <StatCard label="Total Mensagens" value={stats.totalMessages} icon={MessageSquare} />
+        <StatCard label="Taxa de Conversao" value={`${stats.conversionRate}%`} icon={TrendingUp} />
+        <StatCard label="Assinaturas Expirando" value={stats.expiringSubscriptions} icon={Clock} />
       </div>
 
       {/* Plan distribution */}
@@ -130,10 +153,181 @@ function DashboardTab() {
         </div>
       </div>
 
-      {/* Revenue last 30 days */}
-      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h3 className="text-white font-semibold mb-2">Receita ultimos 30 dias</h3>
-        <p className="text-2xl font-bold text-brand-cyan">R$ {stats.revenue.last30Days.toFixed(2)}</p>
+      {/* Revenue daily chart (30 days) */}
+      {stats.revenueLast30Days && stats.revenueLast30Days.length > 0 && (
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-white font-semibold">Receita Diaria (30 dias)</h3>
+            <span className="text-brand-cyan font-bold text-lg">R$ {stats.revenue.last30Days.toFixed(2)}</span>
+          </div>
+          <div className="flex items-end gap-1 h-32">
+            {stats.revenueLast30Days.map((d) => {
+              const max = Math.max(...stats.revenueLast30Days.map((x) => x.amount), 1);
+              return (
+                <div
+                  key={d.date}
+                  className="flex-1 bg-green-500/40 rounded-t hover:bg-green-500/60 transition-colors"
+                  style={{ height: `${(d.amount / max) * 100}%`, minHeight: d.amount > 0 ? '4px' : '0' }}
+                  title={`${d.date}: R$ ${d.amount.toFixed(2)}`}
+                />
+              );
+            })}
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-[10px] text-white/30">{stats.revenueLast30Days[0]?.date.slice(5)}</span>
+            <span className="text-[10px] text-white/30">{stats.revenueLast30Days[stats.revenueLast30Days.length - 1]?.date.slice(5)}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Top Profiles + Feature Adoption (2-col) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Top 5 Profiles */}
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h3 className="text-white font-semibold mb-4">Top 5 Perfis Mais Visitados</h3>
+          {stats.topProfiles && stats.topProfiles.length > 0 ? (
+            <div className="space-y-3">
+              {stats.topProfiles.map((p, i) => (
+                <div key={p.slug} className="flex items-center gap-3">
+                  <span className="text-brand-cyan font-bold text-sm w-6">#{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm truncate">{p.displayName}</p>
+                    <p className="text-white/40 text-xs truncate">/{p.slug}</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-white/60">
+                    <Eye size={12} />
+                    <span className="text-xs font-medium">{p.viewCount.toLocaleString('pt-BR')}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-white/30 text-sm text-center py-4">Nenhum perfil publicado</p>
+          )}
+        </div>
+
+        {/* Feature Adoption */}
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h3 className="text-white font-semibold mb-4">Adocao de Recursos</h3>
+          {stats.featureAdoption && (
+            <div className="space-y-4">
+              {([
+                { key: 'published' as const, label: 'Perfis Publicados', color: 'bg-green-500/50' },
+                { key: 'leadCapture' as const, label: 'Lead Capture Ativo', color: 'bg-blue-500/50' },
+                { key: 'booking' as const, label: 'Agendamento Ativo', color: 'bg-purple-500/50' },
+              ]).map(({ key, label, color }) => {
+                const data = stats.featureAdoption[key];
+                return (
+                  <div key={key}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-white/70 text-sm">{label}</span>
+                      <span className="text-white/50 text-xs">{data.count} ({data.pct}%)</span>
+                    </div>
+                    <div className="bg-white/5 rounded-full h-4 overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${data.pct}%` }}
+                        transition={{ duration: 0.6 }}
+                        className={`h-full ${color} rounded-full`}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Device Distribution */}
+      {stats.deviceDistribution && stats.deviceDistribution.length > 0 && (
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h3 className="text-white font-semibold mb-4">Distribuicao de Dispositivos</h3>
+          <div className="space-y-3">
+            {(() => {
+              const maxDevice = Math.max(...stats.deviceDistribution.map((d) => d.count), 1);
+              const totalDevices = stats.deviceDistribution.reduce((sum, d) => sum + d.count, 0);
+              return stats.deviceDistribution.map((d) => {
+                const DeviceIcon = DEVICE_ICONS[d.device] || Monitor;
+                const pct = totalDevices > 0 ? Math.round((d.count / totalDevices) * 100) : 0;
+                return (
+                  <div key={d.device} className="flex items-center gap-3">
+                    <DeviceIcon size={16} className="text-white/50 shrink-0" />
+                    <span className="text-white/70 text-sm w-16 capitalize">{d.device}</span>
+                    <div className="flex-1 bg-white/5 rounded-full h-5 overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(d.count / maxDevice) * 100}%` }}
+                        transition={{ duration: 0.6 }}
+                        className="h-full bg-brand-cyan/40 rounded-full flex items-center justify-end pr-2"
+                      >
+                        <span className="text-[10px] text-white font-medium">{d.count}</span>
+                      </motion.div>
+                    </div>
+                    <span className="text-white/40 text-xs w-10 text-right">{pct}%</span>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Recent Leads + Activity Feed (2-col) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Recent Unread Leads */}
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h3 className="text-white font-semibold mb-4">Leads Recentes (Nao Lidos)</h3>
+          {stats.recentLeads && stats.recentLeads.length > 0 ? (
+            <div className="space-y-3">
+              {stats.recentLeads.map((lead) => (
+                <div key={lead.id} className="flex items-start gap-3 py-2 border-b border-white/5 last:border-0">
+                  <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <Mail size={14} className="text-yellow-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm truncate">{lead.senderName}</p>
+                    <p className="text-white/40 text-xs truncate">{lead.senderEmail || 'Sem email'}</p>
+                    <p className="text-white/30 text-[10px] mt-0.5">→ {lead.profile.displayName}</p>
+                  </div>
+                  <span className="text-white/30 text-[10px] shrink-0">
+                    {new Date(lead.createdAt).toLocaleDateString('pt-BR')}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-white/30 text-sm text-center py-4">Nenhum lead nao lido</p>
+          )}
+        </div>
+
+        {/* Activity Feed */}
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h3 className="text-white font-semibold mb-4">Atividade Recente</h3>
+          {stats.recentActivity && stats.recentActivity.length > 0 ? (
+            <div className="space-y-3">
+              {stats.recentActivity.map((a, i) => {
+                const style = ACTIVITY_STYLES[a.type] || ACTIVITY_STYLES.signup;
+                const Icon = style.icon;
+                return (
+                  <div key={i} className="flex items-start gap-3 py-1.5">
+                    <div className={`w-6 h-6 rounded-full bg-white/5 flex items-center justify-center shrink-0 mt-0.5`}>
+                      <Icon size={12} className={style.color} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white/70 text-sm truncate">{a.label}</p>
+                    </div>
+                    <span className="text-white/30 text-[10px] shrink-0">
+                      {new Date(a.date).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-white/30 text-sm text-center py-4">Sem atividade recente</p>
+          )}
+        </div>
       </div>
 
       {/* New users chart */}
@@ -598,14 +792,21 @@ function OrgDetailPanel({ orgId, onClose }: { orgId: string; onClose: () => void
 
 // --- Shared ---
 
-function StatCard({ label, value }: { label: string; value: number | string }) {
+function StatCard({ label, value, icon: Icon }: {
+  label: string;
+  value: number | string;
+  icon?: typeof Users;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-white/5 rounded-2xl p-4 border border-white/10"
     >
-      <p className="text-2xl font-bold text-white">{typeof value === 'number' ? value.toLocaleString('pt-BR') : value}</p>
+      <div className="flex items-center gap-2">
+        {Icon && <Icon size={18} className="text-brand-cyan shrink-0" />}
+        <p className="text-2xl font-bold text-white">{typeof value === 'number' ? value.toLocaleString('pt-BR') : value}</p>
+      </div>
       <p className="text-white/50 text-xs mt-1">{label}</p>
     </motion.div>
   );
