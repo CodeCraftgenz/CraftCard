@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Menu, X, LogOut, User, BookOpen, CreditCard, Shield } from 'lucide-react';
+import { Menu, X, LogOut, User, BookOpen, CreditCard, Shield, Webhook } from 'lucide-react';
 import { Logo } from '@/components/atoms/Logo';
 import { NotificationBell } from '@/components/organisms/NotificationBell';
 import { useAuth } from '@/providers/AuthProvider';
@@ -120,6 +120,14 @@ export function Header() {
                     <CreditCard size={14} />
                     Meu Plano
                   </Link>
+                  <Link
+                    to="/webhooks"
+                    onClick={() => setShowDropdown(false)}
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-white/70 hover:bg-white/5 transition-colors"
+                  >
+                    <Webhook size={14} />
+                    Integracoes
+                  </Link>
                   {isAdmin && (
                     <Link
                       to="/admin"
@@ -224,6 +232,13 @@ export function Header() {
                   onClick={() => setIsOpen(false)}
                 >
                   Meu Plano
+                </Link>
+                <Link
+                  to="/webhooks"
+                  className="text-sm text-white/70 py-2"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Integracoes
                 </Link>
                 {isAdmin && (
                   <Link

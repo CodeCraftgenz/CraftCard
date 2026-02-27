@@ -19,6 +19,7 @@ const OrgDashboardPage = lazy(() => import('./pages/OrgDashboardPage').then(m =>
 const OrgJoinPage = lazy(() => import('./pages/OrgJoinPage').then(m => ({ default: m.OrgJoinPage })));
 const TutorialPage = lazy(() => import('./pages/TutorialPage').then(m => ({ default: m.TutorialPage })));
 const WidgetPage = lazy(() => import('./pages/WidgetPage').then(m => ({ default: m.WidgetPage })));
+const WebhooksPage = lazy(() => import('./pages/WebhooksPage').then(m => ({ default: m.WebhooksPage })));
 const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
 
 function PageLoader() {
@@ -69,6 +70,14 @@ export function App() {
                     element={
                       <ProtectedRoute>
                         <BillingPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/webhooks"
+                    element={
+                      <ProtectedRoute>
+                        <WebhooksPage />
                       </ProtectedRoute>
                     }
                   />
