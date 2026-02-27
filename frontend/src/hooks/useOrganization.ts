@@ -22,6 +22,7 @@ export interface Organization {
   fontFamily: string;
   domain: string | null;
   maxMembers: number;
+  extraSeats: number;
   brandingActive: boolean;
   cardTheme: string | null;
   linkStyle: string | null;

@@ -204,7 +204,13 @@ export class OrganizationsService {
     if (!org) throw AppException.notFound('Organizacao');
     const totalSeats = org.maxMembers + org.extraSeats;
     if (org._count.members >= totalSeats) {
-      throw AppException.badRequest(`Limite de ${totalSeats} membros atingido`);
+      throw AppException.badRequest(`Limite de ${totalSeats} membros atingido`, {
+        code: 'SEAT_LIMIT_REACHED',
+        currentMembers: org._count.members,
+        maxMembers: org.maxMembers,
+        extraSeats: org.extraSeats,
+        totalSeats,
+      });
     }
 
     // Check if already a member

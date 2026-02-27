@@ -190,11 +190,46 @@ export class AdminService {
         id: true,
         name: true,
         slug: true,
+        maxMembers: true,
+        extraSeats: true,
         createdAt: true,
         _count: { select: { members: true, profiles: true } },
       },
       orderBy: { createdAt: 'desc' },
       take: 100,
+    });
+  }
+
+  async getOrgDetail(orgId: string) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: orgId },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        maxMembers: true,
+        extraSeats: true,
+        brandingActive: true,
+        createdAt: true,
+        _count: { select: { members: true, profiles: true } },
+        members: {
+          select: { user: { select: { id: true, name: true, email: true } }, role: true },
+          take: 50,
+        },
+      },
+    });
+    if (!org) throw AppException.notFound('Organizacao');
+    return org;
+  }
+
+  async updateOrg(orgId: string, data: { extraSeats?: number }) {
+    const org = await this.prisma.organization.findUnique({ where: { id: orgId } });
+    if (!org) throw AppException.notFound('Organizacao');
+
+    return this.prisma.organization.update({
+      where: { id: orgId },
+      data: { ...(data.extraSeats !== undefined && { extraSeats: data.extraSeats }) },
+      select: { id: true, name: true, extraSeats: true, maxMembers: true },
     });
   }
 }

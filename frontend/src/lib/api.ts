@@ -66,8 +66,12 @@ api.interceptors.response.use(
       }
     }
 
-    const message = error.response?.data?.error?.message || error.message || 'Erro inesperado';
-    return Promise.reject(new Error(message));
+    const errData = error.response?.data?.error;
+    const message = errData?.message || error.message || 'Erro inesperado';
+    const apiError = new Error(message) as Error & { code?: string; details?: unknown };
+    apiError.code = errData?.code;
+    apiError.details = errData?.details;
+    return Promise.reject(apiError);
   },
 );
 

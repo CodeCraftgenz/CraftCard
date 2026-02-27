@@ -52,8 +52,22 @@ export interface AdminOrg {
   id: string;
   name: string;
   slug: string;
+  maxMembers: number;
+  extraSeats: number;
   createdAt: string;
   _count: { members: number; profiles: number };
+}
+
+export interface AdminOrgDetail {
+  id: string;
+  name: string;
+  slug: string;
+  maxMembers: number;
+  extraSeats: number;
+  brandingActive: boolean;
+  createdAt: string;
+  _count: { members: number; profiles: number };
+  members: Array<{ user: { id: string; name: string; email: string }; role: string }>;
 }
 
 // --- Queries ---
@@ -130,6 +144,25 @@ export function useDeleteAdminUser() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'users'] });
       qc.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+    },
+  });
+}
+
+export function useAdminOrgDetail(orgId: string | null) {
+  return useQuery<AdminOrgDetail>({
+    queryKey: ['admin', 'organizations', orgId],
+    queryFn: () => api.get(`/admin/organizations/${orgId}`),
+    enabled: !!orgId,
+  });
+}
+
+export function useUpdateAdminOrg() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orgId, data }: { orgId: string; data: { extraSeats?: number } }) =>
+      api.put(`/admin/organizations/${orgId}`, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'organizations'] });
     },
   });
 }

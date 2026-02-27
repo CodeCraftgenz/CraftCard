@@ -50,4 +50,14 @@ export class AdminController {
   async listOrganizations(@Query('search') search?: string) {
     return this.adminService.listOrganizations(search);
   }
+
+  @Get('organizations/:orgId')
+  async getOrgDetail(@Param('orgId') orgId: string) {
+    return this.adminService.getOrgDetail(orgId);
+  }
+
+  @Put('organizations/:orgId')
+  async updateOrg(@Param('orgId') orgId: string, @Body() body: { extraSeats?: number }) {
+    return this.adminService.updateOrg(orgId, body);
+  }
 }

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Users, CreditCard, Building2, ArrowLeft,
-  Search, Trash2, Crown, Shield,
+  Search, Trash2, Crown, Shield, ChevronRight, Save, X,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
 import {
@@ -11,6 +11,8 @@ import {
   useAdminUsers,
   useAdminPayments,
   useAdminOrgs,
+  useAdminOrgDetail,
+  useUpdateAdminOrg,
   useUpdateAdminUser,
   useDeleteAdminUser,
   type AdminUser,
@@ -397,7 +399,12 @@ function PaymentsTab() {
 
 function OrganizationsTab() {
   const [search, setSearch] = useState('');
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const { data: orgs } = useAdminOrgs(search);
+
+  if (selectedOrgId) {
+    return <OrgDetailPanel orgId={selectedOrgId} onClose={() => setSelectedOrgId(null)} />;
+  }
 
   return (
     <div className="space-y-4">
@@ -415,7 +422,11 @@ function OrganizationsTab() {
 
       <div className="bg-white/5 rounded-2xl border border-white/10 divide-y divide-white/5">
         {orgs?.map((org) => (
-          <div key={org.id} className="flex items-center gap-3 px-4 py-3">
+          <button
+            key={org.id}
+            onClick={() => setSelectedOrgId(org.id)}
+            className="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-white/5 transition-colors"
+          >
             <div className="w-8 h-8 rounded-xl bg-brand-cyan/20 flex items-center justify-center flex-shrink-0">
               <Building2 size={16} className="text-brand-cyan" />
             </div>
@@ -425,15 +436,148 @@ function OrganizationsTab() {
               <p className="text-white/40 text-xs">/{org.slug}</p>
             </div>
 
-            <span className="text-white/50 text-xs">{org._count.members} membros</span>
+            <span className="text-white/50 text-xs">{org._count.members}/{org.maxMembers + org.extraSeats}</span>
             <span className="text-white/50 text-xs">{org._count.profiles} perfis</span>
             <span className="text-white/30 text-xs hidden md:block">{new Date(org.createdAt).toLocaleDateString('pt-BR')}</span>
-          </div>
+            <ChevronRight size={16} className="text-white/20" />
+          </button>
         ))}
 
         {orgs?.length === 0 && (
           <div className="py-8 text-center text-white/30 text-sm">Nenhuma organizacao encontrada</div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function OrgDetailPanel({ orgId, onClose }: { orgId: string; onClose: () => void }) {
+  const { data: org } = useAdminOrgDetail(orgId);
+  const updateOrg = useUpdateAdminOrg();
+  const [extraSeats, setExtraSeats] = useState<number | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  const currentExtra = extraSeats ?? org?.extraSeats ?? 0;
+  const totalSeats = (org?.maxMembers ?? 0) + currentExtra;
+  const usedSeats = org?._count.members ?? 0;
+  const usagePercent = totalSeats > 0 ? Math.min(100, Math.round((usedSeats / totalSeats) * 100)) : 0;
+
+  const handleSave = async () => {
+    if (!org || currentExtra === org.extraSeats) return;
+    await updateOrg.mutateAsync({ orgId, data: { extraSeats: currentExtra } });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  if (!org) {
+    return (
+      <div className="py-12 text-center text-white/50 animate-pulse">Carregando...</div>
+    );
+  }
+
+  const roleLabels: Record<string, string> = { OWNER: 'Dono', ADMIN: 'Admin', MEMBER: 'Membro' };
+
+  return (
+    <div className="space-y-4">
+      <button
+        onClick={onClose}
+        className="flex items-center gap-2 text-sm text-white/50 hover:text-white/70 transition-colors"
+      >
+        <ArrowLeft size={16} />
+        Voltar a lista
+      </button>
+
+      {/* Org header */}
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-white font-semibold text-lg">{org.name}</h3>
+            <p className="text-white/40 text-xs">/{org.slug} — Criada em {new Date(org.createdAt).toLocaleDateString('pt-BR')}</p>
+          </div>
+          <button onClick={onClose} aria-label="Fechar detalhe" className="text-white/30 hover:text-white/60 transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* Seats management */}
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-4">
+        <h4 className="text-white font-semibold">Gestao de Assentos</h4>
+
+        {/* Usage bar */}
+        <div>
+          <div className="flex items-center justify-between text-xs mb-2">
+            <span className="text-white/50">{usedSeats} de {totalSeats} assentos utilizados</span>
+            <span className="text-white/30">{usagePercent}%</span>
+          </div>
+          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${usagePercent >= 90 ? 'bg-red-400' : usagePercent >= 70 ? 'bg-amber-400' : 'bg-brand-cyan'}`}
+              style={{ width: `${usagePercent}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          {/* Base seats (read-only) */}
+          <div>
+            <label className="text-white/40 text-xs block mb-1">Assentos base (plano)</label>
+            <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white/60 text-sm">
+              {org.maxMembers}
+            </div>
+          </div>
+
+          {/* Extra seats (editable) */}
+          <div>
+            <label className="text-white/40 text-xs block mb-1">Assentos extras</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min={0}
+                aria-label="Assentos extras"
+                value={currentExtra}
+                onChange={(e) => setExtraSeats(Math.max(0, parseInt(e.target.value) || 0))}
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-brand-cyan/50"
+              />
+              <button
+                onClick={handleSave}
+                disabled={updateOrg.isPending || currentExtra === org.extraSeats}
+                className="px-4 py-2 bg-brand-cyan/20 text-brand-cyan rounded-xl text-sm font-medium hover:bg-brand-cyan/30 transition-colors disabled:opacity-50 flex items-center gap-1"
+              >
+                <Save size={14} />
+                {saved ? 'Salvo!' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-white/30 text-xs">
+          Total: {totalSeats} assentos ({org.maxMembers} base + {currentExtra} extras)
+        </p>
+      </div>
+
+      {/* Members list */}
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+        <h4 className="text-white font-semibold mb-4">Membros ({org._count.members})</h4>
+        <div className="space-y-2">
+          {org.members.map((m, i) => (
+            <div key={i} className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs text-white font-medium">
+                {m.user.name?.[0]?.toUpperCase() || '?'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm truncate">{m.user.name || 'Sem nome'}</p>
+                <p className="text-white/40 text-xs truncate">{m.user.email}</p>
+              </div>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/50">
+                {roleLabels[m.role] || m.role}
+              </span>
+            </div>
+          ))}
+          {org.members.length === 0 && (
+            <p className="text-white/30 text-sm text-center py-4">Nenhum membro</p>
+          )}
+        </div>
       </div>
     </div>
   );

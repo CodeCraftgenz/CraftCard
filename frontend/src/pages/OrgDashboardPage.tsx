@@ -22,6 +22,7 @@ import {
   useRevokeInvite,
   useRemoveMember,
   useUpdateMemberRole,
+  type Organization,
 } from '@/hooks/useOrganization';
 import { AVAILABLE_FONTS } from '@/lib/google-fonts';
 import { API_URL } from '@/lib/constants';
@@ -117,7 +118,7 @@ export function OrgDashboardPage() {
 
         {/* Tab content */}
         {tab === 'overview' && <OverviewTab orgId={orgId!} myRole={myRole} />}
-        {tab === 'members' && <MembersTab orgId={orgId!} myRole={myRole} />}
+        {tab === 'members' && <MembersTab orgId={orgId!} myRole={myRole} org={org} />}
         {tab === 'branding' && <BrandingTab orgId={orgId!} org={org} />}
         {tab === 'domain' && <DomainTab orgId={orgId!} org={org} />}
         {tab === 'analytics' && <AnalyticsTab orgId={orgId!} />}
@@ -233,7 +234,7 @@ function StatCard({ icon: Icon, label, value }: { icon: typeof Eye; label: strin
 }
 
 // --- Members Tab ---
-function MembersTab({ orgId, myRole }: { orgId: string; myRole: string }) {
+function MembersTab({ orgId, myRole, org }: { orgId: string; myRole: string; org: Organization }) {
   const { data: members } = useOrgMembers(orgId);
   const { data: invites } = useOrgInvites(orgId);
   const inviteMember = useInviteMember(orgId);
@@ -244,17 +245,28 @@ function MembersTab({ orgId, myRole }: { orgId: string; myRole: string }) {
   const [inviteRole, setInviteRole] = useState<'MEMBER' | 'ADMIN'>('MEMBER');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [inviteResult, setInviteResult] = useState<{ emailSent: boolean; token: string } | null>(null);
+  const [seatLimitReached, setSeatLimitReached] = useState(false);
+
+  const totalSeats = org.maxMembers + (org.extraSeats || 0);
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
-    const result = await inviteMember.mutateAsync({ email: inviteEmail.trim(), role: inviteRole });
-    const res = result as { token?: string; emailSent?: boolean };
-    if (res.token && !res.emailSent) {
-      setInviteResult({ emailSent: false, token: res.token });
-    } else {
-      setInviteResult(res.emailSent ? { emailSent: true, token: res.token || '' } : null);
+    setSeatLimitReached(false);
+    try {
+      const result = await inviteMember.mutateAsync({ email: inviteEmail.trim(), role: inviteRole });
+      const res = result as { token?: string; emailSent?: boolean };
+      if (res.token && !res.emailSent) {
+        setInviteResult({ emailSent: false, token: res.token });
+      } else {
+        setInviteResult(res.emailSent ? { emailSent: true, token: res.token || '' } : null);
+      }
+      setInviteEmail('');
+    } catch (err: unknown) {
+      const apiErr = err as Error & { details?: { code?: string } };
+      if (apiErr?.details?.code === 'SEAT_LIMIT_REACHED') {
+        setSeatLimitReached(true);
+      }
     }
-    setInviteEmail('');
   };
 
   const isOwner = myRole === 'OWNER';
@@ -340,9 +352,34 @@ function MembersTab({ orgId, myRole }: { orgId: string; myRole: string }) {
         )}
       </div>
 
+      {/* Seat limit upsell */}
+      {seatLimitReached && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <AlertTriangle size={20} className="text-amber-400" />
+            </div>
+            <div>
+              <p className="text-amber-400 font-medium text-sm">Limite de assentos atingido</p>
+              <p className="text-white/50 text-xs mt-1">
+                Sua organizacao utiliza {org.memberCount}/{totalSeats} assentos.
+                Entre em contato com o administrador para adquirir assentos extras.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Members list */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h3 className="text-white font-semibold mb-4">Membros ({members?.length || 0})</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-white font-semibold">Membros ({members?.length || 0})</h3>
+          <div className="flex items-center gap-2 text-xs text-white/40">
+            <Users size={14} />
+            <span>{org.memberCount}/{totalSeats} assentos</span>
+            {(org.extraSeats || 0) > 0 && <span className="text-brand-cyan">({org.extraSeats} extras)</span>}
+          </div>
+        </div>
         <div className="space-y-3">
           {members?.map((m) => {
             const RoleIcon = roleIcons[m.role] || Users;
