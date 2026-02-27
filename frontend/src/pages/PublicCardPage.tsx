@@ -471,6 +471,9 @@ export function PublicCardPage() {
       const parts = profile.backgroundGradient.split(',');
       if (parts.length >= 3) return `linear-gradient(${parts[0]},${parts[1]},${parts[2]})`;
     }
+    if (bgType === 'image' && profile.backgroundImageUrl) {
+      return getThemeBackground(theme, accent);
+    }
     return getThemeBackground(theme, accent);
   })();
 
@@ -568,6 +571,14 @@ export function PublicCardPage() {
         className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12"
         style={{ background: computedBackground, fontFamily: `'${fontFamily}', sans-serif`, fontSize: `${fontScale}rem` }}
       >
+        {/* Background image + overlay */}
+        {bgType === 'image' && profile.backgroundImageUrl && (
+          <>
+            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0" style={{ backgroundImage: `url(${profile.backgroundImageUrl})` }} />
+            <div className="absolute inset-0 z-0" style={{ backgroundColor: `rgba(0,0,0,${profile.backgroundOverlay ?? 0.7})` }} />
+          </>
+        )}
+
         {/* Background pattern overlay */}
         {bgType === 'pattern' && profile.backgroundPattern && (
           <div className="absolute inset-0 pointer-events-none opacity-20">
@@ -578,7 +589,7 @@ export function PublicCardPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`w-full max-w-md sm:max-w-lg lg:max-w-2xl ${theme !== 'minimal' ? 'p-6' : ''} ${getThemeCardStyle(theme)}`}
+          className={`relative z-[1] w-full max-w-md sm:max-w-lg lg:max-w-2xl ${theme !== 'minimal' ? 'p-6' : ''} ${getThemeCardStyle(theme)}`}
         >
           {/* Cover Photo */}
           {profile.coverPhotoUrl && (

@@ -34,6 +34,8 @@ interface CardPreviewProps {
   fontSizeScale?: number;
   backgroundType?: string;
   backgroundGradient?: string | null;
+  backgroundImageUrl?: string | null;
+  backgroundOverlay?: number;
   backgroundPattern?: string | null;
   linkStyle?: string;
   linkAnimation?: string;
@@ -162,6 +164,8 @@ export const CardPreview = memo(function CardPreview({
   fontSizeScale = 1,
   backgroundType,
   backgroundGradient,
+  backgroundImageUrl,
+  backgroundOverlay = 0.7,
   backgroundPattern,
   linkStyle = 'rounded',
   linkAnimation = 'none',
@@ -184,6 +188,9 @@ export const CardPreview = memo(function CardPreview({
       const parts = backgroundGradient.split(',');
       if (parts.length >= 3) return `linear-gradient(${parts[0]},${parts[1]},${parts[2]})`;
     }
+    if (bgType === 'image' && backgroundImageUrl) {
+      return getThemeBackground(theme, accent);
+    }
     if (bgType === 'pattern') {
       return getThemeBackground(theme, accent);
     }
@@ -202,9 +209,17 @@ export const CardPreview = memo(function CardPreview({
       style={{ fontFamily: `'${font}', sans-serif`, fontSize: `${scale}rem` }}
     >
       <div
-        className={`rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl bg-white/[0.06] ${themeCardClass}`}
+        className={`relative rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl bg-white/[0.06] ${themeCardClass}`}
         style={{ background: computedBg }}
       >
+        {/* Background image + overlay */}
+        {bgType === 'image' && backgroundImageUrl && (
+          <>
+            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${backgroundImageUrl})` }} />
+            <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${backgroundOverlay})` }} />
+          </>
+        )}
+
         {/* Pattern overlay */}
         {bgType === 'pattern' && backgroundPattern && (
           <div className="absolute inset-0 pointer-events-none opacity-10">
@@ -222,7 +237,7 @@ export const CardPreview = memo(function CardPreview({
         {/* Cover Photo */}
         {card.coverPhotoUrl && (
           <div
-            className="w-full h-20 bg-white/5"
+            className="relative z-[1] w-full h-20 bg-white/5"
             style={{
               backgroundImage: `url(${card.coverPhotoUrl})`,
               backgroundSize: 'cover',
@@ -231,7 +246,7 @@ export const CardPreview = memo(function CardPreview({
           />
         )}
 
-        <div className={`p-6 flex flex-col items-center text-center ${card.coverPhotoUrl ? '-mt-10' : ''}`}>
+        <div className={`relative z-[1] p-6 flex flex-col items-center text-center ${card.coverPhotoUrl ? '-mt-10' : ''}`}>
           {/* Avatar */}
           <div
             className="w-24 h-24 rounded-full flex items-center justify-center mb-4 shadow-lg border-4 border-[#16213E]"

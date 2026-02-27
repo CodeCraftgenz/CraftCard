@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   Users, BarChart3, Mail, Settings, Plus, Trash2, Copy, Check,
   UserPlus, Shield, Crown, Download, Eye, MessageSquare, Calendar, ArrowLeft, Loader2, AlertTriangle,
-  ExternalLink, Globe,
+  ExternalLink, Globe, Search, ChevronLeft, ChevronRight, CheckCheck, MailOpen,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
 import { FeatureLock } from '@/components/organisms/FeatureLock';
@@ -15,6 +15,8 @@ import {
   useOrgInvites,
   useOrgAnalytics,
   useOrgLeads,
+  useMarkLeadRead,
+  useMarkAllLeadsRead,
   useUpdateOrganization,
   useDeleteOrganization,
   useBulkApplyBranding,
@@ -961,43 +963,170 @@ function AnalyticsTab({ orgId }: { orgId: string }) {
 
 // --- Leads Tab ---
 function LeadsTab({ orgId }: { orgId: string }) {
-  const { data: leads } = useOrgLeads(orgId);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Debounce search
+  useState(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(t);
+  });
+
+  const isReadParam = filter === 'all' ? undefined : filter === 'read' ? 'true' : 'false';
+  const { data } = useOrgLeads(orgId, { page, search: debouncedSearch || undefined, isRead: isReadParam });
+  const markRead = useMarkLeadRead(orgId);
+  const markAllRead = useMarkAllLeadsRead(orgId);
 
   const handleExport = () => {
     window.open(`${API_URL}/organizations/${orgId}/leads/export`, '_blank');
   };
 
+  const resetPage = () => setPage(1);
+
+  const unreadCount = data?.items.filter((l) => !l.isRead).length ?? 0;
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-white font-semibold">Leads da Equipe ({leads?.length || 0})</h3>
-        <button
-          onClick={handleExport}
-          className="flex items-center gap-2 px-3 py-1.5 bg-white/5 text-white/70 rounded-lg text-xs hover:bg-white/10 transition-colors"
-        >
-          <Download size={14} />
-          Exportar CSV
-        </button>
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h3 className="text-white font-semibold">
+          Leads da Equipe ({data?.total ?? 0})
+          {unreadCount > 0 && (
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs font-medium">
+              {unreadCount} {unreadCount === 1 ? 'novo' : 'novos'}
+            </span>
+          )}
+        </h3>
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && (
+            <button
+              onClick={() => markAllRead.mutate()}
+              disabled={markAllRead.isPending}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-white/70 rounded-lg text-xs hover:bg-white/10 transition-colors"
+            >
+              <CheckCheck size={14} />
+              Marcar todos lidos
+            </button>
+          )}
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 px-3 py-1.5 bg-white/5 text-white/70 rounded-lg text-xs hover:bg-white/10 transition-colors"
+          >
+            <Download size={14} />
+            CSV
+          </button>
+        </div>
       </div>
 
-      {leads && leads.length > 0 ? (
-        <div className="space-y-2">
-          {leads.map((lead) => (
-            <div key={lead.id} className="bg-white/5 rounded-xl p-4 border border-white/10">
-              <div className="flex items-start justify-between mb-1">
-                <div>
-                  <span className="text-white text-sm font-medium">{lead.senderName}</span>
-                  {lead.senderEmail && <span className="text-white/40 text-xs ml-2">{lead.senderEmail}</span>}
-                </div>
-                <span className="text-white/30 text-xs">{new Date(lead.createdAt).toLocaleDateString()}</span>
-              </div>
-              <p className="text-white/60 text-sm line-clamp-2">{lead.message}</p>
-              <span className="text-brand-cyan/50 text-xs mt-1 inline-block">via {lead.profile.displayName}</span>
-            </div>
+      {/* Search + Filter */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setDebouncedSearch(e.target.value); resetPage(); }}
+            placeholder="Buscar por nome ou email..."
+            className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/30"
+          />
+        </div>
+        <div className="flex gap-1">
+          {(['all', 'unread', 'read'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => { setFilter(f); resetPage(); }}
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                filter === f
+                  ? 'bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/30'
+                  : 'bg-white/5 text-white/50 border border-white/10 hover:border-white/20'
+              }`}
+            >
+              {f === 'all' ? 'Todos' : f === 'unread' ? 'Nao lidos' : 'Lidos'}
+            </button>
           ))}
         </div>
+      </div>
+
+      {/* Leads List */}
+      {data && data.items.length > 0 ? (
+        <div className="space-y-2">
+          {data.items.map((lead) => {
+            const isExpanded = expandedId === lead.id;
+            return (
+              <div
+                key={lead.id}
+                className={`rounded-xl p-4 border transition-all cursor-pointer ${
+                  lead.isRead
+                    ? 'bg-white/[0.03] border-white/[0.06]'
+                    : 'bg-white/5 border-white/10'
+                }`}
+                onClick={() => setExpandedId(isExpanded ? null : lead.id)}
+              >
+                <div className="flex items-start justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    {!lead.isRead && <div className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />}
+                    <span className={`text-sm font-medium ${lead.isRead ? 'text-white/60' : 'text-white'}`}>
+                      {lead.senderName}
+                    </span>
+                    {lead.senderEmail && <span className="text-white/30 text-xs hidden sm:inline">{lead.senderEmail}</span>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-white/30 text-xs">{new Date(lead.createdAt).toLocaleDateString()}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markRead.mutate({ leadId: lead.id, isRead: !lead.isRead });
+                      }}
+                      className="p-1 rounded hover:bg-white/10 transition-colors"
+                      title={lead.isRead ? 'Marcar como nao lido' : 'Marcar como lido'}
+                    >
+                      <MailOpen size={14} className={lead.isRead ? 'text-white/20' : 'text-brand-cyan'} />
+                    </button>
+                  </div>
+                </div>
+                <p className={`text-sm text-white/60 ${isExpanded ? '' : 'line-clamp-2'}`}>{lead.message}</p>
+                {lead.senderEmail && isExpanded && (
+                  <p className="text-xs text-white/40 mt-1 sm:hidden">{lead.senderEmail}</p>
+                )}
+                <span className="text-brand-cyan/50 text-xs mt-1 inline-block">via {lead.profile.displayName}</span>
+              </div>
+            );
+          })}
+        </div>
       ) : (
-        <div className="text-center py-12 text-white/30">Nenhum lead recebido ainda</div>
+        <div className="text-center py-12 text-white/30">
+          {debouncedSearch || filter !== 'all' ? 'Nenhum lead encontrado com os filtros atuais' : 'Nenhum lead recebido ainda'}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {data && data.totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            aria-label="Pagina anterior"
+            className="p-2 rounded-lg bg-white/5 border border-white/10 disabled:opacity-30 hover:bg-white/10 transition-colors"
+          >
+            <ChevronLeft size={16} className="text-white/60" />
+          </button>
+          <span className="text-sm text-white/50">
+            Pagina {data.page} de {data.totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
+            disabled={page >= data.totalPages}
+            aria-label="Proxima pagina"
+            className="p-2 rounded-lg bg-white/5 border border-white/10 disabled:opacity-30 hover:bg-white/10 transition-colors"
+          >
+            <ChevronRight size={16} className="text-white/60" />
+          </button>
+        </div>
       )}
     </div>
   );

@@ -37,6 +37,8 @@ export interface Profile {
   fontSizeScale?: number | null;
   backgroundType?: string | null;
   backgroundGradient?: string | null;
+  backgroundImageUrl?: string | null;
+  backgroundOverlay?: number | null;
   backgroundPattern?: string | null;
   linkStyle?: string | null;
   linkAnimation?: string | null;
@@ -165,6 +167,32 @@ export function useUploadVideo() {
       formData.append('file', file);
       return api.post('/me/video-upload', formData);
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+  });
+}
+
+export function useUploadBackground() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return api.post('/me/background-upload', formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+  });
+}
+
+export function useDeleteBackground() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => api.delete('/me/background'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
     },

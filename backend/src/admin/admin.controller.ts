@@ -18,8 +18,14 @@ export class AdminController {
     @Query('search') search?: string,
     @Query('plan') plan?: string,
     @Query('role') role?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.adminService.listUsers(search, plan, role);
+    return this.adminService.listUsers({
+      search, plan, role,
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+    });
   }
 
   @Get('users/:userId')
@@ -42,13 +48,27 @@ export class AdminController {
   async listPayments(
     @Query('status') status?: string,
     @Query('plan') plan?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.adminService.listPayments(status, plan);
+    return this.adminService.listPayments({
+      status, plan,
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+    });
   }
 
   @Get('organizations')
-  async listOrganizations(@Query('search') search?: string) {
-    return this.adminService.listOrganizations(search);
+  async listOrganizations(
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.adminService.listOrganizations({
+      search,
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+    });
   }
 
   @Get('organizations/:orgId')

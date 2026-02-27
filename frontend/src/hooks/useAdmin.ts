@@ -70,6 +70,14 @@ export interface AdminOrgDetail {
   members: Array<{ user: { id: string; name: string; email: string }; role: string }>;
 }
 
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 // --- Queries ---
 
 export function useAdminDashboard() {
@@ -79,15 +87,16 @@ export function useAdminDashboard() {
   });
 }
 
-export function useAdminUsers(search: string, plan: string, role: string) {
+export function useAdminUsers(search: string, plan: string, role: string, page = 1) {
   const params = new URLSearchParams();
   if (search) params.set('search', search);
   if (plan) params.set('plan', plan);
   if (role) params.set('role', role);
+  if (page > 1) params.set('page', String(page));
   const qs = params.toString();
 
-  return useQuery<AdminUser[]>({
-    queryKey: ['admin', 'users', search, plan, role],
+  return useQuery<PaginatedResponse<AdminUser>>({
+    queryKey: ['admin', 'users', search, plan, role, page],
     queryFn: () => api.get(`/admin/users${qs ? `?${qs}` : ''}`),
   });
 }
@@ -100,25 +109,27 @@ export function useAdminUserDetail(userId: string | null) {
   });
 }
 
-export function useAdminPayments(status: string, plan: string) {
+export function useAdminPayments(status: string, plan: string, page = 1) {
   const params = new URLSearchParams();
   if (status) params.set('status', status);
   if (plan) params.set('plan', plan);
+  if (page > 1) params.set('page', String(page));
   const qs = params.toString();
 
-  return useQuery<AdminPayment[]>({
-    queryKey: ['admin', 'payments', status, plan],
+  return useQuery<PaginatedResponse<AdminPayment>>({
+    queryKey: ['admin', 'payments', status, plan, page],
     queryFn: () => api.get(`/admin/payments${qs ? `?${qs}` : ''}`),
   });
 }
 
-export function useAdminOrgs(search: string) {
+export function useAdminOrgs(search: string, page = 1) {
   const params = new URLSearchParams();
   if (search) params.set('search', search);
+  if (page > 1) params.set('page', String(page));
   const qs = params.toString();
 
-  return useQuery<AdminOrg[]>({
-    queryKey: ['admin', 'organizations', search],
+  return useQuery<PaginatedResponse<AdminOrg>>({
+    queryKey: ['admin', 'organizations', search, page],
     queryFn: () => api.get(`/admin/organizations${qs ? `?${qs}` : ''}`),
   });
 }

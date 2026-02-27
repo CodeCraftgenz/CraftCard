@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { OrganizationsService } from './organizations.service';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
@@ -139,8 +139,37 @@ export class OrganizationsController {
   @UseGuards(OrgRoleGuard)
   @RequiresOrgRole('ADMIN')
   @Get(':orgId/leads')
-  async getLeads(@Param('orgId') orgId: string) {
-    return this.orgService.getConsolidatedLeads(orgId);
+  async getLeads(
+    @Param('orgId') orgId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('isRead') isRead?: string,
+  ) {
+    return this.orgService.getConsolidatedLeads(orgId, {
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+      search: search || undefined,
+      isRead: isRead !== undefined ? isRead === 'true' : undefined,
+    });
+  }
+
+  @UseGuards(OrgRoleGuard)
+  @RequiresOrgRole('ADMIN')
+  @Put(':orgId/leads/mark-all-read')
+  async markAllLeadsRead(@Param('orgId') orgId: string) {
+    return this.orgService.markAllLeadsRead(orgId);
+  }
+
+  @UseGuards(OrgRoleGuard)
+  @RequiresOrgRole('ADMIN')
+  @Put(':orgId/leads/:leadId/read')
+  async markLeadRead(
+    @Param('orgId') orgId: string,
+    @Param('leadId') leadId: string,
+    @Body() body: { isRead: boolean },
+  ) {
+    return this.orgService.markLeadRead(orgId, leadId, body.isRead);
   }
 
   @UseGuards(OrgRoleGuard)

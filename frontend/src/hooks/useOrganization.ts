@@ -116,10 +116,26 @@ export function useOrgAnalytics(orgId: string | undefined) {
   });
 }
 
-export function useOrgLeads(orgId: string | undefined) {
-  return useQuery<OrgLead[]>({
-    queryKey: ['organization', orgId, 'leads'],
-    queryFn: () => api.get(`/organizations/${orgId}/leads`),
+export interface PaginatedLeads {
+  items: OrgLead[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export function useOrgLeads(orgId: string | undefined, opts: {
+  page?: number; search?: string; isRead?: string;
+} = {}) {
+  const params = new URLSearchParams();
+  if (opts.page && opts.page > 1) params.set('page', String(opts.page));
+  if (opts.search) params.set('search', opts.search);
+  if (opts.isRead !== undefined) params.set('isRead', opts.isRead);
+  const qs = params.toString();
+
+  return useQuery<PaginatedLeads>({
+    queryKey: ['organization', orgId, 'leads', opts],
+    queryFn: () => api.get(`/organizations/${orgId}/leads${qs ? `?${qs}` : ''}`),
     enabled: !!orgId,
   });
 }
@@ -230,5 +246,22 @@ export function useBulkApplyBranding(orgId: string) {
   return useMutation<{ applied: boolean; count: number }>({
     mutationFn: () => api.post(`/organizations/${orgId}/bulk-apply`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['organization', orgId] }); },
+  });
+}
+
+export function useMarkLeadRead(orgId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ leadId, isRead }: { leadId: string; isRead: boolean }) =>
+      api.put(`/organizations/${orgId}/leads/${leadId}/read`, { isRead }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['organization', orgId, 'leads'] }); },
+  });
+}
+
+export function useMarkAllLeadsRead(orgId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.put(`/organizations/${orgId}/leads/mark-all-read`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['organization', orgId, 'leads'] }); },
   });
 }

@@ -6,6 +6,7 @@ import {
   Search, Trash2, Crown, Shield, ChevronRight, Save, X,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
+import { Pagination } from '@/components/atoms/Pagination';
 import {
   useAdminDashboard,
   useAdminUsers,
@@ -169,8 +170,10 @@ function UsersTab() {
   const [planFilter, setPlanFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
-  const { data: users } = useAdminUsers(search, planFilter, roleFilter);
+  const { data } = useAdminUsers(search, planFilter, roleFilter, page);
+  const users = data?.items;
   const updateUser = useUpdateAdminUser();
   const deleteUser = useDeleteAdminUser();
 
@@ -198,7 +201,7 @@ function UsersTab() {
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Buscar por nome ou email..."
             className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50"
           />
@@ -206,7 +209,7 @@ function UsersTab() {
         <select
           aria-label="Filtrar por plano"
           value={planFilter}
-          onChange={(e) => setPlanFilter(e.target.value)}
+          onChange={(e) => { setPlanFilter(e.target.value); setPage(1); }}
           className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-cyan/50"
         >
           <option value="">Todos planos</option>
@@ -218,7 +221,7 @@ function UsersTab() {
         <select
           aria-label="Filtrar por role"
           value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
+          onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
           className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-cyan/50"
         >
           <option value="">Todos roles</option>
@@ -228,7 +231,7 @@ function UsersTab() {
       </div>
 
       {/* User count */}
-      <p className="text-white/40 text-xs">{users?.length ?? 0} usuarios</p>
+      <p className="text-white/40 text-xs">{data?.total ?? 0} usuarios</p>
 
       {/* User list */}
       <div className="bg-white/5 rounded-2xl border border-white/10 divide-y divide-white/5">
@@ -316,6 +319,8 @@ function UsersTab() {
           <div className="py-8 text-center text-white/30 text-sm">Nenhum usuario encontrado</div>
         )}
       </div>
+
+      <Pagination page={page} totalPages={data?.totalPages ?? 1} onPageChange={setPage} />
     </div>
   );
 }
@@ -325,8 +330,10 @@ function UsersTab() {
 function PaymentsTab() {
   const [statusFilter, setStatusFilter] = useState('');
   const [planFilter, setPlanFilter] = useState('');
+  const [page, setPage] = useState(1);
 
-  const { data: payments } = useAdminPayments(statusFilter, planFilter);
+  const { data } = useAdminPayments(statusFilter, planFilter, page);
+  const payments = data?.items;
 
   return (
     <div className="space-y-4">
@@ -334,7 +341,7 @@ function PaymentsTab() {
         <select
           aria-label="Filtrar por status"
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-cyan/50"
         >
           <option value="">Todos status</option>
@@ -347,7 +354,7 @@ function PaymentsTab() {
         <select
           aria-label="Filtrar por plano"
           value={planFilter}
-          onChange={(e) => setPlanFilter(e.target.value)}
+          onChange={(e) => { setPlanFilter(e.target.value); setPage(1); }}
           className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-cyan/50"
         >
           <option value="">Todos planos</option>
@@ -357,7 +364,7 @@ function PaymentsTab() {
         </select>
       </div>
 
-      <p className="text-white/40 text-xs">{payments?.length ?? 0} pagamentos</p>
+      <p className="text-white/40 text-xs">{data?.total ?? 0} pagamentos</p>
 
       <div className="bg-white/5 rounded-2xl border border-white/10 divide-y divide-white/5">
         {payments?.map((p) => (
@@ -391,6 +398,8 @@ function PaymentsTab() {
           <div className="py-8 text-center text-white/30 text-sm">Nenhum pagamento encontrado</div>
         )}
       </div>
+
+      <Pagination page={page} totalPages={data?.totalPages ?? 1} onPageChange={setPage} />
     </div>
   );
 }
@@ -400,7 +409,9 @@ function PaymentsTab() {
 function OrganizationsTab() {
   const [search, setSearch] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
-  const { data: orgs } = useAdminOrgs(search);
+  const [page, setPage] = useState(1);
+  const { data } = useAdminOrgs(search, page);
+  const orgs = data?.items;
 
   if (selectedOrgId) {
     return <OrgDetailPanel orgId={selectedOrgId} onClose={() => setSelectedOrgId(null)} />;
@@ -412,13 +423,13 @@ function OrganizationsTab() {
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           placeholder="Buscar por nome ou slug..."
           className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50"
         />
       </div>
 
-      <p className="text-white/40 text-xs">{orgs?.length ?? 0} organizacoes</p>
+      <p className="text-white/40 text-xs">{data?.total ?? 0} organizacoes</p>
 
       <div className="bg-white/5 rounded-2xl border border-white/10 divide-y divide-white/5">
         {orgs?.map((org) => (
@@ -447,6 +458,8 @@ function OrganizationsTab() {
           <div className="py-8 text-center text-white/30 text-sm">Nenhuma organizacao encontrada</div>
         )}
       </div>
+
+      <Pagination page={page} totalPages={data?.totalPages ?? 1} onPageChange={setPage} />
     </div>
   );
 }

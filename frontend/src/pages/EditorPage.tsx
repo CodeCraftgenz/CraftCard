@@ -25,6 +25,8 @@ import {
   useUploadCover,
   useUploadResume,
   useUploadVideo,
+  useUploadBackground,
+  useDeleteBackground,
   useCheckSlug,
   useCards,
   useCreateCard,
@@ -102,6 +104,8 @@ export function EditorPage() {
   const uploadCover = useUploadCover();
   const uploadResume = useUploadResume();
   const uploadVideo = useUploadVideo();
+  const uploadBackground = useUploadBackground();
+  const deleteBackground = useDeleteBackground();
   const videoInputRef = useRef<HTMLInputElement>(null);
   const { data: analytics } = useAnalytics(hasPaid);
   const { data: contacts } = useContacts(hasPaid);
@@ -142,6 +146,8 @@ export function EditorPage() {
     fontSizeScale: 1,
     backgroundType: 'theme' as string,
     backgroundGradient: null as string | null,
+    backgroundImageUrl: null as string | null,
+    backgroundOverlay: 0.7 as number,
     backgroundPattern: null as string | null,
     linkStyle: 'rounded' as string,
     linkAnimation: 'none' as string,
@@ -185,6 +191,8 @@ export function EditorPage() {
         fontSizeScale: profile.fontSizeScale ?? 1,
         backgroundType: profile.backgroundType ?? 'theme',
         backgroundGradient: profile.backgroundGradient ?? null,
+        backgroundImageUrl: profile.backgroundImageUrl ?? null,
+        backgroundOverlay: profile.backgroundOverlay ?? 0.7,
         backgroundPattern: profile.backgroundPattern ?? null,
         linkStyle: profile.linkStyle ?? 'rounded',
         linkAnimation: profile.linkAnimation ?? 'none',
@@ -263,6 +271,8 @@ export function EditorPage() {
     data.fontSizeScale = form.fontSizeScale;
     data.backgroundType = form.backgroundType;
     data.backgroundGradient = form.backgroundGradient || null;
+    data.backgroundImageUrl = form.backgroundImageUrl || null;
+    data.backgroundOverlay = form.backgroundOverlay;
     data.backgroundPattern = form.backgroundPattern || null;
     data.linkStyle = form.linkStyle;
     data.linkAnimation = form.linkAnimation;
@@ -420,14 +430,34 @@ export function EditorPage() {
     fontSizeScale: form.fontSizeScale,
     backgroundType: form.backgroundType,
     backgroundGradient: form.backgroundGradient,
+    backgroundImageUrl: form.backgroundImageUrl,
+    backgroundOverlay: form.backgroundOverlay,
     backgroundPattern: form.backgroundPattern,
     linkStyle: form.linkStyle,
     linkAnimation: form.linkAnimation,
-  }), [form.fontFamily, form.fontSizeScale, form.backgroundType, form.backgroundGradient, form.backgroundPattern, form.linkStyle, form.linkAnimation]);
+  }), [form.fontFamily, form.fontSizeScale, form.backgroundType, form.backgroundGradient, form.backgroundImageUrl, form.backgroundOverlay, form.backgroundPattern, form.linkStyle, form.linkAnimation]);
 
   const handleStyleChange = useCallback((key: string, val: string | number | null) => {
     updateField(key as keyof typeof form, val as never);
   }, [updateField]);
+
+  const handleUploadBackground = useCallback(async (file: File) => {
+    try {
+      const result: { url: string } = await uploadBackground.mutateAsync(file);
+      setForm((prev) => ({ ...prev, backgroundImageUrl: result.url, backgroundType: 'image' }));
+    } catch {
+      // upload error handled by react-query
+    }
+  }, [uploadBackground]);
+
+  const handleDeleteBackground = useCallback(async () => {
+    try {
+      await deleteBackground.mutateAsync();
+      setForm((prev) => ({ ...prev, backgroundImageUrl: null, backgroundType: 'theme', backgroundOverlay: 0.7 }));
+    } catch {
+      // delete error handled by react-query
+    }
+  }, [deleteBackground]);
 
   const applyTemplate = (template: CardTemplate) => {
     setForm((prev) => ({
@@ -1580,6 +1610,9 @@ export function EditorPage() {
                 value={styleEditorValue}
                 onChange={handleStyleChange}
                 accent={form.buttonColor}
+                onUploadBackground={handleUploadBackground}
+                onDeleteBackground={handleDeleteBackground}
+                isUploadingBackground={uploadBackground.isPending}
               />
             ) : (
               <UpgradeBanner feature="customFonts" compact />
@@ -2404,6 +2437,8 @@ export function EditorPage() {
                 fontSizeScale={form.fontSizeScale}
                 backgroundType={form.backgroundType}
                 backgroundGradient={form.backgroundGradient}
+                backgroundImageUrl={form.backgroundImageUrl}
+                backgroundOverlay={form.backgroundOverlay}
                 backgroundPattern={form.backgroundPattern}
                 linkStyle={form.linkStyle}
                 linkAnimation={form.linkAnimation}

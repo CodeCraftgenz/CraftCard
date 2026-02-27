@@ -242,6 +242,8 @@ export class ProfilesService {
       delete data.fontSizeScale;
       delete data.backgroundType;
       delete data.backgroundGradient;
+      delete data.backgroundImageUrl;
+      delete data.backgroundOverlay;
       delete data.backgroundPattern;
       delete data.linkStyle;
       delete data.linkAnimation;

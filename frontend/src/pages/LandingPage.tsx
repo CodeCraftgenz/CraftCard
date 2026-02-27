@@ -4,17 +4,20 @@ import { Footer } from '@/components/organisms/Footer';
 import { LandingBackground } from '@/components/atoms/LandingBackground';
 import { ScrollProgressBar } from '@/components/atoms/ScrollProgressBar';
 import { StickyCtaBanner } from '@/components/atoms/StickyCtaBanner';
+import { BackToTopButton } from '@/components/atoms/BackToTopButton';
 import { SectionDivider } from '@/components/atoms/SectionDivider';
+import { RevealSection } from '@/components/atoms/RevealSection';
 import { Marquee } from '@/components/atoms/Marquee';
 import { HeroSection } from '@/components/sections/HeroSection';
 import { TrustedBySection } from '@/components/sections/TrustedBySection';
 import { BenefitsSection } from '@/components/sections/BenefitsSection';
+import { FeaturesShowcaseSection } from '@/components/sections/FeaturesShowcaseSection';
 import { HowItWorksSection } from '@/components/sections/HowItWorksSection';
 import { UseCasesSection } from '@/components/sections/UseCasesSection';
 import { SocialProofSection } from '@/components/sections/SocialProofSection';
+import { TemplateGallerySection } from '@/components/sections/TemplateGallerySection';
 import { PricingSection } from '@/components/sections/PricingSection';
 import { FaqSection } from '@/components/sections/FaqSection';
-import { FeaturesShowcaseSection } from '@/components/sections/FeaturesShowcaseSection';
 import { CtaSection } from '@/components/sections/CtaSection';
 
 export function LandingPage() {
@@ -38,25 +41,44 @@ export function LandingPage() {
           <Marquee />
 
           <SectionDivider />
-          <BenefitsSection />
+          <RevealSection>
+            <BenefitsSection />
+          </RevealSection>
 
           <SectionDivider />
-          <FeaturesShowcaseSection />
+          <RevealSection>
+            <FeaturesShowcaseSection />
+          </RevealSection>
 
           <SectionDivider />
-          <HowItWorksSection />
+          <RevealSection>
+            <HowItWorksSection />
+          </RevealSection>
 
           <SectionDivider />
-          <UseCasesSection />
+          <RevealSection>
+            <UseCasesSection />
+          </RevealSection>
 
           <SectionDivider />
-          <SocialProofSection />
+          <RevealSection>
+            <SocialProofSection />
+          </RevealSection>
 
           <SectionDivider />
-          <PricingSection />
+          <RevealSection>
+            <TemplateGallerySection />
+          </RevealSection>
 
           <SectionDivider />
-          <FaqSection />
+          <RevealSection>
+            <PricingSection />
+          </RevealSection>
+
+          <SectionDivider />
+          <RevealSection>
+            <FaqSection />
+          </RevealSection>
 
           <CtaSection />
         </main>
@@ -64,6 +86,7 @@ export function LandingPage() {
       </motion.div>
 
       <StickyCtaBanner />
+      <BackToTopButton />
     </div>
   );
 }

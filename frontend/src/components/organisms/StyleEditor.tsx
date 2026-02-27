@@ -1,5 +1,5 @@
-import { memo } from 'react';
-import { Type, Paintbrush, MousePointerClick, Layers } from 'lucide-react';
+import { memo, useRef } from 'react';
+import { Type, Paintbrush, MousePointerClick, Layers, ImageIcon, Upload, Trash2, Loader2 } from 'lucide-react';
 import { AVAILABLE_FONTS, loadGoogleFont } from '@/lib/google-fonts';
 import {
   PRESET_GRADIENTS,
@@ -13,6 +13,8 @@ export interface VisualCustomization {
   fontSizeScale: number;
   backgroundType: string;
   backgroundGradient: string | null;
+  backgroundImageUrl: string | null;
+  backgroundOverlay: number;
   backgroundPattern: string | null;
   linkStyle: string;
   linkAnimation: string;
@@ -22,9 +24,14 @@ interface StyleEditorProps {
   value: VisualCustomization;
   onChange: <K extends keyof VisualCustomization>(key: K, val: VisualCustomization[K]) => void;
   accent: string;
+  onUploadBackground?: (file: File) => void;
+  onDeleteBackground?: () => void;
+  isUploadingBackground?: boolean;
 }
 
-export const StyleEditor = memo(function StyleEditor({ value, onChange, accent }: StyleEditorProps) {
+export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, onUploadBackground, onDeleteBackground, isUploadingBackground }: StyleEditorProps) {
+  const bgFileRef = useRef<HTMLInputElement>(null);
+
   return (
     <div className="glass-card p-6 hover:border-white/20 transition-colors">
       <div className="flex items-center gap-2 mb-5">
@@ -93,8 +100,8 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent }
           <label className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider flex items-center gap-1.5">
             <Layers size={12} /> Fundo
           </label>
-          <div className="flex gap-2 mb-3">
-            {(['theme', 'gradient', 'pattern'] as const).map((type) => (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {(['theme', 'gradient', 'image', 'pattern'] as const).map((type) => (
               <button
                 key={type}
                 type="button"
@@ -105,7 +112,7 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent }
                     : 'bg-white/5 text-white/50 border border-white/10 hover:border-white/20'
                 }`}
               >
-                {type === 'theme' ? 'Tema' : type === 'gradient' ? 'Gradiente' : 'Padrao'}
+                {type === 'theme' ? 'Tema' : type === 'gradient' ? 'Gradiente' : type === 'image' ? 'Imagem' : 'Padrao'}
               </button>
             ))}
           </div>
@@ -130,6 +137,91 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent }
                   />
                 );
               })}
+            </div>
+          )}
+
+          {/* Image Upload */}
+          {value.backgroundType === 'image' && (
+            <div className="space-y-3">
+              <input
+                ref={bgFileRef}
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                aria-label="Escolher imagem de fundo"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file && onUploadBackground) onUploadBackground(file);
+                  e.target.value = '';
+                }}
+              />
+
+              {value.backgroundImageUrl ? (
+                <div className="relative rounded-xl overflow-hidden border border-white/10">
+                  <img
+                    src={value.backgroundImageUrl}
+                    alt="Background"
+                    className="w-full h-28 object-cover"
+                  />
+                  <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${value.backgroundOverlay})` }} />
+                  <div className="absolute bottom-2 right-2 flex gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => bgFileRef.current?.click()}
+                      disabled={isUploadingBackground}
+                      className="p-1.5 rounded-lg bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors"
+                      title="Trocar imagem"
+                    >
+                      <Upload size={14} className="text-white" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onDeleteBackground}
+                      className="p-1.5 rounded-lg bg-red-500/20 backdrop-blur-sm hover:bg-red-500/30 transition-colors"
+                      title="Remover imagem"
+                    >
+                      <Trash2 size={14} className="text-red-400" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => bgFileRef.current?.click()}
+                  disabled={isUploadingBackground}
+                  className="w-full h-24 rounded-xl border-2 border-dashed border-white/10 hover:border-white/20 flex flex-col items-center justify-center gap-2 transition-colors"
+                >
+                  {isUploadingBackground ? (
+                    <Loader2 size={20} className="text-brand-cyan animate-spin" />
+                  ) : (
+                    <>
+                      <ImageIcon size={20} className="text-white/30" />
+                      <span className="text-xs text-white/40">Escolher imagem de fundo</span>
+                    </>
+                  )}
+                </button>
+              )}
+
+              {/* Overlay slider */}
+              <div>
+                <label className="text-xs text-white/40 mb-1 block">
+                  Escurecimento: {Math.round(value.backgroundOverlay * 100)}%
+                </label>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={value.backgroundOverlay}
+                  onChange={(e) => onChange('backgroundOverlay', parseFloat(e.target.value))}
+                  aria-label="Escurecimento do fundo"
+                  className="w-full accent-brand-cyan"
+                />
+                <div className="flex justify-between text-[10px] text-white/20 mt-1">
+                  <span>0%</span>
+                  <span>100%</span>
+                </div>
+              </div>
             </div>
           )}
 

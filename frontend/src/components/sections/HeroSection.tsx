@@ -4,6 +4,8 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CardPreview } from '@/components/organisms/CardPreview';
 import { FloatingDecorations } from '@/components/atoms/FloatingDecorations';
+import { MagneticButton } from '@/components/atoms/MagneticButton';
+import { Typewriter } from '@/components/atoms/Typewriter';
 import { useAuth } from '@/providers/AuthProvider';
 
 const wordReveal = {
@@ -88,21 +90,23 @@ export function HeroSection() {
               <motion.span
                 key={i}
                 variants={wordItem}
-                className={`inline-block mr-[0.25em] ${i === 1 || i === 2 ? 'gradient-text' : ''}`}
+                className={`inline-block mr-[0.25em] ${i === 1 || i === 2 ? 'gradient-text-animated' : ''}`}
               >
                 {word}
               </motion.span>
             ))}
           </motion.h1>
 
-          {/* Subtitle */}
+          {/* Subtitle — typewriter */}
           <motion.p
             {...reveal(0.6)}
             className="mt-6 text-lg text-slate-400 max-w-lg mx-auto lg:mx-0 leading-relaxed"
           >
-            Crie um cartao digital completo com foto, bio, redes sociais e
-            WhatsApp. Compartilhe com um unico link e cause uma otima
-            primeira impressao.
+            <Typewriter
+              text="Crie um cartao digital completo com foto, bio, redes sociais e WhatsApp. Compartilhe com um unico link e cause uma otima primeira impressao."
+              speed={25}
+              delay={1200}
+            />
           </motion.p>
 
           {/* CTAs */}
@@ -110,20 +114,24 @@ export function HeroSection() {
             {...reveal(0.75)}
             className="mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
           >
-            <Link
-              to={isAuthenticated ? '/editor' : '/login'}
-              className="btn-glossy btn-glow-hover group inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl gradient-bg text-white font-semibold transition-all shadow-lg shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus:ring-offset-2 focus:ring-offset-[#020617]"
-            >
-              <Sparkles size={16} className="opacity-70" />
-              Criar meu cartao
-              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform duration-200" />
-            </Link>
-            <a
-              href="#como-funciona"
-              className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl border border-white/[0.08] text-slate-400 font-medium hover:bg-white/[0.04] hover:border-white/[0.14] hover:text-white transition-all duration-250 focus:outline-none focus:ring-2 focus:ring-white/20"
-            >
-              Ver como funciona
-            </a>
+            <MagneticButton strength={0.25}>
+              <Link
+                to={isAuthenticated ? '/editor' : '/login'}
+                className="btn-glossy btn-glow-hover group inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl gradient-bg text-white font-semibold transition-all shadow-lg shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus:ring-offset-2 focus:ring-offset-[#020617]"
+              >
+                <Sparkles size={16} className="opacity-70" />
+                Criar meu cartao
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform duration-200" />
+              </Link>
+            </MagneticButton>
+            <MagneticButton strength={0.2}>
+              <a
+                href="#como-funciona"
+                className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl border border-white/[0.08] text-slate-400 font-medium hover:bg-white/[0.04] hover:border-white/[0.14] hover:text-white transition-all duration-250 focus:outline-none focus:ring-2 focus:ring-white/20"
+              >
+                Ver como funciona
+              </a>
+            </MagneticButton>
           </motion.div>
         </div>
 

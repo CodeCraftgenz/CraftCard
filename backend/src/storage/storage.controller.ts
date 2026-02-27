@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Post,
   UseGuards,
   UseInterceptors,
@@ -17,6 +18,7 @@ import { AppException } from '../common/exceptions/app.exception';
 import { PlanGuard, RequiresFeature } from '../payments/guards/plan.guard';
 
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_BG_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_RESUME_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
 
@@ -189,5 +191,75 @@ export class StorageController {
     });
 
     return { url: videoUrl };
+  }
+
+  // ── Upload background image → R2 (PRO+) ──────────────────────────
+  @UseGuards(PlanGuard)
+  @RequiresFeature('customBg')
+  @Post('me/background-upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadBackground(
+    @CurrentUser() user: JwtPayload,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: MAX_BG_SIZE }),
+          new FileTypeValidator({ fileType: /(jpeg|jpg|png|webp)$/i }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    const processed = await sharp(file.buffer)
+      .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toBuffer();
+
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId: user.sub, isPrimary: true },
+      select: { id: true, backgroundImageUrl: true },
+    });
+    if (!profile) throw AppException.notFound('Perfil');
+
+    if (profile.backgroundImageUrl?.startsWith('http')) {
+      this.storageService.deleteFile(profile.backgroundImageUrl).catch(() => {});
+    }
+
+    const backgroundImageUrl = await this.storageService.uploadFile(
+      processed,
+      'backgrounds',
+      user.sub,
+      'webp',
+    );
+
+    await this.prisma.profile.update({
+      where: { id: profile.id },
+      data: { backgroundImageUrl, backgroundType: 'image' },
+    });
+
+    return { url: backgroundImageUrl };
+  }
+
+  // ── Delete background image (PRO+) ───────────────────────────────
+  @UseGuards(PlanGuard)
+  @RequiresFeature('customBg')
+  @Delete('me/background')
+  async deleteBackground(@CurrentUser() user: JwtPayload) {
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId: user.sub, isPrimary: true },
+      select: { id: true, backgroundImageUrl: true },
+    });
+    if (!profile) throw AppException.notFound('Perfil');
+
+    if (profile.backgroundImageUrl?.startsWith('http')) {
+      this.storageService.deleteFile(profile.backgroundImageUrl).catch(() => {});
+    }
+
+    await this.prisma.profile.update({
+      where: { id: profile.id },
+      data: { backgroundImageUrl: null, backgroundType: 'theme', backgroundOverlay: 0.7 },
+    });
+
+    return { deleted: true };
   }
 }

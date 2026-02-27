@@ -401,14 +401,51 @@ export class OrganizationsService {
 
   // --- Consolidated Leads ---
 
-  async getConsolidatedLeads(orgId: string) {
-    return this.prisma.contactMessage.findMany({
-      where: { profile: { orgId } },
-      include: {
-        profile: { select: { displayName: true, slug: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
+  async getConsolidatedLeads(orgId: string, opts: {
+    page?: number; limit?: number; search?: string; isRead?: boolean;
+  } = {}) {
+    const page = opts.page ?? 1;
+    const limit = Math.min(opts.limit ?? 20, 50);
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = { profile: { orgId } };
+    if (opts.search) {
+      where.OR = [
+        { senderName: { contains: opts.search } },
+        { senderEmail: { contains: opts.search } },
+      ];
+    }
+    if (opts.isRead !== undefined) where.isRead = opts.isRead;
+
+    const [items, total] = await Promise.all([
+      this.prisma.contactMessage.findMany({
+        where,
+        include: { profile: { select: { displayName: true, slug: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.contactMessage.count({ where }),
+    ]);
+
+    return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
+  async markLeadRead(orgId: string, leadId: string, isRead: boolean) {
+    const lead = await this.prisma.contactMessage.findFirst({
+      where: { id: leadId, profile: { orgId } },
+    });
+    if (!lead) throw AppException.notFound('Lead');
+    return this.prisma.contactMessage.update({
+      where: { id: leadId },
+      data: { isRead },
+    });
+  }
+
+  async markAllLeadsRead(orgId: string) {
+    return this.prisma.contactMessage.updateMany({
+      where: { profile: { orgId }, isRead: false },
+      data: { isRead: true },
     });
   }
 

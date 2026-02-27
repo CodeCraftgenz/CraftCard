@@ -70,33 +70,42 @@ export class AdminService {
 
   // --- Users ---
 
-  async listUsers(search?: string, plan?: string, role?: string) {
-    const where: Record<string, unknown> = {};
+  async listUsers(opts: { search?: string; plan?: string; role?: string; page?: number; limit?: number } = {}) {
+    const page = opts.page ?? 1;
+    const limit = Math.min(opts.limit ?? 20, 50);
+    const skip = (page - 1) * limit;
 
-    if (search) {
+    const where: Record<string, unknown> = {};
+    if (opts.search) {
       where.OR = [
-        { name: { contains: search } },
-        { email: { contains: search } },
+        { name: { contains: opts.search } },
+        { email: { contains: opts.search } },
       ];
     }
-    if (plan) where.plan = plan;
-    if (role) where.role = role;
+    if (opts.plan) where.plan = opts.plan;
+    if (opts.role) where.role = opts.role;
 
-    return this.prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatarUrl: true,
-        plan: true,
-        role: true,
-        createdAt: true,
-        _count: { select: { profiles: true, orgMemberships: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    });
+    const [items, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarUrl: true,
+          plan: true,
+          role: true,
+          createdAt: true,
+          _count: { select: { profiles: true, orgMemberships: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   async getUserDetail(userId: string) {
@@ -150,54 +159,74 @@ export class AdminService {
 
   // --- Payments ---
 
-  async listPayments(status?: string, plan?: string) {
-    const where: Record<string, unknown> = {};
-    if (status) where.status = status;
-    if (plan) where.plan = plan;
+  async listPayments(opts: { status?: string; plan?: string; page?: number; limit?: number } = {}) {
+    const page = opts.page ?? 1;
+    const limit = Math.min(opts.limit ?? 20, 50);
+    const skip = (page - 1) * limit;
 
-    return this.prisma.payment.findMany({
-      where,
-      select: {
-        id: true,
-        amount: true,
-        status: true,
-        plan: true,
-        payerEmail: true,
-        paidAt: true,
-        expiresAt: true,
-        createdAt: true,
-        user: { select: { id: true, name: true, email: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    });
+    const where: Record<string, unknown> = {};
+    if (opts.status) where.status = opts.status;
+    if (opts.plan) where.plan = opts.plan;
+
+    const [items, total] = await Promise.all([
+      this.prisma.payment.findMany({
+        where,
+        select: {
+          id: true,
+          amount: true,
+          status: true,
+          plan: true,
+          payerEmail: true,
+          paidAt: true,
+          expiresAt: true,
+          createdAt: true,
+          user: { select: { id: true, name: true, email: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.payment.count({ where }),
+    ]);
+
+    return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   // --- Organizations ---
 
-  async listOrganizations(search?: string) {
+  async listOrganizations(opts: { search?: string; page?: number; limit?: number } = {}) {
+    const page = opts.page ?? 1;
+    const limit = Math.min(opts.limit ?? 20, 50);
+    const skip = (page - 1) * limit;
+
     const where: Record<string, unknown> = {};
-    if (search) {
+    if (opts.search) {
       where.OR = [
-        { name: { contains: search } },
-        { slug: { contains: search } },
+        { name: { contains: opts.search } },
+        { slug: { contains: opts.search } },
       ];
     }
 
-    return this.prisma.organization.findMany({
-      where,
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        maxMembers: true,
-        extraSeats: true,
-        createdAt: true,
-        _count: { select: { members: true, profiles: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    });
+    const [items, total] = await Promise.all([
+      this.prisma.organization.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          maxMembers: true,
+          extraSeats: true,
+          createdAt: true,
+          _count: { select: { members: true, profiles: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.organization.count({ where }),
+    ]);
+
+    return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   async getOrgDetail(orgId: string) {

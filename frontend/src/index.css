@@ -293,6 +293,54 @@
   opacity: 1;
 }
 
+/* ── Animated gradient text ── */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.gradient-text-animated {
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(135deg, #60A5FA, #818CF8, #A78BFA, #818CF8, #60A5FA);
+  background-size: 300% 300%;
+  animation: gradient-shift 6s ease-in-out infinite;
+}
+
+/* ── Typewriter cursor ── */
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.typewriter-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background: linear-gradient(to bottom, #818CF8, #A78BFA);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink-cursor 0.8s ease-in-out infinite;
+}
+
+/* ── Back to top button ── */
+.back-to-top-ring {
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+/* ── Template gallery ── */
+.template-gallery-scroll {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.template-gallery-scroll::-webkit-scrollbar {
+  display: none;
+}
+.template-gallery-scroll > * {
+  scroll-snap-align: center;
+}
+
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   .animate-glow-drift,
@@ -302,6 +350,8 @@
   .animate-border-beam,
   .animate-float-decoration,
   .feature-float,
+  .gradient-text-animated,
+  .typewriter-cursor,
   .marquee-track,
   .section-divider-shimmer {
     animation: none !important;
