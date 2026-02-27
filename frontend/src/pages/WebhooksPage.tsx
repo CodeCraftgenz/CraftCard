@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
 import { FeatureLock } from '@/components/organisms/FeatureLock';
-import { useAuth } from '@/providers/AuthProvider';
 import {
   useWebhooks,
   useCreateWebhook,
@@ -33,8 +32,6 @@ function isValidUrl(str: string): boolean {
 }
 
 export function WebhooksPage() {
-  const { hasFeature } = useAuth();
-
   return (
     <div className="min-h-screen bg-brand-dark">
       <Header />
