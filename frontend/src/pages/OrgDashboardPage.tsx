@@ -5,6 +5,7 @@ import {
   Users, BarChart3, Mail, Settings, Plus, Trash2, Copy, Check,
   UserPlus, Shield, Crown, Download, Eye, MessageSquare, Calendar, ArrowLeft, Loader2, AlertTriangle,
   ExternalLink, Globe, Search, ChevronLeft, ChevronRight, CheckCheck, MailOpen,
+  MousePointerClick, Smartphone, Monitor, Tablet, Link2,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
 import { FeatureLock } from '@/components/organisms/FeatureLock';
@@ -903,6 +904,40 @@ function DomainTab({ orgId, org }: { orgId: string; org: { domain: string | null
 }
 
 // --- Analytics Tab ---
+
+const DEVICE_ICONS: Record<string, typeof Monitor> = {
+  desktop: Monitor,
+  mobile: Smartphone,
+  tablet: Tablet,
+};
+
+function MiniBarChart({ data, color, label }: {
+  data: { date: string; count: number }[];
+  color: string;
+  label: string;
+}) {
+  if (!data || data.length === 0) return <p className="text-white/30 text-sm text-center py-4">Sem dados</p>;
+  const max = Math.max(...data.map((d) => d.count), 1);
+  return (
+    <div>
+      <div className="flex items-end gap-1 h-24">
+        {data.map((d) => (
+          <div
+            key={d.date}
+            className={`flex-1 ${color} rounded-t hover:opacity-80 transition-opacity`}
+            style={{ height: `${(d.count / max) * 100}%`, minHeight: d.count > 0 ? '2px' : '0' }}
+            title={`${d.date}: ${d.count} ${label}`}
+          />
+        ))}
+      </div>
+      <div className="flex justify-between mt-1">
+        <span className="text-[10px] text-white/30">{data[0]?.date.slice(5)}</span>
+        <span className="text-[10px] text-white/30">{data[data.length - 1]?.date.slice(5)}</span>
+      </div>
+    </div>
+  );
+}
+
 function AnalyticsTab({ orgId }: { orgId: string }) {
   const { data: analytics } = useOrgAnalytics(orgId);
 
@@ -912,10 +947,13 @@ function AnalyticsTab({ orgId }: { orgId: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
+      {/* KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
         <StatCard icon={Eye} label="Total Views" value={analytics.totalViews} />
         <StatCard icon={MessageSquare} label="Mensagens" value={analytics.totalMessages} />
         <StatCard icon={Calendar} label="Agendamentos" value={analytics.totalBookings} />
+        <StatCard icon={MousePointerClick} label="Cliques em Links" value={analytics.totalLinkClicks} />
+        <StatCard icon={Mail} label="Nao Lidas" value={analytics.unreadMessages} />
       </div>
 
       {/* Daily views chart */}
@@ -932,8 +970,145 @@ function AnalyticsTab({ orgId }: { orgId: string }) {
               />
             ))}
           </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-[10px] text-white/30">{analytics.dailyViews[0]?.date.slice(5)}</span>
+            <span className="text-[10px] text-white/30">{analytics.dailyViews[analytics.dailyViews.length - 1]?.date.slice(5)}</span>
+          </div>
         </div>
       )}
+
+      {/* Messages + Bookings trends (side by side) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h3 className="text-white font-semibold mb-4">Mensagens (30 dias)</h3>
+          <MiniBarChart data={analytics.dailyMessages} color="bg-yellow-500/50" label="mensagens" />
+        </div>
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h3 className="text-white font-semibold mb-4">Agendamentos (30 dias)</h3>
+          <MiniBarChart data={analytics.dailyBookings} color="bg-purple-500/50" label="agendamentos" />
+        </div>
+      </div>
+
+      {/* Devices + Referrers (side by side) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Device Distribution */}
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h3 className="text-white font-semibold mb-4">Dispositivos</h3>
+          {analytics.deviceDistribution && analytics.deviceDistribution.length > 0 ? (
+            <div className="space-y-3">
+              {(() => {
+                const maxDevice = Math.max(...analytics.deviceDistribution.map((d) => d.count), 1);
+                const totalDevices = analytics.deviceDistribution.reduce((sum, d) => sum + d.count, 0);
+                return analytics.deviceDistribution.map((d) => {
+                  const DeviceIcon = DEVICE_ICONS[d.device] || Monitor;
+                  const pct = totalDevices > 0 ? Math.round((d.count / totalDevices) * 100) : 0;
+                  return (
+                    <div key={d.device} className="flex items-center gap-3">
+                      <DeviceIcon size={16} className="text-white/50 shrink-0" />
+                      <span className="text-white/70 text-sm w-16 capitalize">{d.device}</span>
+                      <div className="flex-1 bg-white/5 rounded-full h-4 overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(d.count / maxDevice) * 100}%` }}
+                          transition={{ duration: 0.6 }}
+                          className="h-full bg-brand-cyan/40 rounded-full flex items-center justify-end pr-1.5"
+                        >
+                          <span className="text-[10px] text-white font-medium">{d.count}</span>
+                        </motion.div>
+                      </div>
+                      <span className="text-white/40 text-xs w-10 text-right">{pct}%</span>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          ) : (
+            <p className="text-white/30 text-sm text-center py-4">Sem dados de dispositivos</p>
+          )}
+        </div>
+
+        {/* Top Referrers */}
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h3 className="text-white font-semibold mb-4">Principais Origens</h3>
+          {analytics.topReferrers && analytics.topReferrers.length > 0 ? (
+            <div className="space-y-3">
+              {(() => {
+                const maxRef = Math.max(...analytics.topReferrers.map((r) => r.count), 1);
+                return analytics.topReferrers.map((r) => (
+                  <div key={r.referrer} className="flex items-center gap-3">
+                    <Globe size={14} className="text-white/40 shrink-0" />
+                    <span className="text-white/70 text-sm flex-1 truncate">{r.referrer}</span>
+                    <div className="w-24 bg-white/5 rounded-full h-3 overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(r.count / maxRef) * 100}%` }}
+                        transition={{ duration: 0.6 }}
+                        className="h-full bg-indigo-500/50 rounded-full"
+                      />
+                    </div>
+                    <span className="text-white/50 text-xs w-10 text-right">{r.count}</span>
+                  </div>
+                ));
+              })()}
+            </div>
+          ) : (
+            <p className="text-white/30 text-sm text-center py-4">Sem dados de origem</p>
+          )}
+        </div>
+      </div>
+
+      {/* Top Countries + Top Links (side by side) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Top Countries */}
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h3 className="text-white font-semibold mb-4">Principais Paises</h3>
+          {analytics.topCountries && analytics.topCountries.length > 0 ? (
+            <div className="space-y-3">
+              {(() => {
+                const maxCountry = Math.max(...analytics.topCountries.map((c) => c.count), 1);
+                return analytics.topCountries.map((c) => (
+                  <div key={c.country} className="flex items-center gap-3">
+                    <Globe size={14} className="text-white/40 shrink-0" />
+                    <span className="text-white/70 text-sm flex-1">{c.country}</span>
+                    <div className="w-24 bg-white/5 rounded-full h-3 overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(c.count / maxCountry) * 100}%` }}
+                        transition={{ duration: 0.6 }}
+                        className="h-full bg-green-500/50 rounded-full"
+                      />
+                    </div>
+                    <span className="text-white/50 text-xs w-10 text-right">{c.count}</span>
+                  </div>
+                ));
+              })()}
+            </div>
+          ) : (
+            <p className="text-white/30 text-sm text-center py-4">Sem dados de paises</p>
+          )}
+        </div>
+
+        {/* Top Links */}
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h3 className="text-white font-semibold mb-4">Links Mais Clicados</h3>
+          {analytics.topLinks && analytics.topLinks.length > 0 ? (
+            <div className="space-y-3">
+              {analytics.topLinks.map((link, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Link2 size={14} className="text-white/40 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm truncate">{link.label}</p>
+                    <p className="text-white/30 text-xs">{link.platform}</p>
+                  </div>
+                  <span className="text-brand-cyan text-sm font-semibold">{link.clicks.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-white/30 text-sm text-center py-4">Sem cliques em links</p>
+          )}
+        </div>
+      </div>
 
       {/* Per-card breakdown */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">

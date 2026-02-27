@@ -363,10 +363,94 @@ export class OrganizationsService {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     thirtyDaysAgo.setHours(0, 0, 0, 0);
 
-    const dailyViews = await this.prisma.profileView.findMany({
-      where: { profileId: { in: profileIds }, date: { gte: thirtyDaysAgo } },
-      orderBy: { date: 'asc' },
-    });
+    const [
+      dailyViews,
+      totalMessages,
+      totalBookings,
+      totalLinkClicksAgg,
+      unreadMessages,
+      deviceCounts,
+      topReferrers,
+      topCountries,
+      recentMessages,
+      recentBookings,
+      topLinksRaw,
+    ] = await Promise.all([
+      this.prisma.profileView.findMany({
+        where: { profileId: { in: profileIds }, date: { gte: thirtyDaysAgo } },
+        orderBy: { date: 'asc' },
+      }),
+      this.prisma.contactMessage.count({ where: { profile: { orgId } } }),
+      this.prisma.booking.count({ where: { profile: { orgId } } }),
+      // Total link clicks
+      this.prisma.linkClick.aggregate({
+        where: { socialLink: { profileId: { in: profileIds } } },
+        _sum: { count: true },
+      }),
+      // Unread messages
+      this.prisma.contactMessage.count({ where: { profile: { orgId }, isRead: false } }),
+      // Device distribution
+      this.prisma.viewEvent.groupBy({
+        by: ['device'],
+        _count: true,
+        where: { profileId: { in: profileIds }, device: { not: null } },
+      }),
+      // Top 5 referrers
+      this.prisma.viewEvent.groupBy({
+        by: ['referrer'],
+        _count: true,
+        where: { profileId: { in: profileIds }, referrer: { not: null } },
+        orderBy: { _count: { referrer: 'desc' } },
+        take: 5,
+      }),
+      // Top 5 countries
+      this.prisma.viewEvent.groupBy({
+        by: ['country'],
+        _count: true,
+        where: { profileId: { in: profileIds }, country: { not: null } },
+        orderBy: { _count: { country: 'desc' } },
+        take: 5,
+      }),
+      // Messages trend (30 days)
+      this.prisma.contactMessage.findMany({
+        where: { profile: { orgId }, createdAt: { gte: thirtyDaysAgo } },
+        select: { createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+      // Bookings trend (30 days)
+      this.prisma.booking.findMany({
+        where: { profile: { orgId }, createdAt: { gte: thirtyDaysAgo } },
+        select: { createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+      // Top 5 most clicked links
+      this.prisma.linkClick.groupBy({
+        by: ['socialLinkId'],
+        _sum: { count: true },
+        where: { socialLink: { profileId: { in: profileIds } } },
+        orderBy: { _sum: { count: 'desc' } },
+        take: 5,
+      }),
+    ]);
+
+    // Fetch link details for top links
+    let topLinks: { label: string; platform: string; clicks: number }[] = [];
+    if (topLinksRaw.length > 0) {
+      const linkIds = topLinksRaw.map((l) => l.socialLinkId);
+      const links = await this.prisma.socialLink.findMany({
+        where: { id: { in: linkIds } },
+        select: { id: true, label: true, platform: true },
+      });
+      const linkMap = new Map(links.map((l) => [l.id, l]));
+      topLinks = topLinksRaw.map((l) => {
+        const link = linkMap.get(l.socialLinkId);
+        return {
+          label: link?.label || 'Link',
+          platform: link?.platform || 'link',
+          clicks: Number(l._sum.count || 0),
+        };
+      });
+    }
 
     // Aggregate daily views
     const viewsByDate = new Map<string, number>();
@@ -377,13 +461,19 @@ export class OrganizationsService {
 
     const totalViews = profiles.reduce((sum, p) => sum + p.viewCount, 0);
 
-    const totalMessages = await this.prisma.contactMessage.count({
-      where: { profile: { orgId } },
-    });
+    // Messages daily trend
+    const messagesByDate = new Map<string, number>();
+    for (const m of recentMessages) {
+      const key = m.createdAt.toISOString().split('T')[0];
+      messagesByDate.set(key, (messagesByDate.get(key) || 0) + 1);
+    }
 
-    const totalBookings = await this.prisma.booking.count({
-      where: { profile: { orgId } },
-    });
+    // Bookings daily trend
+    const bookingsByDate = new Map<string, number>();
+    for (const b of recentBookings) {
+      const key = b.createdAt.toISOString().split('T')[0];
+      bookingsByDate.set(key, (bookingsByDate.get(key) || 0) + 1);
+    }
 
     return {
       totalViews,
@@ -396,6 +486,23 @@ export class OrganizationsService {
         viewCount: p.viewCount,
       })),
       dailyViews: Array.from(viewsByDate.entries()).map(([date, count]) => ({ date, count })),
+      totalLinkClicks: Number(totalLinkClicksAgg._sum.count || 0),
+      unreadMessages,
+      deviceDistribution: deviceCounts.map((d) => ({
+        device: d.device || 'unknown',
+        count: d._count,
+      })),
+      topReferrers: topReferrers.map((r) => ({
+        referrer: r.referrer || 'Direto',
+        count: r._count,
+      })),
+      topCountries: topCountries.map((c) => ({
+        country: c.country || 'Desconhecido',
+        count: c._count,
+      })),
+      dailyMessages: Array.from(messagesByDate.entries()).map(([date, count]) => ({ date, count })),
+      dailyBookings: Array.from(bookingsByDate.entries()).map(([date, count]) => ({ date, count })),
+      topLinks,
     };
   }
 

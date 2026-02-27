@@ -63,6 +63,14 @@ export interface OrgAnalytics {
   totalBookings: number;
   memberProfiles: Array<{ id: string; displayName: string; slug: string; viewCount: number }>;
   dailyViews: Array<{ date: string; count: number }>;
+  totalLinkClicks: number;
+  unreadMessages: number;
+  deviceDistribution: Array<{ device: string; count: number }>;
+  topReferrers: Array<{ referrer: string; count: number }>;
+  topCountries: Array<{ country: string; count: number }>;
+  dailyMessages: Array<{ date: string; count: number }>;
+  dailyBookings: Array<{ date: string; count: number }>;
+  topLinks: Array<{ label: string; platform: string; clicks: number }>;
 }
 
 export interface OrgLead {
