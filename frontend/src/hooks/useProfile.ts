@@ -176,7 +176,7 @@ export function useUploadVideo() {
 export function useUploadBackground() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<{ url: string }, Error, File>({
     mutationFn: (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
