@@ -5,15 +5,15 @@ import { ChevronDown } from 'lucide-react';
 const faqs = [
   {
     q: 'Posso comecar gratis?',
-    a: 'Sim! O plano Free permite criar 1 cartao digital com ate 5 links, 3 temas e publicar gratuitamente. Voce pode fazer upgrade para o Pro ou Business a qualquer momento.',
+    a: 'Sim! O plano Free permite criar 1 cartao digital com ate 5 links, 3 temas e publicar gratuitamente. Voce pode fazer upgrade para o Pro, Business ou Enterprise a qualquer momento.',
   },
   {
     q: 'Qual a diferenca entre os planos?',
-    a: 'O plano Free e ideal para experimentar. O Pro (R$30/ano) libera todos os recursos: analytics, galeria, agendamentos, depoimentos, servicos, FAQ, customizacao visual completa e ate 5 cartoes. O Business (R$199/ano) e para empresas: ate 10 usuarios, dashboard centralizado, branding da empresa e webhooks.',
+    a: 'O plano Free e ideal para experimentar (1 cartao, 5 links, 3 temas). O Pro (R$30/ano) libera analytics, galeria, agendamentos, depoimentos, servicos, FAQ, curriculo, video, customizacao visual completa, imagem de fundo personalizada, export de leads e ate 3 cartoes. O Business (R$189,90/ano) adiciona organizacao com ate 10 membros, dashboard centralizado, branding e webhooks. O Enterprise (R$299,90/ano) inclui tudo do Business + dominio customizado.',
   },
   {
     q: 'Como funciona para empresas?',
-    a: 'No plano Business, voce cria uma organizacao, convida membros por email e gerencia todos os cartoes de um so lugar. A empresa define cores, logo e fonte — os membros editam apenas o conteudo (nome, bio, links). O dashboard mostra analytics e leads consolidados de toda a equipe.',
+    a: 'Nos planos Business e Enterprise, voce cria uma organizacao, convida membros por email e gerencia todos os cartoes de um so lugar. A empresa define cores, logo e fonte — os membros editam apenas o conteudo. O dashboard mostra analytics e leads consolidados de toda a equipe, com export CSV e filtros avancados. O Enterprise adiciona dominio customizado (ex: cartoes.suaempresa.com.br).',
   },
   {
     q: 'Posso comecar gratis e fazer upgrade depois?',
