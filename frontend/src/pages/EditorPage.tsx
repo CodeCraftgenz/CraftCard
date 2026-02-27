@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useDebouncedCallback } from '@/hooks/useDebouncedCallback';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus, Lock,
@@ -156,7 +157,6 @@ export function EditorPage() {
   const [showQrCode, setShowQrCode] = useState(false);
   const [qrSettings, setQrSettings] = useState<QrCodeSettings>({ ...DEFAULT_QR_SETTINGS });
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const initializedRef = useRef(false);
 
   // Reset form when switching cards
@@ -310,13 +310,8 @@ export function EditorPage() {
     }
   }, [buildSavePayload, updateProfile]);
 
-  // Auto-save with debounce
-  const triggerAutoSave = useCallback(() => {
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(() => {
-      handleSave();
-    }, 1500);
-  }, [handleSave]);
+  // Auto-save with debounce (1.5s of inactivity triggers save)
+  const triggerAutoSave = useDebouncedCallback(handleSave, 1500);
 
   const updateField = useCallback(<K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -508,9 +503,8 @@ export function EditorPage() {
     }));
     setShowOnboarding(false);
     localStorage.setItem('craftcard_onboarding_done', '1');
-    // Trigger auto-save
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(() => {
+    // Save onboarding data after short delay
+    setTimeout(() => {
       updateProfile.mutateAsync({
         displayName: data.displayName,
         bio: data.bio,

@@ -11,35 +11,36 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.html [QSA,L]
 
 # === Cache Control ===
+<IfModule mod_headers.c>
 
-# HTML e Service Worker: NUNCA cachear (sempre buscar do servidor)
-<FilesMatch "\.(html|htm)$">
-  Header set Cache-Control "no-cache, no-store, must-revalidate"
-  Header set Pragma "no-cache"
-  Header set Expires "0"
-</FilesMatch>
+  # 1. HTML: NUNCA cachear (sempre buscar do servidor)
+  <FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
 
-<FilesMatch "sw\.js$">
-  Header set Cache-Control "no-cache, no-store, must-revalidate"
-  Header set Pragma "no-cache"
-  Header set Expires "0"
-</FilesMatch>
+  # 2. Service Worker / PWA: NUNCA cachear
+  <FilesMatch "(sw|registerSW|push-sw|workbox-.*)\.js$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
 
-<FilesMatch "registerSW\.js$">
-  Header set Cache-Control "no-cache, no-store, must-revalidate"
-</FilesMatch>
+  # 3. Manifest: cache curto (1 hora)
+  <FilesMatch "manifest\.webmanifest$">
+    Header set Cache-Control "public, max-age=3600"
+  </FilesMatch>
 
-# Assets com hash no nome (ex: index-CZ49Fr20.css): cache longo (1 ano)
-<FilesMatch "\.(js|css)$">
-  Header set Cache-Control "public, max-age=31536000, immutable"
-</FilesMatch>
+  # 4. Imagens e fontes: cache medio (30 dias)
+  <FilesMatch "\.(png|jpg|jpeg|gif|svg|ico|woff2|woff|ttf|webp)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
 
-# Imagens e fontes: cache medio (30 dias)
-<FilesMatch "\.(png|jpg|jpeg|gif|svg|ico|woff2|woff|ttf|webp)$">
-  Header set Cache-Control "public, max-age=2592000"
-</FilesMatch>
+  # 5. JS/CSS dentro de /assets/ (com hash no nome): cache longo (1 ano, imutavel)
+  #    Estes arquivos TEM hash gerado pelo Vite — quando o codigo muda, o hash muda
+  <FilesMatch "^assets/.+\.(js|css)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
 
-# Manifest: cache curto (1 hora)
-<FilesMatch "manifest\.webmanifest$">
-  Header set Cache-Control "public, max-age=3600"
-</FilesMatch>
+</IfModule>

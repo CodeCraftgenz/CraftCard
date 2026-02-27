@@ -53,6 +53,16 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        // Hashes únicos garantem cache-busting em cada deploy
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]',
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

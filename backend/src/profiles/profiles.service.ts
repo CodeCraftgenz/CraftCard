@@ -293,6 +293,9 @@ export class ProfilesService {
 
     // Invalidate public page cache after update
     await this.cache.del(`profile:${profile.slug}`);
+    // Also invalidate HTTP-level cache entries (CacheInterceptor keys)
+    await this.cache.del(`/api/profile/${profile.slug}`);
+    await this.cache.del(`/api/profile/${profile.slug}/form-fields`);
 
     return result;
   }

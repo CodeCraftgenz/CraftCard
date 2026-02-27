@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { JwtService } from '@nestjs/jwt';
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
@@ -50,6 +51,8 @@ export class ProfilesController {
 
   @Public()
   @Throttle({ medium: { limit: 60, ttl: 60000 } })
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(300000) // 5 min — HTTP-level cache layer (service also caches internally)
   @Get('profile/:slug')
   async getPublicProfile(
     @Param('slug') slug: string,
@@ -219,6 +222,8 @@ export class ProfilesController {
 
   @Public()
   @Throttle({ medium: { limit: 60, ttl: 60000 } })
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(300000) // 5 min
   @Get('profile/:slug/form-fields')
   async getPublicFormFields(@Param('slug') slug: string) {
     return this.sectionsService.getPublicFormFields(slug);
