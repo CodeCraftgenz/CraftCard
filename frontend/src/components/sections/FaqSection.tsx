@@ -45,15 +45,15 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border-b border-white/5">
+    <div className="border-b border-white/[0.04] last:border-0">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between py-5 text-left"
+        className="w-full flex items-center justify-between py-5 text-left group"
       >
-        <span className="text-sm font-medium pr-4">{q}</span>
+        <span className="text-sm font-medium pr-4 text-slate-300 group-hover:text-white transition-colors duration-200">{q}</span>
         <ChevronDown
           size={18}
-          className={`shrink-0 text-white/40 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`shrink-0 text-slate-600 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
       <AnimatePresence>
@@ -65,7 +65,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <p className="pb-5 text-sm text-white/50 leading-relaxed">{a}</p>
+            <p className="pb-5 text-sm text-slate-500 leading-relaxed">{a}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -77,17 +77,29 @@ export function FaqSection() {
   return (
     <section id="faq" className="py-24">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.45 }}
+          className="text-center mb-16"
+        >
+          <h2 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight">
             Perguntas <span className="gradient-text">frequentes</span>
           </h2>
-        </div>
+        </motion.div>
 
-        <div className="glass-card p-6 sm:p-8">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.45, delay: 0.08 }}
+          className="glass-card p-6 sm:p-8"
+        >
           {faqs.map((faq, i) => (
             <FaqItem key={i} q={faq.q} a={faq.a} />
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

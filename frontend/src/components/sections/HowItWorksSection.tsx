@@ -25,16 +25,22 @@ const steps = [
 export function HowItWorksSection() {
   return (
     <section id="como-funciona" className="py-24 relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-brand-cyan/[0.02] to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-brand-indigo/[0.015] to-transparent" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.45 }}
+          className="text-center mb-16"
+        >
+          <h2 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight">
             Como <span className="gradient-text">funciona</span>
           </h2>
-          <p className="mt-4 text-white/50 max-w-2xl mx-auto">
+          <p className="mt-4 text-slate-400 max-w-2xl mx-auto">
             Tres passos simples para ter seu cartao digital no ar
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {steps.map((s, i) => (
@@ -42,18 +48,18 @@ export function HowItWorksSection() {
               key={i}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.15 }}
-              className="text-center"
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ delay: i * 0.12, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="text-center group"
             >
-              <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl glass mb-6">
-                <s.icon size={28} className="text-brand-cyan" />
-                <span className="absolute -top-2 -right-2 w-7 h-7 rounded-full gradient-bg flex items-center justify-center text-xs font-bold">
+              <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl glass mb-6 group-hover:bg-white/[0.06] group-hover:shadow-lg group-hover:shadow-indigo-500/10 transition-all duration-300">
+                <s.icon size={28} className="text-indigo-400" />
+                <span className="absolute -top-2 -right-2 w-7 h-7 rounded-full gradient-bg flex items-center justify-center text-xs font-bold text-white shadow-lg shadow-violet-600/30">
                   {s.step}
                 </span>
               </div>
-              <h3 className="text-xl font-semibold mb-2">{s.title}</h3>
-              <p className="text-sm text-white/50 leading-relaxed max-w-xs mx-auto">{s.desc}</p>
+              <h3 className="font-heading text-xl font-semibold mb-2 tracking-tight">{s.title}</h3>
+              <p className="text-sm text-slate-500 leading-relaxed max-w-xs mx-auto">{s.desc}</p>
             </motion.div>
           ))}
         </div>
