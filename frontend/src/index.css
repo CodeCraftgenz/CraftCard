@@ -381,28 +381,23 @@
 
 /* ── Diagonal Rain ── */
 @keyframes rain-diagonal {
-  from { background-position: 0 0, 0 0, 0 0; }
-  to   { background-position: 70px 140px, 50px 100px, 35px 70px; }
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 120px 240px, 90px 180px; }
 }
 .rain-bg {
   background-image:
     repeating-linear-gradient(
       105deg,
-      transparent 0px, transparent 68px,
-      rgba(148, 163, 184, 0.06) 68px, rgba(148, 163, 184, 0.06) 70px
+      transparent 0px, transparent 118px,
+      rgba(148, 163, 184, 0.03) 118px, rgba(148, 163, 184, 0.03) 120px
     ),
     repeating-linear-gradient(
       100deg,
-      transparent 0px, transparent 48px,
-      rgba(99, 102, 241, 0.045) 48px, rgba(99, 102, 241, 0.045) 50px
-    ),
-    repeating-linear-gradient(
-      112deg,
-      transparent 0px, transparent 33px,
-      rgba(148, 163, 184, 0.025) 33px, rgba(148, 163, 184, 0.025) 35px
+      transparent 0px, transparent 88px,
+      rgba(99, 102, 241, 0.02) 88px, rgba(99, 102, 241, 0.02) 90px
     );
-  background-size: 70px 140px, 50px 100px, 35px 70px;
-  animation: rain-diagonal 1.5s linear infinite;
+  background-size: 120px 240px, 90px 180px;
+  animation: rain-diagonal 4s linear infinite;
 }
 
 /* ── Reduced motion ── */
