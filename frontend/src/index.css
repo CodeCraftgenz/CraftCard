@@ -381,14 +381,11 @@
 
 /* ── Hero card slow rotate ── */
 @keyframes card-slow-rotate {
-  0%   { transform: rotateY(-6deg) rotateX(3deg); }
-  25%  { transform: rotateY(4deg) rotateX(-2deg); }
-  50%  { transform: rotateY(6deg) rotateX(-3deg); }
-  75%  { transform: rotateY(-4deg) rotateX(2deg); }
-  100% { transform: rotateY(-6deg) rotateX(3deg); }
+  0%   { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
 }
 .card-auto-rotate {
-  animation: card-slow-rotate 8s ease-in-out infinite;
+  animation: card-slow-rotate 12s linear infinite;
 }
 
 /* ── Diagonal Rain ── */
