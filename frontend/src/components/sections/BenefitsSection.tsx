@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Smartphone, Zap, Share2, Palette, Shield, Globe } from 'lucide-react';
 
@@ -51,6 +52,13 @@ const item = {
 };
 
 export function BenefitsSection() {
+  const handleSpotlight = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    el.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+    el.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+  }, []);
+
   return (
     <section id="beneficios" className="py-24 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -80,7 +88,8 @@ export function BenefitsSection() {
             <motion.div
               key={i}
               variants={item}
-              className={`${b.span} glass-card-hover border-glow-hover p-6 group`}
+              onMouseMove={handleSpotlight}
+              className={`${b.span} glass-card-hover border-glow-hover spotlight-glow p-6 group`}
             >
               <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600/[0.10] to-violet-600/[0.10] border border-indigo-500/[0.15] flex items-center justify-center mb-4 group-hover:shadow-lg group-hover:shadow-indigo-500/15 group-hover:border-indigo-500/25 transition-all duration-300">
                 <b.icon size={20} className="text-indigo-400" />

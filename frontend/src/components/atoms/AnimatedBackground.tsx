@@ -75,38 +75,7 @@ function GlowOrbs({ color }: { color: string }) {
 }
 
 function Stars() {
-  const stars = useMemo(
-    () =>
-      Array.from({ length: 20 }, (_, i) => ({
-        id: i,
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        size: 1 + Math.random() * 3,
-        delay: `${Math.random() * 4}s`,
-        duration: `${3 + Math.random() * 3}s`,
-      })),
-    [],
-  );
-
-  return (
-    <>
-      {stars.map((s) => (
-        <div
-          key={s.id}
-          className="absolute rounded-full animate-sparkle"
-          style={{
-            left: s.left,
-            top: s.top,
-            width: s.size,
-            height: s.size,
-            backgroundColor: '#FFFFFF',
-            animationDelay: s.delay,
-            animationDuration: s.duration,
-          }}
-        />
-      ))}
-    </>
-  );
+  return <div className="absolute inset-0 stars-bg" />;
 }
 
 function WaveLines({ color }: { color: string }) {

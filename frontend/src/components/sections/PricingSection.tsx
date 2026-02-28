@@ -237,7 +237,7 @@ export function PricingSection() {
                 <div className="absolute animate-border-beam border-beam-gradient" />
               </div>
             </div>
-            <div className="glass-card-hover p-6 flex flex-col flex-1 border-indigo-500/20 hover:border-violet-500/25">
+            <div className="glass-card-hover electric-card electric-card-hover p-6 flex flex-col flex-1 border-indigo-500/20 hover:border-violet-500/25">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xs font-bold bg-gradient-to-r from-indigo-500/15 to-violet-500/15 text-violet-400 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
                   <Crown size={12} />
