@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -32,6 +32,7 @@ const reveal = (delay = 0) => ({
 export function HeroSection() {
   const { isAuthenticated } = useAuth();
   const cardRef = useRef<HTMLDivElement>(null);
+  const [isCardHovered, setIsCardHovered] = useState(false);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
@@ -41,9 +42,12 @@ export function HeroSection() {
     cardRef.current.style.transform = `rotateY(${x * 10}deg) rotateX(${-y * 10}deg)`;
   }, []);
 
+  const handleMouseEnter = useCallback(() => setIsCardHovered(true), []);
+
   const handleMouseLeave = useCallback(() => {
     if (!cardRef.current) return;
-    cardRef.current.style.transform = 'rotateY(0deg) rotateX(0deg)';
+    cardRef.current.style.transform = '';
+    setIsCardHovered(false);
   }, []);
 
   const headlineWords = ['Seu', 'cartao', 'digital', 'profissional'];
@@ -141,6 +145,7 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="flex justify-center relative perspective-1200"
+          onMouseEnter={handleMouseEnter}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
@@ -148,7 +153,7 @@ export function HeroSection() {
           <div className="absolute inset-0 rounded-full scale-75 animate-pulse-glow glow-card-bg" />
           <div
             ref={cardRef}
-            className="relative transition-transform duration-200 ease-out preserve-3d"
+            className={`relative preserve-3d ${isCardHovered ? 'transition-transform duration-200 ease-out' : 'card-auto-rotate'}`}
           >
             {/* Subtle border glow ring */}
             <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-br from-blue-500/25 via-indigo-500/15 to-violet-600/25 blur-sm" />
