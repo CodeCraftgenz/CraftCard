@@ -49,6 +49,7 @@ export function LandingBackground() {
         />
       ))}
 
+      <div className="absolute inset-0 rain-bg" />
       <div className="absolute inset-0 vignette-dark" />
     </div>
   );

@@ -379,6 +379,32 @@
   scroll-snap-align: center;
 }
 
+/* ── Diagonal Rain ── */
+@keyframes rain-diagonal {
+  from { background-position: 0 0, 0 0, 0 0; }
+  to   { background-position: 70px 140px, 50px 100px, 35px 70px; }
+}
+.rain-bg {
+  background-image:
+    repeating-linear-gradient(
+      105deg,
+      transparent 0px, transparent 68px,
+      rgba(148, 163, 184, 0.06) 68px, rgba(148, 163, 184, 0.06) 70px
+    ),
+    repeating-linear-gradient(
+      100deg,
+      transparent 0px, transparent 48px,
+      rgba(99, 102, 241, 0.045) 48px, rgba(99, 102, 241, 0.045) 50px
+    ),
+    repeating-linear-gradient(
+      112deg,
+      transparent 0px, transparent 33px,
+      rgba(148, 163, 184, 0.025) 33px, rgba(148, 163, 184, 0.025) 35px
+    );
+  background-size: 70px 140px, 50px 100px, 35px 70px;
+  animation: rain-diagonal 1.5s linear infinite;
+}
+
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   .animate-glow-drift,
@@ -391,7 +417,8 @@
   .gradient-text-animated,
   .typewriter-cursor,
   .marquee-track,
-  .section-divider-shimmer {
+  .section-divider-shimmer,
+  .rain-bg {
     animation: none !important;
   }
   .feature-frame::before {
