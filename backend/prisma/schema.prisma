@@ -8,15 +8,18 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  googleId  String   @unique @map("google_id")
-  avatarUrl String?  @map("avatar_url")
-  plan      String   @default("FREE") // FREE, PRO, BUSINESS, ENTERPRISE
-  role      String   @default("USER") @db.VarChar(20) // USER, ADMIN, SUPER_ADMIN
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                     String    @id @default(uuid())
+  email                  String    @unique
+  name                   String
+  googleId               String?   @unique @map("google_id")
+  passwordHash           String?   @map("password_hash")
+  passwordResetToken     String?   @map("password_reset_token")
+  passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
+  avatarUrl              String?   @map("avatar_url")
+  plan                   String    @default("FREE") // FREE, PRO, BUSINESS, ENTERPRISE
+  role                   String    @default("USER") @db.VarChar(20) // USER, ADMIN, SUPER_ADMIN
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
 
   profiles       Profile[]
   payments       Payment[]

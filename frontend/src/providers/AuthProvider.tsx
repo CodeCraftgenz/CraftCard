@@ -72,8 +72,22 @@ interface AuthState {
   organizations: OrgMembership[];
 }
 
+interface RegisterData {
+  email: string;
+  name: string;
+  password: string;
+  confirmPassword: string;
+  inviteToken?: string;
+}
+
+interface RegisterResult {
+  joinedOrg?: { id: string; name: string; slug: string };
+}
+
 interface AuthContextType extends AuthState {
   login: (googleCredential: string) => Promise<void>;
+  loginWithPassword: (email: string, password: string) => Promise<void>;
+  register: (data: RegisterData) => Promise<RegisterResult>;
   devLogin: (email?: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
@@ -144,6 +158,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await fetchMe();
   }, [fetchMe]);
 
+  const loginWithPassword = useCallback(async (email: string, password: string) => {
+    const data: { user: User; accessToken: string } = await api.post('/auth/login', { email, password });
+    setAccessToken(data.accessToken);
+    await fetchMe();
+  }, [fetchMe]);
+
+  const register = useCallback(async (registerData: RegisterData): Promise<RegisterResult> => {
+    const data: { user: User; accessToken: string; joinedOrg?: { id: string; name: string; slug: string } } =
+      await api.post('/auth/register', registerData);
+    setAccessToken(data.accessToken);
+    await fetchMe();
+    return { joinedOrg: data.joinedOrg };
+  }, [fetchMe]);
+
   const devLogin = useCallback(async (email?: string, name?: string) => {
     const data: { user: User; accessToken: string } = await api.post('/auth/dev', { email, name });
     setAccessToken(data.accessToken);
@@ -170,7 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [state.planLimits]);
 
   return (
-    <AuthContext.Provider value={{ ...state, login, devLogin, logout, refreshAuth, hasFeature }}>
+    <AuthContext.Provider value={{ ...state, login, loginWithPassword, register, devLogin, logout, refreshAuth, hasFeature }}>
       {children}
     </AuthContext.Provider>
   );

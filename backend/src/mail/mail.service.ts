@@ -163,6 +163,45 @@ export class MailService {
     }
   }
 
+  // --- Password Reset ---
+
+  async sendPasswordReset(toEmail: string, resetUrl: string): Promise<boolean> {
+    if (!this.transporter) {
+      this.logger.warn(`Password reset email NOT sent to ${toEmail} — mail transporter not configured`);
+      return false;
+    }
+    try {
+      await this.transporter.sendMail({
+        from: `CraftCard <${this.from}>`,
+        to: toEmail,
+        subject: 'Redefinir sua senha — CraftCard',
+        html: this.buildEmail({
+          preheader: 'Voce solicitou a redefinicao da sua senha no CraftCard',
+          title: 'Redefinir Senha',
+          icon: '🔐',
+          body: `
+            <p style="color:#e0e0e0;font-size:15px;line-height:1.6;margin:0 0 16px;">
+              Recebemos uma solicitacao para redefinir a senha da sua conta CraftCard.
+            </p>
+            <p style="color:#999;font-size:14px;line-height:1.6;margin:0 0 20px;">
+              Clique no botao abaixo para criar uma nova senha. Este link expira em <strong style="color:#fff;">1 hora</strong>.
+            </p>
+            <p style="color:#666;font-size:12px;margin:0;">
+              Se voce nao solicitou esta alteracao, ignore este email — sua senha nao sera modificada.
+            </p>
+          `,
+          ctaText: 'Redefinir Senha',
+          ctaUrl: resetUrl,
+        }),
+      });
+      this.logger.log(`Password reset email sent to ${toEmail}`);
+      return true;
+    } catch (err) {
+      this.logger.error(`FAILED to send password reset to ${toEmail}: ${(err as Error).message || err}`);
+      return false;
+    }
+  }
+
   // --- Payment Confirmation ---
 
   async sendPaymentConfirmation(toEmail: string, name: string, plan: string) {

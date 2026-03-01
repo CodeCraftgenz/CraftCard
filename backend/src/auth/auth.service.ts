@@ -3,11 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { OAuth2Client } from 'google-auth-library';
 import { createHash, randomBytes } from 'crypto';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
+import { OrganizationsService } from '../organizations/organizations.service';
 import { AppException } from '../common/exceptions/app.exception';
 import type { EnvConfig } from '../common/config/env.config';
+
+const BCRYPT_ROUNDS = 12;
 
 @Injectable()
 export class AuthService {
@@ -18,6 +22,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
     private readonly mailService: MailService,
+    private readonly orgService: OrganizationsService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<EnvConfig>,
   ) {
@@ -30,32 +35,40 @@ export class AuthService {
     let user = await this.usersService.findByGoogleId(googlePayload.sub);
 
     if (!user) {
-      user = await this.usersService.createFromGoogle({
-        email: googlePayload.email!,
-        name: googlePayload.name || googlePayload.email!.split('@')[0],
-        googleId: googlePayload.sub,
-        avatarUrl: googlePayload.picture,
-      });
+      // Check if a native account exists with this email → link Google
+      const existingByEmail = await this.usersService.findByEmail(googlePayload.email!);
+      if (existingByEmail) {
+        await this.usersService.addGoogleIdToUser(existingByEmail.id, googlePayload.sub, googlePayload.picture);
+        user = (await this.usersService.findById(existingByEmail.id))!;
+        this.logger.log(`Linked Google account to existing user: ${user.email}`);
+      } else {
+        user = await this.usersService.createFromGoogle({
+          email: googlePayload.email!,
+          name: googlePayload.name || googlePayload.email!.split('@')[0],
+          googleId: googlePayload.sub,
+          avatarUrl: googlePayload.picture,
+        });
 
-      // Create initial profile with auto-generated slug
-      const baseSlug = this.generateSlugFromName(user.name);
-      const uniqueSlug = await this.ensureUniqueSlug(baseSlug);
+        // Create initial profile with auto-generated slug
+        const baseSlug = this.generateSlugFromName(user.name);
+        const uniqueSlug = await this.ensureUniqueSlug(baseSlug);
 
-      await this.prisma.profile.create({
-        data: {
-          userId: user.id,
-          displayName: user.name,
-          slug: uniqueSlug,
-          photoUrl: user.avatarUrl,
-          label: 'Principal',
-          isPrimary: true,
-        },
-      });
+        await this.prisma.profile.create({
+          data: {
+            userId: user.id,
+            displayName: user.name,
+            slug: uniqueSlug,
+            photoUrl: user.avatarUrl,
+            label: 'Principal',
+            isPrimary: true,
+          },
+        });
 
-      this.logger.log(`New user created: ${user.email}`);
+        this.logger.log(`New user created: ${user.email}`);
 
-      // Send welcome email (fire-and-forget)
-      this.mailService.sendWelcome(user.email, user.name).catch(() => {});
+        // Send welcome email (fire-and-forget)
+        this.mailService.sendWelcome(user.email, user.name).catch(() => {});
+      }
     }
 
     const accessToken = this.generateAccessToken(user.id, user.email, user.role);
@@ -71,6 +84,125 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  async register(email: string, name: string, password: string, inviteToken?: string) {
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+
+    const existing = await this.usersService.findByEmail(email);
+
+    let user: { id: string; email: string; name: string; avatarUrl: string | null; role: string };
+
+    if (existing) {
+      if (existing.passwordHash) {
+        throw AppException.conflict('Email ja cadastrado');
+      }
+      // Has Google account but no password → link (add password)
+      await this.usersService.addPasswordToUser(existing.id, passwordHash);
+      user = existing;
+      this.logger.log(`Linked password to existing Google user: ${email}`);
+    } else {
+      // Brand new native user
+      user = await this.usersService.createNative({ email, name, passwordHash });
+
+      const baseSlug = this.generateSlugFromName(name);
+      const uniqueSlug = await this.ensureUniqueSlug(baseSlug);
+
+      await this.prisma.profile.create({
+        data: {
+          userId: user.id,
+          displayName: name,
+          slug: uniqueSlug,
+          label: 'Principal',
+          isPrimary: true,
+        },
+      });
+
+      this.logger.log(`New native user created: ${email}`);
+      this.mailService.sendWelcome(email, name).catch(() => {});
+    }
+
+    const accessToken = this.generateAccessToken(user.id, user.email, user.role);
+    const refreshToken = await this.generateRefreshToken(user.id);
+
+    // Auto-consume invite token if provided
+    let joinedOrg: { id: string; name: string; slug: string } | undefined;
+    if (inviteToken) {
+      try {
+        const result = await this.orgService.acceptInvite(inviteToken, user.id);
+        joinedOrg = result.organization as { id: string; name: string; slug: string };
+        this.logger.log(`User ${email} auto-joined org via invite`);
+      } catch (err) {
+        this.logger.warn(`Auto-join invite failed for ${email}: ${(err as Error).message}`);
+      }
+    }
+
+    return {
+      user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl },
+      accessToken,
+      refreshToken,
+      joinedOrg,
+    };
+  }
+
+  async loginWithPassword(email: string, password: string) {
+    const user = await this.usersService.findByEmail(email);
+
+    if (!user) {
+      throw AppException.unauthorized('Credenciais invalidas');
+    }
+
+    if (!user.passwordHash) {
+      throw AppException.unauthorized('Use o login com Google para esta conta');
+    }
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      throw AppException.unauthorized('Credenciais invalidas');
+    }
+
+    const accessToken = this.generateAccessToken(user.id, user.email, user.role);
+    const refreshToken = await this.generateRefreshToken(user.id);
+
+    return {
+      user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl },
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) return; // Do not leak whether email exists
+
+    const rawToken = randomBytes(32).toString('hex');
+    const tokenHash = this.hashToken(rawToken);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await this.usersService.setPasswordResetToken(user.id, tokenHash, expiresAt);
+
+    const frontendUrl = this.configService.get('FRONTEND_URL', { infer: true }) || 'https://craftcardgenz.com';
+    await this.mailService.sendPasswordReset(user.email, `${frontendUrl}/reset-password?token=${rawToken}`);
+
+    this.logger.log(`Password reset email sent to ${email}`);
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const tokenHash = this.hashToken(token);
+    const user = await this.usersService.findByPasswordResetToken(tokenHash);
+
+    if (!user) {
+      throw AppException.badRequest('Token invalido ou expirado');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+    await this.usersService.updatePassword(user.id, passwordHash);
+    await this.usersService.clearPasswordResetToken(user.id);
+
+    // Revoke all refresh tokens for security
+    await this.revokeAllUserTokens(user.id);
+
+    this.logger.log(`Password reset completed for ${user.email}`);
   }
 
   async refreshTokens(currentRefreshToken: string) {

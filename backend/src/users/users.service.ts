@@ -47,4 +47,58 @@ export class UsersService {
       where: { id },
     });
   }
+
+  async createNative(data: { email: string; name: string; passwordHash: string }) {
+    return this.prisma.user.create({
+      data: {
+        email: data.email,
+        name: data.name,
+        passwordHash: data.passwordHash,
+      },
+    });
+  }
+
+  async addPasswordToUser(userId: string, passwordHash: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+  }
+
+  async addGoogleIdToUser(userId: string, googleId: string, avatarUrl?: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { googleId, ...(avatarUrl && { avatarUrl }) },
+    });
+  }
+
+  async setPasswordResetToken(userId: string, tokenHash: string, expiresAt: Date) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordResetToken: tokenHash, passwordResetExpiresAt: expiresAt },
+    });
+  }
+
+  async findByPasswordResetToken(tokenHash: string) {
+    return this.prisma.user.findFirst({
+      where: {
+        passwordResetToken: tokenHash,
+        passwordResetExpiresAt: { gt: new Date() },
+      },
+    });
+  }
+
+  async clearPasswordResetToken(userId: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordResetToken: null, passwordResetExpiresAt: null },
+    });
+  }
+
+  async updatePassword(userId: string, passwordHash: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+  }
 }

@@ -4,6 +4,9 @@ import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { Public } from '../common/decorators/public.decorator';
 import { googleAuthSchema } from './dto/google-auth.dto';
+import { registerSchema } from './dto/register.dto';
+import { loginSchema } from './dto/login.dto';
+import { forgotPasswordSchema, resetPasswordSchema } from './dto/reset-password.dto';
 
 const REFRESH_COOKIE = 'refreshToken';
 const isProduction = process.env.NODE_ENV === 'production';
@@ -32,6 +35,55 @@ export class AuthController {
       user: result.user,
       accessToken: result.accessToken,
     };
+  }
+
+  @Public()
+  @Throttle({ medium: { limit: 5, ttl: 60000 } })
+  @Post('register')
+  async register(@Body() body: unknown, @Res({ passthrough: true }) res: Response) {
+    const { email, name, password, inviteToken } = registerSchema.parse(body);
+    const result = await this.authService.register(email, name, password, inviteToken);
+
+    res.cookie(REFRESH_COOKIE, result.refreshToken, COOKIE_OPTIONS);
+
+    return {
+      user: result.user,
+      accessToken: result.accessToken,
+      joinedOrg: result.joinedOrg,
+    };
+  }
+
+  @Public()
+  @Throttle({ medium: { limit: 5, ttl: 60000 } })
+  @Post('login')
+  async login(@Body() body: unknown, @Res({ passthrough: true }) res: Response) {
+    const { email, password } = loginSchema.parse(body);
+    const result = await this.authService.loginWithPassword(email, password);
+
+    res.cookie(REFRESH_COOKIE, result.refreshToken, COOKIE_OPTIONS);
+
+    return {
+      user: result.user,
+      accessToken: result.accessToken,
+    };
+  }
+
+  @Public()
+  @Throttle({ medium: { limit: 3, ttl: 60000 } })
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: unknown) {
+    const { email } = forgotPasswordSchema.parse(body);
+    await this.authService.forgotPassword(email);
+    return { message: 'Se o email existir, enviaremos um link de recuperacao' };
+  }
+
+  @Public()
+  @Throttle({ medium: { limit: 3, ttl: 60000 } })
+  @Post('reset-password')
+  async resetPassword(@Body() body: unknown) {
+    const { token, password } = resetPasswordSchema.parse(body);
+    await this.authService.resetPassword(token, password);
+    return { message: 'Senha redefinida com sucesso' };
   }
 
   @Public()
