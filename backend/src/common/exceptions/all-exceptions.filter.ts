@@ -78,6 +78,24 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return this.handlePrismaError(exception);
     }
 
+    if (exception instanceof Prisma.PrismaClientValidationError) {
+      this.logger.error(`Prisma validation error: ${exception.message}`);
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        code: 'DATABASE_VALIDATION_ERROR',
+        message: 'Erro de validacao do banco de dados. Tente novamente.',
+      };
+    }
+
+    if (exception instanceof Prisma.PrismaClientInitializationError) {
+      this.logger.error(`Prisma initialization error: ${exception.message}`);
+      return {
+        status: HttpStatus.SERVICE_UNAVAILABLE,
+        code: 'DATABASE_UNAVAILABLE',
+        message: 'Banco de dados temporariamente indisponivel. Tente novamente em instantes.',
+      };
+    }
+
     if (exception instanceof HttpException) {
       const response = exception.getResponse();
       const message =
@@ -113,11 +131,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
           code: 'NOT_FOUND',
           message: 'Registro nao encontrado',
         };
-      default:
+      case 'P2003':
+        return {
+          status: HttpStatus.BAD_REQUEST,
+          code: 'FOREIGN_KEY_ERROR',
+          message: 'Referencia invalida',
+        };
+      case 'P2010':
+        this.logger.error(`Raw query failed: ${error.message}`);
         return {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
           code: 'DATABASE_ERROR',
-          message: 'Erro de banco de dados',
+          message: 'Erro ao consultar banco de dados. Tente novamente.',
+        };
+      default:
+        this.logger.error(`Prisma error ${error.code}: ${error.message}`);
+        return {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          code: 'DATABASE_ERROR',
+          message: 'Erro de banco de dados. Tente novamente.',
         };
     }
   }
