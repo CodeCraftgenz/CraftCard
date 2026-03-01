@@ -229,21 +229,23 @@ export function LoginPage() {
           className="w-full max-w-md"
         >
           {/* Mobile large CC */}
-          <div className="lg:hidden flex justify-center mb-8">
+          <Link to="/" className="lg:hidden flex justify-center mb-8">
             <span
               className="text-7xl font-black bg-clip-text text-transparent select-none"
               style={{ backgroundImage: 'linear-gradient(135deg, #00E4F2 0%, #8B5CF6 40%, #D12BF2 100%)' }}
             >
               CC
             </span>
-          </div>
+          </Link>
 
           {/* Heading */}
           <div className="mb-8">
             <p className="text-white/40 text-sm tracking-widest uppercase mb-2">Bem-vindo</p>
-            <h1 className="text-4xl font-extrabold text-white tracking-tight mb-2">
-              Craft<span className="bg-gradient-to-r from-brand-cyan to-brand-magenta bg-clip-text text-transparent">Card</span>
-            </h1>
+            <Link to="/" className="block">
+              <h1 className="text-4xl font-extrabold text-white tracking-tight mb-2 hover:opacity-80 transition-opacity">
+                Craft<span className="bg-gradient-to-r from-brand-cyan to-brand-magenta bg-clip-text text-transparent">Card</span>
+              </h1>
+            </Link>
             <p className="text-white/40 text-sm">
               Tecnologia para maximizar resultados.
             </p>
