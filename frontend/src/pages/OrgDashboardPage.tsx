@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Users, BarChart3, Mail, Settings, Plus, Trash2, Copy, Check,
@@ -39,6 +39,11 @@ export function OrgDashboardPage() {
 
   const { data: org } = useOrganization(orgId);
   const myRole = organizations.find((o) => o.id === orgId)?.role || 'MEMBER';
+
+  // Only ADMIN/OWNER can access the org dashboard
+  if (myRole === 'MEMBER') {
+    return <Navigate to="/editor" replace />;
+  }
 
   if (!org) {
     return (

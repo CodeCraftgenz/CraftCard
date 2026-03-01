@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, X, Briefcase } from 'lucide-react';
 import { useServices, useCreateService, useUpdateService, useDeleteService } from '@/hooks/useServices';
 
-export function ServicesEditor() {
+export function ServicesEditor({ enabled, onToggle }: { enabled?: boolean; onToggle?: () => void }) {
   const { data: services } = useServices();
   const createService = useCreateService();
   const updateService = useUpdateService();
@@ -21,8 +21,18 @@ export function ServicesEditor() {
         <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
           <Briefcase size={16} className="text-amber-400" />
         </div>
-        <h3 className="font-semibold">Servicos</h3>
-        <span className="text-xs text-white/30 ml-auto">{services?.length || 0}/20</span>
+        <h3 className="font-semibold flex-1">Servicos</h3>
+        <span className="text-xs text-white/30">{services?.length || 0}/20</span>
+        {onToggle && (
+          <button
+            type="button"
+            onClick={onToggle}
+            className={`relative w-11 h-6 rounded-full transition-colors ${enabled ? 'bg-amber-500' : 'bg-white/10'}`}
+            title="Ativar/desativar servicos"
+          >
+            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${enabled ? 'left-[22px]' : 'left-0.5'}`} />
+          </button>
+        )}
       </div>
 
       {services && services.length > 0 && (
@@ -80,6 +90,7 @@ export function ServicesEditor() {
           type="button"
           onClick={handleAdd}
           disabled={(services?.length || 0) >= 20 || createService.isPending}
+          title="Adicionar servico"
           className="px-4 py-2.5 rounded-xl bg-brand-cyan/10 text-brand-cyan text-sm font-medium hover:bg-brand-cyan/20 transition-all disabled:opacity-30"
         >
           <Plus size={16} />

@@ -201,8 +201,13 @@ export class ProfilesService {
 
     const result = {
       ...rest,
-      resumeUrl: this.resolveApiUrl(this.migrateUrl(rest.resumeUrl)),
+      resumeUrl: profile.resumeEnabled ? this.resolveApiUrl(this.migrateUrl(rest.resumeUrl)) : null,
       socialLinks: activeLinks,
+      testimonials: profile.testimonialsEnabled ? rest.testimonials : [],
+      galleryImages: profile.galleryEnabled ? rest.galleryImages : [],
+      services: profile.servicesEnabled ? rest.services : [],
+      faqItems: profile.faqEnabled ? rest.faqItems : [],
+      contactFormEnabled: profile.contactFormEnabled,
       isVerified: subscription.active,
       plan: profile.user?.plan || 'FREE',
       orgBranding,

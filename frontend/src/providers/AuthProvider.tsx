@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { api, setAccessToken, clearAccessToken } from '@/lib/api';
+import { queryClient } from '@/providers/QueryProvider';
 
 interface User {
   id: string;
@@ -144,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const handleLogout = () => {
       clearAccessToken();
+      queryClient.clear();
       setState(EMPTY_STATE);
     };
     window.addEventListener('auth:logout', handleLogout);
@@ -155,12 +157,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       credential: googleCredential,
     });
     setAccessToken(data.accessToken);
+    queryClient.clear();
     await fetchMe();
   }, [fetchMe]);
 
   const loginWithPassword = useCallback(async (email: string, password: string) => {
     const data: { user: User; accessToken: string } = await api.post('/auth/login', { email, password });
     setAccessToken(data.accessToken);
+    queryClient.clear();
     await fetchMe();
   }, [fetchMe]);
 
@@ -168,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data: { user: User; accessToken: string; joinedOrg?: { id: string; name: string; slug: string } } =
       await api.post('/auth/register', registerData);
     setAccessToken(data.accessToken);
+    queryClient.clear();
     await fetchMe();
     return { joinedOrg: data.joinedOrg };
   }, [fetchMe]);
@@ -175,6 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const devLogin = useCallback(async (email?: string, name?: string) => {
     const data: { user: User; accessToken: string } = await api.post('/auth/dev', { email, name });
     setAccessToken(data.accessToken);
+    queryClient.clear();
     await fetchMe();
   }, [fetchMe]);
 
@@ -183,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await api.post('/auth/logout');
     } finally {
       clearAccessToken();
+      queryClient.clear();
       setState(EMPTY_STATE);
     }
   }, []);

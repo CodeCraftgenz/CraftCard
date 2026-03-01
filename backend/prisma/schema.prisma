@@ -84,6 +84,14 @@ model Profile {
   tagline         String?  @db.VarChar(200)
   sectionsOrder   String?  @map("sections_order") @db.Text
 
+  // Section toggles (user can disable sections even if plan allows)
+  resumeEnabled       Boolean @default(true) @map("resume_enabled")
+  contactFormEnabled  Boolean @default(true) @map("contact_form_enabled")
+  testimonialsEnabled Boolean @default(true) @map("testimonials_enabled")
+  galleryEnabled      Boolean @default(true) @map("gallery_enabled")
+  servicesEnabled     Boolean @default(true) @map("services_enabled")
+  faqEnabled          Boolean @default(true) @map("faq_enabled")
+
   // B2B - Organization (Sprint 7)
   orgId           String?  @map("org_id")
 

@@ -77,6 +77,12 @@ export const updateProfileSchema = z.object({
   videoUrl: z.preprocess(emptyToUndefined, safeUrlSchema.optional().nullable()),
   leadCaptureEnabled: z.boolean().optional(),
   bookingEnabled: z.boolean().optional(),
+  resumeEnabled: z.boolean().optional(),
+  contactFormEnabled: z.boolean().optional(),
+  testimonialsEnabled: z.boolean().optional(),
+  galleryEnabled: z.boolean().optional(),
+  servicesEnabled: z.boolean().optional(),
+  faqEnabled: z.boolean().optional(),
   // Visual Customization
   fontFamily: z.preprocess(emptyToUndefined, z.string().max(50).optional().nullable()),
   fontSizeScale: z.number().min(0.8).max(1.3).optional().nullable(),

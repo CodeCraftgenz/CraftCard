@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, X, HelpCircle } from 'lucide-react';
 import { useFaq, useCreateFaq, useUpdateFaq, useDeleteFaq } from '@/hooks/useFaq';
 
-export function FaqEditor() {
+export function FaqEditor({ enabled, onToggle }: { enabled?: boolean; onToggle?: () => void }) {
   const { data: faqItems } = useFaq();
   const createFaq = useCreateFaq();
   const updateFaq = useUpdateFaq();
@@ -23,8 +23,18 @@ export function FaqEditor() {
         <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
           <HelpCircle size={16} className="text-indigo-400" />
         </div>
-        <h3 className="font-semibold">Perguntas Frequentes</h3>
-        <span className="text-xs text-white/30 ml-auto">{faqItems?.length || 0}/15</span>
+        <h3 className="font-semibold flex-1">Perguntas Frequentes</h3>
+        <span className="text-xs text-white/30">{faqItems?.length || 0}/15</span>
+        {onToggle && (
+          <button
+            type="button"
+            onClick={onToggle}
+            className={`relative w-11 h-6 rounded-full transition-colors ${enabled ? 'bg-indigo-500' : 'bg-white/10'}`}
+            title="Ativar/desativar FAQ"
+          >
+            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${enabled ? 'left-[22px]' : 'left-0.5'}`} />
+          </button>
+        )}
       </div>
 
       {faqItems && faqItems.length > 0 && (
@@ -84,6 +94,7 @@ export function FaqEditor() {
             type="button"
             onClick={handleAdd}
             disabled={(faqItems?.length || 0) >= 15 || createFaq.isPending}
+            title="Adicionar pergunta"
             className="px-4 py-2.5 rounded-xl bg-brand-cyan/10 text-brand-cyan text-sm font-medium hover:bg-brand-cyan/20 transition-all disabled:opacity-30 self-end"
           >
             <Plus size={16} />

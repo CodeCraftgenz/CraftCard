@@ -75,10 +75,20 @@ api.interceptors.response.use(
   },
 );
 
+const TOKEN_KEY = 'accessToken';
+
 export function setAccessToken(token: string) {
+  localStorage.setItem(TOKEN_KEY, token);
   api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 }
 
 export function clearAccessToken() {
+  localStorage.removeItem(TOKEN_KEY);
   delete api.defaults.headers.common['Authorization'];
+}
+
+// Restore token from localStorage on module load (survives page refresh)
+const savedToken = localStorage.getItem(TOKEN_KEY);
+if (savedToken) {
+  api.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
 }

@@ -33,6 +33,12 @@ export interface Profile {
   videoUrl: string | null;
   leadCaptureEnabled: boolean;
   bookingEnabled: boolean;
+  resumeEnabled?: boolean;
+  contactFormEnabled?: boolean;
+  testimonialsEnabled?: boolean;
+  galleryEnabled?: boolean;
+  servicesEnabled?: boolean;
+  faqEnabled?: boolean;
   fontFamily?: string | null;
   fontSizeScale?: number | null;
   backgroundType?: string | null;

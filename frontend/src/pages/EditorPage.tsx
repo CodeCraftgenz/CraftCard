@@ -142,6 +142,12 @@ export function EditorPage() {
     coverPositionY: 50,
     leadCaptureEnabled: false,
     bookingEnabled: false,
+    resumeEnabled: true,
+    contactFormEnabled: true,
+    testimonialsEnabled: true,
+    galleryEnabled: true,
+    servicesEnabled: true,
+    faqEnabled: true,
     fontFamily: null as string | null,
     fontSizeScale: 1,
     backgroundType: 'theme' as string,
@@ -187,6 +193,12 @@ export function EditorPage() {
         coverPositionY: profile.coverPositionY ?? 50,
         leadCaptureEnabled: profile.leadCaptureEnabled ?? false,
         bookingEnabled: profile.bookingEnabled ?? false,
+        resumeEnabled: profile.resumeEnabled ?? true,
+        contactFormEnabled: profile.contactFormEnabled ?? true,
+        testimonialsEnabled: profile.testimonialsEnabled ?? true,
+        galleryEnabled: profile.galleryEnabled ?? true,
+        servicesEnabled: profile.servicesEnabled ?? true,
+        faqEnabled: profile.faqEnabled ?? true,
         fontFamily: profile.fontFamily ?? null,
         fontSizeScale: profile.fontSizeScale ?? 1,
         backgroundType: profile.backgroundType ?? 'theme',
@@ -267,6 +279,12 @@ export function EditorPage() {
     data.coverPositionY = form.coverPositionY;
     data.leadCaptureEnabled = form.leadCaptureEnabled;
     data.bookingEnabled = form.bookingEnabled;
+    data.resumeEnabled = form.resumeEnabled;
+    data.contactFormEnabled = form.contactFormEnabled;
+    data.testimonialsEnabled = form.testimonialsEnabled;
+    data.galleryEnabled = form.galleryEnabled;
+    data.servicesEnabled = form.servicesEnabled;
+    data.faqEnabled = form.faqEnabled;
     data.fontFamily = form.fontFamily || null;
     data.fontSizeScale = form.fontSizeScale;
     data.backgroundType = form.backgroundType;
@@ -1469,12 +1487,21 @@ export function EditorPage() {
             </div>
 
             {/* Resume */}
+            <FeatureLock feature="resume">{(
             <div className="glass-card p-6 hover:border-white/20 transition-colors">
               <div className="flex items-center gap-2 mb-5">
                 <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
                   <FileText size={16} className="text-green-400" />
                 </div>
-                <h3 className="font-semibold">Curriculo</h3>
+                <h3 className="font-semibold flex-1">Curriculo</h3>
+                <button
+                  type="button"
+                  onClick={() => updateField('resumeEnabled', !form.resumeEnabled)}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${form.resumeEnabled ? 'bg-green-500' : 'bg-white/10'}`}
+                  title="Ativar/desativar curriculo"
+                >
+                  <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${form.resumeEnabled ? 'left-[22px]' : 'left-0.5'}`} />
+                </button>
               </div>
               <div className="flex items-center gap-3">
                 {profile?.resumeUrl && (
@@ -1499,6 +1526,8 @@ export function EditorPage() {
                 </label>
               </div>
             </div>
+            )}
+            </FeatureLock>
 
             {/* Appearance */}
             <div className="glass-card p-6 hover:border-white/20 transition-colors relative">
@@ -1845,6 +1874,14 @@ export function EditorPage() {
                       <h3 className="font-semibold">Leads & Mensagens</h3>
                       <p className="text-xs text-white/30">{contacts?.length || 0} contatos recebidos</p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => updateField('contactFormEnabled', !form.contactFormEnabled)}
+                      className={`relative w-11 h-6 rounded-full transition-colors ${form.contactFormEnabled ? 'bg-purple-500' : 'bg-white/10'}`}
+                      title="Ativar/desativar formulario de contato"
+                    >
+                      <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${form.contactFormEnabled ? 'left-[22px]' : 'left-0.5'}`} />
+                    </button>
                     {contacts && contacts.filter((m) => !m.isRead).length > 0 && (
                       <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-semibold">
                         {contacts.filter((m) => !m.isRead).length} nova{contacts.filter((m) => !m.isRead).length > 1 ? 's' : ''}
@@ -1948,8 +1985,16 @@ export function EditorPage() {
                   <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
                     <Camera size={16} className="text-purple-400" />
                   </div>
-                  <h3 className="font-semibold">Galeria / Portfolio</h3>
-                  <span className="text-xs text-white/30 ml-auto">{galleryImages?.length || 0}/12</span>
+                  <h3 className="font-semibold flex-1">Galeria / Portfolio</h3>
+                  <span className="text-xs text-white/30">{galleryImages?.length || 0}/12</span>
+                  <button
+                    type="button"
+                    onClick={() => updateField('galleryEnabled', !form.galleryEnabled)}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${form.galleryEnabled ? 'bg-purple-500' : 'bg-white/10'}`}
+                    title="Ativar/desativar galeria"
+                  >
+                    <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${form.galleryEnabled ? 'left-[22px]' : 'left-0.5'}`} />
+                  </button>
                 </div>
 
                 {/* Gallery Grid */}
@@ -2010,12 +2055,12 @@ export function EditorPage() {
 
             {/* Services (PRO+) */}
             <FeatureLock feature="services">
-              <ServicesEditor />
+              <ServicesEditor enabled={form.servicesEnabled} onToggle={() => updateField('servicesEnabled', !form.servicesEnabled)} />
             </FeatureLock>
 
             {/* FAQ (PRO+) */}
             <FeatureLock feature="faq">
-              <FaqEditor />
+              <FaqEditor enabled={form.faqEnabled} onToggle={() => updateField('faqEnabled', !form.faqEnabled)} />
             </FeatureLock>
 
             {/* Organization links */}
@@ -2028,29 +2073,35 @@ export function EditorPage() {
                   <h3 className="text-white font-semibold text-sm">Organizacoes</h3>
                 </div>
                 <div className="space-y-2">
-                  {organizations.map((org) => (
-                    <a
-                      key={org.id}
-                      href={`/org/${org.id}`}
-                      className="group flex items-center justify-between px-4 py-3 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30 transition-all"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                          <UserPlus size={14} className="text-purple-400" />
+                  {organizations.map((org) => {
+                    const isAdmin = org.role === 'ADMIN' || org.role === 'OWNER';
+                    const Wrapper = isAdmin ? 'a' : 'div';
+                    return (
+                      <Wrapper
+                        key={org.id}
+                        {...(isAdmin ? { href: `/org/${org.id}` } : {})}
+                        className={`group flex items-center justify-between px-4 py-3 rounded-xl bg-purple-500/10 border border-purple-500/20 transition-all ${isAdmin ? 'hover:bg-purple-500/20 hover:border-purple-500/30 cursor-pointer' : ''}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                            <UserPlus size={14} className="text-purple-400" />
+                          </div>
+                          <div>
+                            <span className="text-white text-sm font-medium">{org.name}</span>
+                            <span className="block text-white/30 text-xs">{org.role}</span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-white text-sm font-medium">{org.name}</span>
-                          <span className="block text-white/30 text-xs">{org.role}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-purple-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                          Gerenciar
-                        </span>
-                        <ExternalLink size={14} className="text-purple-400 group-hover:translate-x-0.5 transition-transform" />
-                      </div>
-                    </a>
-                  ))}
+                        {isAdmin && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-purple-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                              Gerenciar
+                            </span>
+                            <ExternalLink size={14} className="text-purple-400 group-hover:translate-x-0.5 transition-transform" />
+                          </div>
+                        )}
+                      </Wrapper>
+                    );
+                  })}
                   {(plan === 'BUSINESS' || plan === 'ENTERPRISE') && (
                     <>
                       {!showCreateOrg ? (
@@ -2308,7 +2359,15 @@ export function EditorPage() {
                   <div className="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center">
                     <Star size={16} className="text-yellow-400" />
                   </div>
-                  <h3 className="font-semibold">Depoimentos</h3>
+                  <h3 className="font-semibold flex-1">Depoimentos</h3>
+                  <button
+                    type="button"
+                    onClick={() => updateField('testimonialsEnabled', !form.testimonialsEnabled)}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${form.testimonialsEnabled ? 'bg-yellow-500' : 'bg-white/10'}`}
+                    title="Ativar/desativar depoimentos"
+                  >
+                    <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${form.testimonialsEnabled ? 'left-[22px]' : 'left-0.5'}`} />
+                  </button>
                   {testimonials && testimonials.filter((t) => !t.isApproved).length > 0 && (
                     <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full font-semibold">
                       {testimonials.filter((t) => !t.isApproved).length} pendente{testimonials.filter((t) => !t.isApproved).length > 1 ? 's' : ''}

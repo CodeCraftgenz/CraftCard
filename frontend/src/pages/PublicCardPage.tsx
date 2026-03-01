@@ -67,6 +67,8 @@ interface PublicProfile {
   linkAnimation?: string | null;
   leadCaptureEnabled?: boolean;
   bookingEnabled?: boolean;
+  contactFormEnabled?: boolean;
+  testimonialsEnabled?: boolean;
   socialLinks: Array<{
     id: string;
     platform: string;
@@ -813,6 +815,7 @@ export function PublicCardPage() {
           )}
 
           {/* Leave Testimonial Button */}
+          {profile.testimonialsEnabled !== false && (
           <motion.button
             type="button"
             onClick={() => setShowTestimonialForm(true)}
@@ -824,6 +827,7 @@ export function PublicCardPage() {
             <Star size={16} />
             Deixar Depoimento
           </motion.button>
+          )}
 
           {/* Resume */}
           {profile.resumeUrl && (
@@ -854,6 +858,7 @@ export function PublicCardPage() {
           </motion.button>
 
           {/* Contact Form Button */}
+          {profile.contactFormEnabled !== false && (
           <motion.button
             type="button"
             onClick={() => setShowContactForm(true)}
@@ -865,6 +870,7 @@ export function PublicCardPage() {
             <MessageSquare size={16} />
             Enviar Mensagem
           </motion.button>
+          )}
 
           {/* Booking Button */}
           {publicSlots && publicSlots.length > 0 && (
