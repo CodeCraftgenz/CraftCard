@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -22,6 +22,8 @@ interface GalleryGridProps {
 
 export function GalleryGrid({ images }: GalleryGridProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   if (images.length === 0) return null;
 
@@ -39,32 +41,80 @@ export function GalleryGrid({ images }: GalleryGridProps) {
     }
   };
 
+  const scrollToSlide = (index: number) => {
+    if (scrollRef.current) {
+      const child = scrollRef.current.children[index] as HTMLElement;
+      if (child) {
+        scrollRef.current.scrollTo({ left: child.offsetLeft - 8, behavior: 'smooth' });
+      }
+    }
+  };
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const container = scrollRef.current;
+    const scrollLeft = container.scrollLeft;
+    const childWidth = (container.children[0] as HTMLElement)?.offsetWidth || 1;
+    const newActive = Math.round(scrollLeft / (childWidth + 8));
+    if (newActive !== activeSlide && newActive >= 0 && newActive < images.length) {
+      setActiveSlide(newActive);
+    }
+  };
+
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        {images.map((img, i) => (
-          <motion.button
-            key={img.id}
-            type="button"
-            onClick={() => openLightbox(i)}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: i * 0.05 }}
-            className="relative aspect-square rounded-xl overflow-hidden group cursor-pointer"
-          >
-            <img
-              src={getImageSrc(img)}
-              alt={img.caption || 'Galeria'}
-              loading="lazy"
-              className="w-full h-full object-cover transition-transform group-hover:scale-105"
-            />
-            {img.caption && (
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                <p className="text-[10px] text-white/80 truncate">{img.caption}</p>
-              </div>
-            )}
-          </motion.button>
-        ))}
+      {/* Carousel */}
+      <div className="relative">
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-1"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {images.map((img, i) => (
+            <motion.button
+              key={img.id}
+              type="button"
+              onClick={() => openLightbox(i)}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.05 }}
+              className="relative shrink-0 snap-center rounded-2xl overflow-hidden cursor-pointer group"
+              style={{ width: images.length === 1 ? '100%' : '75%', aspectRatio: '4/3' }}
+            >
+              <img
+                src={getImageSrc(img)}
+                alt={img.caption || 'Galeria'}
+                loading="lazy"
+                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+              />
+              {img.caption && (
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                  <p className="text-xs text-white/90 truncate">{img.caption}</p>
+                </div>
+              )}
+            </motion.button>
+          ))}
+        </div>
+
+        {/* Dot indicators */}
+        {images.length > 1 && (
+          <div className="flex items-center justify-center gap-1.5 mt-3">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => { setActiveSlide(i); scrollToSlide(i); }}
+                className={`rounded-full transition-all ${
+                  i === activeSlide
+                    ? 'w-5 h-1.5 bg-white/70'
+                    : 'w-1.5 h-1.5 bg-white/20 hover:bg-white/40'
+                }`}
+                aria-label={`Imagem ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Lightbox */}
