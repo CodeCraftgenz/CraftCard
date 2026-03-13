@@ -68,6 +68,7 @@ interface PublicProfile {
   linkLayout?: string | null;
   linkStyle?: string | null;
   linkAnimation?: string | null;
+  iconStyle?: string | null;
   leadCaptureEnabled?: boolean;
   bookingEnabled?: boolean;
   contactFormEnabled?: boolean;
@@ -376,6 +377,7 @@ export function PublicCardPage() {
   const linkLayout = profile?.linkLayout || 'list';
   const linkStyle = profile?.linkStyle || 'rounded';
   const linkAnim = profile?.linkAnimation || 'none';
+  const iconStyle = profile?.iconStyle || 'default';
 
   // Load custom Google Font (must be before conditional returns — Rules of Hooks)
   useEffect(() => { if (profile) loadGoogleFont(fontFamily); }, [fontFamily, profile]);
@@ -731,7 +733,7 @@ export function PublicCardPage() {
             transition={{ delay: 0.45, type: 'spring', stiffness: 200 }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
-            className="w-full flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl font-semibold text-sm shadow-lg transition-all"
+            className="w-full flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl font-semibold text-sm shadow-lg transition-all mt-5 mb-2"
             style={{
               background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
               color: '#fff',
@@ -761,6 +763,7 @@ export function PublicCardPage() {
                       accent={accent}
                       linkStyle={linkStyle}
                       linkAnim={linkAnim}
+                      iconStyle={iconStyle}
                     />
                   ))}
                   {hiddenCount > 0 && (

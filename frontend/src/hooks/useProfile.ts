@@ -49,6 +49,7 @@ export interface Profile {
   linkLayout?: string | null;
   linkStyle?: string | null;
   linkAnimation?: string | null;
+  iconStyle?: string | null;
   orgId?: string | null;
   socialLinks: SocialLink[];
 }

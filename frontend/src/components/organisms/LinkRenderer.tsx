@@ -109,9 +109,10 @@ interface LinkRendererProps {
   accent: string;
   linkStyle: string;
   linkAnim: string;
+  iconStyle?: string;
 }
 
-export function LinkRenderer({ link, index, accent, linkStyle, linkAnim }: LinkRendererProps) {
+export function LinkRenderer({ link, index, accent, linkStyle, linkAnim, iconStyle = 'default' }: LinkRendererProps) {
   const [embedOpen, setEmbedOpen] = useState(false);
 
   // Header separator
@@ -140,6 +141,7 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim }: LinkR
         accent={accent}
         linkStyle={linkStyle}
         linkAnim={linkAnim}
+        iconStyle={iconStyle}
       />
     );
   }
@@ -156,6 +158,7 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim }: LinkR
           accent={accent}
           linkStyle={linkStyle}
           linkAnim={linkAnim}
+          iconStyle={iconStyle}
           onClick={(e) => {
             if (videoId) {
               e.preventDefault();
@@ -194,6 +197,7 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim }: LinkR
           accent={accent}
           linkStyle={linkStyle}
           linkAnim={linkAnim}
+          iconStyle={iconStyle}
           onClick={(e) => {
             if (spotifyUri) {
               e.preventDefault();
@@ -245,6 +249,7 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim }: LinkR
           accent={accent}
           linkStyle={linkStyle}
           linkAnim={linkAnim}
+          iconStyle={iconStyle}
           onClick={(e) => {
             e.preventDefault();
             setEmbedOpen(!embedOpen);
@@ -271,6 +276,7 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim }: LinkR
         accent={accent}
         linkStyle={linkStyle}
         linkAnim={linkAnim}
+        iconStyle={iconStyle}
       />
     );
   }
@@ -285,6 +291,7 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim }: LinkR
         accent={accent}
         linkStyle={linkStyle}
         linkAnim={linkAnim}
+        iconStyle={iconStyle}
         download
       />
     );
@@ -299,13 +306,14 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim }: LinkR
       accent={accent}
       linkStyle={linkStyle}
       linkAnim={linkAnim}
+      iconStyle={iconStyle}
     />
   );
 }
 
 // Shared link button component
 function LinkButton({
-  link, href, index, accent, linkStyle, linkAnim, onClick, download,
+  link, href, index, accent, linkStyle, linkAnim, iconStyle = 'default', onClick, download,
 }: {
   link: SocialLink;
   href: string;
@@ -313,6 +321,7 @@ function LinkButton({
   accent: string;
   linkStyle: string;
   linkAnim: string;
+  iconStyle?: string;
   onClick?: (e: React.MouseEvent) => void;
   download?: boolean;
 }) {
@@ -320,6 +329,7 @@ function LinkButton({
   const bgColor = platformColors[link.platform] || accent;
   const isMailto = href.startsWith('mailto:');
   const isInternal = href === '#';
+  const iconContainer = getIconContainerStyle(iconStyle, bgColor, accent);
 
   return (
     <motion.a
@@ -339,15 +349,33 @@ function LinkButton({
       style={{ borderLeft: linkStyle !== 'ghost' ? `3px solid ${accent}` : undefined }}
     >
       <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-        style={{ backgroundColor: `${accent}20` }}
+        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconContainer.className}`}
+        style={iconContainer.style}
       >
-        <Icon size={20} style={{ color: bgColor }} />
+        <Icon size={20} style={{ color: iconContainer.iconColor }} />
       </div>
       <span className="font-medium truncate min-w-0" style={{ fontSize: '0.875em' }}>{link.label}</span>
       <span className="ml-auto text-white/20 group-hover:text-white/40 transition-colors">&rsaquo;</span>
     </motion.a>
   );
+}
+
+function getIconContainerStyle(iconStyle: string, bgColor: string, accent: string): { style: React.CSSProperties; className: string; iconColor: string } {
+  switch (iconStyle) {
+    case 'filled':
+      return { style: { backgroundColor: bgColor }, className: '', iconColor: '#ffffff' };
+    case 'outline':
+      return { style: { border: `2px solid ${bgColor}`, backgroundColor: 'transparent' }, className: '', iconColor: bgColor };
+    case 'neomorph':
+      return { style: { backgroundColor: 'rgba(255,255,255,0.08)', boxShadow: `4px 4px 8px rgba(0,0,0,0.3), -2px -2px 6px rgba(255,255,255,0.05), inset 0 0 0 1px ${bgColor}30` }, className: '', iconColor: bgColor };
+    case 'glass':
+      return { style: { backgroundColor: `${bgColor}15`, border: `1px solid ${bgColor}30`, boxShadow: `0 2px 8px ${bgColor}20`, backdropFilter: 'blur(8px)' }, className: '', iconColor: bgColor };
+    case 'gradient':
+      return { style: { background: `linear-gradient(135deg, ${bgColor}, ${bgColor}88)` }, className: '', iconColor: '#ffffff' };
+    case 'default':
+    default:
+      return { style: { backgroundColor: `${accent}20` }, className: '', iconColor: bgColor };
+  }
 }
 
 function getStyleClass(style: string): string {
@@ -389,7 +417,7 @@ function tryParseJson(str: string): Record<string, string> | null {
 // ──────────────────────────────────────────────
 
 function GridLinkCard({
-  link, href, index, accent, linkAnim, onClick,
+  link, href, index, accent, linkAnim, iconStyle = 'default', onClick,
 }: {
   link: SocialLink;
   href: string;
@@ -397,12 +425,14 @@ function GridLinkCard({
   accent: string;
   linkStyle?: string;
   linkAnim: string;
+  iconStyle?: string;
   onClick?: (e: React.MouseEvent) => void;
 }) {
   const Icon = platformIcons[link.platform] || Globe;
   const bgColor = platformColors[link.platform] || accent;
   const isMailto = href.startsWith('mailto:');
   const isInternal = href === '#';
+  const iconContainer = getIconContainerStyle(iconStyle, bgColor, accent);
 
   return (
     <motion.a
@@ -423,7 +453,9 @@ function GridLinkCard({
         border: `1px solid ${bgColor}20`,
       }}
     >
-      <Icon size={30} style={{ color: bgColor }} />
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconContainer.className}`} style={iconContainer.style}>
+        <Icon size={24} style={{ color: iconContainer.iconColor }} />
+      </div>
       <span className="text-[11px] text-white/70 font-medium truncate max-w-full text-center leading-tight">
         {link.label}
       </span>
@@ -431,7 +463,7 @@ function GridLinkCard({
   );
 }
 
-export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim }: LinkRendererProps) {
+export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, iconStyle = 'default' }: LinkRendererProps) {
   const [embedOpen, setEmbedOpen] = useState(false);
 
   // Header separator — full width
@@ -471,6 +503,7 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim }: L
           accent={accent}
           linkStyle={linkStyle}
           linkAnim={linkAnim}
+          iconStyle={iconStyle}
           onClick={(e) => { e.preventDefault(); setEmbedOpen(!embedOpen); }}
         />
         {embedOpen && pixKey && <PixExpandedSection pixKey={pixKey} pixPayload={pixPayload} accent={accent} />}
@@ -484,7 +517,7 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim }: L
     return (
       <div className={embedOpen && videoId ? 'col-span-3' : ''}>
         <GridLinkCard
-          link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim}
+          link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle}
           onClick={(e) => { if (videoId) { e.preventDefault(); setEmbedOpen(!embedOpen); } }}
         />
         {embedOpen && videoId && (
@@ -502,7 +535,7 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim }: L
     return (
       <div className={embedOpen && spotifyUri ? 'col-span-3' : ''}>
         <GridLinkCard
-          link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim}
+          link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle}
           onClick={(e) => { if (spotifyUri) { e.preventDefault(); setEmbedOpen(!embedOpen); } }}
         />
         {embedOpen && spotifyUri && (
@@ -516,19 +549,19 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim }: L
 
   // Phone
   if (link.platform === 'phone') {
-    return <GridLinkCard link={link} href={link.url.startsWith('tel:') ? link.url : `tel:${link.url}`} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} />;
+    return <GridLinkCard link={link} href={link.url.startsWith('tel:') ? link.url : `tel:${link.url}`} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} />;
   }
 
   // Map
   if (link.platform === 'map') {
-    return <GridLinkCard link={link} href={link.url.startsWith('http') ? link.url : `https://maps.google.com/?q=${encodeURIComponent(link.url)}`} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} />;
+    return <GridLinkCard link={link} href={link.url.startsWith('http') ? link.url : `https://maps.google.com/?q=${encodeURIComponent(link.url)}`} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} />;
   }
 
   // File
   if (link.platform === 'file') {
-    return <GridLinkCard link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} />;
+    return <GridLinkCard link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} />;
   }
 
   // Default
-  return <GridLinkCard link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} />;
+  return <GridLinkCard link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} />;
 }

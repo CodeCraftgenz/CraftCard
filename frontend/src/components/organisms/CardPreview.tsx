@@ -40,6 +40,7 @@ interface CardPreviewProps {
   linkLayout?: string;
   linkStyle?: string;
   linkAnimation?: string;
+  iconStyle?: string;
   socialLinks?: Array<{
     platform: string;
     label: string;
@@ -186,6 +187,7 @@ export const CardPreview = memo(function CardPreview({
   linkLayout = 'list',
   linkStyle = 'rounded',
   linkAnimation = 'none',
+  iconStyle = 'default',
   socialLinks,
   demo,
 }: CardPreviewProps) {
@@ -328,6 +330,7 @@ export const CardPreview = memo(function CardPreview({
               const isGhost = linkStyle === 'ghost';
 
               if (linkLayout === 'grid') {
+                const gic = getPreviewIconStyle(iconStyle, platColor, accent);
                 return (
                   <motion.div
                     key={i}
@@ -339,7 +342,9 @@ export const CardPreview = memo(function CardPreview({
                       border: `1px solid ${platColor}20`,
                     }}
                   >
-                    <Icon size={20} className="shrink-0" style={{ color: platColor }} />
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={gic.style}>
+                      <Icon size={16} className="shrink-0" style={{ color: gic.iconColor }} />
+                    </div>
                     <span className="text-[9px] text-white/60 truncate max-w-full text-center leading-tight">{link.label || 'Link'}</span>
                   </motion.div>
                 );
@@ -359,7 +364,11 @@ export const CardPreview = memo(function CardPreview({
                     borderLeft: !isOutline && !isGhost ? `3px solid ${accent}` : undefined,
                   }}
                 >
-                  <Icon size={18} className="shrink-0" style={{ color: accent }} />
+                  {(() => { const lic = getPreviewIconStyle(iconStyle, platColor, accent); return (
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={lic.style}>
+                      <Icon size={14} style={{ color: lic.iconColor }} />
+                    </div>
+                  ); })()}
                   <span className="truncate min-w-0">{link.label || 'Link'}</span>
                   <span className="ml-auto text-white/30">&rsaquo;</span>
                 </motion.div>
@@ -371,3 +380,21 @@ export const CardPreview = memo(function CardPreview({
     </motion.div>
   );
 });
+
+function getPreviewIconStyle(iconStyle: string, bgColor: string, accent: string): { style: React.CSSProperties; iconColor: string } {
+  switch (iconStyle) {
+    case 'filled':
+      return { style: { backgroundColor: bgColor }, iconColor: '#ffffff' };
+    case 'outline':
+      return { style: { border: `2px solid ${bgColor}`, backgroundColor: 'transparent' }, iconColor: bgColor };
+    case 'neomorph':
+      return { style: { backgroundColor: 'rgba(255,255,255,0.08)', boxShadow: `3px 3px 6px rgba(0,0,0,0.3), -1px -1px 4px rgba(255,255,255,0.05), inset 0 0 0 1px ${bgColor}30` }, iconColor: bgColor };
+    case 'glass':
+      return { style: { backgroundColor: `${bgColor}15`, border: `1px solid ${bgColor}30` }, iconColor: bgColor };
+    case 'gradient':
+      return { style: { background: `linear-gradient(135deg, ${bgColor}, ${bgColor}88)` }, iconColor: '#ffffff' };
+    case 'default':
+    default:
+      return { style: { backgroundColor: `${accent}20` }, iconColor: bgColor };
+  }
+}

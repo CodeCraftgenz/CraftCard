@@ -158,6 +158,7 @@ export function EditorPage() {
     linkLayout: 'list' as string,
     linkStyle: 'rounded' as string,
     linkAnimation: 'none' as string,
+    iconStyle: 'default' as string,
     socialLinks: [] as Array<{ platform: string; label: string; url: string; order: number; startsAt: string | null; endsAt: string | null; linkType?: string | null; metadata?: string | null }>,
   });
 
@@ -210,6 +211,7 @@ export function EditorPage() {
         linkLayout: profile.linkLayout ?? 'list',
         linkStyle: profile.linkStyle ?? 'rounded',
         linkAnimation: profile.linkAnimation ?? 'none',
+        iconStyle: profile.iconStyle ?? 'default',
         socialLinks: profile.socialLinks.map((l) => ({
           platform: l.platform,
           label: l.label,
@@ -297,6 +299,7 @@ export function EditorPage() {
     data.linkLayout = form.linkLayout;
     data.linkStyle = form.linkStyle;
     data.linkAnimation = form.linkAnimation;
+    data.iconStyle = form.iconStyle;
 
     // Only send slug if >= 3 chars
     if (slugInput.length >= 3) {
@@ -457,7 +460,8 @@ export function EditorPage() {
     linkLayout: form.linkLayout,
     linkStyle: form.linkStyle,
     linkAnimation: form.linkAnimation,
-  }), [form.fontFamily, form.fontSizeScale, form.backgroundType, form.backgroundGradient, form.backgroundImageUrl, form.backgroundOverlay, form.backgroundPattern, form.linkLayout, form.linkStyle, form.linkAnimation]);
+    iconStyle: form.iconStyle,
+  }), [form.fontFamily, form.fontSizeScale, form.backgroundType, form.backgroundGradient, form.backgroundImageUrl, form.backgroundOverlay, form.backgroundPattern, form.linkLayout, form.linkStyle, form.linkAnimation, form.iconStyle]);
 
   const handleStyleChange = useCallback((key: string, val: string | number | null) => {
     updateField(key as keyof typeof form, val as never);
@@ -2506,6 +2510,7 @@ export function EditorPage() {
                 linkLayout={form.linkLayout}
                 linkStyle={form.linkStyle}
                 linkAnimation={form.linkAnimation}
+                iconStyle={form.iconStyle}
                 socialLinks={form.socialLinks}
               />
             </div>

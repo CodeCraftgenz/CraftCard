@@ -71,6 +71,15 @@ export const LINK_STYLES = [
   { value: 'ghost', label: 'Transparente' },
 ] as const;
 
+export const ICON_STYLES = [
+  { value: 'default', label: 'Original' },
+  { value: 'filled', label: 'Preenchido' },
+  { value: 'outline', label: 'Contorno' },
+  { value: 'neomorph', label: 'Neomorph' },
+  { value: 'glass', label: 'Glass' },
+  { value: 'gradient', label: 'Gradiente' },
+] as const;
+
 export const LINK_ANIMATIONS = [
   { value: 'none', label: 'Nenhuma' },
   { value: 'scale', label: 'Escala' },

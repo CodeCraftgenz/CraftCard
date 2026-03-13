@@ -1,5 +1,5 @@
 import { memo, useRef } from 'react';
-import { Type, Paintbrush, MousePointerClick, Layers, ImageIcon, Upload, Trash2, Loader2, LayoutGrid, List } from 'lucide-react';
+import { Type, Paintbrush, MousePointerClick, Layers, ImageIcon, Upload, Trash2, Loader2, LayoutGrid, List, Palette } from 'lucide-react';
 import { AVAILABLE_FONTS, loadGoogleFont } from '@/lib/google-fonts';
 import {
   PRESET_GRADIENTS,
@@ -7,6 +7,7 @@ import {
   LINK_LAYOUTS,
   LINK_STYLES,
   LINK_ANIMATIONS,
+  ICON_STYLES,
 } from '@/lib/constants';
 
 export interface VisualCustomization {
@@ -20,6 +21,7 @@ export interface VisualCustomization {
   linkLayout: string;
   linkStyle: string;
   linkAnimation: string;
+  iconStyle: string;
 }
 
 interface StyleEditorProps {
@@ -316,6 +318,30 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, 
             ))}
           </div>
         </div>
+
+        {/* Icon Style */}
+        <div>
+          <label className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider flex items-center gap-1.5">
+            <Palette size={12} /> Estilo dos Icones
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {ICON_STYLES.map((s) => (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => onChange('iconStyle', s.value)}
+                className={`p-3 rounded-xl border-2 transition-all text-center ${
+                  (value.iconStyle || 'default') === s.value
+                    ? 'border-brand-cyan shadow-md shadow-brand-cyan/20'
+                    : 'border-white/10 hover:border-white/20'
+                }`}
+              >
+                <IconStylePreview style={s.value} accent={accent} />
+                <span className="text-[10px] text-white/70 mt-1.5 block">{s.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -392,5 +418,54 @@ function PatternPreview({ pattern, accent }: { pattern: string; accent: string }
       );
     default:
       return <div className="w-10 h-10 bg-white/5 rounded mx-auto" />;
+  }
+}
+
+function IconStylePreview({ style, accent }: { style: string; accent: string }) {
+  const iconPath = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z";
+
+  switch (style) {
+    case 'default':
+      return (
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto" style={{ backgroundColor: `${accent}20` }}>
+          <svg width={18} height={18} viewBox="0 0 24 24" fill={accent}><path d={iconPath} /></svg>
+        </div>
+      );
+    case 'filled':
+      return (
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto" style={{ backgroundColor: accent }}>
+          <svg width={18} height={18} viewBox="0 0 24 24" fill="#fff"><path d={iconPath} /></svg>
+        </div>
+      );
+    case 'outline':
+      return (
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto bg-transparent" style={{ border: `2px solid ${accent}` }}>
+          <svg width={18} height={18} viewBox="0 0 24 24" fill={accent}><path d={iconPath} /></svg>
+        </div>
+      );
+    case 'neomorph':
+      return (
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto bg-white/10" style={{ boxShadow: `4px 4px 8px rgba(0,0,0,0.3), -2px -2px 6px rgba(255,255,255,0.05), inset 0 0 0 1px ${accent}30` }}>
+          <svg width={18} height={18} viewBox="0 0 24 24" fill={accent}><path d={iconPath} /></svg>
+        </div>
+      );
+    case 'glass':
+      return (
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto backdrop-blur-sm" style={{ backgroundColor: `${accent}15`, border: `1px solid ${accent}30`, boxShadow: `0 2px 8px ${accent}20` }}>
+          <svg width={18} height={18} viewBox="0 0 24 24" fill={accent}><path d={iconPath} /></svg>
+        </div>
+      );
+    case 'gradient':
+      return (
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}88)` }}>
+          <svg width={18} height={18} viewBox="0 0 24 24" fill="#fff"><path d={iconPath} /></svg>
+        </div>
+      );
+    default:
+      return (
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto" style={{ backgroundColor: `${accent}20` }}>
+          <svg width={18} height={18} viewBox="0 0 24 24" fill={accent}><path d={iconPath} /></svg>
+        </div>
+      );
   }
 }

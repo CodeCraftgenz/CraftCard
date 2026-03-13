@@ -94,6 +94,7 @@ export const updateProfileSchema = z.object({
   linkStyle: z.enum(['rounded', 'pill', 'square', 'outline', 'ghost']).optional().nullable(),
   linkAnimation: z.enum(['none', 'scale', 'slide', 'glow']).optional().nullable(),
   linkLayout: z.enum(['list', 'grid']).optional().nullable(),
+  iconStyle: z.enum(['default', 'filled', 'outline', 'neomorph', 'glass', 'gradient']).optional().nullable(),
   // Expanded Bio
   location: z.preprocess(emptyToUndefined, z.string().max(100).optional().nullable()),
   pronouns: z.preprocess(emptyToUndefined, z.string().max(30).optional().nullable()),

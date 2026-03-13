@@ -80,6 +80,7 @@ model Profile {
   linkStyle           String?  @default("rounded") @map("link_style") @db.VarChar(20)
   linkAnimation       String?  @default("none") @map("link_animation") @db.VarChar(20)
   linkLayout          String?  @default("list") @map("link_layout") @db.VarChar(10)
+  iconStyle           String?  @default("default") @map("icon_style") @db.VarChar(20)
 
   // Bio expandida (Sprint 6)
   location        String?  @db.VarChar(100)
@@ -365,6 +366,7 @@ model Organization {
   linkStyle          String?  @default("rounded") @map("link_style") @db.VarChar(20)
   linkAnimation      String?  @default("none") @map("link_animation") @db.VarChar(20)
   linkLayout         String?  @default("list") @map("link_layout") @db.VarChar(10)
+  iconStyle          String?  @default("default") @map("icon_style") @db.VarChar(20)
   backgroundType     String?  @default("theme") @map("background_type") @db.VarChar(20)
   backgroundGradient String?  @map("background_gradient") @db.VarChar(200)
   createdAt          DateTime @default(now()) @map("created_at")
