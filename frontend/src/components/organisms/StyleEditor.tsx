@@ -1,9 +1,10 @@
 import { memo, useRef } from 'react';
-import { Type, Paintbrush, MousePointerClick, Layers, ImageIcon, Upload, Trash2, Loader2 } from 'lucide-react';
+import { Type, Paintbrush, MousePointerClick, Layers, ImageIcon, Upload, Trash2, Loader2, LayoutGrid, List } from 'lucide-react';
 import { AVAILABLE_FONTS, loadGoogleFont } from '@/lib/google-fonts';
 import {
   PRESET_GRADIENTS,
   PRESET_PATTERNS,
+  LINK_LAYOUTS,
   LINK_STYLES,
   LINK_ANIMATIONS,
 } from '@/lib/constants';
@@ -16,6 +17,7 @@ export interface VisualCustomization {
   backgroundImageUrl: string | null;
   backgroundOverlay: number;
   backgroundPattern: string | null;
+  linkLayout: string;
   linkStyle: string;
   linkAnimation: string;
 }
@@ -245,6 +247,30 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, 
               ))}
             </div>
           )}
+        </div>
+
+        {/* Link Layout */}
+        <div>
+          <label className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider flex items-center gap-1.5">
+            <LayoutGrid size={12} /> Layout dos Links
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {LINK_LAYOUTS.map((l) => (
+              <button
+                key={l.value}
+                type="button"
+                onClick={() => onChange('linkLayout', l.value)}
+                className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                  (value.linkLayout || 'list') === l.value
+                    ? 'border-brand-cyan shadow-md shadow-brand-cyan/20 bg-brand-cyan/10'
+                    : 'border-white/10 hover:border-white/20'
+                }`}
+              >
+                {l.value === 'list' ? <List size={16} className="text-white/70" /> : <LayoutGrid size={16} className="text-white/70" />}
+                <span className="text-xs text-white/70 font-medium">{l.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Link Style */}

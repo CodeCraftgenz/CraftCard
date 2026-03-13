@@ -24,11 +24,13 @@ import {
   CalendarDays,
   Briefcase,
   HelpCircle,
+  UserPlus,
 } from 'lucide-react';
 import { CustomQrCode } from '@/components/organisms/CustomQrCode';
 import { AnimatedBackground } from '@/components/atoms/AnimatedBackground';
 import { GalleryGrid } from '@/components/organisms/GalleryGrid';
-import { LinkRenderer } from '@/components/organisms/LinkRenderer';
+import { LocationMap } from '@/components/organisms/LocationMap';
+import { LinkRenderer, GridLinkRenderer } from '@/components/organisms/LinkRenderer';
 import { BookingCalendar } from '@/components/organisms/BookingCalendar';
 import { api } from '@/lib/api';
 import { trackViewEvent } from '@/hooks/useAnalytics';
@@ -63,6 +65,7 @@ interface PublicProfile {
   backgroundImageUrl?: string | null;
   backgroundOverlay?: number | null;
   backgroundPattern?: string | null;
+  linkLayout?: string | null;
   linkStyle?: string | null;
   linkAnimation?: string | null;
   leadCaptureEnabled?: boolean;
@@ -254,15 +257,27 @@ function FaqAccordion({ question, answer }: { question: string; answer: string }
   );
 }
 
+function escapeVCard(str: string): string {
+  return str.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+}
+
 function generateVCard(profile: PublicProfile): string {
   const lines = [
     'BEGIN:VCARD',
     'VERSION:3.0',
-    `FN:${profile.displayName}`,
+    `FN:${escapeVCard(profile.displayName)}`,
   ];
 
+  if (profile.tagline) {
+    lines.push(`TITLE:${escapeVCard(profile.tagline)}`);
+  }
+
   if (profile.bio) {
-    lines.push(`NOTE:${profile.bio.replace(/\n/g, '\\n')}`);
+    lines.push(`NOTE:${escapeVCard(profile.bio)}`);
+  }
+
+  if (profile.location) {
+    lines.push(`ADR;TYPE=WORK:;;${escapeVCard(profile.location)};;;;`);
   }
 
   if (profile.photoUrl) {
@@ -275,6 +290,12 @@ function generateVCard(profile: PublicProfile): string {
     lines.push(`EMAIL:${email}`);
   }
 
+  const phoneLink = profile.socialLinks.find((l) => l.platform === 'phone');
+  if (phoneLink) {
+    const phone = phoneLink.url.replace(/^tel:/, '').replace(/\D/g, '');
+    if (phone) lines.push(`TEL;TYPE=VOICE:+${phone}`);
+  }
+
   const whatsappLink = profile.socialLinks.find((l) => l.platform === 'whatsapp');
   if (whatsappLink) {
     const phone = whatsappLink.url.replace(/.*wa\.me\//, '').replace(/\D/g, '');
@@ -284,6 +305,13 @@ function generateVCard(profile: PublicProfile): string {
   const websiteLink = profile.socialLinks.find((l) => l.platform === 'website');
   if (websiteLink) {
     lines.push(`URL:${websiteLink.url}`);
+  }
+
+  // Social profiles
+  const socialPlatforms = ['instagram', 'linkedin', 'github', 'twitter', 'youtube', 'tiktok'] as const;
+  for (const platform of socialPlatforms) {
+    const link = profile.socialLinks.find((l) => l.platform === platform);
+    if (link) lines.push(`X-SOCIALPROFILE;TYPE=${platform}:${link.url}`);
   }
 
   lines.push(`URL:${window.location.href}`);
@@ -345,6 +373,7 @@ export function PublicCardPage() {
   const fontFamily = orgB?.orgFontFamily || profile?.fontFamily || 'Inter';
   const fontScale = profile?.fontSizeScale ?? 1;
   const bgType = profile?.backgroundType || 'theme';
+  const linkLayout = profile?.linkLayout || 'list';
   const linkStyle = profile?.linkStyle || 'rounded';
   const linkAnim = profile?.linkAnimation || 'none';
 
@@ -694,17 +723,38 @@ export function PublicCardPage() {
             )}
           </div>
 
-          {/* Links (all types rendered via LinkRenderer) */}
-          <div className="space-y-3">
+          {/* Save Contact (vCard) — CTA proeminente */}
+          <motion.button
+            onClick={() => handleDownloadVCard(profile)}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.45, type: 'spring', stiffness: 200 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            className="w-full flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl font-semibold text-sm shadow-lg transition-all"
+            style={{
+              background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
+              color: '#fff',
+              boxShadow: `0 4px 20px ${accent}40`,
+            }}
+          >
+            <UserPlus size={18} />
+            Salvar Contato
+          </motion.button>
+
+          {/* Links (list or grid layout) */}
+          <div className={linkLayout === 'grid' ? 'grid grid-cols-2 gap-2.5' : 'space-y-3'}>
             {(() => {
               const allLinks = profile.socialLinks;
-              const visibleLinks = showAllLinks ? allLinks : allLinks.slice(0, 5);
-              const hiddenCount = allLinks.length - 5;
+              const gridLimit = linkLayout === 'grid' ? 8 : 5;
+              const visibleLinks = showAllLinks ? allLinks : allLinks.slice(0, gridLimit);
+              const hiddenCount = allLinks.length - gridLimit;
+              const Renderer = linkLayout === 'grid' ? GridLinkRenderer : LinkRenderer;
 
               return (
                 <>
                   {visibleLinks.map((link, i) => (
-                    <LinkRenderer
+                    <Renderer
                       key={link.id}
                       link={link}
                       index={i}
@@ -719,7 +769,7 @@ export function PublicCardPage() {
                       onClick={() => setShowAllLinks(!showAllLinks)}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-dashed border-white/15 text-white/50 hover:text-white/80 hover:border-white/30 hover:bg-white/5 transition-all text-sm"
+                      className={`flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-dashed border-white/15 text-white/50 hover:text-white/80 hover:border-white/30 hover:bg-white/5 transition-all text-sm ${linkLayout === 'grid' ? 'col-span-2' : 'w-full'}`}
                     >
                       {showAllLinks ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                       {showAllLinks
@@ -783,6 +833,11 @@ export function PublicCardPage() {
             </div>
           )}
 
+          {/* Location Map */}
+          {profile.location && (
+            <LocationMap location={profile.location} accent={accent} />
+          )}
+
           {/* Testimonials */}
           {profile.testimonials && profile.testimonials.length > 0 && (
             <div className="mt-6">
@@ -844,18 +899,6 @@ export function PublicCardPage() {
               Ver Curriculo
             </motion.a>
           )}
-
-          {/* Save Contact (vCard) */}
-          <motion.button
-            onClick={() => handleDownloadVCard(profile)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="mt-3 w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-white/10 text-white/70 hover:text-white hover:bg-white/5 transition-all text-sm"
-          >
-            <Download size={16} />
-            Salvar Contato
-          </motion.button>
 
           {/* Contact Form Button */}
           {profile.contactFormEnabled !== false && (

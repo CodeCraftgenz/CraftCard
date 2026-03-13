@@ -162,7 +162,7 @@ export class ProfilesService {
         services: { orderBy: { order: 'asc' }, select: { id: true, title: true, description: true, price: true, order: true } },
         faqItems: { orderBy: { order: 'asc' }, select: { id: true, question: true, answer: true, order: true } },
         user: { select: { name: true, email: true, plan: true } },
-        organization: { select: { id: true, name: true, logoUrl: true, primaryColor: true, secondaryColor: true, fontFamily: true, brandingActive: true, cardTheme: true, linkStyle: true, linkAnimation: true, backgroundType: true, backgroundGradient: true } },
+        organization: { select: { id: true, name: true, logoUrl: true, primaryColor: true, secondaryColor: true, fontFamily: true, brandingActive: true, cardTheme: true, linkStyle: true, linkAnimation: true, linkLayout: true, backgroundType: true, backgroundGradient: true } },
       },
     });
     if (!profile || !profile.isPublished) {
@@ -195,6 +195,7 @@ export class ProfilesService {
       orgCardTheme: profile.organization.cardTheme,
       orgLinkStyle: profile.organization.linkStyle,
       orgLinkAnimation: profile.organization.linkAnimation,
+      orgLinkLayout: profile.organization.linkLayout,
       orgBackgroundType: profile.organization.backgroundType,
       orgBackgroundGradient: profile.organization.backgroundGradient,
     } : null;
@@ -252,6 +253,7 @@ export class ProfilesService {
       delete data.backgroundPattern;
       delete data.linkStyle;
       delete data.linkAnimation;
+      delete data.linkLayout;
     }
 
     // Validate slug uniqueness

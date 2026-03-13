@@ -37,6 +37,7 @@ interface CardPreviewProps {
   backgroundImageUrl?: string | null;
   backgroundOverlay?: number;
   backgroundPattern?: string | null;
+  linkLayout?: string;
   linkStyle?: string;
   linkAnimation?: string;
   socialLinks?: Array<{
@@ -167,6 +168,7 @@ export const CardPreview = memo(function CardPreview({
   backgroundImageUrl,
   backgroundOverlay = 0.7,
   backgroundPattern,
+  linkLayout = 'list',
   linkStyle = 'rounded',
   linkAnimation = 'none',
   socialLinks,
@@ -294,12 +296,12 @@ export const CardPreview = memo(function CardPreview({
           )}
 
           {/* Social Links */}
-          <div className="w-full flex flex-col gap-2.5">
+          <div className={linkLayout === 'grid' ? 'w-full grid grid-cols-2 gap-2' : 'w-full flex flex-col gap-2.5'}>
             {(card.socialLinks || []).map((link, i) => {
-              // Header separator
+              // Header separator — full width in grid
               if (link.platform === 'header' || link.linkType === 'header') {
                 return (
-                  <div key={i} className="font-semibold text-white/40 uppercase tracking-wider mt-2 mb-1 text-left px-1 truncate" style={{ fontSize: '0.75em' }}>
+                  <div key={i} className={`font-semibold text-white/40 uppercase tracking-wider mt-2 mb-1 text-left px-1 truncate ${linkLayout === 'grid' ? 'col-span-2' : ''}`} style={{ fontSize: '0.75em' }}>
                     {link.label}
                   </div>
                 );
@@ -308,6 +310,26 @@ export const CardPreview = memo(function CardPreview({
               const Icon = platformIcons[link.platform] || Globe;
               const isOutline = linkStyle === 'outline';
               const isGhost = linkStyle === 'ghost';
+
+              if (linkLayout === 'grid') {
+                return (
+                  <motion.div
+                    key={i}
+                    whileHover={getHoverAnim(linkAnimation)}
+                    whileTap={{ scale: 0.98 }}
+                    className={`flex flex-col items-center justify-center gap-1.5 p-3 text-white font-medium transition-all cursor-pointer aspect-square ${linkClass} ${linkAnimation === 'glow' ? 'hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]' : ''}`}
+                    style={{
+                      fontSize: '0.875em',
+                      backgroundColor: isGhost ? 'transparent' : isOutline ? 'transparent' : `${accent}15`,
+                      borderColor: isOutline ? `${accent}60` : `${accent}20`,
+                      borderWidth: 1,
+                    }}
+                  >
+                    <Icon size={22} className="shrink-0" style={{ color: accent }} />
+                    <span className="text-[10px] text-white/60 truncate max-w-full text-center leading-tight">{link.label || 'Link'}</span>
+                  </motion.div>
+                );
+              }
 
               return (
                 <motion.div

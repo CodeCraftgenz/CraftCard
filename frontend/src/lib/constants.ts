@@ -58,6 +58,11 @@ export const PRESET_PATTERNS = [
   { value: 'cross', label: 'Cruz' },
 ] as const;
 
+export const LINK_LAYOUTS = [
+  { value: 'list', label: 'Lista' },
+  { value: 'grid', label: 'Grid' },
+] as const;
+
 export const LINK_STYLES = [
   { value: 'rounded', label: 'Arredondado' },
   { value: 'pill', label: 'Pilula' },

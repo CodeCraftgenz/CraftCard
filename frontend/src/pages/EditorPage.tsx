@@ -155,6 +155,7 @@ export function EditorPage() {
     backgroundImageUrl: null as string | null,
     backgroundOverlay: 0.7 as number,
     backgroundPattern: null as string | null,
+    linkLayout: 'list' as string,
     linkStyle: 'rounded' as string,
     linkAnimation: 'none' as string,
     socialLinks: [] as Array<{ platform: string; label: string; url: string; order: number; startsAt: string | null; endsAt: string | null; linkType?: string | null; metadata?: string | null }>,
@@ -206,6 +207,7 @@ export function EditorPage() {
         backgroundImageUrl: profile.backgroundImageUrl ?? null,
         backgroundOverlay: profile.backgroundOverlay ?? 0.7,
         backgroundPattern: profile.backgroundPattern ?? null,
+        linkLayout: profile.linkLayout ?? 'list',
         linkStyle: profile.linkStyle ?? 'rounded',
         linkAnimation: profile.linkAnimation ?? 'none',
         socialLinks: profile.socialLinks.map((l) => ({
@@ -292,6 +294,7 @@ export function EditorPage() {
     data.backgroundImageUrl = form.backgroundImageUrl || null;
     data.backgroundOverlay = form.backgroundOverlay;
     data.backgroundPattern = form.backgroundPattern || null;
+    data.linkLayout = form.linkLayout;
     data.linkStyle = form.linkStyle;
     data.linkAnimation = form.linkAnimation;
 
@@ -451,9 +454,10 @@ export function EditorPage() {
     backgroundImageUrl: form.backgroundImageUrl,
     backgroundOverlay: form.backgroundOverlay,
     backgroundPattern: form.backgroundPattern,
+    linkLayout: form.linkLayout,
     linkStyle: form.linkStyle,
     linkAnimation: form.linkAnimation,
-  }), [form.fontFamily, form.fontSizeScale, form.backgroundType, form.backgroundGradient, form.backgroundImageUrl, form.backgroundOverlay, form.backgroundPattern, form.linkStyle, form.linkAnimation]);
+  }), [form.fontFamily, form.fontSizeScale, form.backgroundType, form.backgroundGradient, form.backgroundImageUrl, form.backgroundOverlay, form.backgroundPattern, form.linkLayout, form.linkStyle, form.linkAnimation]);
 
   const handleStyleChange = useCallback((key: string, val: string | number | null) => {
     updateField(key as keyof typeof form, val as never);
@@ -2499,6 +2503,7 @@ export function EditorPage() {
                 backgroundImageUrl={form.backgroundImageUrl}
                 backgroundOverlay={form.backgroundOverlay}
                 backgroundPattern={form.backgroundPattern}
+                linkLayout={form.linkLayout}
                 linkStyle={form.linkStyle}
                 linkAnimation={form.linkAnimation}
                 socialLinks={form.socialLinks}
