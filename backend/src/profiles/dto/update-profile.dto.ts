@@ -41,6 +41,10 @@ export const socialLinkSchema = z.object({
     if (link.platform === 'header') return true;
     // Pix stores key in metadata, not URL
     if (link.platform === 'pix') return true;
+    // Map accepts plain address text (e.g. "Av. Paulista, 1000 - SP")
+    if (link.platform === 'map') return true;
+    // Phone accepts plain number
+    if (link.platform === 'phone') return true;
     // All other types need a valid URL
     if (!link.url) return false;
     return /^https?:\/\/.+/i.test(link.url) || /^mailto:.+@.+/i.test(link.url) || /^tel:.+/i.test(link.url);
@@ -110,7 +114,7 @@ export const updateProfileSchema = z.object({
     data.socialLinks = data.socialLinks.filter(
       (link) => {
         if (link.label.trim() === '') return false;
-        if (link.platform === 'header' || link.platform === 'pix') return true;
+        if (['header', 'pix', 'map', 'phone'].includes(link.platform)) return true;
         return link.url.trim() !== '';
       },
     );
