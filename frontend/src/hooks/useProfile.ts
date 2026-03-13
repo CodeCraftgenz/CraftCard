@@ -46,6 +46,7 @@ export interface Profile {
   backgroundImageUrl?: string | null;
   backgroundOverlay?: number | null;
   backgroundPattern?: string | null;
+  linkLayout?: string | null;
   linkStyle?: string | null;
   linkAnimation?: string | null;
   orgId?: string | null;
