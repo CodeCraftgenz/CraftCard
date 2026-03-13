@@ -314,8 +314,8 @@ export function EditorPage() {
       const hasLabel = l.label.trim().length > 0;
       // Headers and Pix don't need a URL
       if (l.platform === 'header' || l.platform === 'pix') return hasLabel;
-      // Phone links accept tel: prefix
-      if (l.platform === 'phone') return hasLabel && l.url.trim().length > 0;
+      // Map and Phone accept plain text (address/number)
+      if (l.platform === 'map' || l.platform === 'phone') return hasLabel && l.url.trim().length > 0;
       const hasUrl = l.url.trim().length > 0;
       const isValidUrl = /^(https?:\/\/|mailto:|tel:).+/i.test(l.url.trim());
       return hasLabel && hasUrl && isValidUrl;
