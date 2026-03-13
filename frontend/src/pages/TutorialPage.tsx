@@ -6,6 +6,8 @@ import {
   CalendarDays, BarChart3, MessageSquare, FileText,
   Download, Building2, Users, Settings,
   Eye, Webhook, Sparkles, BookOpen, Copy,
+  MapPin, Phone, QrCode, Video, Grid3X3,
+  Clock, Smartphone, Mail, UserPlus, LayoutGrid,
 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
 import { UpgradeBanner } from '@/components/organisms/UpgradeBanner';
@@ -31,19 +33,19 @@ const GETTING_STARTED: TutorialCard[] = [
   {
     icon: <UserCircle size={20} />,
     title: 'Edite seu cartao',
-    description: 'Personalize seu nome, bio, foto de perfil e escolha um slug unico para seu link.',
+    description: 'Personalize seu nome, bio, foto de perfil e foto de capa. Escolha um slug unico (ex: craftcardgenz.com/seu-nome).',
     link: '/editor',
   },
   {
     icon: <Link2 size={20} />,
-    title: 'Adicione links',
-    description: 'Conecte WhatsApp, Instagram, LinkedIn, email e qualquer link importante. Use headers para organizar e Pix para receber.',
+    title: 'Adicione links e redes sociais',
+    description: 'Conecte WhatsApp, Instagram, LinkedIn, TikTok, YouTube, email, telefone e qualquer link personalizado. Use separadores para organizar.',
     link: '/editor',
   },
   {
     icon: <Share2 size={20} />,
     title: 'Publique e compartilhe',
-    description: 'Ative a publicacao do cartao, copie seu link e compartilhe nas redes sociais ou via QR Code.',
+    description: 'Ative a publicacao do cartao, copie seu link e compartilhe nas redes sociais ou via QR Code personalizado.',
     link: '/editor',
   },
   {
@@ -52,13 +54,44 @@ const GETTING_STARTED: TutorialCard[] = [
     description: 'Exporte seu cartao como imagem PNG para usar em apresentacoes, curriculos ou materiais impressos.',
     link: '/editor',
   },
+  {
+    icon: <QrCode size={20} />,
+    title: 'Pix no cartao',
+    description: 'Adicione sua chave Pix como link. Visitantes veem um QR Code e podem copiar a chave ou o payload Copia e Cola.',
+    link: '/editor',
+  },
+  {
+    icon: <MapPin size={20} />,
+    title: 'Mapa interativo',
+    description: 'Adicione um endereco como link tipo "Mapa". Ele aparece como um mapa visual do Google Maps embutido no cartao.',
+    link: '/editor',
+  },
+  {
+    icon: <Phone size={20} />,
+    title: 'Telefone direto',
+    description: 'Adicione um link tipo "Telefone" com seu numero. Ao clicar, o visitante inicia a ligacao automaticamente.',
+    link: '/editor',
+  },
+  {
+    icon: <Clock size={20} />,
+    title: 'Agendamento de links',
+    description: 'Programe quando um link aparece no cartao. Defina data de inicio e fim — o link so fica visivel durante o periodo. Ideal para promocoes temporarias.',
+    link: '/editor',
+  },
 ];
 
 const PRO_FEATURES: TutorialCard[] = [
   {
     icon: <Palette size={20} />,
     title: 'Personalize o visual',
-    description: 'Escolha entre 10 temas, customize cores, fontes do Google Fonts, backgrounds com gradientes ou padroes.',
+    description: 'Escolha entre 10 temas, customize cores, fontes do Google Fonts, backgrounds com gradientes, imagens ou padroes. 6 estilos de icones: Neomorph, Glass, Gradiente e mais.',
+    feature: 'customFonts',
+    link: '/editor',
+  },
+  {
+    icon: <LayoutGrid size={20} />,
+    title: 'Layout Grid com tamanhos',
+    description: 'Alterne entre lista e grid. No modo grid, escolha o tamanho de cada link: Pequeno, Wide, Banner, Alto ou Grande. Arraste para reordenar.',
     feature: 'customFonts',
     link: '/editor',
   },
@@ -86,7 +119,7 @@ const PRO_FEATURES: TutorialCard[] = [
   {
     icon: <CalendarDays size={20} />,
     title: 'Agendamento online',
-    description: 'Configure seus horarios disponiveis e receba agendamentos diretamente pelo cartao.',
+    description: 'Configure seus horarios disponiveis e receba agendamentos diretamente pelo cartao. Gerencie tudo pelo editor.',
     feature: 'bookings',
     link: '/editor',
   },
@@ -105,9 +138,23 @@ const PRO_FEATURES: TutorialCard[] = [
     link: '/editor',
   },
   {
+    icon: <Mail size={20} />,
+    title: 'Formulario de contato',
+    description: 'Receba mensagens diretamente pelo cartao. As mensagens aparecem no editor com notificacao.',
+    feature: 'contacts',
+    link: '/editor',
+  },
+  {
     icon: <FileText size={20} />,
     title: 'Curriculo e Video',
-    description: 'Faca upload do seu curriculo em PDF e adicione um video de apresentacao de ate 15 segundos.',
+    description: 'Faca upload do seu curriculo em PDF e adicione um video de apresentacao. Embed de YouTube e Spotify tambem funciona nos links.',
+    feature: 'resume',
+    link: '/editor',
+  },
+  {
+    icon: <Video size={20} />,
+    title: 'Embeds de video e musica',
+    description: 'Adicione links tipo "Video (YouTube)" ou "Musica (Spotify)". Eles abrem como players embutidos diretamente no cartao.',
     feature: 'resume',
     link: '/editor',
   },
@@ -119,10 +166,23 @@ const PRO_FEATURES: TutorialCard[] = [
     link: '/editor',
   },
   {
+    icon: <UserPlus size={20} />,
+    title: 'Conexoes entre perfis',
+    description: 'Conecte-se com outros usuarios do CraftCard. Visitantes logados podem enviar pedidos de conexao pelo botao no seu cartao. Gerencie na pagina de Conexoes.',
+    link: '/connections',
+  },
+  {
     icon: <Copy size={20} />,
     title: 'Multiplos cartoes',
-    description: 'Crie ate 5 cartoes diferentes (Pro) ou 50 (Business). Use o seletor no topo do editor para alternar, criar ou excluir cartoes.',
+    description: 'Crie ate 3 cartoes pessoais (Pro). Use o seletor no topo do editor para alternar, criar ou excluir cartoes.',
     feature: 'canPublish',
+    link: '/editor',
+  },
+  {
+    icon: <Smartphone size={20} />,
+    title: 'Preview mobile no editor',
+    description: 'Veja como seu cartao aparece no celular em tempo real. O preview mostra um mockup de smartphone com todas as alteracoes.',
+    feature: 'customFonts',
     link: '/editor',
   },
 ];
@@ -137,7 +197,7 @@ const BUSINESS_FEATURES: TutorialCard[] = [
   {
     icon: <Users size={20} />,
     title: 'Gerenciar equipe',
-    description: 'Convide membros por email, defina roles (Admin/Membro) e gerencie permissoes da organizacao.',
+    description: 'Convide membros por email, defina roles (Admin/Membro) e gerencie permissoes. Ate 10 assentos por organizacao.',
     feature: 'orgDashboard',
   },
   {
@@ -156,6 +216,12 @@ const BUSINESS_FEATURES: TutorialCard[] = [
     icon: <Webhook size={20} />,
     title: 'Webhooks e integracoes',
     description: 'Receba notificacoes em tempo real de novos contatos, agendamentos e visitas no seu sistema.',
+    feature: 'webhooks',
+  },
+  {
+    icon: <Grid3X3 size={20} />,
+    title: 'Widget embutivel',
+    description: 'Gere um codigo HTML para embutir seu cartao em qualquer site. Configure tamanho e tema do widget.',
     feature: 'webhooks',
   },
 ];
@@ -198,7 +264,7 @@ function TutorialCardComponent({ card, hasFeature, organizations }: {
           to={link}
           className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-cyan hover:text-brand-cyan/80 transition-colors"
         >
-          Ir para o editor
+          {card.link === '/connections' ? 'Ir para Conexoes' : 'Ir para o editor'}
           <span aria-hidden>&rarr;</span>
         </Link>
       )}
@@ -295,6 +361,39 @@ export function TutorialPage() {
                 organizations={organizations}
               />
             ))}
+          </div>
+        </section>
+
+        {/* Tips section */}
+        <section className="mb-12">
+          <div className="flex items-center gap-2 mb-5">
+            <Sparkles size={16} className="text-yellow-400" />
+            <h2 className="text-lg font-semibold text-white">Dicas</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-5 rounded-2xl bg-white/[0.05] border border-white/10">
+              <h3 className="text-sm font-semibold text-white mb-2">Tipos de links especiais</h3>
+              <ul className="text-xs text-white/50 space-y-1.5 leading-relaxed">
+                <li><span className="text-brand-cyan">Separador:</span> Cria um titulo visual para organizar seus links em secoes</li>
+                <li><span className="text-brand-cyan">Pix:</span> Exibe QR Code + chave copiavel no cartao</li>
+                <li><span className="text-brand-cyan">Mapa:</span> Mostra Google Maps embutido com seu endereco</li>
+                <li><span className="text-brand-cyan">Telefone:</span> Inicia ligacao ao clicar</li>
+                <li><span className="text-brand-cyan">Video:</span> Embed do YouTube com player inline</li>
+                <li><span className="text-brand-cyan">Musica:</span> Embed do Spotify com player inline</li>
+                <li><span className="text-brand-cyan">Arquivo:</span> Link com download automatico (PDF, etc)</li>
+              </ul>
+            </div>
+            <div className="p-5 rounded-2xl bg-white/[0.05] border border-white/10">
+              <h3 className="text-sm font-semibold text-white mb-2">Layout Grid</h3>
+              <ul className="text-xs text-white/50 space-y-1.5 leading-relaxed">
+                <li><span className="text-brand-cyan">Pequeno (1x1):</span> Icone quadrado compacto</li>
+                <li><span className="text-brand-cyan">Wide (2x1):</span> Ocupa 2 colunas — ideal para links principais</li>
+                <li><span className="text-brand-cyan">Banner (3x1):</span> Largura total — destaque maximo</li>
+                <li><span className="text-brand-cyan">Alto (1x2):</span> Ocupa 2 linhas — bom para mapas</li>
+                <li><span className="text-brand-cyan">Grande (2x2):</span> Bloco grande — perfeito para Pix ou video</li>
+                <li className="pt-1 text-white/30">Arraste os links para reordenar. O grid preenche espacos automaticamente.</li>
+              </ul>
+            </div>
           </div>
         </section>
 
