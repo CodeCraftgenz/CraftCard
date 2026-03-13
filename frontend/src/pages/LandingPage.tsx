@@ -11,6 +11,7 @@ import { Marquee } from '@/components/atoms/Marquee';
 import { HeroSection } from '@/components/sections/HeroSection';
 import { TrustedBySection } from '@/components/sections/TrustedBySection';
 import { BenefitsSection } from '@/components/sections/BenefitsSection';
+import { DemoShowcaseSection } from '@/components/sections/DemoShowcaseSection';
 import { FeaturesShowcaseSection } from '@/components/sections/FeaturesShowcaseSection';
 import { HowItWorksSection } from '@/components/sections/HowItWorksSection';
 import { UseCasesSection } from '@/components/sections/UseCasesSection';
@@ -43,6 +44,11 @@ export function LandingPage() {
           <SectionDivider />
           <RevealSection>
             <BenefitsSection />
+          </RevealSection>
+
+          <SectionDivider />
+          <RevealSection>
+            <DemoShowcaseSection />
           </RevealSection>
 
           <SectionDivider />
