@@ -743,10 +743,10 @@ export function PublicCardPage() {
           </motion.button>
 
           {/* Links (list or grid layout) */}
-          <div className={linkLayout === 'grid' ? 'grid grid-cols-2 gap-2.5' : 'space-y-3'}>
+          <div className={linkLayout === 'grid' ? 'grid grid-cols-3 gap-2.5' : 'space-y-3'}>
             {(() => {
               const allLinks = profile.socialLinks;
-              const gridLimit = linkLayout === 'grid' ? 8 : 5;
+              const gridLimit = linkLayout === 'grid' ? 9 : 5;
               const visibleLinks = showAllLinks ? allLinks : allLinks.slice(0, gridLimit);
               const hiddenCount = allLinks.length - gridLimit;
               const Renderer = linkLayout === 'grid' ? GridLinkRenderer : LinkRenderer;
@@ -769,7 +769,7 @@ export function PublicCardPage() {
                       onClick={() => setShowAllLinks(!showAllLinks)}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className={`flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-dashed border-white/15 text-white/50 hover:text-white/80 hover:border-white/30 hover:bg-white/5 transition-all text-sm ${linkLayout === 'grid' ? 'col-span-2' : 'w-full'}`}
+                      className={`flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-dashed border-white/15 text-white/50 hover:text-white/80 hover:border-white/30 hover:bg-white/5 transition-all text-sm ${linkLayout === 'grid' ? 'col-span-3' : 'w-full'}`}
                     >
                       {showAllLinks ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                       {showAllLinks

@@ -389,13 +389,13 @@ function tryParseJson(str: string): Record<string, string> | null {
 // ──────────────────────────────────────────────
 
 function GridLinkCard({
-  link, href, index, accent, linkStyle, linkAnim, onClick,
+  link, href, index, accent, linkAnim, onClick,
 }: {
   link: SocialLink;
   href: string;
   index: number;
   accent: string;
-  linkStyle: string;
+  linkStyle?: string;
   linkAnim: string;
   onClick?: (e: React.MouseEvent) => void;
 }) {
@@ -414,23 +414,17 @@ function GridLinkCard({
       }}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: index * 0.06 }}
+      transition={{ delay: index * 0.05 }}
       whileHover={getHoverAnim(linkAnim)}
       whileTap={{ scale: 0.95 }}
-      className={`flex flex-col items-center justify-center gap-2 p-4 backdrop-blur-xl text-white transition-all group aspect-square ${getStyleClass(linkStyle)}`}
+      className="flex flex-col items-center justify-center gap-1.5 py-4 px-2 rounded-2xl text-white transition-all group"
       style={{
-        backgroundColor: `${accent}10`,
-        borderColor: `${accent}25`,
-        borderWidth: 1,
+        backgroundColor: `${bgColor}12`,
+        border: `1px solid ${bgColor}20`,
       }}
     >
-      <div
-        className="w-12 h-12 rounded-2xl flex items-center justify-center"
-        style={{ backgroundColor: `${accent}20` }}
-      >
-        <Icon size={24} style={{ color: bgColor }} />
-      </div>
-      <span className="text-xs text-white/60 font-medium truncate max-w-full text-center leading-tight group-hover:text-white/80 transition-colors">
+      <Icon size={30} style={{ color: bgColor }} />
+      <span className="text-[11px] text-white/70 font-medium truncate max-w-full text-center leading-tight">
         {link.label}
       </span>
     </motion.a>
@@ -447,7 +441,7 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim }: L
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: index * 0.06 }}
-        className="col-span-2 flex items-center gap-3 py-2"
+        className="col-span-3 flex items-center gap-3 py-2"
       >
         <div className="flex-1 h-px bg-white/10" />
         <span className="font-semibold text-white/40 uppercase tracking-wider truncate max-w-[60%]" style={{ fontSize: '0.75em' }}>{link.label}</span>
@@ -469,7 +463,7 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim }: L
       : null;
 
     return (
-      <div className="col-span-2">
+      <div className="col-span-3">
         <GridLinkCard
           link={{ ...link, url: '#' }}
           href="#"
@@ -484,17 +478,17 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim }: L
     );
   }
 
-  // Video embed — col-span-2 for embed
+  // Video embed — col-span-3 for embed
   if (link.platform === 'video_embed') {
     const videoId = extractYouTubeId(link.url);
     return (
-      <div className={embedOpen && videoId ? 'col-span-2' : ''}>
+      <div className={embedOpen && videoId ? 'col-span-3' : ''}>
         <GridLinkCard
           link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim}
           onClick={(e) => { if (videoId) { e.preventDefault(); setEmbedOpen(!embedOpen); } }}
         />
         {embedOpen && videoId && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-2 rounded-xl overflow-hidden col-span-2">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-2 rounded-xl overflow-hidden col-span-3">
             <iframe src={`https://www.youtube.com/embed/${videoId}?autoplay=1`} className="w-full aspect-video rounded-xl" allow="autoplay; encrypted-media" allowFullScreen title={link.label} />
           </motion.div>
         )}
@@ -502,11 +496,11 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim }: L
     );
   }
 
-  // Music embed — col-span-2 for embed
+  // Music embed — col-span-3 for embed
   if (link.platform === 'music_embed') {
     const spotifyUri = extractSpotifyUri(link.url);
     return (
-      <div className={embedOpen && spotifyUri ? 'col-span-2' : ''}>
+      <div className={embedOpen && spotifyUri ? 'col-span-3' : ''}>
         <GridLinkCard
           link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim}
           onClick={(e) => { if (spotifyUri) { e.preventDefault(); setEmbedOpen(!embedOpen); } }}
