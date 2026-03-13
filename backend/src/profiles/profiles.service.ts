@@ -6,7 +6,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { SlugsService } from '../slugs/slugs.service';
 import { PaymentsService } from '../payments/payments.service';
 import { AppException } from '../common/exceptions/app.exception';
-import { getPlanLimits, FREE_THEMES } from '../payments/plan-limits';
+import { FREE_THEMES } from '../payments/plan-limits';
 import { randomUUID } from 'crypto';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
 import type { EnvConfig } from '../common/config/env.config';
@@ -78,8 +78,7 @@ export class ProfilesService {
   }
 
   async createCard(userId: string, label: string, orgId?: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
-    const limits = getPlanLimits(user?.plan || 'FREE');
+    const { plan: effectivePlan, planLimits: limits } = await this.paymentsService.getUserPlanInfo(userId);
 
     if (orgId) {
       // B2B: validate org membership and seat limit
@@ -105,7 +104,7 @@ export class ProfilesService {
         where: { userId, orgId: null },
       });
       if (personalCount >= limits.maxCards) {
-        throw AppException.badRequest(`Maximo de ${limits.maxCards} ${limits.maxCards === 1 ? 'cartao pessoal' : 'cartoes pessoais'} no plano ${user?.plan || 'FREE'}`);
+        throw AppException.badRequest(`Maximo de ${limits.maxCards} ${limits.maxCards === 1 ? 'cartao pessoal' : 'cartoes pessoais'} no plano ${effectivePlan}`);
       }
     }
 
@@ -254,13 +253,12 @@ export class ProfilesService {
       : await this.prisma.profile.findFirst({ where: { userId, isPrimary: true }, include: { organization: { select: { brandingActive: true } } } });
     if (!profile) throw AppException.notFound('Perfil');
 
-    // Enforce plan limits
-    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
-    const limits = getPlanLimits(user?.plan || 'FREE');
+    // Enforce plan limits (uses PaymentsService to respect whitelist + org inheritance)
+    const { plan: effectivePlan, planLimits: limits } = await this.paymentsService.getUserPlanInfo(userId);
 
     // Validate maxLinks
     if (data.socialLinks && data.socialLinks.length > limits.maxLinks) {
-      throw AppException.badRequest(`Maximo de ${limits.maxLinks} links no plano ${user?.plan || 'FREE'}`);
+      throw AppException.badRequest(`Maximo de ${limits.maxLinks} links no plano ${effectivePlan}`);
     }
 
     // Validate theme for free tier

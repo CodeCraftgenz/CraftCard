@@ -5,6 +5,12 @@ import { ProfilesService } from './profiles.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { SlugsService } from '../slugs/slugs.service';
 import { PaymentsService } from '../payments/payments.service';
+import { getPlanLimits } from '../payments/plan-limits';
+
+/** Helper to mock getUserPlanInfo for a given plan */
+function mockPlanInfo(plan: string) {
+  return { plan, planLimits: getPlanLimits(plan), expiresAt: null };
+}
 
 describe('ProfilesService', () => {
   let service: ProfilesService;
@@ -27,7 +33,7 @@ describe('ProfilesService', () => {
     $transaction: jest.Mock;
   };
   let slugsService: { isAvailable: jest.Mock; slugify: jest.Mock };
-  let paymentsService: { getActiveSubscription: jest.Mock };
+  let paymentsService: { getActiveSubscription: jest.Mock; getUserPlanInfo: jest.Mock };
 
   beforeEach(async () => {
     prisma = {
@@ -50,7 +56,14 @@ describe('ProfilesService', () => {
     };
 
     slugsService = { isAvailable: jest.fn(), slugify: jest.fn() };
-    paymentsService = { getActiveSubscription: jest.fn() };
+    paymentsService = {
+      getActiveSubscription: jest.fn(),
+      getUserPlanInfo: jest.fn().mockResolvedValue({
+        plan: 'FREE',
+        planLimits: { maxCards: 1, maxLinks: 5, maxThemes: 3, canPublish: true, analytics: false, gallery: false, bookings: false, testimonials: false, contacts: false, services: false, faq: false, resume: false, video: false, watermark: true, customFonts: false, customBg: false, leadsExport: false, orgDashboard: false, branding: false, customDomain: false, webhooks: false, connections: true, maxConnections: 10 },
+        expiresAt: null,
+      }),
+    };
 
     const configMock = {
       get: jest.fn((key: string) => {
@@ -87,7 +100,7 @@ describe('ProfilesService', () => {
 
   describe('createCard — personal (B2C)', () => {
     it('should create a personal card when under plan limit', async () => {
-      prisma.user.findUnique.mockResolvedValue({ plan: 'PRO' });
+      paymentsService.getUserPlanInfo.mockResolvedValue(mockPlanInfo('PRO'));
       prisma.profile.count.mockResolvedValue(2);
       prisma.profile.create.mockResolvedValue({
         id: 'new-id',
@@ -104,7 +117,7 @@ describe('ProfilesService', () => {
     });
 
     it('should throw when FREE user tries to create second personal card', async () => {
-      prisma.user.findUnique.mockResolvedValue({ plan: 'FREE' });
+      paymentsService.getUserPlanInfo.mockResolvedValue(mockPlanInfo('FREE'));
       prisma.profile.count.mockResolvedValue(1);
 
       await expect(service.createCard('user-1', 'Extra')).rejects.toThrow(
@@ -113,7 +126,7 @@ describe('ProfilesService', () => {
     });
 
     it('should throw when PRO user exceeds 3 personal cards', async () => {
-      prisma.user.findUnique.mockResolvedValue({ plan: 'PRO' });
+      paymentsService.getUserPlanInfo.mockResolvedValue(mockPlanInfo('PRO'));
       prisma.profile.count.mockResolvedValue(3);
 
       await expect(service.createCard('user-1', 'Extra')).rejects.toThrow(
@@ -122,7 +135,7 @@ describe('ProfilesService', () => {
     });
 
     it('should throw when BUSINESS user exceeds 3 personal cards', async () => {
-      prisma.user.findUnique.mockResolvedValue({ plan: 'BUSINESS' });
+      paymentsService.getUserPlanInfo.mockResolvedValue(mockPlanInfo('BUSINESS'));
       prisma.profile.count.mockResolvedValue(3);
 
       await expect(service.createCard('user-1', 'Extra')).rejects.toThrow(
@@ -133,7 +146,7 @@ describe('ProfilesService', () => {
 
   describe('createCard — org (B2B)', () => {
     it('should create an org card when under seat limit', async () => {
-      prisma.user.findUnique.mockResolvedValue({ plan: 'BUSINESS' });
+      paymentsService.getUserPlanInfo.mockResolvedValue(mockPlanInfo('BUSINESS'));
       prisma.organization.findUnique.mockResolvedValue({ maxMembers: 10 });
       prisma.organizationMember.findUnique.mockResolvedValue({ id: 'member-1', role: 'MEMBER' });
       prisma.profile.count.mockResolvedValue(5);
@@ -151,14 +164,14 @@ describe('ProfilesService', () => {
     });
 
     it('should throw when org not found', async () => {
-      prisma.user.findUnique.mockResolvedValue({ plan: 'BUSINESS' });
+      paymentsService.getUserPlanInfo.mockResolvedValue(mockPlanInfo('BUSINESS'));
       prisma.organization.findUnique.mockResolvedValue(null);
 
       await expect(service.createCard('user-1', 'Corp', 'org-invalid')).rejects.toThrow('Organizacao');
     });
 
     it('should throw when user is not org member', async () => {
-      prisma.user.findUnique.mockResolvedValue({ plan: 'BUSINESS' });
+      paymentsService.getUserPlanInfo.mockResolvedValue(mockPlanInfo('BUSINESS'));
       prisma.organization.findUnique.mockResolvedValue({ maxMembers: 10, extraSeats: 0 });
       prisma.organizationMember.findUnique.mockResolvedValue(null);
 
@@ -168,7 +181,7 @@ describe('ProfilesService', () => {
     });
 
     it('should throw when org seat limit reached', async () => {
-      prisma.user.findUnique.mockResolvedValue({ plan: 'BUSINESS' });
+      paymentsService.getUserPlanInfo.mockResolvedValue(mockPlanInfo('BUSINESS'));
       prisma.organization.findUnique.mockResolvedValue({ maxMembers: 5, extraSeats: 0 });
       prisma.organizationMember.findUnique.mockResolvedValue({ id: 'member-1', role: 'MEMBER' });
       prisma.profile.count.mockResolvedValue(5);
