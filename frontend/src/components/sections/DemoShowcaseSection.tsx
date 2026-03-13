@@ -166,11 +166,17 @@ function PhoneContent() {
           </div>
         </div>
 
-        {/* Mini map placeholder */}
-        <div className="mt-3 h-20 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5 flex items-center justify-center">
-          <div className="text-center">
-            <MapPin size={14} className="text-amber-400 mx-auto" />
-            <p className="text-[8px] text-slate-500 mt-1">Sao Paulo, SP</p>
+        {/* Mini map */}
+        <div className="mt-3 h-24 rounded-xl overflow-hidden border border-white/5 relative">
+          <iframe
+            src="https://www.google.com/maps?q=Sao+Paulo,SP,Brasil&output=embed"
+            className="w-full h-full border-0 pointer-events-none"
+            loading="lazy"
+            title="Localizacao"
+          />
+          <div className="absolute bottom-0 inset-x-0 h-6 bg-gradient-to-t from-[#0f172a] to-transparent" />
+          <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm">
+            <span className="text-[7px] text-white/80 font-medium">Sao Paulo, SP</span>
           </div>
         </div>
       </div>

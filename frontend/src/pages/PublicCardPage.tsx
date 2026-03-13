@@ -338,7 +338,7 @@ function handleDownloadVCard(profile: PublicProfile) {
 
 export function PublicCardPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { cards, isLoading: authLoading } = useAuth();
+  const { cards, isAuthenticated, isLoading: authLoading } = useAuth();
   const [showContactForm, setShowContactForm] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [contactForm, setContactForm] = useState({ senderName: '', senderEmail: '', message: '' });
@@ -752,7 +752,7 @@ export function PublicCardPage() {
           <ConnectButton
             targetProfileId={profile.id}
             accent={accent}
-            isLoggedIn={!!cards}
+            isLoggedIn={isAuthenticated}
           />
 
           {/* Links (list or grid layout) */}

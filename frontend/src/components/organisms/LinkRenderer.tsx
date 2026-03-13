@@ -266,18 +266,43 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim, iconSty
     );
   }
 
-  // Map
+  // Map — expandable embed
   if (link.platform === 'map') {
+    const mapQuery = link.url.startsWith('http') ? link.url : encodeURIComponent(link.url);
+    const embedUrl = link.url.startsWith('http')
+      ? link.url
+      : `https://www.google.com/maps?q=${encodeURIComponent(link.url)}&output=embed`;
     return (
-      <LinkButton
-        link={link}
-        href={link.url.startsWith('http') ? link.url : `https://maps.google.com/?q=${encodeURIComponent(link.url)}`}
-        index={index}
-        accent={accent}
-        linkStyle={linkStyle}
-        linkAnim={linkAnim}
-        iconStyle={iconStyle}
-      />
+      <div>
+        <LinkButton
+          link={link}
+          href={link.url.startsWith('http') ? link.url : `https://maps.google.com/?q=${mapQuery}`}
+          index={index}
+          accent={accent}
+          linkStyle={linkStyle}
+          linkAnim={linkAnim}
+          iconStyle={iconStyle}
+          onClick={(e) => {
+            e.preventDefault();
+            setEmbedOpen(!embedOpen);
+          }}
+        />
+        {embedOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            className="mt-2 rounded-xl overflow-hidden"
+          >
+            <iframe
+              src={embedUrl}
+              className="w-full h-48 rounded-xl border-0"
+              loading="lazy"
+              title={link.label}
+              allowFullScreen
+            />
+          </motion.div>
+        )}
+      </div>
     );
   }
 
@@ -552,9 +577,43 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, ico
     return <GridLinkCard link={link} href={link.url.startsWith('tel:') ? link.url : `tel:${link.url}`} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} />;
   }
 
-  // Map
+  // Map — show embedded map
   if (link.platform === 'map') {
-    return <GridLinkCard link={link} href={link.url.startsWith('http') ? link.url : `https://maps.google.com/?q=${encodeURIComponent(link.url)}`} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} />;
+    const embedUrl = link.url.startsWith('http')
+      ? link.url
+      : `https://www.google.com/maps?q=${encodeURIComponent(link.url)}&output=embed`;
+    return (
+      <div>
+        <GridLinkCard
+          link={link}
+          href={link.url.startsWith('http') ? link.url : `https://maps.google.com/?q=${encodeURIComponent(link.url)}`}
+          index={index}
+          accent={accent}
+          linkStyle={linkStyle}
+          linkAnim={linkAnim}
+          iconStyle={iconStyle}
+          onClick={(e) => {
+            e.preventDefault();
+            setEmbedOpen(!embedOpen);
+          }}
+        />
+        {embedOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            className="mt-2 rounded-xl overflow-hidden col-span-3"
+          >
+            <iframe
+              src={embedUrl}
+              className="w-full h-48 rounded-xl border-0"
+              loading="lazy"
+              title={link.label}
+              allowFullScreen
+            />
+          </motion.div>
+        )}
+      </div>
+    );
   }
 
   // File
