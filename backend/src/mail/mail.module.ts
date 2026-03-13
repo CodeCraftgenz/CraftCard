@@ -6,9 +6,11 @@ import { MailProcessor, MAIL_QUEUE } from './mail.processor';
 @Global()
 @Module({
   imports: [
-    BullModule.registerQueue({ name: MAIL_QUEUE }),
+    ...(process.env.REDIS_HOST
+      ? [BullModule.registerQueue({ name: MAIL_QUEUE })]
+      : []),
   ],
-  providers: [MailService, MailProcessor],
+  providers: [MailService, ...(process.env.REDIS_HOST ? [MailProcessor] : [])],
   exports: [MailService],
 })
 export class MailModule {}

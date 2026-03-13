@@ -35,18 +35,23 @@ import configuration from './common/config/configuration';
       load: [configuration],
     }),
 
-    // BullMQ — Fila de emails com Redis (graceful: sem Redis, MailService cai em fallback SMTP)
-    BullModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        connection: {
-          host: config.get('REDIS_HOST') || '127.0.0.1',
-          port: Number(config.get('REDIS_PORT')) || 6379,
-          password: config.get('REDIS_PASSWORD') || undefined,
-          maxRetriesPerRequest: null, // obrigatório para BullMQ
-        },
-      }),
-    }),
+    // BullMQ — Fila de emails com Redis (só registra se REDIS_HOST estiver configurado)
+    // Sem Redis, MailService cai em fallback SMTP direto
+    ...(process.env.REDIS_HOST
+      ? [
+          BullModule.forRootAsync({
+            inject: [ConfigService],
+            useFactory: (config: ConfigService) => ({
+              connection: {
+                host: config.get('REDIS_HOST'),
+                port: Number(config.get('REDIS_PORT')) || 6379,
+                password: config.get('REDIS_PASSWORD') || undefined,
+                maxRetriesPerRequest: null, // obrigatório para BullMQ
+              },
+            }),
+          }),
+        ]
+      : []),
 
     ThrottlerModule.forRoot([
       { name: 'short', ttl: 1000, limit: 3 },          // 3 req/s — burst protection
