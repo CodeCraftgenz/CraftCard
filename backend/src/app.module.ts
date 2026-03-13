@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
-import { redisStore } from 'cache-manager-redis-yet';
 import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './common/prisma/prisma.module';
@@ -65,6 +64,8 @@ import configuration from './common/config/configuration';
         const redisHost = config.get('REDIS_HOST');
         if (redisHost) {
           try {
+            // Dynamic import para nao inicializar conexão Redis ao carregar o módulo
+            const { redisStore } = await import('cache-manager-redis-yet');
             const store = await redisStore({
               socket: {
                 host: redisHost,
