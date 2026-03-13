@@ -266,43 +266,42 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim, iconSty
     );
   }
 
-  // Map — expandable embed
+  // Map — show inline embedded map visual
   if (link.platform === 'map') {
-    const mapQuery = link.url.startsWith('http') ? link.url : encodeURIComponent(link.url);
+    const query = link.url.startsWith('http') ? '' : encodeURIComponent(link.url);
     const embedUrl = link.url.startsWith('http')
       ? link.url
-      : `https://www.google.com/maps?q=${encodeURIComponent(link.url)}&output=embed`;
+      : `https://www.google.com/maps?q=${query}&output=embed`;
+    const mapsLink = link.url.startsWith('http')
+      ? link.url
+      : `https://maps.google.com/?q=${query}`;
     return (
-      <div>
-        <LinkButton
-          link={link}
-          href={link.url.startsWith('http') ? link.url : `https://maps.google.com/?q=${mapQuery}`}
-          index={index}
-          accent={accent}
-          linkStyle={linkStyle}
-          linkAnim={linkAnim}
-          iconStyle={iconStyle}
-          onClick={(e) => {
-            e.preventDefault();
-            setEmbedOpen(!embedOpen);
-          }}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.06 }}
+        className="rounded-2xl overflow-hidden relative"
+        style={{ border: `1px solid ${accent}20` }}
+      >
+        <iframe
+          src={embedUrl}
+          className="w-full h-48 border-0"
+          loading="lazy"
+          title={link.label}
+          allowFullScreen
         />
-        {embedOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            className="mt-2 rounded-xl overflow-hidden"
-          >
-            <iframe
-              src={embedUrl}
-              className="w-full h-48 rounded-xl border-0"
-              loading="lazy"
-              title={link.label}
-              allowFullScreen
-            />
-          </motion.div>
-        )}
-      </div>
+        <a
+          href={mapsLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => trackLinkClick(link.id)}
+          className="absolute top-0 left-0 z-10"
+        >
+          <div className="m-2.5 px-3 py-1.5 rounded-xl shadow-sm backdrop-blur-sm" style={{ backgroundColor: `${accent}cc` }}>
+            <span className="text-xs font-semibold text-white drop-shadow">{link.label}</span>
+          </div>
+        </a>
+      </motion.div>
     );
   }
 
@@ -577,42 +576,42 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, ico
     return <GridLinkCard link={link} href={link.url.startsWith('tel:') ? link.url : `tel:${link.url}`} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} />;
   }
 
-  // Map — show embedded map
+  // Map — inline embedded map visual (spans full width)
   if (link.platform === 'map') {
+    const query = link.url.startsWith('http') ? '' : encodeURIComponent(link.url);
     const embedUrl = link.url.startsWith('http')
       ? link.url
-      : `https://www.google.com/maps?q=${encodeURIComponent(link.url)}&output=embed`;
+      : `https://www.google.com/maps?q=${query}&output=embed`;
+    const mapsLink = link.url.startsWith('http')
+      ? link.url
+      : `https://maps.google.com/?q=${query}`;
     return (
-      <div>
-        <GridLinkCard
-          link={link}
-          href={link.url.startsWith('http') ? link.url : `https://maps.google.com/?q=${encodeURIComponent(link.url)}`}
-          index={index}
-          accent={accent}
-          linkStyle={linkStyle}
-          linkAnim={linkAnim}
-          iconStyle={iconStyle}
-          onClick={(e) => {
-            e.preventDefault();
-            setEmbedOpen(!embedOpen);
-          }}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: index * 0.05 }}
+        className="col-span-3 rounded-2xl overflow-hidden relative"
+        style={{ border: `1px solid ${accent}20` }}
+      >
+        <iframe
+          src={embedUrl}
+          className="w-full h-40 border-0"
+          loading="lazy"
+          title={link.label}
+          allowFullScreen
         />
-        {embedOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            className="mt-2 rounded-xl overflow-hidden col-span-3"
-          >
-            <iframe
-              src={embedUrl}
-              className="w-full h-48 rounded-xl border-0"
-              loading="lazy"
-              title={link.label}
-              allowFullScreen
-            />
-          </motion.div>
-        )}
-      </div>
+        <a
+          href={mapsLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => trackLinkClick(link.id)}
+          className="absolute top-0 left-0 z-10"
+        >
+          <div className="m-2 px-2.5 py-1 rounded-lg shadow-sm backdrop-blur-sm" style={{ backgroundColor: `${accent}cc` }}>
+            <span className="text-[10px] font-semibold text-white drop-shadow">{link.label}</span>
+          </div>
+        </a>
+      </motion.div>
     );
   }
 

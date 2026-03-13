@@ -1296,10 +1296,10 @@ export function EditorPage() {
                               />
                             </div>
                             <input
-                              type="url"
+                              type={['map', 'header', 'pix', 'phone'].includes(link.platform) ? 'text' : 'url'}
                               value={link.url}
                               onChange={(e) => updateSocialLink(i, 'url', e.target.value)}
-                              placeholder={SOCIAL_PLATFORMS.find((p) => p.value === link.platform)?.placeholder || 'https://...'}
+                              placeholder={link.platform === 'map' ? 'Ex: Av. Paulista, 1000 - Sao Paulo, SP' : SOCIAL_PLATFORMS.find((p) => p.value === link.platform)?.placeholder || 'https://...'}
                               className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
                             />
                             <div className="flex items-center gap-2">
