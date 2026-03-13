@@ -101,4 +101,39 @@ export class UsersService {
       data: { passwordHash },
     });
   }
+
+  async setTotpSecret(userId: string, secret: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { totpSecret: secret },
+    });
+  }
+
+  async enableTotp(userId: string, backupCodes: string[]) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        totpEnabled: true,
+        totpBackupCodes: JSON.stringify(backupCodes),
+      },
+    });
+  }
+
+  async disableTotp(userId: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        totpEnabled: false,
+        totpSecret: null,
+        totpBackupCodes: null,
+      },
+    });
+  }
+
+  async consumeBackupCode(userId: string, remainingCodes: string[]) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { totpBackupCodes: JSON.stringify(remainingCodes) },
+    });
+  }
 }

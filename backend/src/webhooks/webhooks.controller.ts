@@ -40,4 +40,9 @@ export class WebhooksController {
   async test(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.webhooksService.test(user.sub, id);
   }
+
+  @Get(':id/logs')
+  async logs(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.webhooksService.getLogs(user.sub, id);
+  }
 }

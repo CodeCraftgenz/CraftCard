@@ -5,7 +5,7 @@ import { randomBytes, createHmac } from 'crypto';
 import * as https from 'https';
 import * as http from 'http';
 
-type WebhookEvent = 'new_message' | 'new_booking' | 'new_testimonial' | 'new_view';
+export type WebhookEvent = 'new_message' | 'new_booking' | 'new_testimonial' | 'new_view' | 'lead_status_changed';
 
 @Injectable()
 export class WebhooksService {
@@ -76,10 +76,22 @@ export class WebhooksService {
       const events = JSON.parse(webhook.events) as WebhookEvent[];
       if (!events.includes(event)) continue;
 
-      this.sendWebhook(webhook.url, webhook.secret, event, payload).catch((err) => {
+      this.sendWebhookWithLog(webhook.id, webhook.url, webhook.secret, event, payload).catch((err) => {
         this.logger.warn(`Webhook delivery failed for ${webhook.id}: ${err}`);
       });
     }
+  }
+
+  /** List delivery logs for a specific webhook */
+  async getLogs(userId: string, webhookId: string, take = 50) {
+    const webhook = await this.prisma.webhook.findFirst({ where: { id: webhookId, userId } });
+    if (!webhook) throw AppException.notFound('Webhook');
+
+    return this.prisma.webhookLog.findMany({
+      where: { webhookId },
+      orderBy: { createdAt: 'desc' },
+      take,
+    });
   }
 
   /** Send a test event to a specific webhook */
@@ -87,7 +99,7 @@ export class WebhooksService {
     const webhook = await this.prisma.webhook.findFirst({ where: { id, userId } });
     if (!webhook) throw AppException.notFound('Webhook');
 
-    await this.sendWebhook(webhook.url, webhook.secret, 'new_message', {
+    await this.sendWebhookWithLog(webhook.id, webhook.url, webhook.secret, 'new_message', {
       type: 'test',
       message: 'This is a test event from CraftCard',
       timestamp: new Date().toISOString(),
@@ -96,22 +108,42 @@ export class WebhooksService {
     return { sent: true };
   }
 
+  /** Send webhook and log the result to WebhookLog */
+  private async sendWebhookWithLog(
+    webhookId: string,
+    url: string,
+    secret: string,
+    event: string,
+    payload: Record<string, unknown>,
+  ): Promise<void> {
+    const { statusCode, success, error } = await this.sendWebhook(url, secret, event, payload);
+
+    await this.prisma.webhookLog.create({
+      data: { webhookId, event, statusCode, success, error },
+    }).catch((err) => {
+      this.logger.warn(`Failed to save webhook log: ${err}`);
+    });
+  }
+
   private async sendWebhook(
     url: string,
     secret: string,
     event: string,
     payload: Record<string, unknown>,
     retries = 3,
-  ): Promise<void> {
+  ): Promise<{ statusCode: number | null; success: boolean; error: string | null }> {
     const body = JSON.stringify({ event, data: payload, timestamp: new Date().toISOString() });
     const signature = createHmac('sha256', secret).update(body).digest('hex');
 
     const parsed = new URL(url);
     const client = parsed.protocol === 'https:' ? https : http;
 
+    let lastError: string | null = null;
+    let lastStatusCode: number | null = null;
+
     for (let attempt = 0; attempt < retries; attempt++) {
       try {
-        await new Promise<void>((resolve, reject) => {
+        const result = await new Promise<{ statusCode: number }>((resolve, reject) => {
           const req = client.request(
             {
               hostname: parsed.hostname,
@@ -128,7 +160,7 @@ export class WebhooksService {
             (res) => {
               res.resume();
               if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-                resolve();
+                resolve({ statusCode: res.statusCode });
               } else {
                 reject(new Error(`HTTP ${res.statusCode}`));
               }
@@ -139,12 +171,19 @@ export class WebhooksService {
           req.write(body);
           req.end();
         });
-        return; // success
-      } catch {
+        return { statusCode: result.statusCode, success: true, error: null };
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        lastError = errMsg;
+        const statusMatch = errMsg.match(/HTTP (\d+)/);
+        lastStatusCode = statusMatch ? parseInt(statusMatch[1], 10) : null;
+
         if (attempt < retries - 1) {
           await new Promise((r) => setTimeout(r, 1000 * (attempt + 1))); // backoff
         }
       }
     }
+
+    return { statusCode: lastStatusCode, success: false, error: lastError };
   }
 }

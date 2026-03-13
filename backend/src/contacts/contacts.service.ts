@@ -20,7 +20,7 @@ export class ContactsService {
   async sendMessage(slug: string, data: SendMessageDto) {
     const profile = await this.prisma.profile.findFirst({
       where: { slug },
-      select: { id: true, userId: true, isPublished: true, user: { select: { email: true } } },
+      select: { id: true, userId: true, isPublished: true, slug: true, displayName: true, user: { select: { email: true } } },
     });
     if (!profile || !profile.isPublished) {
       throw AppException.notFound('Perfil');
@@ -65,6 +65,7 @@ export class ContactsService {
       senderName: data.senderName,
       senderEmail: data.senderEmail || null,
       message: data.message,
+      profile: { slug: profile.slug, displayName: profile.displayName },
     }).catch(() => {});
 
     return { sent: true };
@@ -98,10 +99,21 @@ export class ContactsService {
       throw AppException.notFound('Mensagem');
     }
 
-    return this.prisma.contactMessage.update({
+    const updated = await this.prisma.contactMessage.update({
       where: { id: messageId },
       data: { isRead: true },
     });
+
+    // Webhook: notify CRM that lead status changed (fire-and-forget)
+    this.webhooksService.dispatch(userId, 'lead_status_changed', {
+      messageId: message.id,
+      senderName: message.senderName,
+      senderEmail: message.senderEmail,
+      status: 'read',
+      readAt: new Date().toISOString(),
+    }).catch(() => {});
+
+    return updated;
   }
 
   async exportMessagesCsv(userId: string): Promise<string> {

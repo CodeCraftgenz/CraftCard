@@ -4,6 +4,8 @@ import { JwtService } from '@nestjs/jwt';
 import { OAuth2Client } from 'google-auth-library';
 import { createHash, randomBytes } from 'crypto';
 import * as bcrypt from 'bcrypt';
+import * as OTPAuth from 'otpauth';
+import * as QRCode from 'qrcode';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
@@ -161,10 +163,21 @@ export class AuthService {
       throw AppException.unauthorized('Credenciais invalidas');
     }
 
+    // Se 2FA esta ativo, retornar flag sem emitir tokens
+    if (user.totpEnabled) {
+      return {
+        requires2FA: true,
+        user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl },
+        accessToken: null,
+        refreshToken: null,
+      };
+    }
+
     const accessToken = this.generateAccessToken(user.id, user.email, user.role);
     const refreshToken = await this.generateRefreshToken(user.id);
 
     return {
+      requires2FA: false,
       user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl },
       accessToken,
       refreshToken,
@@ -310,6 +323,145 @@ export class AuthService {
       where: { userId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+  }
+
+  // ──────────────────────────────────────────────
+  // 2FA / TOTP
+  // ──────────────────────────────────────────────
+
+  async setupTotp(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw AppException.notFound('Usuario');
+
+    if (user.totpEnabled) {
+      throw AppException.conflict('2FA ja esta ativado');
+    }
+
+    const secret = new OTPAuth.Secret({ size: 20 });
+    const totp = new OTPAuth.TOTP({
+      issuer: 'CraftCard',
+      label: user.email,
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret,
+    });
+
+    // Salvar o secret (ainda nao ativado — sera ativado apos verificar codigo)
+    await this.usersService.setTotpSecret(userId, secret.base32);
+
+    const otpauthUrl = totp.toString();
+    const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
+
+    return {
+      secret: secret.base32,
+      qrCode: qrCodeDataUrl,
+      otpauthUrl,
+    };
+  }
+
+  async verifyAndEnableTotp(userId: string, code: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw AppException.notFound('Usuario');
+    if (user.totpEnabled) throw AppException.conflict('2FA ja esta ativado');
+    if (!user.totpSecret) throw AppException.badRequest('Configure o 2FA primeiro (POST /auth/setup-2fa)');
+
+    const totp = new OTPAuth.TOTP({
+      issuer: 'CraftCard',
+      label: user.email,
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret: OTPAuth.Secret.fromBase32(user.totpSecret),
+    });
+
+    const delta = totp.validate({ token: code, window: 1 });
+    if (delta === null) {
+      throw AppException.unauthorized('Codigo TOTP invalido');
+    }
+
+    // Gerar 8 codigos de backup
+    const backupCodes = Array.from({ length: 8 }, () =>
+      randomBytes(4).toString('hex'),
+    );
+
+    await this.usersService.enableTotp(userId, backupCodes);
+
+    this.logger.log(`2FA enabled for user ${user.email}`);
+
+    return { enabled: true, backupCodes };
+  }
+
+  async disableTotp(userId: string, code: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw AppException.notFound('Usuario');
+    if (!user.totpEnabled) throw AppException.badRequest('2FA nao esta ativado');
+
+    // Verificar codigo antes de desativar
+    const totp = new OTPAuth.TOTP({
+      issuer: 'CraftCard',
+      label: user.email,
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret: OTPAuth.Secret.fromBase32(user.totpSecret!),
+    });
+
+    const delta = totp.validate({ token: code, window: 1 });
+    if (delta === null) {
+      throw AppException.unauthorized('Codigo TOTP invalido');
+    }
+
+    await this.usersService.disableTotp(userId);
+    this.logger.log(`2FA disabled for user ${user.email}`);
+
+    return { disabled: true };
+  }
+
+  async loginWith2FA(email: string, code: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user || !user.totpEnabled) {
+      throw AppException.unauthorized('Credenciais invalidas');
+    }
+
+    // Tentar como codigo TOTP (6 digitos)
+    if (/^\d{6}$/.test(code)) {
+      const totp = new OTPAuth.TOTP({
+        issuer: 'CraftCard',
+        label: user.email,
+        algorithm: 'SHA1',
+        digits: 6,
+        period: 30,
+        secret: OTPAuth.Secret.fromBase32(user.totpSecret!),
+      });
+
+      const delta = totp.validate({ token: code, window: 1 });
+      if (delta === null) {
+        throw AppException.unauthorized('Codigo TOTP invalido');
+      }
+    } else {
+      // Tentar como codigo de backup
+      const backupCodes: string[] = user.totpBackupCodes ? JSON.parse(user.totpBackupCodes) : [];
+      const codeIndex = backupCodes.indexOf(code);
+
+      if (codeIndex === -1) {
+        throw AppException.unauthorized('Codigo invalido');
+      }
+
+      // Consumir o codigo de backup (one-time use)
+      backupCodes.splice(codeIndex, 1);
+      await this.usersService.consumeBackupCode(user.id, backupCodes);
+      this.logger.log(`Backup code used for ${user.email}, ${backupCodes.length} remaining`);
+    }
+
+    const accessToken = this.generateAccessToken(user.id, user.email, user.role);
+    const refreshToken = await this.generateRefreshToken(user.id);
+
+    return {
+      user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl },
+      accessToken,
+      refreshToken,
+    };
   }
 
   async devLogin(email: string, name: string) {

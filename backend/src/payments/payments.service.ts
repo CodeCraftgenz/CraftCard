@@ -1,24 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
-import * as crypto from 'crypto';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { AppException } from '../common/exceptions/app.exception';
 import type { EnvConfig } from '../common/config/env.config';
 import { getPlanLimits, type PlanType, type PlanLimits } from './plan-limits';
-
-const MP_STATUS_MAP: Record<string, string> = {
-  approved: 'approved',
-  pending: 'pending',
-  authorized: 'pending',
-  in_process: 'pending',
-  in_mediation: 'pending',
-  rejected: 'rejected',
-  cancelled: 'cancelled',
-  refunded: 'refunded',
-  charged_back: 'refunded',
-};
+import { PAYMENT_GATEWAY, type PaymentGateway } from './gateway/payment-gateway.interface';
 
 const PLAN_PRICES: Record<string, number> = {
   PRO: 30.0,
@@ -46,18 +33,13 @@ const FREE_ACCESS_EMAILS = new Set([
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
-  private readonly preference: Preference;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService<EnvConfig>,
     private readonly mailService: MailService,
-  ) {
-    const mpClient = new MercadoPagoConfig({
-      accessToken: this.configService.get('MP_ACCESS_TOKEN', { infer: true })!,
-    });
-    this.preference = new Preference(mpClient);
-  }
+    @Inject(PAYMENT_GATEWAY) private readonly gateway: PaymentGateway,
+  ) {}
 
   async getActiveSubscription(userId: string): Promise<{ active: boolean; expiresAt: Date | null }> {
     const planInfo = await this.getUserPlanInfo(userId);
@@ -182,6 +164,7 @@ export class PaymentsService {
     }
 
     const frontendUrl = this.configService.get('FRONTEND_URL', { infer: true });
+    const backendUrl = this.configService.get('BACKEND_URL', { infer: true });
 
     // Create pending payment record
     const payment = await this.prisma.payment.create({
@@ -195,49 +178,29 @@ export class PaymentsService {
       },
     });
 
-    const backendUrl = this.configService.get('BACKEND_URL', { infer: true });
-
-    const mpResponse = await this.preference.create({
-      body: {
-        items: [
-          {
-            id: payment.id,
-            title,
-            description: `Assinatura anual CraftCard ${plan}`,
-            quantity: 1,
-            currency_id: 'BRL',
-            unit_price: price,
-          },
-        ],
-        back_urls: {
-          success: `${frontendUrl}/billing/success`,
-          failure: `${frontendUrl}/editor?payment=failed`,
-          pending: `${frontendUrl}/editor?payment=pending`,
-        },
-        auto_return: 'approved',
-        notification_url: `${backendUrl}/api/payments/webhook`,
-        external_reference: payment.id,
-        payment_methods: {
-          installments: 4,
-        },
-        payer: {
-          email,
-        },
+    const result = await this.gateway.createPreference({
+      paymentId: payment.id,
+      title,
+      description: `Assinatura anual CraftCard ${plan}`,
+      price,
+      currency: 'BRL',
+      payerEmail: email,
+      backUrls: {
+        success: `${frontendUrl}/billing/success`,
+        failure: `${frontendUrl}/editor?payment=failed`,
+        pending: `${frontendUrl}/editor?payment=pending`,
       },
+      notificationUrl: `${backendUrl}/api/payments/webhook`,
     });
 
     await this.prisma.payment.update({
       where: { id: payment.id },
-      data: { preferenceId: mpResponse.id },
+      data: { preferenceId: result.preferenceId },
     });
 
-    const nodeEnv = this.configService.get('NODE_ENV', { infer: true });
-    const checkoutUrl =
-      nodeEnv === 'production' ? mpResponse.init_point! : mpResponse.sandbox_init_point!;
+    this.logger.log(`Checkout preference created for user ${userId} (${plan}): ${result.preferenceId}`);
 
-    this.logger.log(`Checkout preference created for user ${userId} (${plan}): ${mpResponse.id}`);
-
-    return { url: checkoutUrl };
+    return { url: result.checkoutUrl };
   }
 
   async handleWebhook(
@@ -248,18 +211,13 @@ export class PaymentsService {
 
     // Validate signature if secret is configured (non-blocking: log warning instead of rejecting)
     if (webhookSecret && webhookSecret !== 'placeholder') {
-      const { xSignature, xRequestId } = headers;
-      if (xSignature && xRequestId) {
-        const parts = xSignature.split(',');
-        const ts = parts.find((p) => p.trim().startsWith('ts='))?.split('=')[1];
-        const v1 = parts.find((p) => p.trim().startsWith('v1='))?.split('=')[1];
-
-        const dataId = body.data?.id;
-        const template = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
-
-        const expected = crypto.createHmac('sha256', webhookSecret).update(template).digest('hex');
-
-        if (v1 !== expected) {
+      const headerMap: Record<string, string> = {
+        xSignature: headers.xSignature || '',
+        xRequestId: headers.xRequestId || '',
+      };
+      if (headerMap.xSignature && headerMap.xRequestId) {
+        const valid = this.gateway.verifyWebhookSignature(body, headerMap, webhookSecret);
+        if (!valid) {
           this.logger.warn(`Webhook signature mismatch - proceeding anyway (verified via MP API)`);
         }
       } else {
@@ -302,30 +260,14 @@ export class PaymentsService {
       return { synced: false, status: 'no_pending_payments' };
     }
 
-    const accessToken = this.configService.get('MP_ACCESS_TOKEN', { infer: true });
-
     for (const payment of pendingPayments) {
       if (!payment.preferenceId) continue;
 
-      // Search for payments by external_reference (our payment ID)
       try {
-        const searchResponse = await fetch(
-          `https://api.mercadopago.com/v1/payments/search?external_reference=${payment.id}&sort=date_created&criteria=desc`,
-          { headers: { Authorization: `Bearer ${accessToken}` } },
-        );
+        const searchResult = await this.gateway.searchPaymentsByReference(payment.id);
 
-        if (!searchResponse.ok) {
-          this.logger.warn(`Failed to search MP payments for ${payment.id}: ${searchResponse.status}`);
-          continue;
-        }
-
-        const searchResult = await searchResponse.json();
-        const results = searchResult.results || [];
-
-        for (const mpPayment of results) {
-          const newStatus = MP_STATUS_MAP[mpPayment.status] || 'pending';
-
-          if (newStatus === 'approved' && payment.status !== 'approved') {
+        for (const gatewayPayment of searchResult.payments) {
+          if (gatewayPayment.status === 'approved' && payment.status !== 'approved') {
             const now = new Date();
             const expiresAt = new Date(now.getTime() + SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000);
 
@@ -334,8 +276,8 @@ export class PaymentsService {
               where: { id: payment.id, status: { not: 'approved' } },
               data: {
                 status: 'approved',
-                mpPaymentId: String(mpPayment.id),
-                mpResponseJson: JSON.stringify(mpPayment),
+                mpPaymentId: gatewayPayment.externalReference || payment.id,
+                mpResponseJson: gatewayPayment.rawResponse,
                 paidAt: now,
                 expiresAt,
               },
@@ -353,7 +295,7 @@ export class PaymentsService {
               data: { plan: targetPlan },
             }).catch(() => {});
 
-            this.logger.log(`Payment verified and approved: ${payment.id} (MP: ${mpPayment.id}, plan: ${targetPlan})`);
+            this.logger.log(`Payment verified and approved: ${payment.id} (plan: ${targetPlan})`);
             return { synced: true, status: 'approved' };
           }
         }
@@ -462,25 +404,22 @@ export class PaymentsService {
   }
 
   private async processPaymentNotification(mpPaymentId: string): Promise<void> {
-    const accessToken = this.configService.get('MP_ACCESS_TOKEN', { infer: true });
-    const response = await fetch(`https://api.mercadopago.com/v1/payments/${mpPaymentId}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    if (!response.ok) {
-      this.logger.error(`Failed to fetch MP payment ${mpPaymentId}: ${response.status}`);
+    let fetched;
+    try {
+      fetched = await this.gateway.fetchPayment(mpPaymentId);
+    } catch (err) {
+      this.logger.error(`Failed to fetch payment ${mpPaymentId}: ${err}`);
       return;
     }
 
-    const mpPayment = await response.json();
-    const externalRef = mpPayment.external_reference;
+    const externalRef = fetched.externalReference;
 
     if (!externalRef) {
-      this.logger.warn(`No external_reference in MP payment ${mpPaymentId}`);
+      this.logger.warn(`No external_reference in payment ${mpPaymentId}`);
       return;
     }
 
-    const newStatus = MP_STATUS_MAP[mpPayment.status] || 'pending';
+    const newStatus = fetched.status;
 
     // Deduplication: skip if we already processed this exact MP payment ID
     const existing = await this.prisma.payment.findUnique({
@@ -515,7 +454,7 @@ export class PaymentsService {
       data: {
         status: newStatus,
         mpPaymentId: String(mpPaymentId),
-        mpResponseJson: JSON.stringify(mpPayment),
+        mpResponseJson: fetched.rawResponse,
         paidAt: newStatus === 'approved' ? now : undefined,
         expiresAt: newStatus === 'approved' ? expiresAt : undefined,
       },

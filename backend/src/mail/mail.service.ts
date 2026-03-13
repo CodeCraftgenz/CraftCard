@@ -1,16 +1,30 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import { MAIL_QUEUE, type MailJobData } from './mail.processor';
 
+/**
+ * MailService — Enfileira emails via BullMQ (Redis) com 3x retry.
+ *
+ * RETROCOMPATIBILIDADE: Se Redis não estiver disponível, a queue
+ * é injetada como null (@Optional) e o envio cai no fallback SMTP
+ * direto — comportamento idêntico ao original, sem retries.
+ */
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private transporter: Transporter | null = null;
   private readonly from: string;
   private readonly frontendUrl: string;
+  private fallbackTransporter: Transporter | null = null;
+  private readonly useQueue: boolean;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    @Optional() @InjectQueue(MAIL_QUEUE) private readonly mailQueue?: Queue<MailJobData>,
+  ) {
     const host = this.config.get<string>('MAIL_HOST');
     const portNum = Number(this.config.get('MAIL_PORT')) || 465;
     const user = this.config.get<string>('MAIL_USER');
@@ -18,30 +32,61 @@ export class MailService {
     this.from = this.config.get<string>('MAIL_FROM') || user || 'noreply@craftcard.com';
     this.frontendUrl = this.config.get<string>('FRONTEND_URL') || 'https://craftcardgenz.com';
 
-    if (host && user && pass) {
-      this.transporter = nodemailer.createTransport({
-        host,
-        port: portNum,
-        secure: portNum === 465,
-        auth: { user, pass },
-      });
-      this.logger.log(`Mail transporter configured (${host}:${portNum}, secure=${portNum === 465})`);
+    this.useQueue = !!this.mailQueue;
+
+    if (!this.useQueue) {
+      if (host && user && pass) {
+        this.fallbackTransporter = nodemailer.createTransport({
+          host, port: portNum, secure: portNum === 465, auth: { user, pass },
+        });
+      }
+      this.logger.warn('Redis not available — using direct SMTP fallback (no retries)');
     } else {
-      this.logger.warn('MAIL_* env vars not configured — email notifications disabled');
+      this.logger.log('MailService using BullMQ queue with 3x exponential retry');
+    }
+  }
+
+  // ============================================================
+  // Enqueue Helper — tenta fila, cai em SMTP direto se falhar
+  // ============================================================
+
+  private async enqueue(to: string, subject: string, html: string, replyTo?: string): Promise<void> {
+    const jobData: MailJobData = { to, subject, html, from: `CraftCard <${this.from}>`, replyTo };
+
+    if (this.useQueue && this.mailQueue) {
+      try {
+        await this.mailQueue.add('send', jobData, {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 5000 },
+          removeOnComplete: { age: 86400 },
+          removeOnFail: { age: 604800 },
+        });
+        return;
+      } catch (err) {
+        this.logger.warn(`Queue add failed, falling back to direct: ${err}`);
+      }
+    }
+
+    // Fallback: envio direto (sem retries)
+    if (this.fallbackTransporter) {
+      try {
+        await this.fallbackTransporter.sendMail({
+          from: jobData.from, to, subject, html,
+          ...(replyTo ? { replyTo } : {}),
+        });
+      } catch (err) {
+        this.logger.warn(`Direct mail failed: ${err}`);
+      }
     }
   }
 
   // --- Contact Message Notification ---
 
   async sendNewMessageNotification(ownerEmail: string, senderName: string, preview: string, senderEmail?: string) {
-    if (!this.transporter) return;
-    try {
-      await this.transporter.sendMail({
-        from: `CraftCard <${this.from}>`,
-        replyTo: senderEmail || undefined,
-        to: ownerEmail,
-        subject: `Nova mensagem de ${senderName}`,
-        html: this.buildEmail({
+    await this.enqueue(
+      ownerEmail,
+      `Nova mensagem de ${senderName}`,
+      this.buildEmail({
           preheader: `${senderName} enviou uma mensagem pelo seu cartao`,
           title: 'Nova Mensagem',
           icon: '💬',
@@ -57,77 +102,55 @@ export class MailService {
           ctaText: 'Ver mensagens',
           ctaUrl: `${this.frontendUrl}/editor`,
         }),
-      });
-      this.logger.log(`Message notification sent to ${ownerEmail}`);
-    } catch (err) {
-      this.logger.warn(`Failed to send message notification: ${err}`);
-    }
+      senderEmail || undefined,
+    );
+    this.logger.log(`Message notification queued for ${ownerEmail}`);
   }
-
-  // --- Testimonial Notification ---
 
   async sendNewTestimonialNotification(ownerEmail: string, authorName: string, preview: string) {
-    if (!this.transporter) return;
-    try {
-      await this.transporter.sendMail({
-        from: `CraftCard <${this.from}>`,
-        to: ownerEmail,
-        subject: `Novo depoimento de ${authorName}`,
-        html: this.buildEmail({
-          preheader: `${authorName} deixou um depoimento no seu cartao`,
-          title: 'Novo Depoimento',
-          icon: '⭐',
-          body: `
-            <p style="color:#e0e0e0;font-size:15px;line-height:1.6;margin:0 0 16px;">
-              <strong style="color:#fff;">${this.esc(authorName)}</strong> deixou um depoimento:
-            </p>
-            <div style="background:#0D0D1A;border-left:3px solid #D12BF2;padding:16px;border-radius:0 8px 8px 0;margin:0 0 20px;">
-              <p style="color:#ccc;font-size:14px;line-height:1.6;margin:0;font-style:italic;">"${this.esc(preview)}"</p>
-            </div>
-          `,
-          ctaText: 'Aprovar depoimento',
-          ctaUrl: `${this.frontendUrl}/editor`,
-        }),
-      });
-      this.logger.log(`Testimonial notification sent to ${ownerEmail}`);
-    } catch (err) {
-      this.logger.warn(`Failed to send testimonial notification: ${err}`);
-    }
+    await this.enqueue(
+      ownerEmail,
+      `Novo depoimento de ${authorName}`,
+      this.buildEmail({
+        preheader: `${authorName} deixou um depoimento no seu cartao`,
+        title: 'Novo Depoimento',
+        icon: '⭐',
+        body: `
+          <p style="color:#e0e0e0;font-size:15px;line-height:1.6;margin:0 0 16px;">
+            <strong style="color:#fff;">${this.esc(authorName)}</strong> deixou um depoimento:
+          </p>
+          <div style="background:#0D0D1A;border-left:3px solid #D12BF2;padding:16px;border-radius:0 8px 8px 0;margin:0 0 20px;">
+            <p style="color:#ccc;font-size:14px;line-height:1.6;margin:0;font-style:italic;">"${this.esc(preview)}"</p>
+          </div>
+        `,
+        ctaText: 'Aprovar depoimento',
+        ctaUrl: `${this.frontendUrl}/editor`,
+      }),
+    );
+    this.logger.log(`Testimonial notification queued for ${ownerEmail}`);
   }
-
-  // --- Organization Invite ---
 
   async sendOrgInvite(toEmail: string, orgName: string, inviterName: string, token: string): Promise<boolean> {
-    if (!this.transporter) {
-      this.logger.warn(`Org invite email NOT sent to ${toEmail} — mail transporter not configured`);
-      return false;
-    }
     const joinUrl = `${this.frontendUrl}/org/join/${token}`;
     try {
-      await this.transporter.sendMail({
-        from: `CraftCard <${this.from}>`,
-        to: toEmail,
-        subject: `${inviterName} convidou voce para ${orgName}`,
-        html: this.buildInviteEmail(orgName, inviterName, joinUrl),
-      });
-      this.logger.log(`Org invite email sent to ${toEmail}`);
+      await this.enqueue(
+        toEmail,
+        `${inviterName} convidou voce para ${orgName}`,
+        this.buildInviteEmail(orgName, inviterName, joinUrl),
+      );
+      this.logger.log(`Org invite queued for ${toEmail}`);
       return true;
     } catch (err) {
-      this.logger.error(`FAILED to send org invite to ${toEmail}: ${(err as Error).message || err}`);
+      this.logger.error(`FAILED to queue org invite to ${toEmail}: ${(err as Error).message || err}`);
       return false;
     }
   }
 
-  // --- Welcome Email ---
-
   async sendWelcome(toEmail: string, name: string) {
-    if (!this.transporter) return;
-    try {
-      await this.transporter.sendMail({
-        from: `CraftCard <${this.from}>`,
-        to: toEmail,
-        subject: `Bem-vindo ao CraftCard, ${name}!`,
-        html: this.buildEmail({
+    await this.enqueue(
+      toEmail,
+      `Bem-vindo ao CraftCard, ${name}!`,
+      this.buildEmail({
           preheader: 'Seu cartao digital profissional esta pronto',
           title: `Bem-vindo, ${this.esc(name)}!`,
           icon: '🎉',
@@ -156,26 +179,16 @@ export class MailService {
           ctaText: 'Acessar meu cartao',
           ctaUrl: `${this.frontendUrl}/editor`,
         }),
-      });
-      this.logger.log(`Welcome email sent to ${toEmail}`);
-    } catch (err) {
-      this.logger.warn(`Failed to send welcome email: ${err}`);
-    }
+    );
+    this.logger.log(`Welcome email queued for ${toEmail}`);
   }
 
-  // --- Password Reset ---
-
   async sendPasswordReset(toEmail: string, resetUrl: string): Promise<boolean> {
-    if (!this.transporter) {
-      this.logger.warn(`Password reset email NOT sent to ${toEmail} — mail transporter not configured`);
-      return false;
-    }
     try {
-      await this.transporter.sendMail({
-        from: `CraftCard <${this.from}>`,
-        to: toEmail,
-        subject: 'Redefinir sua senha — CraftCard',
-        html: this.buildEmail({
+      await this.enqueue(
+        toEmail,
+        'Redefinir sua senha — CraftCard',
+        this.buildEmail({
           preheader: 'Voce solicitou a redefinicao da sua senha no CraftCard',
           title: 'Redefinir Senha',
           icon: '🔐',
@@ -193,25 +206,20 @@ export class MailService {
           ctaText: 'Redefinir Senha',
           ctaUrl: resetUrl,
         }),
-      });
-      this.logger.log(`Password reset email sent to ${toEmail}`);
+      );
+      this.logger.log(`Password reset queued for ${toEmail}`);
       return true;
     } catch (err) {
-      this.logger.error(`FAILED to send password reset to ${toEmail}: ${(err as Error).message || err}`);
+      this.logger.error(`FAILED to queue password reset to ${toEmail}: ${(err as Error).message || err}`);
       return false;
     }
   }
 
-  // --- Payment Confirmation ---
-
   async sendPaymentConfirmation(toEmail: string, name: string, plan: string) {
-    if (!this.transporter) return;
-    try {
-      await this.transporter.sendMail({
-        from: `CraftCard <${this.from}>`,
-        to: toEmail,
-        subject: `Plano ${plan} ativado com sucesso!`,
-        html: this.buildEmail({
+    await this.enqueue(
+      toEmail,
+      `Plano ${plan} ativado com sucesso!`,
+      this.buildEmail({
           preheader: `Seu plano ${plan} esta ativo`,
           title: 'Pagamento Confirmado!',
           icon: '✅',
@@ -227,23 +235,15 @@ export class MailService {
           ctaText: 'Ver tutorial',
           ctaUrl: `${this.frontendUrl}/tutorial`,
         }),
-      });
-      this.logger.log(`Payment confirmation sent to ${toEmail}`);
-    } catch (err) {
-      this.logger.warn(`Failed to send payment confirmation: ${err}`);
-    }
+    );
+    this.logger.log(`Payment confirmation queued for ${toEmail}`);
   }
 
-  // --- Booking Notification ---
-
   async sendBookingNotification(ownerEmail: string, guestName: string, date: string, time: string) {
-    if (!this.transporter) return;
-    try {
-      await this.transporter.sendMail({
-        from: `CraftCard <${this.from}>`,
-        to: ownerEmail,
-        subject: `Novo agendamento de ${guestName}`,
-        html: this.buildEmail({
+    await this.enqueue(
+      ownerEmail,
+      `Novo agendamento de ${guestName}`,
+      this.buildEmail({
           preheader: `${guestName} agendou para ${date} as ${time}`,
           title: 'Novo Agendamento',
           icon: '📅',
@@ -267,11 +267,8 @@ export class MailService {
           ctaText: 'Ver agendamentos',
           ctaUrl: `${this.frontendUrl}/editor`,
         }),
-      });
-      this.logger.log(`Booking notification sent to ${ownerEmail}`);
-    } catch (err) {
-      this.logger.warn(`Failed to send booking notification: ${err}`);
-    }
+    );
+    this.logger.log(`Booking notification queued for ${ownerEmail}`);
   }
 
   // ============================================================

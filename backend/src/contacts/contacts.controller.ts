@@ -12,7 +12,7 @@ export class ContactsController {
   constructor(private readonly contactsService: ContactsService) {}
 
   @Public()
-  @Throttle({ short: { ttl: 60000, limit: 5 } })
+  @Throttle({ short: { ttl: 60000, limit: 5 }, strict: { ttl: 300000, limit: 15 } })
   @Post(':slug')
   async sendMessage(@Param('slug') slug: string, @Body() body: unknown) {
     const data = sendMessageSchema.parse(body);

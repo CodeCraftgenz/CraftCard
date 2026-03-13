@@ -3,10 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { PaymentsService } from './payments.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
+import { PAYMENT_GATEWAY, type PaymentGateway } from './gateway/payment-gateway.interface';
 
 describe('PaymentsService', () => {
   let service: PaymentsService;
   let mailMock: { sendPaymentConfirmation: jest.Mock };
+  let gatewayMock: jest.Mocked<PaymentGateway>;
   let prisma: {
     user: { findUnique: jest.Mock; findFirst: jest.Mock; findMany: jest.Mock; update: jest.Mock };
     payment: { findFirst: jest.Mock; findMany: jest.Mock; create: jest.Mock; update: jest.Mock; updateMany: jest.Mock; findUnique: jest.Mock };
@@ -39,12 +41,20 @@ describe('PaymentsService', () => {
       sendPaymentConfirmation: jest.fn().mockResolvedValue(undefined),
     };
 
+    gatewayMock = {
+      createPreference: jest.fn(),
+      fetchPayment: jest.fn(),
+      searchPaymentsByReference: jest.fn(),
+      verifyWebhookSignature: jest.fn().mockReturnValue(true),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentsService,
         { provide: PrismaService, useValue: prisma },
         { provide: ConfigService, useValue: configMock },
         { provide: MailService, useValue: mailMock },
+        { provide: PAYMENT_GATEWAY, useValue: gatewayMock },
       ],
     }).compile();
 
@@ -179,19 +189,16 @@ describe('PaymentsService', () => {
   describe('webhook idempotency', () => {
     const mpPaymentId = 'mp-pay-123';
     const paymentId = 'pay-uuid-1';
-    const mockMpResponse = (status: string) => ({
-      ok: true,
-      json: () => Promise.resolve({
-        id: mpPaymentId,
-        status,
-        external_reference: paymentId,
-        transaction_amount: 30,
-      }),
-    });
 
     beforeEach(() => {
-      // Default: MP API returns approved payment
-      jest.spyOn(global, 'fetch').mockResolvedValue(mockMpResponse('approved') as unknown as Response);
+      // Default: gateway returns approved payment
+      gatewayMock.fetchPayment.mockResolvedValue({
+        status: 'approved',
+        externalReference: paymentId,
+        amount: 30,
+        payerEmail: 'test@test.local',
+        rawResponse: JSON.stringify({ id: mpPaymentId, status: 'approved', external_reference: paymentId }),
+      });
     });
 
     it('should skip if payment record is already approved', async () => {
@@ -209,7 +216,13 @@ describe('PaymentsService', () => {
     });
 
     it('should skip duplicate webhook with same mpPaymentId and status', async () => {
-      jest.spyOn(global, 'fetch').mockResolvedValue(mockMpResponse('pending') as unknown as Response);
+      gatewayMock.fetchPayment.mockResolvedValue({
+        status: 'pending',
+        externalReference: paymentId,
+        amount: 30,
+        payerEmail: 'test@test.local',
+        rawResponse: JSON.stringify({ id: mpPaymentId, status: 'pending' }),
+      });
       prisma.payment.findUnique.mockResolvedValue({
         id: paymentId, userId: 'user-1', status: 'pending', plan: 'PRO', mpPaymentId: mpPaymentId,
       });
@@ -271,7 +284,13 @@ describe('PaymentsService', () => {
     });
 
     it('should handle non-approved status without activating plan', async () => {
-      jest.spyOn(global, 'fetch').mockResolvedValue(mockMpResponse('pending') as unknown as Response);
+      gatewayMock.fetchPayment.mockResolvedValue({
+        status: 'pending',
+        externalReference: paymentId,
+        amount: 30,
+        payerEmail: 'test@test.local',
+        rawResponse: JSON.stringify({ id: mpPaymentId, status: 'pending' }),
+      });
       prisma.payment.findUnique.mockResolvedValue({
         id: paymentId, userId: 'user-1', status: 'pending', plan: 'PRO', mpPaymentId: null,
       });
@@ -292,8 +311,8 @@ describe('PaymentsService', () => {
       expect(mailMock.sendPaymentConfirmation).not.toHaveBeenCalled();
     });
 
-    it('should handle MP API failure gracefully', async () => {
-      jest.spyOn(global, 'fetch').mockResolvedValue({ ok: false, status: 500 } as Response);
+    it('should handle gateway API failure gracefully', async () => {
+      gatewayMock.fetchPayment.mockRejectedValue(new Error('MP API error 500'));
 
       await service.handleWebhook(
         { type: 'payment', data: { id: mpPaymentId } },
@@ -304,11 +323,14 @@ describe('PaymentsService', () => {
       expect(prisma.payment.updateMany).not.toHaveBeenCalled();
     });
 
-    it('should handle missing external_reference in MP response', async () => {
-      jest.spyOn(global, 'fetch').mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ id: mpPaymentId, status: 'approved' }),
-      } as unknown as Response);
+    it('should handle missing external_reference in gateway response', async () => {
+      gatewayMock.fetchPayment.mockResolvedValue({
+        status: 'approved',
+        externalReference: null,
+        amount: 30,
+        payerEmail: 'test@test.local',
+        rawResponse: JSON.stringify({ id: mpPaymentId, status: 'approved' }),
+      });
 
       await service.handleWebhook(
         { type: 'payment', data: { id: mpPaymentId } },

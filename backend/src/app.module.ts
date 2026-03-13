@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
+import { redisStore } from 'cache-manager-redis-yet';
+import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -32,11 +34,50 @@ import configuration from './common/config/configuration';
       isGlobal: true,
       load: [configuration],
     }),
+
+    // BullMQ — Fila de emails com Redis (graceful: sem Redis, MailService cai em fallback SMTP)
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          host: config.get('REDIS_HOST') || '127.0.0.1',
+          port: Number(config.get('REDIS_PORT')) || 6379,
+          password: config.get('REDIS_PASSWORD') || undefined,
+          maxRetriesPerRequest: null, // obrigatório para BullMQ
+        },
+      }),
+    }),
+
     ThrottlerModule.forRoot([
-      { name: 'short', ttl: 1000, limit: 3 },
-      { name: 'medium', ttl: 60000, limit: 100 },
+      { name: 'short', ttl: 1000, limit: 3 },          // 3 req/s — burst protection
+      { name: 'medium', ttl: 60000, limit: 100 },       // 100 req/min — general API
+      { name: 'strict', ttl: 300000, limit: 10 },       // 10 req/5min — auth anti brute-force
     ]),
-    CacheModule.register({ isGlobal: true, ttl: 300000 }), // 5 min default TTL
+    CacheModule.registerAsync({
+      isGlobal: true,
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => {
+        const redisHost = config.get('REDIS_HOST');
+        if (redisHost) {
+          try {
+            const store = await redisStore({
+              socket: {
+                host: redisHost,
+                port: Number(config.get('REDIS_PORT')) || 6379,
+              },
+              password: config.get('REDIS_PASSWORD') || undefined,
+              ttl: 300000, // 5 min default TTL (ms)
+            });
+            return { store, ttl: 300000 };
+          } catch {
+            // Redis unavailable — fall back to in-memory
+            return { ttl: 300000 };
+          }
+        }
+        // No REDIS_HOST configured — use in-memory cache
+        return { ttl: 300000 };
+      },
+    }),
     ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,

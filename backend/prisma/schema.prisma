@@ -16,6 +16,9 @@ model User {
   passwordResetToken     String?   @map("password_reset_token")
   passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
   avatarUrl              String?   @map("avatar_url")
+  totpSecret             String?   @map("totp_secret")
+  totpEnabled            Boolean   @default(false) @map("totp_enabled")
+  totpBackupCodes        String?   @map("totp_backup_codes") @db.Text
   plan                   String    @default("FREE") // FREE, PRO, BUSINESS, ENTERPRISE
   role                   String    @default("USER") @db.VarChar(20) // USER, ADMIN, SUPER_ADMIN
   createdAt              DateTime  @default(now()) @map("created_at")
@@ -421,15 +424,32 @@ model Webhook {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
   url       String   @db.VarChar(500)
-  events    String   @db.Text // JSON array: ["new_message","new_booking","new_testimonial","new_view"]
+  events    String   @db.Text // JSON array: ["new_message","new_booking","new_testimonial","new_view","lead_status_changed"]
   secret    String   @db.VarChar(100)
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs WebhookLog[]
 
   @@index([userId])
   @@map("webhooks")
+}
+
+model WebhookLog {
+  id         String   @id @default(uuid())
+  webhookId  String   @map("webhook_id")
+  event      String   @db.VarChar(50)
+  statusCode Int?     @map("status_code")
+  success    Boolean  @default(false)
+  error      String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([createdAt])
+  @@map("webhook_logs")
 }
 
 model CustomFormField {

@@ -44,6 +44,7 @@ export class MeController {
       },
       profile: primaryProfile,
       cards: userData.profiles.map((p) => ({ id: p.id, label: p.label, slug: p.slug, isPrimary: p.isPrimary, displayName: p.displayName })),
+      twoFactorEnabled: userData.totpEnabled,
       hasPaid: planInfo.plan !== 'FREE',
       paidUntil: planInfo.expiresAt?.toISOString() ?? null,
       plan: planInfo.plan,
