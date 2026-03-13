@@ -756,7 +756,7 @@ export function PublicCardPage() {
           />
 
           {/* Links (list or grid layout) */}
-          <div className={linkLayout === 'grid' ? 'grid grid-cols-3 gap-2.5' : 'space-y-3'}>
+          <div className={linkLayout === 'grid' ? 'grid grid-cols-3 gap-2.5' : 'space-y-3'} style={linkLayout === 'grid' ? { gridAutoFlow: 'dense', gridAutoRows: 'minmax(90px, auto)' } : undefined}>
             {(() => {
               const allLinks = profile.socialLinks;
               const gridLimit = linkLayout === 'grid' ? 9 : 5;

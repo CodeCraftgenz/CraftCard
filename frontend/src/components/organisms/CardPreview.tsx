@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
+import { getGridSize } from '@/lib/constants';
 import {
   Instagram,
   Linkedin,
@@ -46,6 +47,7 @@ interface CardPreviewProps {
     label: string;
     url: string;
     linkType?: string | null;
+    metadata?: string | null;
   }>;
   demo?: boolean;
 }
@@ -313,7 +315,7 @@ export const CardPreview = memo(function CardPreview({
           )}
 
           {/* Social Links */}
-          <div className={linkLayout === 'grid' ? 'w-full grid grid-cols-3 gap-2' : 'w-full flex flex-col gap-2.5'}>
+          <div className={linkLayout === 'grid' ? 'w-full grid grid-cols-3 gap-2' : 'w-full flex flex-col gap-2.5'} style={linkLayout === 'grid' ? { gridAutoFlow: 'dense', gridAutoRows: 'minmax(56px, auto)' } : undefined}>
             {(card.socialLinks || []).map((link, i) => {
               // Header separator — full width in grid
               if (link.platform === 'header' || link.linkType === 'header') {
@@ -331,6 +333,7 @@ export const CardPreview = memo(function CardPreview({
 
               if (linkLayout === 'grid') {
                 const gic = getPreviewIconStyle(iconStyle, platColor, accent);
+                const gs = getGridSize(link.metadata);
                 return (
                   <motion.div
                     key={i}
@@ -340,6 +343,8 @@ export const CardPreview = memo(function CardPreview({
                     style={{
                       backgroundColor: `${platColor}12`,
                       border: `1px solid ${platColor}20`,
+                      gridColumn: `span ${gs.cols}`,
+                      gridRow: `span ${gs.rows}`,
                     }}
                   >
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={gic.style}>

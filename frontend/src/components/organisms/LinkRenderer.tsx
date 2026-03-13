@@ -8,6 +8,7 @@ import {
 import { QRCodeCanvas } from 'qrcode.react';
 import { trackLinkClick } from '@/hooks/useAnalytics';
 import { generatePixPayload } from '@/lib/pix-generator';
+import { getGridSize } from '@/lib/constants';
 
 interface SocialLink {
   id: string;
@@ -457,6 +458,7 @@ function GridLinkCard({
   const isMailto = href.startsWith('mailto:');
   const isInternal = href === '#';
   const iconContainer = getIconContainerStyle(iconStyle, bgColor, accent);
+  const gs = getGridSize(link.metadata);
 
   return (
     <motion.a
@@ -475,12 +477,14 @@ function GridLinkCard({
       style={{
         backgroundColor: `${bgColor}12`,
         border: `1px solid ${bgColor}20`,
+        gridColumn: `span ${gs.cols}`,
+        gridRow: `span ${gs.rows}`,
       }}
     >
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconContainer.className}`} style={iconContainer.style}>
-        <Icon size={24} style={{ color: iconContainer.iconColor }} />
+        <Icon size={gs.cols >= 2 || gs.rows >= 2 ? 32 : 24} style={{ color: iconContainer.iconColor }} />
       </div>
-      <span className="text-[11px] text-white/70 font-medium truncate max-w-full text-center leading-tight">
+      <span className={`text-white/70 font-medium truncate max-w-full text-center leading-tight ${gs.cols >= 2 ? 'text-sm' : 'text-[11px]'}`}>
         {link.label}
       </span>
     </motion.a>
@@ -506,7 +510,7 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, ico
     );
   }
 
-  // Pix — needs expand behavior, render as list item spanning full width
+  // Pix — needs expand behavior, use gridSize or default to full width
   if (link.platform === 'pix') {
     const meta = link.metadata ? tryParseJson(link.metadata) : null;
     const pixKey = meta?.pixKey || null;
@@ -518,8 +522,9 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, ico
       ? generatePixPayload({ pixKey, merchantName: pixName, merchantCity: pixCity, amount: pixAmount })
       : null;
 
+    const pixGs = getGridSize(link.metadata);
     return (
-      <div className="col-span-3">
+      <div style={{ gridColumn: embedOpen ? 'span 3' : `span ${pixGs.cols}`, gridRow: `span ${pixGs.rows}` }}>
         <GridLinkCard
           link={{ ...link, url: '#' }}
           href="#"
@@ -535,11 +540,12 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, ico
     );
   }
 
-  // Video embed — col-span-3 for embed
+  // Video embed
   if (link.platform === 'video_embed') {
     const videoId = extractYouTubeId(link.url);
+    const vidGs = getGridSize(link.metadata);
     return (
-      <div className={embedOpen && videoId ? 'col-span-3' : ''}>
+      <div style={{ gridColumn: embedOpen && videoId ? 'span 3' : `span ${vidGs.cols}`, gridRow: `span ${vidGs.rows}` }}>
         <GridLinkCard
           link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle}
           onClick={(e) => { if (videoId) { e.preventDefault(); setEmbedOpen(!embedOpen); } }}
@@ -553,11 +559,12 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, ico
     );
   }
 
-  // Music embed — col-span-3 for embed
+  // Music embed
   if (link.platform === 'music_embed') {
     const spotifyUri = extractSpotifyUri(link.url);
+    const musGs = getGridSize(link.metadata);
     return (
-      <div className={embedOpen && spotifyUri ? 'col-span-3' : ''}>
+      <div style={{ gridColumn: embedOpen && spotifyUri ? 'span 3' : `span ${musGs.cols}`, gridRow: `span ${musGs.rows}` }}>
         <GridLinkCard
           link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle}
           onClick={(e) => { if (spotifyUri) { e.preventDefault(); setEmbedOpen(!embedOpen); } }}
@@ -576,7 +583,7 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, ico
     return <GridLinkCard link={link} href={link.url.startsWith('tel:') ? link.url : `tel:${link.url}`} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} />;
   }
 
-  // Map — inline embedded map visual (spans full width)
+  // Map — inline embedded map visual
   if (link.platform === 'map') {
     const query = link.url.startsWith('http') ? '' : encodeURIComponent(link.url);
     const embedUrl = link.url.startsWith('http')
@@ -585,13 +592,14 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, ico
     const mapsLink = link.url.startsWith('http')
       ? link.url
       : `https://maps.google.com/?q=${query}`;
+    const mapGs = getGridSize(link.metadata);
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: index * 0.05 }}
-        className="col-span-3 rounded-2xl overflow-hidden relative"
-        style={{ border: `1px solid ${accent}20` }}
+        className="rounded-2xl overflow-hidden relative"
+        style={{ border: `1px solid ${accent}20`, gridColumn: `span ${mapGs.cols}`, gridRow: `span ${mapGs.rows}` }}
       >
         <iframe
           src={embedUrl}

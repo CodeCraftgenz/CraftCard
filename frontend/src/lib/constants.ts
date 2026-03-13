@@ -87,6 +87,33 @@ export const LINK_ANIMATIONS = [
   { value: 'glow', label: 'Brilho' },
 ] as const;
 
+export const GRID_SIZES = [
+  { value: '1x1', label: 'Pequeno', desc: '400×400', cols: 1, rows: 1, w: 14, h: 14 },
+  { value: '2x1', label: 'Wide', desc: '800×400', cols: 2, rows: 1, w: 28, h: 14 },
+  { value: '3x1', label: 'Banner', desc: '1200×400', cols: 3, rows: 1, w: 42, h: 14 },
+  { value: '1x2', label: 'Alto', desc: '400×800', cols: 1, rows: 2, w: 14, h: 28 },
+  { value: '2x2', label: 'Grande', desc: '800×800', cols: 2, rows: 2, w: 28, h: 28 },
+] as const;
+
+export type GridSizeValue = typeof GRID_SIZES[number]['value'];
+
+export function parseMetadata(str: string | null | undefined): Record<string, string> {
+  if (!str) return {};
+  try { return JSON.parse(str); } catch { return {}; }
+}
+
+export function setMetadataField(current: string | null | undefined, key: string, value: string): string {
+  const meta = parseMetadata(current);
+  meta[key] = value;
+  return JSON.stringify(meta);
+}
+
+export function getGridSize(metadata: string | null | undefined): typeof GRID_SIZES[number] {
+  const meta = parseMetadata(metadata);
+  const val = meta.gridSize || '1x1';
+  return GRID_SIZES.find(s => s.value === val) || GRID_SIZES[0];
+}
+
 export const SOCIAL_PLATFORMS = [
   { value: 'whatsapp', label: 'WhatsApp', icon: 'MessageCircle', urlPrefix: 'https://wa.me/', placeholder: 'https://wa.me/5511999999999' },
   { value: 'instagram', label: 'Instagram', icon: 'Instagram', urlPrefix: 'https://instagram.com/', placeholder: 'https://instagram.com/seu_usuario' },

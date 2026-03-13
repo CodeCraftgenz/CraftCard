@@ -3,7 +3,7 @@ import { useDebouncedCallback } from '@/hooks/useDebouncedCallback';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus, Lock,
-  Camera, FileText, Palette, Link2, Sparkles, Eye, Smartphone, Building2, Shield,
+  Camera, FileText, Palette, Link2, Sparkles, Smartphone, Building2, Shield,
   QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, Star, Video, UserPlus, Users,
 } from 'lucide-react';
 import {
@@ -15,6 +15,7 @@ import { Header } from '@/components/organisms/Header';
 import { SortableLinkItem } from '@/components/organisms/SortableLinkItem';
 import { TemplatePicker } from '@/components/organisms/TemplatePicker';
 import { CardPreview } from '@/components/organisms/CardPreview';
+import { MobilePreview } from '@/components/organisms/MobilePreview';
 import { CustomQrCode, DEFAULT_QR_SETTINGS, type QrCodeSettings } from '@/components/organisms/CustomQrCode';
 import { CardSwitcher } from '@/components/organisms/CardSwitcher';
 import { useAuth } from '@/providers/AuthProvider';
@@ -39,7 +40,7 @@ import { useContacts, useMarkAsRead } from '@/hooks/useContacts';
 import { useTestimonials, useApproveTestimonial, useRejectTestimonial } from '@/hooks/useTestimonials';
 import { useGallery, useUploadGalleryImage, useDeleteGalleryImage } from '@/hooks/useGallery';
 import { useMySlots, useSaveSlots, useMyBookings, useUpdateBookingStatus } from '@/hooks/useBookings';
-import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, resolvePhotoUrl, API_URL } from '@/lib/constants';
+import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, GRID_SIZES, setMetadataField, getGridSize, resolvePhotoUrl, API_URL } from '@/lib/constants';
 import { StyleEditor } from '@/components/organisms/StyleEditor';
 import { ServicesEditor } from '@/components/organisms/ServicesEditor';
 import { FaqEditor } from '@/components/organisms/FaqEditor';
@@ -1302,7 +1303,7 @@ export function EditorPage() {
                               placeholder={link.platform === 'map' ? 'Ex: Av. Paulista, 1000 - Sao Paulo, SP' : SOCIAL_PLATFORMS.find((p) => p.value === link.platform)?.placeholder || 'https://...'}
                               className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
                             />
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1319,6 +1320,37 @@ export function EditorPage() {
                                 Agendamento
                               </button>
                             </div>
+                            {/* Grid Size Selector — only when layout is grid */}
+                            {form.linkLayout === 'grid' && link.platform !== 'header' && (
+                              <div className="flex items-center gap-1.5">
+                                {GRID_SIZES.map((size) => {
+                                  const current = getGridSize(link.metadata);
+                                  const isSelected = current.value === size.value;
+                                  return (
+                                    <button
+                                      key={size.value}
+                                      type="button"
+                                      onClick={() => {
+                                        const links = [...form.socialLinks];
+                                        links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'gridSize', size.value) };
+                                        updateField('socialLinks', links);
+                                      }}
+                                      className={`flex flex-col items-center gap-0.5 rounded-lg border-2 p-1.5 transition-all flex-1 ${
+                                        isSelected
+                                          ? 'border-brand-cyan bg-brand-cyan/10 text-brand-cyan'
+                                          : 'border-white/10 hover:border-white/20 text-white/40'
+                                      }`}
+                                    >
+                                      <div
+                                        className="rounded bg-current opacity-30"
+                                        style={{ width: size.w, height: size.h }}
+                                      />
+                                      <span className="text-[9px] font-medium">{size.label}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
                             {(link.startsAt !== null || link.endsAt !== null) && (
                               <div className="flex gap-2">
                                 <div className="flex-1">
@@ -1424,7 +1456,7 @@ export function EditorPage() {
                               placeholder="https://..."
                               className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
                             />
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1441,6 +1473,37 @@ export function EditorPage() {
                                 Agendamento
                               </button>
                             </div>
+                            {/* Grid Size Selector — custom links */}
+                            {form.linkLayout === 'grid' && (
+                              <div className="flex items-center gap-1.5">
+                                {GRID_SIZES.map((size) => {
+                                  const current = getGridSize(link.metadata);
+                                  const isSelected = current.value === size.value;
+                                  return (
+                                    <button
+                                      key={size.value}
+                                      type="button"
+                                      onClick={() => {
+                                        const links = [...form.socialLinks];
+                                        links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'gridSize', size.value) };
+                                        updateField('socialLinks', links);
+                                      }}
+                                      className={`flex flex-col items-center gap-0.5 rounded-lg border-2 p-1.5 transition-all flex-1 ${
+                                        isSelected
+                                          ? 'border-brand-cyan bg-brand-cyan/10 text-brand-cyan'
+                                          : 'border-white/10 hover:border-white/20 text-white/40'
+                                      }`}
+                                    >
+                                      <div
+                                        className="rounded bg-current opacity-30"
+                                        style={{ width: size.w, height: size.h }}
+                                      />
+                                      <span className="text-[9px] font-medium">{size.label}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
                             {(link.startsAt !== null || link.endsAt !== null) && (
                               <div className="flex gap-2">
                                 <div className="flex-1">
@@ -2516,10 +2579,10 @@ export function EditorPage() {
             className="lg:sticky lg:top-24 h-fit"
           >
             <div className="flex items-center gap-2 mb-4">
-              <Eye size={16} className="text-white/40" />
-              <h3 className="font-semibold text-white/60">Preview</h3>
+              <Smartphone size={16} className="text-white/40" />
+              <h3 className="font-semibold text-white/60">Preview Mobile</h3>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 backdrop-blur-sm">
+            <MobilePreview>
               <CardPreview
                 displayName={form.displayName}
                 bio={form.bio}
@@ -2544,7 +2607,7 @@ export function EditorPage() {
                 iconStyle={form.iconStyle}
                 socialLinks={form.socialLinks}
               />
-            </div>
+            </MobilePreview>
           </motion.div>
         </div>
       </div>
