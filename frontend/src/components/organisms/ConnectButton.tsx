@@ -1,0 +1,110 @@
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { UserPlus, Check, Clock, Loader2 } from 'lucide-react';
+import { useConnectionStatus, useRequestConnection, useAcceptConnection } from '@/hooks/useConnections';
+import { useProfile } from '@/hooks/useProfile';
+
+interface ConnectButtonProps {
+  targetProfileId: string;
+  accent: string;
+  isLoggedIn: boolean;
+}
+
+export function ConnectButton({ targetProfileId, accent, isLoggedIn }: ConnectButtonProps) {
+  const [justSent, setJustSent] = useState(false);
+  const { data: myProfile } = useProfile();
+  const { data: status, isLoading: statusLoading } = useConnectionStatus(
+    isLoggedIn ? targetProfileId : undefined,
+  );
+  const requestMutation = useRequestConnection();
+  const acceptMutation = useAcceptConnection();
+
+  if (!isLoggedIn || statusLoading || !myProfile) return null;
+
+  // Don't show if viewing own profile
+  if (myProfile.id === targetProfileId) return null;
+
+  const handleConnect = () => {
+    requestMutation.mutate(
+      { fromProfileId: myProfile.id, toProfileId: targetProfileId },
+      { onSuccess: () => setJustSent(true) },
+    );
+  };
+
+  const handleAccept = () => {
+    if (status?.connectionId) {
+      acceptMutation.mutate(status.connectionId);
+    }
+  };
+
+  const isLoading = requestMutation.isPending || acceptMutation.isPending;
+
+  // Already connected
+  if (status?.status === 'ACCEPTED') {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-sm font-medium border border-white/10 bg-white/5 text-white/50"
+      >
+        <Check size={16} />
+        Conectado
+      </motion.div>
+    );
+  }
+
+  // Pending - user sent the request
+  if (status?.status === 'PENDING' && status.direction === 'SENT' || justSent) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-sm font-medium border border-white/10 bg-white/5 text-white/40"
+      >
+        <Clock size={16} />
+        Solicitacao Enviada
+      </motion.div>
+    );
+  }
+
+  // Pending - user received the request
+  if (status?.status === 'PENDING' && status.direction === 'RECEIVED') {
+    return (
+      <motion.button
+        onClick={handleAccept}
+        disabled={isLoading}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.97 }}
+        className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold text-white shadow-lg transition-all"
+        style={{
+          background: `linear-gradient(135deg, #22c55e, #16a34a)`,
+          boxShadow: `0 4px 20px rgba(34,197,94,0.3)`,
+        }}
+      >
+        {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+        Aceitar Conexao
+      </motion.button>
+    );
+  }
+
+  // No connection - show connect button
+  return (
+    <motion.button
+      onClick={handleConnect}
+      disabled={isLoading}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.5 }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.97 }}
+      className="w-full flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl font-semibold text-sm shadow-lg transition-all border border-white/10 bg-white/5 hover:bg-white/10 text-white"
+    >
+      {isLoading ? (
+        <Loader2 size={16} className="animate-spin" />
+      ) : (
+        <UserPlus size={16} style={{ color: accent }} />
+      )}
+      Conectar
+    </motion.button>
+  );
+}

@@ -83,6 +83,7 @@ export const updateProfileSchema = z.object({
   galleryEnabled: z.boolean().optional(),
   servicesEnabled: z.boolean().optional(),
   faqEnabled: z.boolean().optional(),
+  connectionsEnabled: z.boolean().optional(),
   // Visual Customization
   fontFamily: z.preprocess(emptyToUndefined, z.string().max(50).optional().nullable()),
   fontSizeScale: z.number().min(0.8).max(1.3).optional().nullable(),

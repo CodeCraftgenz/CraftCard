@@ -201,6 +201,33 @@ export class ProfilesService {
       orgBackgroundGradient: profile.organization.backgroundGradient,
     } : null;
 
+    // Fetch connections if enabled
+    let connections: Array<{ id: string; displayName: string; photoUrl: string | null; slug: string; tagline: string | null }> = [];
+    if (profile.connectionsEnabled) {
+      const rawConnections = await this.prisma.connection.findMany({
+        where: {
+          status: 'ACCEPTED',
+          OR: [
+            { requesterId: profile.id },
+            { addresseeId: profile.id },
+          ],
+        },
+        include: {
+          requester: { select: { id: true, displayName: true, photoUrl: true, slug: true, tagline: true, isPublished: true } },
+          addressee: { select: { id: true, displayName: true, photoUrl: true, slug: true, tagline: true, isPublished: true } },
+        },
+        orderBy: { acceptedAt: 'desc' },
+        take: 20,
+      });
+      connections = rawConnections
+        .map((c) => {
+          const other = c.requesterId === profile.id ? c.addressee : c.requester;
+          if (!other.isPublished) return null;
+          return { id: other.id, displayName: other.displayName, photoUrl: other.photoUrl, slug: other.slug, tagline: other.tagline };
+        })
+        .filter((c): c is NonNullable<typeof c> => c !== null);
+    }
+
     const result = {
       ...rest,
       resumeUrl: profile.resumeEnabled ? this.resolveApiUrl(this.migrateUrl(rest.resumeUrl)) : null,
@@ -210,6 +237,8 @@ export class ProfilesService {
       services: profile.servicesEnabled ? rest.services : [],
       faqItems: profile.faqEnabled ? rest.faqItems : [],
       contactFormEnabled: profile.contactFormEnabled,
+      connectionsEnabled: profile.connectionsEnabled,
+      connections,
       isVerified: subscription.active,
       plan: profile.user?.plan || 'FREE',
       orgBranding,

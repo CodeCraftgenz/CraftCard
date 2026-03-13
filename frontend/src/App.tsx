@@ -24,6 +24,7 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage').then(m => ({ defa
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
 const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
+const ConnectionsPage = lazy(() => import('./pages/ConnectionsPage'));
 
 function PageLoader() {
   return (
@@ -84,6 +85,14 @@ export function App() {
                     element={
                       <ProtectedRoute>
                         <WebhooksPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/connections"
+                    element={
+                      <ProtectedRoute>
+                        <ConnectionsPage />
                       </ProtectedRoute>
                     }
                   />

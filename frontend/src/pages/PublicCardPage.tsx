@@ -32,6 +32,8 @@ import { GalleryGrid } from '@/components/organisms/GalleryGrid';
 import { LocationMap } from '@/components/organisms/LocationMap';
 import { LinkRenderer, GridLinkRenderer } from '@/components/organisms/LinkRenderer';
 import { BookingCalendar } from '@/components/organisms/BookingCalendar';
+import { ConnectButton } from '@/components/organisms/ConnectButton';
+import { ConnectionsSection } from '@/components/organisms/ConnectionsSection';
 import { api } from '@/lib/api';
 import { trackViewEvent } from '@/hooks/useAnalytics';
 import { usePublicSlots } from '@/hooks/useBookings';
@@ -69,6 +71,8 @@ interface PublicProfile {
   linkStyle?: string | null;
   linkAnimation?: string | null;
   iconStyle?: string | null;
+  connectionsEnabled?: boolean;
+  connections?: Array<{ id: string; displayName: string; photoUrl: string | null; slug: string; tagline: string | null }>;
   leadCaptureEnabled?: boolean;
   bookingEnabled?: boolean;
   contactFormEnabled?: boolean;
@@ -744,6 +748,13 @@ export function PublicCardPage() {
             Salvar Contato
           </motion.button>
 
+          {/* Connect Button (for logged-in visitors) */}
+          <ConnectButton
+            targetProfileId={profile.id}
+            accent={accent}
+            isLoggedIn={!!cards}
+          />
+
           {/* Links (list or grid layout) */}
           <div className={linkLayout === 'grid' ? 'grid grid-cols-3 gap-2.5' : 'space-y-3'}>
             {(() => {
@@ -839,6 +850,11 @@ export function PublicCardPage() {
           {/* Location Map */}
           {profile.location && (
             <LocationMap location={profile.location} accent={accent} />
+          )}
+
+          {/* Connections */}
+          {profile.connectionsEnabled !== false && profile.connections && profile.connections.length > 0 && (
+            <ConnectionsSection connections={profile.connections} accent={accent} />
           )}
 
           {/* Testimonials */}

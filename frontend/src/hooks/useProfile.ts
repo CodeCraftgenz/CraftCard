@@ -50,6 +50,7 @@ export interface Profile {
   linkStyle?: string | null;
   linkAnimation?: string | null;
   iconStyle?: string | null;
+  connectionsEnabled?: boolean;
   orgId?: string | null;
   socialLinks: SocialLink[];
 }

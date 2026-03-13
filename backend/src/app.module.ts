@@ -20,6 +20,7 @@ import { TestimonialsModule } from './testimonials/testimonials.module';
 import { GalleryModule } from './gallery/gallery.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { OrganizationsModule } from './organizations/organizations.module';
+import { ConnectionsModule } from './connections/connections.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { MailModule } from './mail/mail.module';
@@ -98,6 +99,7 @@ import configuration from './common/config/configuration';
     GalleryModule,
     BookingsModule,
     OrganizationsModule,
+    ConnectionsModule,
     NotificationsModule,
     WebhooksModule,
     MailModule,

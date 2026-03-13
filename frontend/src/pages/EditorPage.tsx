@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus, Lock,
   Camera, FileText, Palette, Link2, Sparkles, Eye, Smartphone, Building2, Shield,
-  QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, Star, Video, UserPlus,
+  QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, Star, Video, UserPlus, Users,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
@@ -148,6 +148,7 @@ export function EditorPage() {
     galleryEnabled: true,
     servicesEnabled: true,
     faqEnabled: true,
+    connectionsEnabled: true,
     fontFamily: null as string | null,
     fontSizeScale: 1,
     backgroundType: 'theme' as string,
@@ -201,6 +202,7 @@ export function EditorPage() {
         galleryEnabled: profile.galleryEnabled ?? true,
         servicesEnabled: profile.servicesEnabled ?? true,
         faqEnabled: profile.faqEnabled ?? true,
+        connectionsEnabled: profile.connectionsEnabled ?? true,
         fontFamily: profile.fontFamily ?? null,
         fontSizeScale: profile.fontSizeScale ?? 1,
         backgroundType: profile.backgroundType ?? 'theme',
@@ -289,6 +291,7 @@ export function EditorPage() {
     data.galleryEnabled = form.galleryEnabled;
     data.servicesEnabled = form.servicesEnabled;
     data.faqEnabled = form.faqEnabled;
+    data.connectionsEnabled = form.connectionsEnabled;
     data.fontFamily = form.fontFamily || null;
     data.fontSizeScale = form.fontSizeScale;
     data.backgroundType = form.backgroundType;
@@ -2070,6 +2073,34 @@ export function EditorPage() {
             <FeatureLock feature="faq">
               <FaqEditor enabled={form.faqEnabled} onToggle={() => updateField('faqEnabled', !form.faqEnabled)} />
             </FeatureLock>
+
+            {/* Connections toggle */}
+            <div className="glass-card p-6 hover:border-white/20 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <Users size={16} className="text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm">Conexoes</h3>
+                    <p className="text-[11px] text-white/40">Mostrar perfis conectados no seu cartao</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    aria-label="Habilitar conexões"
+                    checked={form.connectionsEnabled}
+                    onChange={() => updateField('connectionsEnabled', !form.connectionsEnabled)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-white/10 rounded-full peer peer-checked:bg-brand-cyan/60 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full" />
+                </label>
+              </div>
+              <a href="/connections" className="mt-3 flex items-center gap-1 text-xs text-brand-cyan hover:underline">
+                Gerenciar conexoes →
+              </a>
+            </div>
 
             {/* Organization links */}
             {(organizations.length > 0 || plan === 'BUSINESS' || plan === 'ENTERPRISE') && (

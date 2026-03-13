@@ -96,6 +96,7 @@ model Profile {
   galleryEnabled      Boolean @default(true) @map("gallery_enabled")
   servicesEnabled     Boolean @default(true) @map("services_enabled")
   faqEnabled          Boolean @default(true) @map("faq_enabled")
+  connectionsEnabled  Boolean @default(true) @map("connections_enabled")
 
   // B2B - Organization (Sprint 7)
   orgId           String?  @map("org_id")
@@ -114,6 +115,8 @@ model Profile {
   viewEvents      ViewEvent[]
   customFormFields CustomFormField[]
   customDomain    CustomDomain?
+  connectionsRequested Connection[] @relation("ConnectionsRequested")
+  connectionsReceived  Connection[] @relation("ConnectionsReceived")
 
   @@index([userId])
   @@index([orgId])
@@ -499,4 +502,21 @@ model Notification {
   @@index([userId, isRead])
   @@index([userId, createdAt])
   @@map("notifications")
+}
+
+model Connection {
+  id          String    @id @default(uuid())
+  requesterId String    @map("requester_id")
+  addresseeId String    @map("addressee_id")
+  status      String    @default("PENDING") @db.VarChar(20)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  acceptedAt  DateTime? @map("accepted_at")
+
+  requester Profile @relation("ConnectionsRequested", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee Profile @relation("ConnectionsReceived", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status])
+  @@index([requesterId, status])
+  @@map("connections")
 }

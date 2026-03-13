@@ -22,6 +22,8 @@ export interface PlanLimits {
   branding: boolean;
   customDomain: boolean;
   webhooks: boolean;
+  connections: boolean;
+  maxConnections: number;
 }
 
 const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
@@ -47,6 +49,8 @@ const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     branding: false,
     customDomain: false,
     webhooks: false,
+    connections: true,
+    maxConnections: 10,
   },
   PRO: {
     maxCards: 3,
@@ -70,6 +74,8 @@ const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     branding: false,
     customDomain: false,
     webhooks: false,
+    connections: true,
+    maxConnections: 100,
   },
   BUSINESS: {
     maxCards: 3,
@@ -93,6 +99,8 @@ const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     branding: true,
     customDomain: false,
     webhooks: true,
+    connections: true,
+    maxConnections: 500,
   },
   ENTERPRISE: {
     maxCards: 3,
@@ -116,6 +124,8 @@ const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     branding: true,
     customDomain: true,
     webhooks: true,
+    connections: true,
+    maxConnections: 1000,
   },
 };
 
