@@ -1,15 +1,16 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Camera, ChevronRight, ChevronLeft, Check, Loader2,
   GraduationCap, User, Mail, Lock, Eye, EyeOff, LogIn,
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
-import { useUploadPhoto, useUpdateProfile } from '@/hooks/useProfile';
+import { useProfile, useUploadPhoto, useUpdateProfile } from '@/hooks/useProfile';
 import { usePublicSetting } from '@/hooks/useAdmin';
 import {
   SOFT_SKILLS, FORMATION_AREAS, MAX_SKILLS, HACKATHON_CONFIG,
+  parseHackathonMeta,
   type SoftSkill,
 } from './constants';
 
@@ -22,15 +23,21 @@ const STEPS: Step[] = ['account', 'photo', 'area', 'skills', 'done'];
 
 export default function HackathonOnboarding() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isEditMode = searchParams.get('edit') === '1';
   const { register, loginWithPassword, isAuthenticated } = useAuth();
   const uploadPhoto = useUploadPhoto();
   const updateProfile = useUpdateProfile();
   const { data: hackathonSetting, isLoading: settingLoading } = usePublicSetting('hackathon_active');
   const isHackathonActive = hackathonSetting?.value === 'true';
 
+  // Fetch existing profile to detect returning users
+  const { data: existingProfile, isLoading: profileLoading } = useProfile(undefined, isAuthenticated);
+
   const [step, setStep] = useState<Step>(isAuthenticated ? 'photo' : 'account');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [redirectChecked, setRedirectChecked] = useState(false);
 
   // Account fields
   const [isLoginMode, setIsLoginMode] = useState(false);
@@ -48,10 +55,35 @@ export default function HackathonOnboarding() {
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
+  // ── Redirect returning users to dashboard ─────────────
+  useEffect(() => {
+    if (!isAuthenticated || profileLoading || redirectChecked) return;
+    setRedirectChecked(true);
+
+    if (!existingProfile) return;
+
+    const metaLink = existingProfile.socialLinks?.find(
+      (l: { linkType?: string | null }) => l.linkType === 'hackathon_meta',
+    );
+    if (!metaLink) return; // New user, no hackathon data yet
+
+    // If editing, pre-populate fields and start at photo step
+    if (isEditMode) {
+      const meta = parseHackathonMeta(metaLink.metadata);
+      if (meta.hackathonArea) setSelectedArea(meta.hackathonArea);
+      if (meta.hackathonSkills) setSelectedSkills(meta.hackathonSkills);
+      setStep('photo');
+      return;
+    }
+
+    // Returning user who already completed onboarding → go to dashboard
+    navigate('/hackathon/dashboard', { replace: true });
+  }, [isAuthenticated, profileLoading, existingProfile, redirectChecked, isEditMode, navigate]);
+
   const stepIndex = STEPS.indexOf(step);
 
-  // ── Guard: evento inativo ─────────────────────────────
-  if (settingLoading) {
+  // ── Guard: loading state ────────────────────────────────
+  if (settingLoading || (isAuthenticated && profileLoading && !redirectChecked)) {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
@@ -62,6 +94,7 @@ export default function HackathonOnboarding() {
     );
   }
 
+  // ── Guard: evento inativo ─────────────────────────────
   if (!isHackathonActive) {
     return (
       <div
@@ -145,6 +178,8 @@ export default function HackathonOnboarding() {
     setLoading(true);
     try {
       await loginWithPassword(email.trim(), password);
+      // After login, the useEffect above will detect hackathon data and redirect
+      // For new users without hackathon data, go to photo step
       goNext();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'E-mail ou senha incorretos');
@@ -190,6 +225,7 @@ export default function HackathonOnboarding() {
         displayName: name.trim() || undefined,
         bio: area?.fullPhrase || null,
         buttonColor: area?.color || '#00E4F2',
+        isPublished: true, // Auto-publish for hackathon users
         socialLinks: [{
           platform: 'custom',
           label: 'hackathon_meta',
@@ -505,11 +541,11 @@ export default function HackathonOnboarding() {
                 Seu perfil para o {HACKATHON_CONFIG.name} foi criado com sucesso.
               </p>
               <button
-                onClick={() => navigate('/editor')}
+                onClick={() => navigate('/hackathon/dashboard')}
                 className="w-full py-3 rounded-xl font-semibold text-white transition-all hover:brightness-110"
                 style={{ background: `linear-gradient(135deg, ${HACKATHON_CONFIG.senacBlue}, ${HACKATHON_CONFIG.senacOrange})` }}
               >
-                Ir para o Editor
+                Ver meu Cartao
               </button>
             </motion.div>
           )}
