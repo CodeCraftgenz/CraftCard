@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
 import { useUploadPhoto, useUpdateProfile } from '@/hooks/useProfile';
+import { usePublicSetting } from '@/hooks/useAdmin';
 import {
   SOFT_SKILLS, FORMATION_AREAS, MAX_SKILLS, HACKATHON_CONFIG,
   type SoftSkill,
@@ -24,6 +25,8 @@ export default function HackathonOnboarding() {
   const { register, isAuthenticated } = useAuth();
   const uploadPhoto = useUploadPhoto();
   const updateProfile = useUpdateProfile();
+  const { data: hackathonSetting, isLoading: settingLoading } = usePublicSetting('hackathon_active');
+  const isHackathonActive = hackathonSetting?.value === 'true';
 
   const [step, setStep] = useState<Step>(isAuthenticated ? 'photo' : 'account');
   const [error, setError] = useState('');
@@ -45,6 +48,40 @@ export default function HackathonOnboarding() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   const stepIndex = STEPS.indexOf(step);
+
+  // ── Guard: evento inativo ─────────────────────────────
+  if (settingLoading) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: `linear-gradient(135deg, ${HACKATHON_CONFIG.senacBlue}, #001a33)` }}
+      >
+        <div className="w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isHackathonActive) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center px-4"
+        style={{ background: `linear-gradient(135deg, ${HACKATHON_CONFIG.senacBlue}, #001a33)` }}
+      >
+        <div className="text-center max-w-md">
+          <GraduationCap size={48} className="mx-auto mb-4 text-white/30" />
+          <h1 className="text-2xl font-bold text-white mb-2">Inscricoes encerradas</h1>
+          <p className="text-white/50 text-sm mb-6">O evento {HACKATHON_CONFIG.name} ainda nao esta com inscricoes abertas ou ja foi encerrado.</p>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="px-6 py-3 rounded-xl text-white font-semibold text-sm border border-white/20 hover:bg-white/10 transition"
+          >
+            Voltar ao inicio
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ── Handlers ───────────────────────────────────────────
 

@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { Public } from './common/decorators/public.decorator';
 import { PrismaService } from './common/prisma/prisma.service';
 
@@ -7,6 +7,17 @@ export class AppController {
   private readonly startedAt = Date.now();
 
   constructor(private readonly prisma: PrismaService) {}
+
+  @Public()
+  @Get('settings/public/:key')
+  async getPublicSetting(@Param('key') key: string) {
+    const allowed = ['hackathon_active'];
+    if (!allowed.includes(key)) {
+      return { key, value: null };
+    }
+    const setting = await this.prisma.systemSetting.findUnique({ where: { key } });
+    return { key, value: setting?.value ?? null };
+  }
 
   @Public()
   @Get('health')

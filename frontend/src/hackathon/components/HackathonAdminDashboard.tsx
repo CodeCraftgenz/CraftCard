@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Trophy, Eye, BarChart3, Search, X,
-  GraduationCap, ChevronRight, Crown,
+  GraduationCap, ChevronRight, Crown, Power,
 } from 'lucide-react';
 import {
   useHackathonDashboard,
   useHackathonParticipants,
   useHackathonTeams,
   useHackathonTeamDetail,
+  useAdminSetting,
+  useUpdateAdminSetting,
 } from '@/hooks/useAdmin';
 import { FORMATION_AREAS, HACKATHON_CONFIG, getAreaById, getSkillById } from '../constants';
 import { Pagination } from '@/components/atoms/Pagination';
@@ -22,6 +24,17 @@ type SubTab = 'overview' | 'participants' | 'teams';
 
 export function HackathonAdminDashboard() {
   const [subTab, setSubTab] = useState<SubTab>('overview');
+  const { data: settingData } = useAdminSetting('hackathon_active');
+  const updateSetting = useUpdateAdminSetting();
+
+  const isHackathonActive = settingData?.value === 'true';
+
+  const handleToggleHackathon = () => {
+    updateSetting.mutate({
+      key: 'hackathon_active',
+      value: isHackathonActive ? 'false' : 'true',
+    });
+  };
 
   const subTabs: { key: SubTab; label: string; icon: typeof Users }[] = [
     { key: 'overview', label: 'Visao Geral', icon: BarChart3 },
@@ -32,17 +45,37 @@ export function HackathonAdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center"
-          style={{ background: `linear-gradient(135deg, ${HACKATHON_CONFIG.senacBlue}, ${HACKATHON_CONFIG.senacOrange})` }}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            style={{ background: `linear-gradient(135deg, ${HACKATHON_CONFIG.senacBlue}, ${HACKATHON_CONFIG.senacOrange})` }}
+          >
+            <GraduationCap size={20} className="text-white" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white">{HACKATHON_CONFIG.name}</h2>
+            <p className="text-white/40 text-xs">Painel de monitoramento em tempo real (atualiza a cada 30s)</p>
+          </div>
+        </div>
+
+        {/* Toggle Evento Ativo */}
+        <button
+          type="button"
+          onClick={handleToggleHackathon}
+          disabled={updateSetting.isPending}
+          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border ${
+            isHackathonActive
+              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25'
+              : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60'
+          }`}
         >
-          <GraduationCap size={20} className="text-white" />
-        </div>
-        <div>
-          <h2 className="text-lg font-bold text-white">{HACKATHON_CONFIG.name}</h2>
-          <p className="text-white/40 text-xs">Painel de monitoramento em tempo real (atualiza a cada 30s)</p>
-        </div>
+          <Power size={16} />
+          <span>{isHackathonActive ? 'Evento Ativo' : 'Evento Inativo'}</span>
+          <div className={`w-10 h-5 rounded-full relative transition-colors ${isHackathonActive ? 'bg-emerald-500' : 'bg-white/20'}`}>
+            <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${isHackathonActive ? 'left-[22px]' : 'left-0.5'}`} />
+          </div>
+        </button>
       </div>
 
       {/* Sub-tabs */}

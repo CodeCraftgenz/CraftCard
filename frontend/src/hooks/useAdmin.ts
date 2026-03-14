@@ -283,3 +283,34 @@ export function useHackathonTeamDetail(orgId: string | null) {
     enabled: !!orgId,
   });
 }
+
+// ── Admin Settings ────────────────────────────────────────
+
+export function useAdminSetting(key: string) {
+  return useQuery<{ key: string; value: string | null }>({
+    queryKey: ['admin', 'settings', key],
+    queryFn: () => api.get(`/admin/settings/${key}`),
+  });
+}
+
+export function useUpdateAdminSetting() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ key, value }: { key: string; value: string }) =>
+      api.put(`/admin/settings/${key}`, { value }),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'settings', vars.key] });
+      qc.invalidateQueries({ queryKey: ['public-setting', vars.key] });
+    },
+  });
+}
+
+// ── Public Setting (no auth) ──────────────────────────────
+
+export function usePublicSetting(key: string) {
+  return useQuery<{ key: string; value: string | null }>({
+    queryKey: ['public-setting', key],
+    queryFn: () => api.get(`/settings/public/${key}`),
+    staleTime: 60_000,
+  });
+}

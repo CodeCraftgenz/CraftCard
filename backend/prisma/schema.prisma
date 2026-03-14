@@ -504,6 +504,14 @@ model Notification {
   @@map("notifications")
 }
 
+model SystemSetting {
+  key       String   @id @db.VarChar(100)
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
 model Connection {
   id          String    @id @default(uuid())
   requesterId String    @map("requester_id")

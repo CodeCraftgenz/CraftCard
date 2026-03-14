@@ -4,6 +4,7 @@ import { Check, X, ArrowRight, Building2, Crown, Info, GraduationCap } from 'luc
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
 import { api } from '@/lib/api';
+import { usePublicSetting } from '@/hooks/useAdmin';
 
 interface PlanFeature {
   label: string;
@@ -37,18 +38,18 @@ const features: PlanFeature[] = [
   { label: 'Marca d\'agua CraftCard', free: 'Sim', pro: 'Nao', business: 'Nao', enterprise: 'Nao' },
 ];
 
-function FeatureRow({ label, hint, value }: { label: string; hint?: string; value: boolean | string }) {
+function FeatureRow({ label, hint, value, highlighted }: { label: string; hint?: string; value: boolean | string; highlighted?: boolean }) {
   const isIncluded = value === true || (typeof value === 'string' && value !== 'false');
 
   if (typeof value === 'string') {
     return (
       <div className="flex items-center gap-3">
-        <Check size={14} className="text-brand-indigo shrink-0" />
-        <span className="text-sm text-slate-400 flex-1 inline-flex items-center gap-1">
+        <Check size={14} className={highlighted ? 'text-indigo-300 shrink-0' : 'text-brand-indigo shrink-0'} />
+        <span className={`text-sm flex-1 inline-flex items-center gap-1 ${highlighted ? 'text-white/80' : 'text-slate-400'}`}>
           {label}
-          {hint && <span title={hint}><Info size={12} className="text-slate-600 shrink-0 cursor-help" /></span>}
+          {hint && <span title={hint}><Info size={12} className={`shrink-0 cursor-help ${highlighted ? 'text-white/40' : 'text-slate-600'}`} /></span>}
         </span>
-        <span className="text-xs font-semibold text-brand-indigo bg-brand-indigo/10 px-2 py-0.5 rounded-full shrink-0">
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${highlighted ? 'text-indigo-200 bg-white/10' : 'text-brand-indigo bg-brand-indigo/10'}`}>
           {value}
         </span>
       </div>
@@ -58,13 +59,13 @@ function FeatureRow({ label, hint, value }: { label: string; hint?: string; valu
   return (
     <div className="flex items-center gap-3">
       {isIncluded ? (
-        <Check size={14} className="text-brand-indigo shrink-0" />
+        <Check size={14} className={highlighted ? 'text-indigo-300 shrink-0' : 'text-brand-indigo shrink-0'} />
       ) : (
-        <X size={14} className="text-white/10 shrink-0" />
+        <X size={14} className={highlighted ? 'text-white/20 shrink-0' : 'text-white/10 shrink-0'} />
       )}
-      <span className={`text-sm inline-flex items-center gap-1 ${isIncluded ? 'text-slate-400' : 'text-slate-700'}`}>
+      <span className={`text-sm inline-flex items-center gap-1 ${isIncluded ? (highlighted ? 'text-white/80' : 'text-slate-400') : (highlighted ? 'text-white/30' : 'text-slate-700')}`}>
         {label}
-        {hint && <span title={hint}><Info size={12} className="text-slate-600 shrink-0 cursor-help" /></span>}
+        {hint && <span title={hint}><Info size={12} className={`shrink-0 cursor-help ${highlighted ? 'text-white/40' : 'text-slate-600'}`} /></span>}
       </span>
     </div>
   );
@@ -73,6 +74,8 @@ function FeatureRow({ label, hint, value }: { label: string; hint?: string; valu
 export function PricingSection() {
   const { isAuthenticated } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const { data: hackathonSetting } = usePublicSetting('hackathon_active');
+  const isHackathonActive = hackathonSetting?.value === 'true';
 
   const handleCheckout = async (plan: 'BUSINESS' | 'ENTERPRISE') => {
     if (!isAuthenticated) {
@@ -158,19 +161,19 @@ export function PricingSection() {
               </div>
 
               <div className="mb-6">
-                <p className="text-sm text-indigo-400 font-semibold uppercase tracking-wider mb-1">Pro</p>
-                <p className="text-xs text-slate-600 mb-3">Para profissionais individuais</p>
+                <p className="text-sm text-indigo-300 font-semibold uppercase tracking-wider mb-1">Pro</p>
+                <p className="text-xs text-white/50 mb-3">Para profissionais individuais</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-base text-slate-600 line-through">R$99,90</span>
+                  <span className="text-base text-white/40 line-through">R$99,90</span>
                   <span className="font-heading text-4xl font-extrabold gradient-text">R$30</span>
-                  <span className="text-sm text-slate-500">/ano</span>
+                  <span className="text-sm text-white/50">/ano</span>
                 </div>
-                <p className="text-sm text-slate-500 mt-2">Menos de R$2,50 por mes</p>
+                <p className="text-sm text-white/50 mt-2">Menos de R$2,50 por mes</p>
               </div>
 
               <div className="space-y-2.5 mb-8 flex-1">
                 {features.map((f, i) => (
-                  <FeatureRow key={i} label={f.label} hint={f.hint} value={f.pro} />
+                  <FeatureRow key={i} label={f.label} hint={f.hint} value={f.pro} highlighted />
                 ))}
               </div>
 
@@ -294,18 +297,29 @@ export function PricingSection() {
               <div className="flex-1 text-center sm:text-left">
                 <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
                   <h3 className="font-heading text-xl font-bold text-white">Hackathon Senac</h3>
-                  <span className="text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full">EVENTO</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isHackathonActive ? 'bg-emerald-500/30 text-emerald-200' : 'bg-white/20 text-white'}`}>
+                    {isHackathonActive ? 'INSCRICOES ABERTAS' : 'EVENTO'}
+                  </span>
                 </div>
                 <p className="text-white/80 text-sm mb-1">Cracha digital + networking + formacao de equipes</p>
                 <p className="text-white/50 text-xs">2 dias de imersao com cartao digital exclusivo, QR Code para conexoes e match de habilidades entre participantes.</p>
               </div>
-              <button
-                type="button"
-                disabled
-                className="shrink-0 px-6 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold text-sm cursor-not-allowed opacity-70 border border-white/20"
-              >
-                Disponivel em breve
-              </button>
+              {isHackathonActive ? (
+                <Link
+                  to="/hackathon"
+                  className="shrink-0 px-6 py-3 rounded-xl bg-white/25 backdrop-blur-sm text-white font-semibold text-sm border border-white/30 hover:bg-white/35 transition-all"
+                >
+                  Participar agora
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="shrink-0 px-6 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold text-sm cursor-not-allowed opacity-70 border border-white/20"
+                >
+                  Disponivel em breve
+                </button>
+              )}
             </div>
           </div>
         </motion.div>

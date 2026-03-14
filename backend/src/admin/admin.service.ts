@@ -626,4 +626,21 @@ export class AdminService {
       members,
     };
   }
+
+  // ── System Settings ───────────────────────────────────────
+
+  async getSetting(key: string) {
+    const setting = await this.prisma.systemSetting.findUnique({ where: { key } });
+    return { key, value: setting?.value ?? null };
+  }
+
+  async setSetting(key: string, value: string) {
+    const setting = await this.prisma.systemSetting.upsert({
+      where: { key },
+      update: { value },
+      create: { key, value },
+    });
+    this.logger.log(`Setting updated: ${key} = ${value}`);
+    return { key: setting.key, value: setting.value };
+  }
 }

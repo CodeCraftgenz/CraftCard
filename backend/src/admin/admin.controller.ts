@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Delete, Param, Query, Body } from '@nestjs/common';
+import { Controller, Get, Put, Delete, Param, Query, Body, Post } from '@nestjs/common';
 import { Roles } from '../common/decorators/roles.decorator';
 import { AdminService } from './admin.service';
 import { updateUserSchema } from './dto/update-user.dto';
@@ -110,5 +110,17 @@ export class AdminController {
   @Get('hackathon/teams/:orgId')
   async getHackathonTeamDetail(@Param('orgId') orgId: string) {
     return this.adminService.getHackathonTeamDetail(orgId);
+  }
+
+  // --- Settings ---
+
+  @Get('settings/:key')
+  async getSetting(@Param('key') key: string) {
+    return this.adminService.getSetting(key);
+  }
+
+  @Put('settings/:key')
+  async setSetting(@Param('key') key: string, @Body() body: { value: string }) {
+    return this.adminService.setSetting(key, body.value);
   }
 }
