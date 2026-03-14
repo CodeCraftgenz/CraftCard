@@ -78,7 +78,7 @@ export default function HackathonPublicCard() {
   const photoSrc = profile.photoUrl ? resolvePhotoUrl(profile.photoUrl) : null;
 
   const handleShare = async () => {
-    const url = window.location.href;
+    const url = `${window.location.origin}/hackathon/card/${slug}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: `${profile.displayName} - ${HACKATHON_CONFIG.name}`, url });

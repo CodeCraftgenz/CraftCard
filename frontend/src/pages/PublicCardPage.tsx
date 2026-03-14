@@ -453,7 +453,9 @@ export function PublicCardPage() {
     setLeadSubmitting(false);
   };
 
-  const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const pageUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/${slug}`
+    : '';
   const displayName = profile?.displayName || '';
 
   const handleCopyLink = () => {
