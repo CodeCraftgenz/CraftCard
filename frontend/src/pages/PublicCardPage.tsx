@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import html2canvas from 'html2canvas';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
@@ -43,6 +43,8 @@ import { useSubmitTestimonial } from '@/hooks/useTestimonials';
 import { useAuth } from '@/providers/AuthProvider';
 import { API_BASE, APP_NAME, resolvePhotoUrl } from '@/lib/constants';
 import { loadGoogleFont } from '@/lib/google-fonts';
+
+const HackathonPublicCard = lazy(() => import('@/hackathon/HackathonPublicCard'));
 
 interface PublicProfile {
   id: string;
@@ -403,7 +405,17 @@ function handleDownloadVCard(profile: PublicProfile) {
 
 export function PublicCardPage() {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
   const { cards, isAuthenticated, isLoading: authLoading } = useAuth();
+
+  // If ?mode=hackathon → render the hackathon-specific card instead
+  if (searchParams.get('mode') === 'hackathon') {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-[#001a33] flex items-center justify-center"><div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" /></div>}>
+        <HackathonPublicCard />
+      </Suspense>
+    );
+  }
   const [showContactForm, setShowContactForm] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [contactForm, setContactForm] = useState({ senderName: '', senderEmail: '', message: '' });

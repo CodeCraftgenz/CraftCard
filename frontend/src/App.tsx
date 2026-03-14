@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryProvider } from './providers/QueryProvider';
 import { AuthProvider } from './providers/AuthProvider';
-import { ProtectedRoute } from './components/organisms/ProtectedRoute';
+import { ProtectedRoute, HackathonGuard } from './components/organisms/ProtectedRoute';
 import { AdminRoute } from './components/organisms/AdminRoute';
 import { ErrorBoundary } from './components/atoms/ErrorBoundary';
 import { LandingPage } from './pages/LandingPage';
@@ -55,7 +55,9 @@ export function App() {
                     path="/editor"
                     element={
                       <ProtectedRoute>
-                        <EditorPage />
+                        <HackathonGuard>
+                          <EditorPage />
+                        </HackathonGuard>
                       </ProtectedRoute>
                     }
                   />

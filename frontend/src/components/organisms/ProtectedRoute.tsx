@@ -22,3 +22,16 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 
   return <>{children}</>;
 }
+
+/** Blocks FREE hackathon participants from accessing standard pages (editor, billing, etc).
+ *  PRO+ hackathon users pass through freely. */
+export function HackathonGuard({ children }: { children: ReactNode }) {
+  const { isHackathonParticipant, hasPaid } = useAuth();
+
+  // Hackathon participant on FREE plan → lock to hackathon dashboard
+  if (isHackathonParticipant && !hasPaid) {
+    return <Navigate to="/hackathon/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+}

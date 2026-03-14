@@ -28,6 +28,11 @@ export class MeController {
     const planInfo = await this.paymentsService.getUserPlanInfo(user.sub);
     const primaryProfile = userData.profiles.find((p) => p.isPrimary) || userData.profiles[0] || null;
 
+    // Detect hackathon participation from hackathon_meta social link
+    const isHackathonParticipant = userData.profiles.some((p) =>
+      p.socialLinks.some((l) => l.linkType === 'hackathon_meta'),
+    );
+
     // Get user's org memberships
     const orgMemberships = await this.prisma.organizationMember.findMany({
       where: { userId: user.sub },
@@ -50,6 +55,7 @@ export class MeController {
       plan: planInfo.plan,
       planLimits: planInfo.planLimits,
       organizations: orgMemberships.map((m) => ({ ...m.org, role: m.role })),
+      isHackathonParticipant,
     };
   }
 

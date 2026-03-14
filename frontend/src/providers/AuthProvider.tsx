@@ -71,6 +71,7 @@ interface AuthState {
   plan: PlanType;
   planLimits: PlanLimits;
   organizations: OrgMembership[];
+  isHackathonParticipant: boolean;
 }
 
 interface RegisterData {
@@ -101,6 +102,7 @@ const EMPTY_STATE: AuthState = {
   user: null, isAuthenticated: false, isLoading: false, isAdmin: false,
   hasPaid: false, paidUntil: null, cards: [],
   plan: 'FREE', planLimits: DEFAULT_LIMITS, organizations: [],
+  isHackathonParticipant: false,
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -119,6 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         plan?: PlanType;
         planLimits?: PlanLimits;
         organizations?: OrgMembership[];
+        isHackathonParticipant?: boolean;
       } = await api.get('/me');
       const role = data.user.role || 'USER';
       setState({
@@ -132,6 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         plan: data.plan || (data.hasPaid ? 'PRO' : 'FREE'),
         planLimits: data.planLimits || DEFAULT_LIMITS,
         organizations: data.organizations || [],
+        isHackathonParticipant: data.isHackathonParticipant || false,
       });
     } catch {
       setState(EMPTY_STATE);
