@@ -221,20 +221,41 @@ export default function HackathonOnboarding() {
         hackathonSkills: selectedSkills,
       });
       const area = FORMATION_AREAS.find(a => a.id === selectedArea);
-      await updateProfile.mutateAsync({
-        displayName: name.trim() || undefined,
-        bio: area?.fullPhrase || null,
-        buttonColor: area?.color || '#00E4F2',
-        isPublished: true, // Auto-publish for hackathon users
-        socialLinks: [{
-          platform: 'custom',
-          label: 'hackathon_meta',
-          url: '#',
-          order: 999,
-          linkType: 'hackathon_meta',
-          metadata: hackathonMeta,
-        }],
-      } as Parameters<typeof updateProfile.mutateAsync>[0]);
+
+      // Preserve existing social links — only replace the hackathon_meta entry
+      const existingLinks = (existingProfile?.socialLinks || [])
+        .filter(l => l.linkType !== 'hackathon_meta')
+        .map(l => ({
+          platform: l.platform as 'custom',
+          label: l.label,
+          url: l.url,
+          order: l.order,
+          linkType: l.linkType || undefined,
+          metadata: l.metadata || undefined,
+        }));
+
+      const hackathonLink = {
+        platform: 'custom' as const,
+        label: 'hackathon_meta',
+        url: '#',
+        order: 999,
+        linkType: 'hackathon_meta',
+        metadata: hackathonMeta,
+      };
+
+      // Only set displayName if user typed one (new registration); skip for existing users
+      const payload: Record<string, unknown> = {
+        isPublished: true,
+        socialLinks: [...existingLinks, hackathonLink],
+      };
+      if (name.trim()) payload.displayName = name.trim();
+      // Only set bio/buttonColor if user doesn't already have custom values
+      if (!existingProfile?.bio) payload.bio = area?.fullPhrase || null;
+      if (!existingProfile?.buttonColor || existingProfile.buttonColor === '#00E4F2') {
+        payload.buttonColor = area?.color || '#00E4F2';
+      }
+
+      await updateProfile.mutateAsync(payload as Parameters<typeof updateProfile.mutateAsync>[0]);
       setStep('done');
     } catch {
       setError('Erro ao salvar dados');
