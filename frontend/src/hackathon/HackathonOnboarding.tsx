@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Camera, ChevronRight, ChevronLeft, Check, Loader2,
-  GraduationCap, User, Mail, Lock, Eye, EyeOff,
+  GraduationCap, User, Mail, Lock, Eye, EyeOff, LogIn,
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
 import { useUploadPhoto, useUpdateProfile } from '@/hooks/useProfile';
@@ -22,7 +22,7 @@ const STEPS: Step[] = ['account', 'photo', 'area', 'skills', 'done'];
 
 export default function HackathonOnboarding() {
   const navigate = useNavigate();
-  const { register, isAuthenticated } = useAuth();
+  const { register, loginWithPassword, isAuthenticated } = useAuth();
   const uploadPhoto = useUploadPhoto();
   const updateProfile = useUpdateProfile();
   const { data: hackathonSetting, isLoading: settingLoading } = usePublicSetting('hackathon_active');
@@ -33,6 +33,7 @@ export default function HackathonOnboarding() {
   const [loading, setLoading] = useState(false);
 
   // Account fields
+  const [isLoginMode, setIsLoginMode] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -128,6 +129,25 @@ export default function HackathonOnboarding() {
       goNext();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erro ao criar conta');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Step: Login ──────────────────────────────────────
+
+  const handleLogin = async () => {
+    setError('');
+    if (!email.trim() || !password.trim()) {
+      setError('Preencha e-mail e senha');
+      return;
+    }
+    setLoading(true);
+    try {
+      await loginWithPassword(email.trim(), password);
+      goNext();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'E-mail ou senha incorretos');
     } finally {
       setLoading(false);
     }
@@ -238,23 +258,29 @@ export default function HackathonOnboarding() {
         <ProgressBar />
 
         <AnimatePresence mode="wait">
-          {/* ── STEP: Account ───────────────────── */}
+          {/* ── STEP: Account (Register / Login) ── */}
           {step === 'account' && (
             <motion.div key="account" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
-              <h2 className="text-xl font-bold text-white mb-1">Crie sua conta</h2>
-              <p className="text-sm text-white/50 mb-6">Rapido e sem complicacao</p>
+              <h2 className="text-xl font-bold text-white mb-1">
+                {isLoginMode ? 'Entrar na sua conta' : 'Crie sua conta'}
+              </h2>
+              <p className="text-sm text-white/50 mb-6">
+                {isLoginMode ? 'Use o e-mail e senha cadastrados' : 'Rapido e sem complicacao'}
+              </p>
 
               <div className="space-y-4">
-                <div className="relative">
-                  <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-                  <input
-                    type="text"
-                    placeholder="Seu nome"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition"
-                  />
-                </div>
+                {!isLoginMode && (
+                  <div className="relative">
+                    <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+                    <input
+                      type="text"
+                      placeholder="Seu nome"
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition"
+                    />
+                  </div>
+                )}
                 <div className="relative">
                   <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
                   <input
@@ -269,7 +295,7 @@ export default function HackathonOnboarding() {
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Senha (min. 6 caracteres)"
+                    placeholder={isLoginMode ? 'Senha' : 'Senha (min. 6 caracteres)'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     className="w-full pl-10 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition"
@@ -287,12 +313,25 @@ export default function HackathonOnboarding() {
               {error && <p className="text-red-400 text-sm mt-3">{error}</p>}
 
               <button
-                onClick={handleRegister}
+                onClick={isLoginMode ? handleLogin : handleRegister}
                 disabled={loading}
                 className="w-full mt-6 py-3 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all hover:brightness-110 disabled:opacity-50"
                 style={{ background: `linear-gradient(135deg, ${HACKATHON_CONFIG.senacBlue}, ${HACKATHON_CONFIG.senacOrange})` }}
               >
-                {loading ? <Loader2 size={18} className="animate-spin" /> : <>Criar conta <ChevronRight size={18} /></>}
+                {loading
+                  ? <Loader2 size={18} className="animate-spin" />
+                  : isLoginMode
+                    ? <><LogIn size={18} /> Entrar</>
+                    : <>Criar conta <ChevronRight size={18} /></>
+                }
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setIsLoginMode(!isLoginMode); setError(''); }}
+                className="w-full mt-3 py-2 text-sm text-white/50 hover:text-white/80 transition text-center"
+              >
+                {isLoginMode ? 'Nao tenho conta — Criar agora' : 'Ja tenho conta — Entrar'}
               </button>
             </motion.div>
           )}
