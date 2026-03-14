@@ -36,7 +36,7 @@ export default function HackathonPublicCard() {
 
   const { data: profile, isLoading, isError } = useQuery<HackathonProfile>({
     queryKey: ['hackathon-profile', slug],
-    queryFn: () => api.get(`/profiles/${slug}`),
+    queryFn: () => api.get(`/profile/${slug}`),
     enabled: !!slug,
   });
 
