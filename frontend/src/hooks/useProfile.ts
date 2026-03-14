@@ -55,11 +55,12 @@ export interface Profile {
   socialLinks: SocialLink[];
 }
 
-export function useProfile(cardId?: string) {
+export function useProfile(cardId?: string, enabled = true) {
   const params = cardId ? `?cardId=${cardId}` : '';
   return useQuery<Profile>({
     queryKey: ['profile', cardId || 'primary'],
     queryFn: () => api.get(`/me/profile${params}`),
+    enabled,
   });
 }
 

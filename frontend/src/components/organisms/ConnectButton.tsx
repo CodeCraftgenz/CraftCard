@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { UserPlus, Check, Clock, Loader2 } from 'lucide-react';
 import { useConnectionStatus, useRequestConnection, useAcceptConnection } from '@/hooks/useConnections';
@@ -12,14 +13,34 @@ interface ConnectButtonProps {
 
 export function ConnectButton({ targetProfileId, accent, isLoggedIn }: ConnectButtonProps) {
   const [justSent, setJustSent] = useState(false);
-  const { data: myProfile } = useProfile();
+  const navigate = useNavigate();
+  const { data: myProfile } = useProfile(undefined, isLoggedIn);
   const { data: status, isLoading: statusLoading } = useConnectionStatus(
     isLoggedIn ? targetProfileId : undefined,
   );
   const requestMutation = useRequestConnection();
   const acceptMutation = useAcceptConnection();
 
-  if (!isLoggedIn || statusLoading || !myProfile) return null;
+  // Not logged in — show button that redirects to login
+  if (!isLoggedIn) {
+    return (
+      <motion.button
+        onClick={() => navigate('/login')}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.5 }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.97 }}
+        className="w-full flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl font-semibold text-sm shadow-lg transition-all border border-white/10 bg-white/5 hover:bg-white/10 text-white"
+      >
+        <UserPlus size={16} style={{ color: accent }} />
+        Conectar
+      </motion.button>
+    );
+  }
+
+  // Loading status or profile
+  if (statusLoading || !myProfile) return null;
 
   // Don't show if viewing own profile
   if (myProfile.id === targetProfileId) return null;
@@ -54,7 +75,7 @@ export function ConnectButton({ targetProfileId, accent, isLoggedIn }: ConnectBu
   }
 
   // Pending - user sent the request
-  if (status?.status === 'PENDING' && status.direction === 'SENT' || justSent) {
+  if ((status?.status === 'PENDING' && status.direction === 'SENT') || justSent) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
