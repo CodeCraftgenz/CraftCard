@@ -383,4 +383,247 @@ export class AdminService {
       select: { id: true, name: true, extraSeats: true, maxMembers: true },
     });
   }
+
+  // ── Hackathon Dashboard ─────────────────────────────────
+
+  /**
+   * Participantes do hackathon sao identificados por possuir
+   * um SocialLink com linkType = 'hackathon_meta'.
+   */
+  async getHackathonDashboard() {
+    const hackathonStartDate = new Date('2026-04-05');
+
+    const [
+      totalParticipants,
+      teamsFormed,
+      totalTeamMembers,
+      hackathonViews,
+    ] = await Promise.all([
+      // Perfis com link hackathon_meta
+      this.prisma.profile.count({
+        where: { socialLinks: { some: { linkType: 'hackathon_meta' } } },
+      }),
+      // Organizacoes criadas a partir da data do evento
+      this.prisma.organization.count({
+        where: { createdAt: { gte: hackathonStartDate } },
+      }),
+      // Total de membros em equipes do hackathon
+      this.prisma.organizationMember.count({
+        where: { org: { createdAt: { gte: hackathonStartDate } } },
+      }),
+      // Views nos perfis hackathon
+      this.prisma.profile.aggregate({
+        where: { socialLinks: { some: { linkType: 'hackathon_meta' } } },
+        _sum: { viewCount: true },
+      }),
+    ]);
+
+    const avgPerTeam = teamsFormed > 0
+      ? Math.round((totalTeamMembers / teamsFormed) * 10) / 10
+      : 0;
+
+    // Distribuicao por area (extraido do metadata JSON do social link)
+    const hackathonLinks = await this.prisma.socialLink.findMany({
+      where: { linkType: 'hackathon_meta' },
+      select: { metadata: true },
+    });
+
+    const areaCounts: Record<string, number> = {};
+    for (const link of hackathonLinks) {
+      if (!link.metadata) continue;
+      try {
+        const parsed = JSON.parse(link.metadata);
+        const area = parsed.hackathonArea;
+        if (area) areaCounts[area] = (areaCounts[area] || 0) + 1;
+      } catch { /* ignore bad JSON */ }
+    }
+
+    return {
+      totalParticipants,
+      teamsFormed,
+      avgPerTeam,
+      totalViews: Number(hackathonViews._sum.viewCount || 0),
+      areaDistribution: areaCounts,
+    };
+  }
+
+  async getHackathonParticipants(opts: { search?: string; area?: string; page?: number; limit?: number } = {}) {
+    const page = opts.page ?? 1;
+    const limit = Math.min(opts.limit ?? 50, 100);
+    const skip = (page - 1) * limit;
+
+    // Buscar perfis com hackathon_meta
+    const where: Record<string, unknown> = {
+      socialLinks: { some: { linkType: 'hackathon_meta' } },
+    };
+    if (opts.search) {
+      where.OR = [
+        { displayName: { contains: opts.search } },
+        { user: { email: { contains: opts.search } } },
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.profile.findMany({
+        where,
+        select: {
+          id: true,
+          displayName: true,
+          photoUrl: true,
+          slug: true,
+          user: { select: { email: true } },
+          socialLinks: {
+            where: { linkType: 'hackathon_meta' },
+            select: { metadata: true },
+            take: 1,
+          },
+          _count: { select: { socialLinks: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.profile.count({ where }),
+    ]);
+
+    // Enriquecer com dados do hackathon
+    const participants = items.map((p) => {
+      let hackathonArea: string | null = null;
+      let hackathonSkills: string[] = [];
+      const metaLink = p.socialLinks[0];
+      if (metaLink?.metadata) {
+        try {
+          const parsed = JSON.parse(metaLink.metadata);
+          hackathonArea = parsed.hackathonArea || null;
+          hackathonSkills = parsed.hackathonSkills || [];
+        } catch { /* ignore */ }
+      }
+      return {
+        id: p.id,
+        displayName: p.displayName,
+        photoUrl: p.photoUrl,
+        slug: p.slug,
+        email: p.user.email,
+        hackathonArea,
+        hackathonSkills,
+        // TODO: team info when org membership logic is tied to hackathon
+        team: null as string | null,
+      };
+    });
+
+    // Filtrar por area se especificado
+    const filtered = opts.area
+      ? participants.filter((p) => p.hackathonArea === opts.area)
+      : participants;
+
+    return {
+      items: opts.area ? filtered.slice(skip, skip + limit) : filtered,
+      total: opts.area ? filtered.length : total,
+      page,
+      limit,
+      totalPages: Math.ceil((opts.area ? filtered.length : total) / limit),
+    };
+  }
+
+  async getHackathonTeams() {
+    const hackathonStartDate = new Date('2026-04-05');
+
+    const teams = await this.prisma.organization.findMany({
+      where: { createdAt: { gte: hackathonStartDate } },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        createdAt: true,
+        maxMembers: true,
+        _count: { select: { members: true } },
+        members: {
+          where: { role: 'OWNER' },
+          select: { user: { select: { name: true, email: true } } },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return teams.map((t) => ({
+      id: t.id,
+      name: t.name,
+      slug: t.slug,
+      createdAt: t.createdAt,
+      memberCount: t._count.members,
+      maxMembers: t.maxMembers,
+      leader: t.members[0]?.user || null,
+    }));
+  }
+
+  async getHackathonTeamDetail(orgId: string) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: orgId },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        maxMembers: true,
+        createdAt: true,
+        members: {
+          select: {
+            role: true,
+            user: {
+              select: {
+                name: true,
+                email: true,
+                profiles: {
+                  where: { isPrimary: true },
+                  select: {
+                    displayName: true,
+                    photoUrl: true,
+                    socialLinks: {
+                      where: { linkType: 'hackathon_meta' },
+                      select: { metadata: true },
+                      take: 1,
+                    },
+                  },
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!org) throw AppException.notFound('Equipe');
+
+    const members = org.members.map((m) => {
+      const profile = m.user.profiles[0];
+      let hackathonArea: string | null = null;
+      let hackathonSkills: string[] = [];
+      if (profile?.socialLinks[0]?.metadata) {
+        try {
+          const parsed = JSON.parse(profile.socialLinks[0].metadata);
+          hackathonArea = parsed.hackathonArea || null;
+          hackathonSkills = parsed.hackathonSkills || [];
+        } catch { /* ignore */ }
+      }
+      return {
+        name: m.user.name,
+        email: m.user.email,
+        role: m.role,
+        displayName: profile?.displayName || m.user.name,
+        photoUrl: profile?.photoUrl || null,
+        hackathonArea,
+        hackathonSkills,
+      };
+    });
+
+    return {
+      id: org.id,
+      name: org.name,
+      slug: org.slug,
+      maxMembers: org.maxMembers,
+      createdAt: org.createdAt,
+      members,
+    };
+  }
 }

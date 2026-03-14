@@ -5,8 +5,9 @@ import {
   LayoutDashboard, Users, CreditCard, Building2, ArrowLeft,
   Search, Trash2, Crown, Shield, ChevronRight, Save, X,
   Eye, MessageSquare, TrendingUp, Clock, Smartphone, Monitor, Tablet,
-  UserPlus, DollarSign, Mail,
+  UserPlus, DollarSign, Mail, GraduationCap,
 } from 'lucide-react';
+import { HackathonAdminDashboard } from '@/hackathon/components/HackathonAdminDashboard';
 import { Header } from '@/components/organisms/Header';
 import { Pagination } from '@/components/atoms/Pagination';
 import {
@@ -21,7 +22,7 @@ import {
   type AdminUser,
 } from '@/hooks/useAdmin';
 
-type Tab = 'dashboard' | 'users' | 'payments' | 'organizations';
+type Tab = 'dashboard' | 'users' | 'payments' | 'organizations' | 'hackathon';
 
 const PLAN_COLORS: Record<string, string> = {
   FREE: 'bg-white/10 text-white/60',
@@ -46,6 +47,7 @@ export function AdminPage() {
     { key: 'users', label: 'Usuarios', icon: Users },
     { key: 'payments', label: 'Pagamentos', icon: CreditCard },
     { key: 'organizations', label: 'Organizacoes', icon: Building2 },
+    { key: 'hackathon', label: 'Hackathon', icon: GraduationCap },
   ];
 
   return (
@@ -87,6 +89,7 @@ export function AdminPage() {
         {tab === 'users' && <UsersTab />}
         {tab === 'payments' && <PaymentsTab />}
         {tab === 'organizations' && <OrganizationsTab />}
+        {tab === 'hackathon' && <HackathonAdminDashboard />}
       </div>
     </div>
   );

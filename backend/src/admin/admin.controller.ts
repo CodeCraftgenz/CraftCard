@@ -80,4 +80,35 @@ export class AdminController {
   async updateOrg(@Param('orgId') orgId: string, @Body() body: { extraSeats?: number }) {
     return this.adminService.updateOrg(orgId, body);
   }
+
+  // --- Hackathon ---
+
+  @Get('hackathon/dashboard')
+  async getHackathonDashboard() {
+    return this.adminService.getHackathonDashboard();
+  }
+
+  @Get('hackathon/participants')
+  async getHackathonParticipants(
+    @Query('search') search?: string,
+    @Query('area') area?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.adminService.getHackathonParticipants({
+      search, area,
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+    });
+  }
+
+  @Get('hackathon/teams')
+  async getHackathonTeams() {
+    return this.adminService.getHackathonTeams();
+  }
+
+  @Get('hackathon/teams/:orgId')
+  async getHackathonTeamDetail(@Param('orgId') orgId: string) {
+    return this.adminService.getHackathonTeamDetail(orgId);
+  }
 }

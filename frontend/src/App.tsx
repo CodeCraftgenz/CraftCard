@@ -25,6 +25,8 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
 const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
 const ConnectionsPage = lazy(() => import('./pages/ConnectionsPage'));
+const HackathonOnboarding = lazy(() => import('./hackathon/HackathonOnboarding'));
+const HackathonPublicCard = lazy(() => import('./hackathon/HackathonPublicCard'));
 
 function PageLoader() {
   return (
@@ -120,6 +122,8 @@ export function App() {
                       </AdminRoute>
                     }
                   />
+                  <Route path="/hackathon" element={<HackathonOnboarding />} />
+                  <Route path="/hackathon/card/:slug" element={<HackathonPublicCard />} />
                   <Route path="/widget/:slug" element={<WidgetPage />} />
                   {/* Public card page - catch-all must be last */}
                   <Route path="/:slug" element={<PublicCardPage />} />

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, X, ArrowRight, Building2, Crown, Info } from 'lucide-react';
+import { Check, X, ArrowRight, Building2, Crown, Info, GraduationCap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
 import { api } from '@/lib/api';
@@ -276,6 +276,39 @@ export function PricingSection() {
             </div>
           </motion.div>
         </div>
+
+        {/* HACKATHON SENAC — Special Event Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
+          className="mt-10 max-w-2xl mx-auto"
+        >
+          <div className="relative rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #004B87, #F37021)' }}>
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjA4KSIvPjwvc3ZnPg==')] opacity-50" />
+            <div className="relative p-8 flex flex-col sm:flex-row items-center gap-6">
+              <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center shrink-0">
+                <GraduationCap size={32} className="text-white" />
+              </div>
+              <div className="flex-1 text-center sm:text-left">
+                <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+                  <h3 className="font-heading text-xl font-bold text-white">Hackathon Senac</h3>
+                  <span className="text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full">EVENTO</span>
+                </div>
+                <p className="text-white/80 text-sm mb-1">Cracha digital + networking + formacao de equipes</p>
+                <p className="text-white/50 text-xs">2 dias de imersao com cartao digital exclusivo, QR Code para conexoes e match de habilidades entre participantes.</p>
+              </div>
+              <button
+                type="button"
+                disabled
+                className="shrink-0 px-6 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold text-sm cursor-not-allowed opacity-70 border border-white/20"
+              >
+                Disponivel em breve
+              </button>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

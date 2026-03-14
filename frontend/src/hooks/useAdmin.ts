@@ -197,3 +197,89 @@ export function useUpdateAdminOrg() {
     },
   });
 }
+
+// ── Hackathon Admin ───────────────────────────────────────
+
+export interface HackathonDashboardStats {
+  totalParticipants: number;
+  teamsFormed: number;
+  avgPerTeam: number;
+  totalViews: number;
+  areaDistribution: Record<string, number>;
+}
+
+export interface HackathonParticipant {
+  id: string;
+  displayName: string;
+  photoUrl: string | null;
+  slug: string;
+  email: string;
+  hackathonArea: string | null;
+  hackathonSkills: string[];
+  team: string | null;
+}
+
+export interface HackathonTeam {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: string;
+  memberCount: number;
+  maxMembers: number;
+  leader: { name: string | null; email: string } | null;
+}
+
+export interface HackathonTeamDetail {
+  id: string;
+  name: string;
+  slug: string;
+  maxMembers: number;
+  createdAt: string;
+  members: Array<{
+    name: string | null;
+    email: string;
+    role: string;
+    displayName: string;
+    photoUrl: string | null;
+    hackathonArea: string | null;
+    hackathonSkills: string[];
+  }>;
+}
+
+export function useHackathonDashboard() {
+  return useQuery<HackathonDashboardStats>({
+    queryKey: ['admin', 'hackathon', 'dashboard'],
+    queryFn: () => api.get('/admin/hackathon/dashboard'),
+    refetchInterval: 30_000,
+  });
+}
+
+export function useHackathonParticipants(search: string, area: string, page = 1) {
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (area) params.set('area', area);
+  if (page > 1) params.set('page', String(page));
+  const qs = params.toString();
+
+  return useQuery<PaginatedResponse<HackathonParticipant>>({
+    queryKey: ['admin', 'hackathon', 'participants', search, area, page],
+    queryFn: () => api.get(`/admin/hackathon/participants${qs ? `?${qs}` : ''}`),
+    refetchInterval: 30_000,
+  });
+}
+
+export function useHackathonTeams() {
+  return useQuery<HackathonTeam[]>({
+    queryKey: ['admin', 'hackathon', 'teams'],
+    queryFn: () => api.get('/admin/hackathon/teams'),
+    refetchInterval: 30_000,
+  });
+}
+
+export function useHackathonTeamDetail(orgId: string | null) {
+  return useQuery<HackathonTeamDetail>({
+    queryKey: ['admin', 'hackathon', 'teams', orgId],
+    queryFn: () => api.get(`/admin/hackathon/teams/${orgId}`),
+    enabled: !!orgId,
+  });
+}
