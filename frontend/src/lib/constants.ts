@@ -56,6 +56,22 @@ export const PRESET_PATTERNS = [
   { value: 'circles', label: 'Circulos' },
   { value: 'diagonal', label: 'Diagonal' },
   { value: 'cross', label: 'Cruz' },
+  { value: 'hexagons', label: 'Hexagonos' },
+  { value: 'topography', label: 'Topografia' },
+  { value: 'circuit', label: 'Circuito' },
+  { value: 'confetti', label: 'Confete' },
+  { value: 'stars', label: 'Estrelas' },
+  { value: 'zigzag', label: 'Zigue-Zague' },
+] as const;
+
+// ── Animated background presets ──
+export const ANIMATED_BACKGROUNDS = [
+  { value: 'aurora', label: 'Aurora' },
+  { value: 'mesh-gradient', label: 'Mesh' },
+  { value: 'particles', label: 'Particulas' },
+  { value: 'waves-animated', label: 'Ondas' },
+  { value: 'gradient-flow', label: 'Fluxo' },
+  { value: 'starfield', label: 'Estrelas' },
 ] as const;
 
 export const LINK_LAYOUTS = [
@@ -94,6 +110,31 @@ export const LINK_ANIMATIONS = [
   { value: 'slide', label: 'Deslizar' },
   { value: 'glow', label: 'Brilho' },
 ] as const;
+
+// ── Per-link button shape (border-radius / clip-path) ──
+export const BLOCK_SHAPES = [
+  { value: 'default', label: 'Padrao', desc: 'Usa estilo global' },
+  { value: 'rounded', label: 'Arredondado', desc: 'rounded-2xl' },
+  { value: 'pill', label: 'Pilula', desc: 'Totalmente arredondado' },
+  { value: 'square', label: 'Quadrado', desc: 'Cantos retos' },
+  { value: 'ticket', label: 'Ticket', desc: 'Recorte lateral' },
+  { value: 'leaf', label: 'Folha', desc: 'Cantos assimetricos' },
+  { value: 'brutalist', label: 'Brutalist', desc: 'Borda grossa angular' },
+] as const;
+
+// ── Per-link button texture / visual effect ──
+export const BLOCK_TEXTURES = [
+  { value: 'none', label: 'Nenhuma', desc: 'Sem textura' },
+  { value: 'glass', label: 'Vidro', desc: 'Glassmorphism sutil' },
+  { value: 'noise', label: 'Ruido', desc: 'Granulado sutil' },
+  { value: 'gradient-shine', label: 'Brilho', desc: 'Reflexo deslizante' },
+  { value: 'brushed', label: 'Escovado', desc: 'Metal escovado' },
+  { value: 'frosted', label: 'Fosco', desc: 'Vidro fosco' },
+  { value: 'holographic', label: 'Holografico', desc: 'Efeito holografico' },
+] as const;
+
+export type BlockShapeValue = typeof BLOCK_SHAPES[number]['value'];
+export type BlockTextureValue = typeof BLOCK_TEXTURES[number]['value'];
 
 export const GRID_SIZES = [
   { value: '1x1', label: 'Pequeno', desc: '400×400', cols: 1, rows: 1, w: 14, h: 14 },

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus, Lock,
   Camera, FileText, Palette, Link2, Sparkles, Smartphone, Building2, Shield,
-  QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, Star, Video, UserPlus, Users,
+  QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, Star, Video, UserPlus, Users, Paintbrush,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
@@ -40,7 +40,7 @@ import { useContacts, useMarkAsRead } from '@/hooks/useContacts';
 import { useTestimonials, useApproveTestimonial, useRejectTestimonial } from '@/hooks/useTestimonials';
 import { useGallery, useUploadGalleryImage, useDeleteGalleryImage } from '@/hooks/useGallery';
 import { useMySlots, useSaveSlots, useMyBookings, useUpdateBookingStatus } from '@/hooks/useBookings';
-import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, GRID_SIZES, setMetadataField, getGridSize, resolvePhotoUrl, API_URL } from '@/lib/constants';
+import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, GRID_SIZES, BLOCK_SHAPES, BLOCK_TEXTURES, setMetadataField, getGridSize, parseMetadata, resolvePhotoUrl, API_URL } from '@/lib/constants';
 import { StyleEditor } from '@/components/organisms/StyleEditor';
 import { ServicesEditor } from '@/components/organisms/ServicesEditor';
 import { FaqEditor } from '@/components/organisms/FaqEditor';
@@ -321,16 +321,27 @@ export function EditorPage() {
       const isValidUrl = /^(https?:\/\/|mailto:|tel:).+/i.test(l.url.trim());
       return hasLabel && hasUrl && isValidUrl;
     });
-    data.socialLinks = validLinks.map((l, i) => ({
-      platform: l.platform,
-      label: l.label.trim(),
-      url: l.url.trim(),
-      order: i,
-      startsAt: l.startsAt || null,
-      endsAt: l.endsAt || null,
-      linkType: l.linkType || 'link',
-      metadata: l.metadata || null,
-    }));
+    data.socialLinks = validLinks.map((l, i) => {
+      // Strip UI-only keys from metadata before saving
+      let cleanMeta = l.metadata || null;
+      if (cleanMeta) {
+        try {
+          const parsed = JSON.parse(cleanMeta);
+          delete parsed._showAppearance;
+          cleanMeta = Object.keys(parsed).length > 0 ? JSON.stringify(parsed) : null;
+        } catch { /* keep as-is */ }
+      }
+      return {
+        platform: l.platform,
+        label: l.label.trim(),
+        url: l.url.trim(),
+        order: i,
+        startsAt: l.startsAt || null,
+        endsAt: l.endsAt || null,
+        linkType: l.linkType || 'link',
+        metadata: cleanMeta,
+      };
+    });
 
     return data;
   }, [form, slugInput]);
@@ -1319,7 +1330,85 @@ export function EditorPage() {
                                 <Calendar size={12} />
                                 Agendamento
                               </button>
+                              {link.platform !== 'header' && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const meta = parseMetadata(link.metadata);
+                                    const links = [...form.socialLinks];
+                                    links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, '_showAppearance', meta._showAppearance === '1' ? '0' : '1') };
+                                    updateField('socialLinks', links);
+                                  }}
+                                  className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-all ${
+                                    parseMetadata(link.metadata).buttonShape || parseMetadata(link.metadata).buttonTexture
+                                      ? 'text-purple-400 bg-purple-400/10'
+                                      : 'text-white/30 hover:text-white/50 hover:bg-white/5'
+                                  }`}
+                                >
+                                  <Paintbrush size={12} />
+                                  Aparencia
+                                </button>
+                              )}
                             </div>
+                            {/* Per-link Appearance Panel */}
+                            {link.platform !== 'header' && parseMetadata(link.metadata)._showAppearance === '1' && (
+                              <div className="space-y-3 p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                                <div>
+                                  <label className="text-[10px] text-white/40 block mb-1.5 uppercase tracking-wider">Forma do Bloco</label>
+                                  <div className="flex flex-wrap gap-1">
+                                    {BLOCK_SHAPES.map((shape) => {
+                                      const currentShape = parseMetadata(link.metadata).buttonShape || 'default';
+                                      return (
+                                        <button
+                                          key={shape.value}
+                                          type="button"
+                                          onClick={() => {
+                                            const links = [...form.socialLinks];
+                                            links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'buttonShape', shape.value) };
+                                            updateField('socialLinks', links);
+                                          }}
+                                          title={shape.desc}
+                                          className={`text-[10px] px-2 py-1 rounded-md border transition-all ${
+                                            currentShape === shape.value
+                                              ? 'border-purple-400 bg-purple-400/15 text-purple-300'
+                                              : 'border-white/10 text-white/40 hover:border-white/20 hover:text-white/60'
+                                          }`}
+                                        >
+                                          {shape.label}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-[10px] text-white/40 block mb-1.5 uppercase tracking-wider">Textura</label>
+                                  <div className="flex flex-wrap gap-1">
+                                    {BLOCK_TEXTURES.map((tex) => {
+                                      const currentTex = parseMetadata(link.metadata).buttonTexture || 'none';
+                                      return (
+                                        <button
+                                          key={tex.value}
+                                          type="button"
+                                          onClick={() => {
+                                            const links = [...form.socialLinks];
+                                            links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'buttonTexture', tex.value) };
+                                            updateField('socialLinks', links);
+                                          }}
+                                          title={tex.desc}
+                                          className={`text-[10px] px-2 py-1 rounded-md border transition-all ${
+                                            currentTex === tex.value
+                                              ? 'border-purple-400 bg-purple-400/15 text-purple-300'
+                                              : 'border-white/10 text-white/40 hover:border-white/20 hover:text-white/60'
+                                          }`}
+                                        >
+                                          {tex.label}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                             {/* Grid Size Selector — only when layout is grid */}
                             {form.linkLayout === 'grid' && link.platform !== 'header' && (
                               <div className="flex items-center gap-1.5">
@@ -1472,7 +1561,83 @@ export function EditorPage() {
                                 <Calendar size={12} />
                                 Agendamento
                               </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const meta = parseMetadata(link.metadata);
+                                  const links = [...form.socialLinks];
+                                  links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, '_showAppearance', meta._showAppearance === '1' ? '0' : '1') };
+                                  updateField('socialLinks', links);
+                                }}
+                                className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-all ${
+                                  parseMetadata(link.metadata).buttonShape || parseMetadata(link.metadata).buttonTexture
+                                    ? 'text-purple-400 bg-purple-400/10'
+                                    : 'text-white/30 hover:text-white/50 hover:bg-white/5'
+                                }`}
+                              >
+                                <Paintbrush size={12} />
+                                Aparencia
+                              </button>
                             </div>
+                            {/* Per-link Appearance Panel — custom links */}
+                            {parseMetadata(link.metadata)._showAppearance === '1' && (
+                              <div className="space-y-3 p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                                <div>
+                                  <label className="text-[10px] text-white/40 block mb-1.5 uppercase tracking-wider">Forma do Bloco</label>
+                                  <div className="flex flex-wrap gap-1">
+                                    {BLOCK_SHAPES.map((shape) => {
+                                      const currentShape = parseMetadata(link.metadata).buttonShape || 'default';
+                                      return (
+                                        <button
+                                          key={shape.value}
+                                          type="button"
+                                          onClick={() => {
+                                            const links = [...form.socialLinks];
+                                            links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'buttonShape', shape.value) };
+                                            updateField('socialLinks', links);
+                                          }}
+                                          title={shape.desc}
+                                          className={`text-[10px] px-2 py-1 rounded-md border transition-all ${
+                                            currentShape === shape.value
+                                              ? 'border-purple-400 bg-purple-400/15 text-purple-300'
+                                              : 'border-white/10 text-white/40 hover:border-white/20 hover:text-white/60'
+                                          }`}
+                                        >
+                                          {shape.label}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-[10px] text-white/40 block mb-1.5 uppercase tracking-wider">Textura</label>
+                                  <div className="flex flex-wrap gap-1">
+                                    {BLOCK_TEXTURES.map((tex) => {
+                                      const currentTex = parseMetadata(link.metadata).buttonTexture || 'none';
+                                      return (
+                                        <button
+                                          key={tex.value}
+                                          type="button"
+                                          onClick={() => {
+                                            const links = [...form.socialLinks];
+                                            links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'buttonTexture', tex.value) };
+                                            updateField('socialLinks', links);
+                                          }}
+                                          title={tex.desc}
+                                          className={`text-[10px] px-2 py-1 rounded-md border transition-all ${
+                                            currentTex === tex.value
+                                              ? 'border-purple-400 bg-purple-400/15 text-purple-300'
+                                              : 'border-white/10 text-white/40 hover:border-white/20 hover:text-white/60'
+                                          }`}
+                                        >
+                                          {tex.label}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                             {/* Grid Size Selector — custom links */}
                             {form.linkLayout === 'grid' && (
                               <div className="flex items-center gap-1.5">

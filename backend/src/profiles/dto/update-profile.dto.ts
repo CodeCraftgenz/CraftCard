@@ -33,7 +33,7 @@ export const socialLinkSchema = z.object({
   order: z.number().int().min(0).max(50),
   startsAt: z.coerce.date().optional().nullable(),
   endsAt: z.coerce.date().optional().nullable(),
-  linkType: z.enum(['link', 'header', 'embed', 'pix', 'file', 'map', 'phone']).optional().nullable(),
+  linkType: z.enum(['link', 'header', 'embed', 'pix', 'file', 'map', 'phone', 'hackathon_meta']).optional().nullable(),
   metadata: z.string().max(2000).optional().nullable(),
 }).refine(
   (link) => {
@@ -45,6 +45,8 @@ export const socialLinkSchema = z.object({
     if (link.platform === 'map') return true;
     // Phone accepts plain number
     if (link.platform === 'phone') return true;
+    // Hackathon meta stores data in metadata, URL is '#'
+    if (link.linkType === 'hackathon_meta') return true;
     // All other types need a valid URL
     if (!link.url) return false;
     return /^https?:\/\/.+/i.test(link.url) || /^mailto:.+@.+/i.test(link.url) || /^tel:.+/i.test(link.url);
@@ -91,15 +93,15 @@ export const updateProfileSchema = z.object({
   // Visual Customization
   fontFamily: z.preprocess(emptyToUndefined, z.string().max(50).optional().nullable()),
   fontSizeScale: z.number().min(0.8).max(1.3).optional().nullable(),
-  backgroundType: z.enum(['theme', 'gradient', 'image', 'pattern']).optional().nullable(),
+  backgroundType: z.enum(['theme', 'gradient', 'image', 'pattern', 'animated']).optional().nullable(),
   backgroundGradient: z.preprocess(emptyToUndefined, z.string().max(200).optional().nullable()),
   backgroundImageUrl: z.preprocess(emptyToUndefined, safeUrlSchema.optional().nullable()),
   backgroundOverlay: z.number().min(0).max(1).optional().nullable(),
   backgroundPattern: z.preprocess(emptyToUndefined, z.string().max(30).optional().nullable()),
-  linkStyle: z.enum(['rounded', 'pill', 'square', 'outline', 'ghost']).optional().nullable(),
+  linkStyle: z.enum(['rounded', 'pill', 'square', 'outline', 'ghost', 'elevated', 'glassmorphism', 'neon-border']).optional().nullable(),
   linkAnimation: z.enum(['none', 'scale', 'slide', 'glow']).optional().nullable(),
   linkLayout: z.enum(['list', 'grid']).optional().nullable(),
-  iconStyle: z.enum(['default', 'filled', 'outline', 'neomorph', 'glass', 'gradient']).optional().nullable(),
+  iconStyle: z.enum(['default', 'filled', 'outline', 'neomorph', 'glass', 'gradient', 'neon', 'shadow', 'minimal', 'circle', 'soft']).optional().nullable(),
   // Expanded Bio
   location: z.preprocess(emptyToUndefined, z.string().max(100).optional().nullable()),
   pronouns: z.preprocess(emptyToUndefined, z.string().max(30).optional().nullable()),
@@ -115,6 +117,7 @@ export const updateProfileSchema = z.object({
       (link) => {
         if (link.label.trim() === '') return false;
         if (['header', 'pix', 'map', 'phone'].includes(link.platform)) return true;
+        if (link.linkType === 'hackathon_meta') return true;
         return link.url.trim() !== '';
       },
     );

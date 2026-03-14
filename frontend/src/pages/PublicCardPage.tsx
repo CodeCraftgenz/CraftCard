@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { CustomQrCode } from '@/components/organisms/CustomQrCode';
 import { AnimatedBackground } from '@/components/atoms/AnimatedBackground';
+import { AnimatedBackgroundOverlay } from '@/components/organisms/AnimatedBackgroundOverlay';
 import { GalleryGrid } from '@/components/organisms/GalleryGrid';
 import { LocationMap } from '@/components/organisms/LocationMap';
 import { LinkRenderer, GridLinkRenderer } from '@/components/organisms/LinkRenderer';
@@ -236,6 +237,70 @@ function PatternOverlay({ pattern, color }: { pattern: string; color: string }) 
             <path d="M8 0 V16 M0 8 H16" stroke={c} strokeWidth="0.5" />
           </pattern>
           <rect width="100%" height="100%" fill="url(#bg-cross)" />
+        </svg>
+      );
+    case 'hexagons':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="bg-hex" width="34" height="40" patternUnits="userSpaceOnUse">
+            <path d="M17 0 L34 10 L34 30 L17 40 L0 30 L0 10 Z" fill="none" stroke={c} strokeWidth="0.5" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#bg-hex)" />
+        </svg>
+      );
+    case 'topography':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="bg-topo" width="80" height="60" patternUnits="userSpaceOnUse">
+            <path d="M10 20 Q30 10 50 24 Q70 38 80 20" fill="none" stroke={c} strokeWidth="0.5" />
+            <path d="M0 40 Q20 30 40 44 Q60 56 80 38" fill="none" stroke={c} strokeWidth="0.5" />
+            <path d="M10 55 Q30 48 50 58 Q70 65 80 52" fill="none" stroke={c} strokeWidth="0.5" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#bg-topo)" />
+        </svg>
+      );
+    case 'circuit':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="bg-circuit" width="60" height="60" patternUnits="userSpaceOnUse">
+            <path d="M10 10 H30 V25 H50 M15 40 H35 V55 M25 15 V45" fill="none" stroke={c} strokeWidth="0.5" />
+            <circle cx="10" cy="10" r="2" fill={c} />
+            <circle cx="50" cy="25" r="2" fill={c} />
+            <circle cx="35" cy="55" r="2" fill={c} />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#bg-circuit)" />
+        </svg>
+      );
+    case 'confetti':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="bg-confetti" width="50" height="50" patternUnits="userSpaceOnUse">
+            <rect x="8" y="12" width="4" height="8" rx="1" fill={c} transform="rotate(30 10 16)" />
+            <rect x="30" y="8" width="4" height="8" rx="1" fill={c} transform="rotate(-20 32 12)" />
+            <rect x="18" y="35" width="4" height="8" rx="1" fill={c} transform="rotate(45 20 39)" />
+            <rect x="42" y="30" width="4" height="8" rx="1" fill={c} transform="rotate(-15 44 34)" />
+            <circle cx="40" cy="12" r="3" fill={c} />
+            <circle cx="12" cy="42" r="3" fill={c} />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#bg-confetti)" />
+        </svg>
+      );
+    case 'stars':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="bg-stars" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M20 5 L22 15 L30 15 L24 20 L26 30 L20 24 L14 30 L16 20 L10 15 L18 15 Z" fill={c} />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#bg-stars)" />
+        </svg>
+      );
+    case 'zigzag':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="bg-zigzag" width="24" height="12" patternUnits="userSpaceOnUse">
+            <path d="M0 6 L6 0 L12 6 L18 0 L24 6" fill="none" stroke={c} strokeWidth="0.8" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#bg-zigzag)" />
         </svg>
       );
     default:
@@ -623,6 +688,10 @@ export function PublicCardPage() {
           <div className="absolute inset-0 pointer-events-none opacity-20">
             <PatternOverlay pattern={profile.backgroundPattern} color={accent} />
           </div>
+        )}
+        {/* Animated background overlay */}
+        {bgType === 'animated' && profile.backgroundPattern && (
+          <AnimatedBackgroundOverlay pattern={profile.backgroundPattern} accent={accent} />
         )}
         <AnimatedBackground theme={theme} />
         <motion.div

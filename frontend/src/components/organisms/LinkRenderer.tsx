@@ -8,7 +8,7 @@ import {
 import { QRCodeCanvas } from 'qrcode.react';
 import { trackLinkClick } from '@/hooks/useAnalytics';
 import { generatePixPayload } from '@/lib/pix-generator';
-import { getGridSize } from '@/lib/constants';
+import { getGridSize, parseMetadata } from '@/lib/constants';
 
 interface SocialLink {
   id: string;
@@ -356,6 +356,14 @@ function LinkButton({
   const isInternal = href === '#';
   const iconContainer = getIconContainerStyle(iconStyle, bgColor, accent);
 
+  // Per-link overrides from metadata
+  const meta = parseMetadata(link.metadata);
+  const blockShape = meta.buttonShape || 'default';
+  const blockTexture = meta.buttonTexture || 'none';
+  const effectiveStyle = blockShape !== 'default' ? blockShape : linkStyle;
+  const shapeClass = getShapeClass(effectiveStyle, linkStyle);
+  const textureStyle = getTextureStyle(blockTexture, accent);
+
   return (
     <motion.a
       href={href}
@@ -370,20 +378,23 @@ function LinkButton({
       transition={{ delay: index * 0.08 }}
       whileHover={getHoverAnim(linkAnim)}
       whileTap={{ scale: 0.98 }}
-      className={`flex items-center gap-4 px-5 py-3.5 backdrop-blur-xl text-white transition-all group ${getStyleClass(linkStyle)}`}
+      className={`flex items-center gap-4 px-5 py-3.5 backdrop-blur-xl text-white transition-all group relative overflow-hidden ${shapeClass}`}
       style={{
-        borderLeft: linkStyle !== 'ghost' && linkStyle !== 'neon-border' ? `3px solid ${accent}` : undefined,
-        ...(linkStyle === 'neon-border' ? { border: `1px solid ${accent}60`, boxShadow: `0 0 8px ${accent}30, inset 0 0 8px ${accent}08` } : {}),
+        borderLeft: effectiveStyle !== 'ghost' && effectiveStyle !== 'neon-border' && effectiveStyle !== 'ticket' ? `3px solid ${accent}` : undefined,
+        ...(effectiveStyle === 'neon-border' ? { border: `1px solid ${accent}60`, boxShadow: `0 0 8px ${accent}30, inset 0 0 8px ${accent}08` } : {}),
+        ...getShapeInlineStyle(effectiveStyle, accent),
       }}
     >
+      {/* Texture overlay */}
+      {blockTexture !== 'none' && <div className="absolute inset-0 pointer-events-none" style={textureStyle} />}
       <div
-        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconContainer.className}`}
+        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 relative z-[1] ${iconContainer.className}`}
         style={iconContainer.style}
       >
         <Icon size={20} style={{ color: iconContainer.iconColor }} />
       </div>
-      <span className="font-medium truncate min-w-0" style={{ fontSize: '0.875em' }}>{link.label}</span>
-      <span className="ml-auto text-white/20 group-hover:text-white/40 transition-colors">&rsaquo;</span>
+      <span className="font-medium truncate min-w-0 relative z-[1]" style={{ fontSize: '0.875em' }}>{link.label}</span>
+      <span className="ml-auto text-white/20 group-hover:text-white/40 transition-colors relative z-[1]">&rsaquo;</span>
     </motion.a>
   );
 }
@@ -413,6 +424,50 @@ function getIconContainerStyle(iconStyle: string, bgColor: string, accent: strin
     case 'default':
     default:
       return { style: { backgroundColor: `${accent}20` }, className: '', iconColor: bgColor };
+  }
+}
+
+function getShapeClass(shape: string, fallbackStyle: string): string {
+  switch (shape) {
+    case 'pill': return 'rounded-full bg-white/5 border border-white/10 hover:bg-white/10';
+    case 'square': return 'rounded-none bg-white/5 border border-white/10 hover:bg-white/10';
+    case 'rounded': return 'rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10';
+    case 'ticket': return 'bg-white/5 border border-white/10 hover:bg-white/10';
+    case 'leaf': return 'bg-white/5 border border-white/10 hover:bg-white/10';
+    case 'brutalist': return 'rounded-none bg-white/5 hover:bg-white/10';
+    default: return getStyleClass(fallbackStyle);
+  }
+}
+
+function getShapeInlineStyle(shape: string, accent: string): React.CSSProperties {
+  switch (shape) {
+    case 'ticket':
+      return { borderRadius: '16px 4px 4px 16px' };
+    case 'leaf':
+      return { borderRadius: '20px 4px 20px 4px' };
+    case 'brutalist':
+      return { border: `2px solid ${accent}`, boxShadow: `3px 3px 0 ${accent}40` };
+    default:
+      return {};
+  }
+}
+
+function getTextureStyle(texture: string, accent: string): React.CSSProperties {
+  switch (texture) {
+    case 'glass':
+      return { background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)', backdropFilter: 'blur(4px)' };
+    case 'noise':
+      return { backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")`, backgroundSize: '100px 100px' };
+    case 'gradient-shine':
+      return { background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.08) 55%, transparent 60%)', backgroundSize: '200% 100%', animation: 'shimmer 3s infinite linear' };
+    case 'brushed':
+      return { background: 'repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)' };
+    case 'frosted':
+      return { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(8px) saturate(120%)' };
+    case 'holographic':
+      return { background: `linear-gradient(135deg, ${accent}15, rgba(255,0,128,0.08), rgba(0,200,255,0.08), ${accent}15)`, backgroundSize: '300% 300%', animation: 'hologram 4s ease infinite' };
+    default:
+      return {};
   }
 }
 
@@ -476,6 +531,24 @@ function GridLinkCard({
   const iconContainer = getIconContainerStyle(iconStyle, bgColor, accent);
   const gs = getGridSize(link.metadata);
 
+  // Per-link overrides
+  const meta = parseMetadata(link.metadata);
+  const blockShape = meta.buttonShape || 'default';
+  const blockTexture = meta.buttonTexture || 'none';
+  const textureStyle = getTextureStyle(blockTexture, accent);
+
+  const gridShapeRadius = (() => {
+    switch (blockShape) {
+      case 'pill': return '9999px';
+      case 'square': return '0';
+      case 'rounded': return '16px';
+      case 'ticket': return '16px 4px 4px 16px';
+      case 'leaf': return '20px 4px 20px 4px';
+      case 'brutalist': return '0';
+      default: return '16px';
+    }
+  })();
+
   return (
     <motion.a
       href={href}
@@ -489,18 +562,21 @@ function GridLinkCard({
       transition={{ delay: index * 0.05 }}
       whileHover={getHoverAnim(linkAnim)}
       whileTap={{ scale: 0.95 }}
-      className="flex flex-col items-center justify-center gap-1.5 py-4 px-2 rounded-2xl text-white transition-all group"
+      className="flex flex-col items-center justify-center gap-1.5 py-4 px-2 text-white transition-all group relative overflow-hidden"
       style={{
         backgroundColor: `${bgColor}12`,
-        border: `1px solid ${bgColor}20`,
+        border: blockShape === 'brutalist' ? `2px solid ${accent}` : `1px solid ${bgColor}20`,
+        borderRadius: gridShapeRadius,
         gridColumn: `span ${gs.cols}`,
         gridRow: `span ${gs.rows}`,
+        ...(blockShape === 'brutalist' ? { boxShadow: `3px 3px 0 ${accent}40` } : {}),
       }}
     >
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconContainer.className}`} style={iconContainer.style}>
+      {blockTexture !== 'none' && <div className="absolute inset-0 pointer-events-none" style={textureStyle} />}
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center relative z-[1] ${iconContainer.className}`} style={iconContainer.style}>
         <Icon size={gs.cols >= 2 || gs.rows >= 2 ? 32 : 24} style={{ color: iconContainer.iconColor }} />
       </div>
-      <span className={`text-white/70 font-medium truncate max-w-full text-center leading-tight ${gs.cols >= 2 ? 'text-sm' : 'text-[11px]'}`}>
+      <span className={`text-white/70 font-medium truncate max-w-full text-center leading-tight relative z-[1] ${gs.cols >= 2 ? 'text-sm' : 'text-[11px]'}`}>
         {link.label}
       </span>
     </motion.a>

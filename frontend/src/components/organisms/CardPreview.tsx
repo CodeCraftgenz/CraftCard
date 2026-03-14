@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
-import { getGridSize } from '@/lib/constants';
+import { getGridSize, parseMetadata } from '@/lib/constants';
+import { AnimatedBackgroundOverlay } from './AnimatedBackgroundOverlay';
 import {
   Instagram,
   Linkedin,
@@ -250,15 +251,13 @@ export const CardPreview = memo(function CardPreview({
         {/* Pattern overlay */}
         {bgType === 'pattern' && backgroundPattern && (
           <div className="absolute inset-0 pointer-events-none opacity-10">
-            {backgroundPattern === 'dots' && (
-              <svg width="100%" height="100%">
-                <pattern id="prev-dots" width="20" height="20" patternUnits="userSpaceOnUse">
-                  <circle cx="3" cy="3" r="1.5" fill={`${accent}30`} />
-                </pattern>
-                <rect width="100%" height="100%" fill="url(#prev-dots)" />
-              </svg>
-            )}
+            <PreviewPatternSvg pattern={backgroundPattern} accent={accent} />
           </div>
+        )}
+
+        {/* Animated background overlay */}
+        {bgType === 'animated' && backgroundPattern && (
+          <AnimatedBackgroundOverlay pattern={backgroundPattern} accent={accent} />
         )}
 
         {/* Cover Photo */}
@@ -334,41 +333,54 @@ export const CardPreview = memo(function CardPreview({
 
               const Icon = platformIcons[link.platform] || Globe;
               const platColor = platformColors[link.platform] || accent;
-              const isOutline = linkStyle === 'outline';
-              const isGhost = linkStyle === 'ghost';
-              const isNeonBorder = linkStyle === 'neon-border';
-              const noLeftBorder = isOutline || isGhost || isNeonBorder;
+              const meta = parseMetadata(link.metadata);
+              const blockShape = meta.buttonShape || 'default';
+              const blockTexture = meta.buttonTexture || 'none';
+
+              // Determine effective style: per-link shape overrides global
+              const effectiveStyle = blockShape !== 'default' ? blockShape : linkStyle;
+              const isOutline = effectiveStyle === 'outline';
+              const isGhost = effectiveStyle === 'ghost';
+              const isNeonBorder = effectiveStyle === 'neon-border';
+              const noLeftBorder = isOutline || isGhost || isNeonBorder || effectiveStyle === 'ticket';
 
               if (linkLayout === 'grid') {
                 const gic = getPreviewIconStyle(iconStyle, platColor, accent);
                 const gs = getGridSize(link.metadata);
+                const gridRadius = getPreviewShapeRadius(blockShape);
                 return (
                   <motion.div
                     key={i}
                     whileHover={getHoverAnim(linkAnimation)}
                     whileTap={{ scale: 0.98 }}
-                    className="flex flex-col items-center justify-center gap-1 py-3 px-1 rounded-xl text-white transition-all cursor-pointer"
+                    className="flex flex-col items-center justify-center gap-1 py-3 px-1 text-white transition-all cursor-pointer relative overflow-hidden"
                     style={{
                       backgroundColor: `${platColor}12`,
-                      border: `1px solid ${platColor}20`,
+                      border: blockShape === 'brutalist' ? `2px solid ${accent}` : `1px solid ${platColor}20`,
+                      borderRadius: gridRadius,
                       gridColumn: `span ${gs.cols}`,
                       gridRow: `span ${gs.rows}`,
+                      ...(blockShape === 'brutalist' ? { boxShadow: `2px 2px 0 ${accent}40` } : {}),
                     }}
                   >
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={gic.style}>
+                    {blockTexture !== 'none' && <div className="absolute inset-0 pointer-events-none" style={getPreviewTextureStyle(blockTexture, accent)} />}
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center relative z-[1]" style={gic.style}>
                       <Icon size={16} className="shrink-0" style={{ color: gic.iconColor }} />
                     </div>
-                    <span className="text-[9px] text-white/60 truncate max-w-full text-center leading-tight">{link.label || 'Link'}</span>
+                    <span className="text-[9px] text-white/60 truncate max-w-full text-center leading-tight relative z-[1]">{link.label || 'Link'}</span>
                   </motion.div>
                 );
               }
+
+              const listRadius = getPreviewShapeRadius(blockShape);
+              const effectiveLinkClass = blockShape !== 'default' ? '' : linkClass;
 
               return (
                 <motion.div
                   key={i}
                   whileHover={getHoverAnim(linkAnimation)}
                   whileTap={{ scale: 0.98 }}
-                  className={`flex items-center gap-3 px-4 py-3 text-white font-medium transition-all cursor-pointer ${linkClass} ${linkAnimation === 'glow' ? 'hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]' : ''}`}
+                  className={`flex items-center gap-3 px-4 py-3 text-white font-medium transition-all cursor-pointer relative overflow-hidden ${effectiveLinkClass} ${linkAnimation === 'glow' ? 'hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]' : ''}`}
                   style={{
                     fontSize: '0.875em',
                     backgroundColor: isGhost || isNeonBorder ? 'transparent' : isOutline ? 'transparent' : `${accent}20`,
@@ -376,15 +388,18 @@ export const CardPreview = memo(function CardPreview({
                     borderWidth: isOutline || isNeonBorder ? 1 : undefined,
                     borderLeft: !noLeftBorder ? `3px solid ${accent}` : undefined,
                     ...(isNeonBorder ? { boxShadow: `0 0 6px ${accent}30, inset 0 0 6px ${accent}08` } : {}),
+                    ...(blockShape !== 'default' ? { borderRadius: listRadius } : {}),
+                    ...(blockShape === 'brutalist' ? { border: `2px solid ${accent}`, boxShadow: `2px 2px 0 ${accent}40` } : {}),
                   }}
                 >
+                  {blockTexture !== 'none' && <div className="absolute inset-0 pointer-events-none" style={getPreviewTextureStyle(blockTexture, accent)} />}
                   {(() => { const lic = getPreviewIconStyle(iconStyle, platColor, accent); return (
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={lic.style}>
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 relative z-[1]" style={lic.style}>
                       <Icon size={14} style={{ color: lic.iconColor }} />
                     </div>
                   ); })()}
-                  <span className="truncate min-w-0">{link.label || 'Link'}</span>
-                  <span className="ml-auto text-white/30">&rsaquo;</span>
+                  <span className="truncate min-w-0 relative z-[1]">{link.label || 'Link'}</span>
+                  <span className="ml-auto text-white/30 relative z-[1]">&rsaquo;</span>
                 </motion.div>
               );
             })}
@@ -394,6 +409,37 @@ export const CardPreview = memo(function CardPreview({
     </motion.div>
   );
 });
+
+function getPreviewShapeRadius(shape: string): string {
+  switch (shape) {
+    case 'pill': return '9999px';
+    case 'square': return '0';
+    case 'rounded': return '16px';
+    case 'ticket': return '16px 4px 4px 16px';
+    case 'leaf': return '20px 4px 20px 4px';
+    case 'brutalist': return '0';
+    default: return '12px';
+  }
+}
+
+function getPreviewTextureStyle(texture: string, accent: string): React.CSSProperties {
+  switch (texture) {
+    case 'glass':
+      return { background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)' };
+    case 'noise':
+      return { backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")`, backgroundSize: '100px 100px' };
+    case 'gradient-shine':
+      return { background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.08) 55%, transparent 60%)' };
+    case 'brushed':
+      return { background: 'repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)' };
+    case 'frosted':
+      return { background: 'rgba(255,255,255,0.06)' };
+    case 'holographic':
+      return { background: `linear-gradient(135deg, ${accent}15, rgba(255,0,128,0.08), rgba(0,200,255,0.08), ${accent}15)` };
+    default:
+      return {};
+  }
+}
 
 function getPreviewIconStyle(iconStyle: string, bgColor: string, accent: string): { style: React.CSSProperties; iconColor: string } {
   switch (iconStyle) {
@@ -420,5 +466,69 @@ function getPreviewIconStyle(iconStyle: string, bgColor: string, accent: string)
     case 'default':
     default:
       return { style: { backgroundColor: `${accent}20` }, iconColor: bgColor };
+  }
+}
+
+function PreviewPatternSvg({ pattern, accent }: { pattern: string; accent: string }) {
+  const color = `${accent}30`;
+  switch (pattern) {
+    case 'dots':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="prev-dots" width="20" height="20" patternUnits="userSpaceOnUse">
+            <circle cx="3" cy="3" r="1.5" fill={color} />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#prev-dots)" />
+        </svg>
+      );
+    case 'grid':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="prev-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke={color} strokeWidth="0.5" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#prev-grid)" />
+        </svg>
+      );
+    case 'waves':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="prev-waves" width="40" height="20" patternUnits="userSpaceOnUse">
+            <path d="M0 10 Q10 0 20 10 T40 10" fill="none" stroke={color} strokeWidth="0.8" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#prev-waves)" />
+        </svg>
+      );
+    case 'hexagons':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="prev-hex" width="34" height="40" patternUnits="userSpaceOnUse">
+            <path d="M17 0 L34 10 L34 30 L17 40 L0 30 L0 10 Z" fill="none" stroke={color} strokeWidth="0.5" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#prev-hex)" />
+        </svg>
+      );
+    case 'circuit':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="prev-circuit" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M5 5 H20 V15 H35 M10 25 H25 V35" fill="none" stroke={color} strokeWidth="0.5" />
+            <circle cx="5" cy="5" r="1.5" fill={color} />
+            <circle cx="35" cy="15" r="1.5" fill={color} />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#prev-circuit)" />
+        </svg>
+      );
+    case 'zigzag':
+      return (
+        <svg width="100%" height="100%">
+          <pattern id="prev-zigzag" width="16" height="8" patternUnits="userSpaceOnUse">
+            <path d="M0 4 L4 0 L8 4 L12 0 L16 4" fill="none" stroke={color} strokeWidth="0.6" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#prev-zigzag)" />
+        </svg>
+      );
+    default:
+      return null;
   }
 }

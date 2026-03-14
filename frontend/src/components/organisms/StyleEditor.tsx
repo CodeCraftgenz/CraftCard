@@ -4,6 +4,7 @@ import { AVAILABLE_FONTS, loadGoogleFont } from '@/lib/google-fonts';
 import {
   PRESET_GRADIENTS,
   PRESET_PATTERNS,
+  ANIMATED_BACKGROUNDS,
   LINK_LAYOUTS,
   LINK_STYLES,
   LINK_ANIMATIONS,
@@ -105,7 +106,7 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, 
             <Layers size={12} /> Fundo
           </label>
           <div className="flex flex-wrap gap-2 mb-3">
-            {(['theme', 'gradient', 'image', 'pattern'] as const).map((type) => (
+            {(['theme', 'gradient', 'image', 'pattern', 'animated'] as const).map((type) => (
               <button
                 key={type}
                 type="button"
@@ -116,7 +117,7 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, 
                     : 'bg-white/5 text-white/50 border border-white/10 hover:border-white/20'
                 }`}
               >
-                {type === 'theme' ? 'Tema' : type === 'gradient' ? 'Gradiente' : type === 'image' ? 'Imagem' : 'Padrao'}
+                {type === 'theme' ? 'Tema' : type === 'gradient' ? 'Gradiente' : type === 'image' ? 'Imagem' : type === 'pattern' ? 'Padrao' : 'Animado'}
               </button>
             ))}
           </div>
@@ -245,6 +246,27 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, 
                 >
                   <PatternPreview pattern={p.value} accent={accent} />
                   <span className="text-[10px] text-white/50 mt-1 block">{p.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Animated Backgrounds */}
+          {value.backgroundType === 'animated' && (
+            <div className="grid grid-cols-3 gap-2">
+              {ANIMATED_BACKGROUNDS.map((bg) => (
+                <button
+                  key={bg.value}
+                  type="button"
+                  onClick={() => onChange('backgroundPattern', bg.value)}
+                  className={`p-3 rounded-xl border-2 transition-all text-center ${
+                    value.backgroundPattern === bg.value
+                      ? 'border-brand-cyan shadow-md shadow-brand-cyan/20'
+                      : 'border-white/10 hover:border-white/20'
+                  }`}
+                >
+                  <AnimatedBgPreview type={bg.value} accent={accent} />
+                  <span className="text-[10px] text-white/50 mt-1 block">{bg.label}</span>
                 </button>
               ))}
             </div>
@@ -416,8 +438,81 @@ function PatternPreview({ pattern, accent }: { pattern: string; accent: string }
           <rect width={size} height={size} fill={`url(#p-cross-${pattern})`} />
         </svg>
       );
+    case 'hexagons':
+      return (
+        <svg width={size} height={size} className="mx-auto opacity-60">
+          <pattern id={`p-hex-${pattern}`} width="17" height="20" patternUnits="userSpaceOnUse">
+            <path d="M8.5 0 L17 5 L17 15 L8.5 20 L0 15 L0 5 Z" fill="none" stroke={color} strokeWidth="0.5" />
+          </pattern>
+          <rect width={size} height={size} fill={`url(#p-hex-${pattern})`} />
+        </svg>
+      );
+    case 'topography':
+      return (
+        <svg width={size} height={size} className="mx-auto opacity-60">
+          <path d="M5 10 Q15 5 25 12 Q35 20 45 10" fill="none" stroke={color} strokeWidth="0.5" />
+          <path d="M0 20 Q10 15 20 22 Q30 28 40 18" fill="none" stroke={color} strokeWidth="0.5" />
+          <path d="M5 30 Q15 25 25 32 Q35 38 45 28" fill="none" stroke={color} strokeWidth="0.5" />
+        </svg>
+      );
+    case 'circuit':
+      return (
+        <svg width={size} height={size} className="mx-auto opacity-60">
+          <path d="M5 5 H20 V15 H30 M10 25 H25 V35 M15 10 V30" fill="none" stroke={color} strokeWidth="0.5" />
+          <circle cx="5" cy="5" r="1.5" fill={color} />
+          <circle cx="25" cy="25" r="1.5" fill={color} />
+          <circle cx="35" cy="15" r="1.5" fill={color} />
+        </svg>
+      );
+    case 'confetti':
+      return (
+        <svg width={size} height={size} className="mx-auto opacity-60">
+          <rect x="5" y="8" width="3" height="6" rx="1" fill={color} transform="rotate(30 6 11)" />
+          <rect x="20" y="5" width="3" height="6" rx="1" fill={color} transform="rotate(-20 21 8)" />
+          <rect x="12" y="22" width="3" height="6" rx="1" fill={color} transform="rotate(45 13 25)" />
+          <rect x="30" y="20" width="3" height="6" rx="1" fill={color} transform="rotate(-15 31 23)" />
+          <circle cx="28" cy="8" r="2" fill={color} />
+          <circle cx="8" cy="30" r="2" fill={color} />
+        </svg>
+      );
+    case 'stars':
+      return (
+        <svg width={size} height={size} className="mx-auto opacity-60">
+          <path d="M10 2 L12 8 L18 8 L13 12 L15 18 L10 14 L5 18 L7 12 L2 8 L8 8 Z" fill={color} />
+          <path d="M30 15 L31.5 19 L35 19 L32.5 21.5 L33.5 25 L30 22.5 L26.5 25 L27.5 21.5 L25 19 L28.5 19 Z" fill={color} transform="scale(0.6)" />
+        </svg>
+      );
+    case 'zigzag':
+      return (
+        <svg width={size} height={size} className="mx-auto opacity-60">
+          <pattern id={`p-zigzag-${pattern}`} width="16" height="8" patternUnits="userSpaceOnUse">
+            <path d="M0 4 L4 0 L8 4 L12 0 L16 4" fill="none" stroke={color} strokeWidth="0.6" />
+          </pattern>
+          <rect width={size} height={size} fill={`url(#p-zigzag-${pattern})`} />
+        </svg>
+      );
     default:
       return <div className="w-10 h-10 bg-white/5 rounded mx-auto" />;
+  }
+}
+
+function AnimatedBgPreview({ type, accent }: { type: string; accent: string }) {
+  const baseClass = 'w-10 h-10 rounded-lg mx-auto overflow-hidden';
+  switch (type) {
+    case 'aurora':
+      return <div className={baseClass} style={{ background: `linear-gradient(135deg, ${accent}40, #D12BF230, ${accent}20)` }} />;
+    case 'mesh-gradient':
+      return <div className={baseClass} style={{ background: `radial-gradient(at 20% 30%, ${accent}30 0%, transparent 50%), radial-gradient(at 80% 70%, #D12BF225 0%, transparent 50%)` }} />;
+    case 'particles':
+      return <div className={baseClass} style={{ background: '#0a0a1a' }}><div className="w-1 h-1 rounded-full absolute" style={{ backgroundColor: accent, top: 8, left: 12 }} /><div className="w-0.5 h-0.5 rounded-full absolute" style={{ backgroundColor: accent, top: 20, left: 28 }} /></div>;
+    case 'waves-animated':
+      return <div className={baseClass} style={{ background: `linear-gradient(180deg, transparent, ${accent}30)` }} />;
+    case 'gradient-flow':
+      return <div className={baseClass} style={{ background: `linear-gradient(45deg, ${accent}30, #D12BF220, ${accent}15)` }} />;
+    case 'starfield':
+      return <div className={baseClass} style={{ background: '#050510' }}><div className="w-0.5 h-0.5 rounded-full bg-white/60 absolute" style={{ top: 8, left: 15 }} /><div className="w-0.5 h-0.5 rounded-full bg-white/40 absolute" style={{ top: 20, left: 28 }} /></div>;
+    default:
+      return <div className={`${baseClass} bg-white/5`} />;
   }
 }
 
