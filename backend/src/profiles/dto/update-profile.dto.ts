@@ -30,7 +30,7 @@ export const socialLinkSchema = z.object({
   platform: z.enum(EXPANDED_PLATFORMS),
   label: z.string().min(1).max(100),
   url: z.string().max(500).default(''),
-  order: z.number().int().min(0).max(50),
+  order: z.number().int().min(0).max(9999),
   startsAt: z.coerce.date().optional().nullable(),
   endsAt: z.coerce.date().optional().nullable(),
   linkType: z.enum(['link', 'header', 'embed', 'pix', 'file', 'map', 'phone', 'hackathon_meta']).optional().nullable(),
