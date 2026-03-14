@@ -69,6 +69,9 @@ export const LINK_STYLES = [
   { value: 'square', label: 'Quadrado' },
   { value: 'outline', label: 'Contorno' },
   { value: 'ghost', label: 'Transparente' },
+  { value: 'elevated', label: 'Elevado' },
+  { value: 'glassmorphism', label: 'Glassmorphism' },
+  { value: 'neon-border', label: 'Neon Border' },
 ] as const;
 
 export const ICON_STYLES = [
@@ -78,6 +81,11 @@ export const ICON_STYLES = [
   { value: 'neomorph', label: 'Neomorph' },
   { value: 'glass', label: 'Glass' },
   { value: 'gradient', label: 'Gradiente' },
+  { value: 'neon', label: 'Neon' },
+  { value: 'shadow', label: 'Sombra' },
+  { value: 'minimal', label: 'Minimal' },
+  { value: 'circle', label: 'Circulo' },
+  { value: 'soft', label: 'Soft' },
 ] as const;
 
 export const LINK_ANIMATIONS = [

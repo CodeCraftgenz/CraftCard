@@ -154,6 +154,12 @@ function getLinkClasses(style: string): string {
       return 'rounded-xl bg-transparent !border';
     case 'ghost':
       return 'rounded-xl bg-transparent';
+    case 'elevated':
+      return 'rounded-xl shadow-lg shadow-black/30';
+    case 'glassmorphism':
+      return 'rounded-xl backdrop-blur-md';
+    case 'neon-border':
+      return 'rounded-xl bg-transparent';
     default:
       return 'rounded-xl';
   }
@@ -330,6 +336,8 @@ export const CardPreview = memo(function CardPreview({
               const platColor = platformColors[link.platform] || accent;
               const isOutline = linkStyle === 'outline';
               const isGhost = linkStyle === 'ghost';
+              const isNeonBorder = linkStyle === 'neon-border';
+              const noLeftBorder = isOutline || isGhost || isNeonBorder;
 
               if (linkLayout === 'grid') {
                 const gic = getPreviewIconStyle(iconStyle, platColor, accent);
@@ -363,10 +371,11 @@ export const CardPreview = memo(function CardPreview({
                   className={`flex items-center gap-3 px-4 py-3 text-white font-medium transition-all cursor-pointer ${linkClass} ${linkAnimation === 'glow' ? 'hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]' : ''}`}
                   style={{
                     fontSize: '0.875em',
-                    backgroundColor: isGhost ? 'transparent' : isOutline ? 'transparent' : `${accent}20`,
-                    borderColor: isOutline ? `${accent}60` : undefined,
-                    borderWidth: isOutline ? 1 : undefined,
-                    borderLeft: !isOutline && !isGhost ? `3px solid ${accent}` : undefined,
+                    backgroundColor: isGhost || isNeonBorder ? 'transparent' : isOutline ? 'transparent' : `${accent}20`,
+                    borderColor: isOutline ? `${accent}60` : isNeonBorder ? `${accent}60` : undefined,
+                    borderWidth: isOutline || isNeonBorder ? 1 : undefined,
+                    borderLeft: !noLeftBorder ? `3px solid ${accent}` : undefined,
+                    ...(isNeonBorder ? { boxShadow: `0 0 6px ${accent}30, inset 0 0 6px ${accent}08` } : {}),
                   }}
                 >
                   {(() => { const lic = getPreviewIconStyle(iconStyle, platColor, accent); return (
@@ -398,6 +407,16 @@ function getPreviewIconStyle(iconStyle: string, bgColor: string, accent: string)
       return { style: { backgroundColor: `${bgColor}15`, border: `1px solid ${bgColor}30` }, iconColor: bgColor };
     case 'gradient':
       return { style: { background: `linear-gradient(135deg, ${bgColor}, ${bgColor}88)` }, iconColor: '#ffffff' };
+    case 'neon':
+      return { style: { backgroundColor: 'transparent', border: `1.5px solid ${bgColor}`, boxShadow: `0 0 6px ${bgColor}60, 0 0 16px ${bgColor}25, inset 0 0 6px ${bgColor}15` }, iconColor: bgColor };
+    case 'shadow':
+      return { style: { backgroundColor: bgColor, boxShadow: `0 3px 10px ${bgColor}50, 0 1px 4px rgba(0,0,0,0.3)` }, iconColor: '#ffffff' };
+    case 'minimal':
+      return { style: { backgroundColor: 'transparent' }, iconColor: bgColor };
+    case 'circle':
+      return { style: { backgroundColor: `${bgColor}18`, borderRadius: '50%' }, iconColor: bgColor };
+    case 'soft':
+      return { style: { backgroundColor: `${bgColor}12`, border: `1px solid ${bgColor}10` }, iconColor: bgColor };
     case 'default':
     default:
       return { style: { backgroundColor: `${accent}20` }, iconColor: bgColor };

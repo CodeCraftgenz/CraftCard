@@ -371,7 +371,10 @@ function LinkButton({
       whileHover={getHoverAnim(linkAnim)}
       whileTap={{ scale: 0.98 }}
       className={`flex items-center gap-4 px-5 py-3.5 backdrop-blur-xl text-white transition-all group ${getStyleClass(linkStyle)}`}
-      style={{ borderLeft: linkStyle !== 'ghost' ? `3px solid ${accent}` : undefined }}
+      style={{
+        borderLeft: linkStyle !== 'ghost' && linkStyle !== 'neon-border' ? `3px solid ${accent}` : undefined,
+        ...(linkStyle === 'neon-border' ? { border: `1px solid ${accent}60`, boxShadow: `0 0 8px ${accent}30, inset 0 0 8px ${accent}08` } : {}),
+      }}
     >
       <div
         className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconContainer.className}`}
@@ -397,6 +400,16 @@ function getIconContainerStyle(iconStyle: string, bgColor: string, accent: strin
       return { style: { backgroundColor: `${bgColor}15`, border: `1px solid ${bgColor}30`, boxShadow: `0 2px 8px ${bgColor}20`, backdropFilter: 'blur(8px)' }, className: '', iconColor: bgColor };
     case 'gradient':
       return { style: { background: `linear-gradient(135deg, ${bgColor}, ${bgColor}88)` }, className: '', iconColor: '#ffffff' };
+    case 'neon':
+      return { style: { backgroundColor: 'transparent', border: `1.5px solid ${bgColor}`, boxShadow: `0 0 8px ${bgColor}60, 0 0 20px ${bgColor}25, inset 0 0 8px ${bgColor}15` }, className: '', iconColor: bgColor };
+    case 'shadow':
+      return { style: { backgroundColor: bgColor, boxShadow: `0 4px 14px ${bgColor}50, 0 2px 6px rgba(0,0,0,0.3)` }, className: '', iconColor: '#ffffff' };
+    case 'minimal':
+      return { style: { backgroundColor: 'transparent' }, className: '', iconColor: bgColor };
+    case 'circle':
+      return { style: { backgroundColor: `${bgColor}18`, borderRadius: '50%' }, className: '!rounded-full', iconColor: bgColor };
+    case 'soft':
+      return { style: { backgroundColor: `${bgColor}12`, border: `1px solid ${bgColor}10` }, className: '', iconColor: bgColor };
     case 'default':
     default:
       return { style: { backgroundColor: `${accent}20` }, className: '', iconColor: bgColor };
@@ -409,6 +422,9 @@ function getStyleClass(style: string): string {
     case 'square': return 'rounded-none bg-white/5 border border-white/10 hover:bg-white/10';
     case 'outline': return 'rounded-2xl bg-transparent border border-white/20 hover:bg-white/5';
     case 'ghost': return 'rounded-2xl bg-transparent border-none hover:bg-white/5';
+    case 'elevated': return 'rounded-2xl bg-white/8 border border-white/5 shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40 hover:bg-white/10';
+    case 'glassmorphism': return 'rounded-2xl bg-white/[0.07] backdrop-blur-md border border-white/15 hover:bg-white/[0.12]';
+    case 'neon-border': return 'rounded-2xl bg-white/[0.03] border border-white/20 hover:bg-white/[0.06]';
     case 'rounded':
     default: return 'rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10';
   }
