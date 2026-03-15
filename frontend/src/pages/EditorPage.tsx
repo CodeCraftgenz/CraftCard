@@ -1029,7 +1029,7 @@ export function EditorPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,380px] gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,380px] gap-8 items-start">
           {/* Editor Form */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -2795,7 +2795,7 @@ export function EditorPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="lg:sticky lg:top-24 h-fit"
+            className="lg:sticky lg:top-8 self-start hidden lg:block"
           >
             <div className="flex items-center gap-2 mb-4">
               <Smartphone size={16} className="text-white/40" />

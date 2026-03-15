@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ExternalLink, MessageCircle, Instagram, Linkedin, Github, Globe, Mail, Youtube, Twitter, Music2, Link as LinkIcon } from 'lucide-react';
@@ -31,11 +32,25 @@ interface WidgetProfile {
 export function WidgetPage() {
   const { slug } = useParams<{ slug: string }>();
 
+  // Inject no-cache meta tags for iframe browsers
+  useEffect(() => {
+    const meta1 = document.createElement('meta');
+    meta1.httpEquiv = 'Cache-Control';
+    meta1.content = 'no-store, no-cache, must-revalidate';
+    document.head.appendChild(meta1);
+    const meta2 = document.createElement('meta');
+    meta2.httpEquiv = 'Pragma';
+    meta2.content = 'no-cache';
+    document.head.appendChild(meta2);
+    return () => { meta1.remove(); meta2.remove(); };
+  }, []);
+
   const { data: profile, isLoading, error } = useQuery<WidgetProfile>({
     queryKey: ['widget', slug],
-    queryFn: () => api.get(`/profile/${slug}`, { headers: { 'Cache-Control': 'no-cache' } }),
+    queryFn: () => api.get(`/profile/${slug}`),
     enabled: !!slug,
     staleTime: 0,
+    gcTime: 0,
     refetchOnMount: 'always',
   });
 

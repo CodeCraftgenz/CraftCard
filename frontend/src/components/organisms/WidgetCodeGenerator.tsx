@@ -19,7 +19,10 @@ export function WidgetCodeGenerator({ slug }: WidgetCodeGeneratorProps) {
 
   const selected = SIZES.find((s) => s.value === size)!;
   const widgetUrl = `${window.location.origin}/widget/${slug}`;
-  const embedCode = `<iframe src="${widgetUrl}" width="${selected.width}" height="${selected.height}" style="border:none;border-radius:16px;" title="CraftCard"></iframe>`;
+  // Embed code for clients — no cache buster (they control their own caching)
+  const embedCode = `<iframe src="${widgetUrl}" width="${selected.width}" height="${selected.height}" style="border:none;border-radius:16px;" title="CraftCard" loading="lazy"></iframe>`;
+  // Preview URL with cache buster so editor always shows fresh data
+  const previewUrl = `${widgetUrl}?v=${Date.now()}`;
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(embedCode);
@@ -68,7 +71,7 @@ export function WidgetCodeGenerator({ slug }: WidgetCodeGeneratorProps) {
           style={{ width: Math.min(selected.width, 280), height: Math.min(selected.height, 380) }}
         >
           <iframe
-            src={widgetUrl}
+            src={previewUrl}
             width="100%"
             height="100%"
             style={{ border: 'none', borderRadius: 16 }}
