@@ -184,6 +184,7 @@ export default function HackathonTeamTab({ accent }: HackathonTeamTabProps) {
                   </button>
                   <button
                     type="button"
+                    title="Recusar convite"
                     onClick={() => declineInvite.mutate(inv.id)}
                     disabled={declineInvite.isPending}
                     className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/40 border border-white/10 hover:bg-white/5 transition"
@@ -485,11 +486,13 @@ function EditTeamName({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         maxLength={40}
+        title="Nome da equipe"
         className="w-28 px-2 py-1 bg-white/5 border border-white/20 rounded-lg text-sm text-white focus:outline-none"
         autoFocus
       />
       <button
         type="button"
+        title="Salvar"
         onClick={() => { if (value.trim()) { onSave(value.trim()); setEditing(false); } }}
         disabled={isPending || !value.trim()}
         className="p-1 rounded text-white/60 hover:text-white transition"
@@ -499,6 +502,7 @@ function EditTeamName({
       </button>
       <button
         type="button"
+        title="Cancelar"
         onClick={() => setEditing(false)}
         className="p-1 rounded text-white/30 hover:text-white/60 transition"
       >
