@@ -242,7 +242,7 @@ export default function HackathonTeamTab({ accent }: HackathonTeamTabProps) {
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold text-white"
                     style={{ background: `linear-gradient(135deg, ${HACKATHON_CONFIG.senacBlue}, ${accent})` }}
                   >
-                    {team.name.charAt(0).toUpperCase()}
+                    {(team.name || 'E').charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-bold text-white truncate">{team.name}</h3>
@@ -276,7 +276,7 @@ export default function HackathonTeamTab({ accent }: HackathonTeamTabProps) {
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-white/30 text-sm font-bold">
-                              {member.displayName.charAt(0)}
+                              {(member.displayName || '?').charAt(0)}
                             </div>
                           )}
                         </div>
@@ -362,7 +362,7 @@ export default function HackathonTeamTab({ accent }: HackathonTeamTabProps) {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-white/30 text-sm font-bold">
-                          {p.displayName.charAt(0)}
+                          {(p.displayName || '?').charAt(0)}
                         </div>
                       )}
                     </div>
