@@ -1064,6 +1064,44 @@ export function PublicCardPage() {
             </button>
           </div>
 
+          {/* QR Code + Download Card */}
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <div className="p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm">
+              <CustomQrCode
+                url={pageUrl}
+                fgColor={accent}
+                bgColor="#1A1A2E"
+                size={140}
+                frameText={displayName}
+                showLogo={false}
+                showActions={false}
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleExportImage}
+                disabled={exporting}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium border border-white/10 bg-white/5 text-white/50 hover:text-white/80 hover:bg-white/10 transition disabled:opacity-40"
+              >
+                <Download size={12} />
+                {exporting ? 'Gerando...' : 'Baixar Cartão'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(pageUrl);
+                  setLinkCopied(true);
+                  setTimeout(() => setLinkCopied(false), 2000);
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium border border-white/10 bg-white/5 text-white/50 hover:text-white/80 hover:bg-white/10 transition"
+              >
+                {linkCopied ? <Check size={12} /> : <Copy size={12} />}
+                {linkCopied ? 'Copiado!' : 'Copiar Link'}
+              </button>
+            </div>
+          </div>
+
           {/* Org branding badge */}
           {orgB && (
             <div className="mt-8 flex justify-center">

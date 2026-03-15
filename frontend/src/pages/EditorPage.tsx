@@ -2753,9 +2753,26 @@ export function EditorPage() {
                   </button>
                 </div>
 
+                {/* Google Calendar Integration */}
+                <div className="mb-4 p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calendar size={14} className="text-blue-400" />
+                      <span className="text-xs text-white/60">Google Calendar</span>
+                    </div>
+                    <a
+                      href={`${API_URL}/bookings/google/connect`}
+                      className="text-[10px] px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 hover:bg-blue-500/20 transition"
+                    >
+                      Conectar
+                    </a>
+                  </div>
+                  <p className="text-[10px] text-white/30 mt-1">Agendamentos serão sincronizados automaticamente com seu Google Calendar</p>
+                </div>
+
                 {/* Quick Slot Config */}
                 <div className="space-y-3 mb-4">
-                  <p className="text-xs text-white/40">Configure seus horários disponíveis. Visitantes poderao agendar reunioes.</p>
+                  <p className="text-xs text-white/40">Configure seus horários disponíveis. Visitantes poderão agendar reuniões.</p>
                   {['Seg', 'Ter', 'Qua', 'Qui', 'Sex'].map((day, i) => {
                     const dayOfWeek = i + 1; // 1=Mon, 5=Fri
                     const slot = mySlots?.find((s) => s.dayOfWeek === dayOfWeek);

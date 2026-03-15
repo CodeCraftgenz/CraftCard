@@ -38,6 +38,7 @@
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "google-auth-library": "^9.15.1",
+    "googleapis": "^171.4.0",
     "helmet": "^8.0.0",
     "ioredis": "^5.10.0",
     "mercadopago": "^2.12.0",

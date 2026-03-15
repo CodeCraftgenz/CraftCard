@@ -4,6 +4,7 @@ import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { InAppNotificationsService } from '../notifications/in-app-notifications.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
+import { GoogleCalendarService } from './google-calendar.service';
 import { AppException } from '../common/exceptions/app.exception';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class BookingsService {
     private readonly notificationsService: NotificationsService,
     private readonly inAppService: InAppNotificationsService,
     private readonly webhooksService: WebhooksService,
+    private readonly googleCalendar: GoogleCalendarService,
   ) {}
 
   async getSlots(slug: string) {
@@ -145,6 +147,16 @@ export class BookingsService {
       date: dateStr,
       time: data.time,
       notes: data.notes || null,
+    }).catch(() => {});
+
+    // Google Calendar sync (fire-and-forget)
+    this.googleCalendar.createBookingEvent(profile.userId, {
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      date: dateStr,
+      time: data.time,
+      notes: data.notes,
     }).catch(() => {});
 
     return booking;

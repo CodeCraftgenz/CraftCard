@@ -22,6 +22,7 @@ model User {
   plan                   String    @default("FREE") // FREE, PRO, BUSINESS, ENTERPRISE
   role                   String    @default("USER") @db.VarChar(20) // USER, ADMIN, SUPER_ADMIN
   apiKey                 String?   @unique @map("api_key") @db.VarChar(64)
+  googleCalendarToken    String?   @map("google_calendar_token") @db.Text
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
 
