@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Crown, Building2 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
+import { api } from '@/lib/api';
 
 const PASSWORD_RULES = [
   { test: (v: string) => v.length >= 8, label: 'Mínimo 8 caracteres' },
@@ -17,6 +18,12 @@ export function RegisterPage() {
   const redirectTo = searchParams.get('redirect') || '/editor';
   const inviteToken = searchParams.get('invite') || undefined;
   const inviteEmail = searchParams.get('email') || '';
+
+  // Checkout intent from pricing page
+  const checkoutPlan = searchParams.get('plan') as 'PRO' | 'BUSINESS' | null;
+  const checkoutSeats = parseInt(searchParams.get('seats') || '1');
+  const checkoutCycle = (searchParams.get('cycle') || 'YEARLY') as 'MONTHLY' | 'YEARLY';
+  const hasCheckoutIntent = !!checkoutPlan;
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState(inviteEmail);
@@ -48,13 +55,31 @@ export function RegisterPage() {
     setIsSubmitting(true);
     try {
       const result = await register({ email, name, password, confirmPassword, inviteToken });
+
+      // Auto-checkout if coming from pricing page
+      if (hasCheckoutIntent && checkoutPlan) {
+        try {
+          const data: { url: string } = await api.post('/payments/checkout', {
+            plan: checkoutPlan,
+            billingCycle: checkoutCycle,
+            seatsCount: checkoutSeats,
+          });
+          window.location.href = data.url;
+          return;
+        } catch {
+          // Checkout failed — still redirect to billing
+          navigate('/billing');
+          return;
+        }
+      }
+
       if (result.joinedOrg) {
         navigate(`/org/${result.joinedOrg.slug}`);
       } else {
         navigate(redirectTo);
       }
-    } catch (err: any) {
-      setError(err?.message || 'Erro ao criar conta. Tente novamente.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao criar conta. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
@@ -68,9 +93,12 @@ export function RegisterPage() {
     );
   }
 
-  const loginUrl = inviteToken
-    ? `/login?redirect=${encodeURIComponent(redirectTo)}`
-    : `/login?redirect=${encodeURIComponent(redirectTo)}`;
+  const loginParams = new URLSearchParams();
+  loginParams.set('redirect', redirectTo);
+  if (checkoutPlan) loginParams.set('plan', checkoutPlan);
+  if (checkoutSeats > 1) loginParams.set('seats', String(checkoutSeats));
+  if (checkoutCycle) loginParams.set('cycle', checkoutCycle);
+  const loginUrl = `/login?${loginParams.toString()}`;
 
   return (
     <div className="min-h-screen bg-[#0B0E1A] flex items-center justify-center px-4 relative overflow-hidden">
@@ -95,8 +123,24 @@ export function RegisterPage() {
           </Link>
           <h1 className="text-2xl font-bold text-white mb-1">Criar conta</h1>
           <p className="text-sm text-white/40">
-            {inviteToken ? 'Crie sua conta para entrar na organização' : 'Comece a criar seu cartão digital'}
+            {inviteToken ? 'Crie sua conta para entrar na organização' : hasCheckoutIntent ? 'Crie sua conta para continuar com a assinatura' : 'Comece a criar seu cartão digital'}
           </p>
+
+          {/* Checkout intent banner */}
+          {hasCheckoutIntent && (
+            <div className="mt-4 p-3 rounded-xl bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-indigo-500/20">
+              <div className="flex items-center gap-2">
+                {checkoutPlan === 'PRO' ? <Crown size={16} className="text-indigo-400" /> : <Building2 size={16} className="text-indigo-400" />}
+                <span className="text-sm font-semibold text-white">Plano {checkoutPlan}</span>
+                {checkoutPlan === 'BUSINESS' && (
+                  <span className="text-xs text-indigo-300/60">· {checkoutSeats} membros</span>
+                )}
+              </div>
+              <p className="text-[11px] text-white/40 mt-1">
+                Após criar sua conta, você será redirecionado para o pagamento seguro.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Form */}

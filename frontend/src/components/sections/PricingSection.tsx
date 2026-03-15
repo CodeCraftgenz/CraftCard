@@ -105,8 +105,12 @@ export function PricingSection() {
   const businessSavingsPercent = Math.round((1 - businessPricePerSeat / 39.9) * 100);
 
   const handleCheckout = async (plan: 'PRO' | 'BUSINESS') => {
+    const seats = plan === 'BUSINESS' ? businessSeats : 1;
+    const params = `plan=${plan}&seats=${seats}&cycle=${billingCycle}`;
+
     if (!isAuthenticated) {
-      window.location.href = '/login';
+      // Redirect to register with checkout intent preserved in URL
+      window.location.href = `/register?${params}&redirect=/billing`;
       return;
     }
     setLoadingPlan(plan);
@@ -114,7 +118,7 @@ export function PricingSection() {
       const data: { url: string } = await api.post('/payments/checkout', {
         plan,
         billingCycle,
-        seatsCount: plan === 'BUSINESS' ? businessSeats : 1,
+        seatsCount: seats,
       });
       window.location.href = data.url;
     } catch {

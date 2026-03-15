@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Crown, Building2 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
 import { api } from '@/lib/api';
 import { GOOGLE_CLIENT_ID } from '@/lib/constants';
@@ -87,6 +87,10 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/editor';
+  const checkoutPlan = searchParams.get('plan') as 'PRO' | 'BUSINESS' | null;
+  const checkoutSeats = parseInt(searchParams.get('seats') || '1');
+  const checkoutCycle = (searchParams.get('cycle') || 'YEARLY') as 'MONTHLY' | 'YEARLY';
+  const hasCheckoutIntent = !!checkoutPlan;
   const buttonRef = useRef<HTMLDivElement>(null);
   const [sdkFailed, setSdkFailed] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -112,16 +116,33 @@ export function LoginPage() {
     }).catch(() => {});
   }, [redirectTo]);
 
+  const autoCheckout = useCallback(async () => {
+    if (!hasCheckoutIntent || !checkoutPlan) return false;
+    try {
+      const data: { url: string } = await api.post('/payments/checkout', {
+        plan: checkoutPlan,
+        billingCycle: checkoutCycle,
+        seatsCount: checkoutSeats,
+      });
+      window.location.href = data.url;
+      return true;
+    } catch {
+      navigate('/billing');
+      return true;
+    }
+  }, [hasCheckoutIntent, checkoutPlan, checkoutCycle, checkoutSeats, navigate]);
+
   const handleGoogleCallback = useCallback(async (response: { credential: string }) => {
     try {
       setLoginError('');
       await login(response.credential);
+      if (await autoCheckout()) return;
       navigate(redirectTo);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Google login failed:', err);
-      setLoginError(err?.message || 'Erro ao fazer login. Tente novamente.');
+      setLoginError(err instanceof Error ? err.message : 'Erro ao fazer login. Tente novamente.');
     }
-  }, [login, navigate, redirectTo]);
+  }, [login, navigate, redirectTo, autoCheckout]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -188,9 +209,10 @@ export function LoginPage() {
     setIsSubmitting(true);
     try {
       await loginWithPassword(email, password);
+      if (await autoCheckout()) return;
       navigate(redirectTo);
-    } catch (err: any) {
-      setLoginError(err?.message || 'Credenciais invalidas. Verifique email e senha.');
+    } catch (err: unknown) {
+      setLoginError(err instanceof Error ? err.message : 'Credenciais inválidas. Verifique email e senha.');
     } finally {
       setIsSubmitting(false);
     }
@@ -210,9 +232,15 @@ export function LoginPage() {
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&prompt=select_account`;
   };
 
-  const registerUrl = invitePreview
-    ? `/register?invite=${invitePreview.token}&email=${encodeURIComponent(invitePreview.email)}&redirect=${encodeURIComponent(redirectTo)}`
-    : `/register?redirect=${encodeURIComponent(redirectTo)}`;
+  const regParams = new URLSearchParams({ redirect: redirectTo });
+  if (invitePreview) {
+    regParams.set('invite', invitePreview.token);
+    regParams.set('email', invitePreview.email);
+  }
+  if (checkoutPlan) regParams.set('plan', checkoutPlan);
+  if (checkoutSeats > 1) regParams.set('seats', String(checkoutSeats));
+  if (checkoutCycle !== 'YEARLY') regParams.set('cycle', checkoutCycle);
+  const registerUrl = `/register?${regParams.toString()}`;
 
   return (
     <div className="min-h-screen bg-[#0B0E1A] flex relative overflow-hidden">
@@ -250,6 +278,22 @@ export function LoginPage() {
               Tecnologia para maximizar resultados.
             </p>
           </div>
+
+          {/* Checkout intent banner */}
+          {hasCheckoutIntent && !invitePreview && (
+            <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-indigo-500/20">
+              <div className="flex items-center gap-2">
+                {checkoutPlan === 'PRO' ? <Crown size={16} className="text-indigo-400" /> : <Building2 size={16} className="text-indigo-400" />}
+                <span className="text-sm font-semibold text-white">Assinando o plano {checkoutPlan}</span>
+                {checkoutPlan === 'BUSINESS' && (
+                  <span className="text-xs text-indigo-300/60">· {checkoutSeats} membros</span>
+                )}
+              </div>
+              <p className="text-[11px] text-white/40 mt-1">
+                Faça login para continuar com o pagamento seguro.
+              </p>
+            </div>
+          )}
 
           {/* Invite banner */}
           {invitePreview && (
