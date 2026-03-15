@@ -230,8 +230,13 @@ export default function HackathonOnboarding() {
       });
 
       setStep('done');
-    } catch {
-      setError('Erro ao salvar dados');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('unauthorized')) {
+        setError('Sessão expirada. Por favor, recarregue a página e faça login novamente.');
+      } else {
+        setError('Erro ao salvar dados. Tente novamente.');
+      }
     } finally {
       setLoading(false);
     }
