@@ -339,7 +339,7 @@ export function PricingSection() {
               </div>
 
               <a
-                href="https://wa.me/5518997249438?text=Olá! Tenho interesse no plano Enterprise do CraftCard para minha empresa."
+                href="https://wa.me/5535999358856?text=Olá! Tenho interesse no plano Enterprise do CraftCard para minha empresa. Gostaria de saber mais sobre preços e funcionalidades. 🚀"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-glossy btn-glow-hover group w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl gradient-bg text-white font-semibold transition-all shadow-lg shadow-violet-600/25 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/50"
@@ -490,7 +490,7 @@ export function PricingSection() {
               </button>
 
               <p className="text-center text-[10px] text-white/20">
-                Precisa de mais de 100 membros? <a href="https://wa.me/5518997249438?text=Interesse no Enterprise" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Fale com vendas</a>
+                Precisa de mais de 100 membros? <a href="https://wa.me/5535999358856?text=Olá! Preciso do plano Enterprise para mais de 100 colaboradores. Podem me ajudar? 🏢" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Fale com vendas</a>
               </p>
             </div>
           </motion.div>

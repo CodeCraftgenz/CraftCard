@@ -145,7 +145,7 @@ export function BillingPage() {
                     price="Sob Consulta"
                     period=""
                     features={['Tudo do Business', 'Domínio customizado', 'API Keys', 'SLA 99.9%', 'Suporte VIP']}
-                    onSelect={() => { window.open('https://wa.me/5518997249438?text=Interesse no Enterprise', '_blank'); }}
+                    onSelect={() => { window.open('https://wa.me/5535999358856?text=Olá! Tenho interesse no plano Enterprise do CraftCard. Gostaria de um orçamento personalizado. 🚀', '_blank'); }}
                     loading={false}
                     highlight
                     cta="Falar com Vendas"
@@ -167,7 +167,7 @@ export function BillingPage() {
                     price="Sob Consulta"
                     period=""
                     features={['Tudo do Business', 'Domínio customizado', 'API Keys', 'SLA 99.9%']}
-                    onSelect={() => { window.open('https://wa.me/5518997249438?text=Interesse no Enterprise', '_blank'); }}
+                    onSelect={() => { window.open('https://wa.me/5535999358856?text=Olá! Tenho interesse no plano Enterprise do CraftCard. Gostaria de um orçamento personalizado. 🚀', '_blank'); }}
                     loading={false}
                     highlight
                     cta="Falar com Vendas"
@@ -180,7 +180,7 @@ export function BillingPage() {
                   price="Sob Consulta"
                   period=""
                   features={['Tudo do Business', 'Domínio customizado', 'API Keys', 'SLA 99.9%']}
-                  onSelect={() => { window.open('https://wa.me/5518997249438?text=Interesse no Enterprise', '_blank'); }}
+                  onSelect={() => { window.open('https://wa.me/5535999358856?text=Olá! Tenho interesse no plano Enterprise do CraftCard. Gostaria de um orçamento personalizado. 🚀', '_blank'); }}
                   loading={false}
                   highlight
                 />
