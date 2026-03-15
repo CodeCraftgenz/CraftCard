@@ -11,12 +11,12 @@ import { PAYMENT_GATEWAY, type PaymentGateway } from './gateway/payment-gateway.
 const PRO_MONTHLY = 19.9;
 const PRO_YEARLY_MONTH = 15.9; // ~20% discount
 
-// BUSINESS tiered pricing (per seat/month) — progressive volume discounts
+// BUSINESS tiered pricing (per seat/month) — 5 to 100 seats
 const BUSINESS_TIERS = [
   { min: 1, max: 10, price: 39.9 },
-  { min: 11, max: 20, price: 34.9 },
-  { min: 21, max: 35, price: 29.9 },
-  { min: 36, max: 50, price: 24.9 },
+  { min: 11, max: 25, price: 34.9 },
+  { min: 26, max: 50, price: 29.9 },
+  { min: 51, max: 100, price: 22.9 },
 ];
 
 /** Calculate per-seat price based on volume tier */

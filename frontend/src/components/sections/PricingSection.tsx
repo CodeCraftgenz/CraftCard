@@ -17,7 +17,7 @@ interface PlanFeature {
 
 const features: PlanFeature[] = [
   { label: 'Cartões pessoais', free: '1', pro: '3', business: '3', enterprise: '3' },
-  { label: 'Licenças (seats)', free: false, pro: '1', business: '5-50', enterprise: 'Sob consulta' },
+  { label: 'Licenças (seats)', free: false, pro: '1', business: '5-100', enterprise: '101+' },
   { label: 'Botões de links no cartão', hint: 'Redes sociais e links personalizados exibidos no seu cartão digital', free: '5', pro: '20', business: '50', enterprise: '50' },
   { label: 'Temas visuais', free: '3', pro: 'Todos', business: 'Todos', enterprise: 'Todos' },
   { label: 'Conexões entre perfis', hint: 'Conecte-se com outros usuários e apareça na rede de contatos deles', free: '10', pro: '100', business: '500', enterprise: '1000' },
@@ -92,12 +92,12 @@ export function PricingSection() {
   const isYearly = billingCycle === 'YEARLY';
   const proPrice = isYearly ? 15.9 : 19.9;
 
-  // Tiered pricing for BUSINESS — progressive volume discounts (max 50 seats)
+  // Tiered pricing for BUSINESS — 5 to 100 seats
   const getBusinessTierPrice = (seats: number): number => {
-    if (seats <= 10) return 39.9;       // Base price
-    if (seats <= 20) return 34.9;       // ~12% off
-    if (seats <= 35) return 29.9;       // ~25% off
-    return 24.9;                         // ~38% off (36-50 seats)
+    if (seats <= 10) return 39.9;
+    if (seats <= 25) return 34.9;
+    if (seats <= 50) return 29.9;
+    return 22.9; // 51-100
   };
   const businessBasePricePerSeat = getBusinessTierPrice(businessSeats);
   const businessPricePerSeat = isYearly ? Math.round(businessBasePricePerSeat * 0.8 * 100) / 100 : businessBasePricePerSeat;
@@ -276,11 +276,11 @@ export function PricingSection() {
               <p className="text-xs text-slate-600 mb-3">Gestão de equipe centralizada</p>
               <div className="flex items-baseline gap-1 flex-wrap">
                 <span className="text-sm text-white/40 line-through">R$49,90</span>
-                <span className="font-heading text-3xl sm:text-4xl font-extrabold text-white">R${(isYearly ? Math.round(24.9 * 0.8 * 100) / 100 : 24.9).toFixed(2).replace('.', ',')}</span>
+                <span className="font-heading text-3xl sm:text-4xl font-extrabold text-white">R${(isYearly ? Math.round(22.9 * 0.8 * 100) / 100 : 22.9).toFixed(2).replace('.', ',')}</span>
               </div>
-              <p className="text-xs text-slate-500 mt-1">a partir de /mês por seat · 5 a 50 membros</p>
+              <p className="text-xs text-slate-500 mt-1">a partir de /mês por seat · 5 a 100 membros</p>
               <p className="text-xs mt-1">
-                <span className="text-emerald-400 font-semibold">Até 38% OFF por volume</span>
+                <span className="text-emerald-400 font-semibold">Até 43% OFF por volume</span>
                 {isYearly && <span className="text-white/30"> + 20% desconto anual</span>}
               </p>
             </div>
@@ -325,7 +325,7 @@ export function PricingSection() {
 
               <div className="mb-6">
                 <p className="text-sm text-violet-400 font-semibold uppercase tracking-wider mb-1">Enterprise</p>
-                <p className="text-xs text-slate-600 mb-3">+50 colaboradores · vendas complexas</p>
+                <p className="text-xs text-slate-600 mb-3">+100 colaboradores · vendas complexas</p>
                 <div className="flex items-baseline gap-1">
                   <span className="font-heading text-3xl font-extrabold text-white">Sob Consulta</span>
                 </div>
@@ -438,7 +438,7 @@ export function PricingSection() {
               <input
                 type="range"
                 min={5}
-                max={50}
+                max={100}
                 value={businessSeats}
                 onChange={(e) => setBusinessSeats(Number(e.target.value))}
                 className="w-full h-2.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-indigo-500"
@@ -449,9 +449,9 @@ export function PricingSection() {
               <div className="grid grid-cols-4 gap-1.5">
                 {[
                   { range: '5-10', price: 39.9, active: businessSeats <= 10 },
-                  { range: '11-20', price: 34.9, active: businessSeats > 10 && businessSeats <= 20 },
-                  { range: '21-35', price: 29.9, active: businessSeats > 20 && businessSeats <= 35 },
-                  { range: '36-50', price: 24.9, active: businessSeats > 35 },
+                  { range: '11-25', price: 34.9, active: businessSeats > 10 && businessSeats <= 25 },
+                  { range: '26-50', price: 29.9, active: businessSeats > 25 && businessSeats <= 50 },
+                  { range: '51-100', price: 22.9, active: businessSeats > 50 },
                 ].map((tier) => (
                   <div
                     key={tier.range}
@@ -490,7 +490,7 @@ export function PricingSection() {
               </button>
 
               <p className="text-center text-[10px] text-white/20">
-                Precisa de mais de 50 membros? <a href="https://wa.me/5518997249438?text=Interesse no Enterprise" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Fale com vendas</a>
+                Precisa de mais de 100 membros? <a href="https://wa.me/5518997249438?text=Interesse no Enterprise" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Fale com vendas</a>
               </p>
             </div>
           </motion.div>

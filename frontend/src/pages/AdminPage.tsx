@@ -837,7 +837,7 @@ function StatCard({ label, value, icon: Icon }: {
 function EnterpriseTab() {
   const [email, setEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
-  const [seats, setSeats] = useState(100);
+  const [seats, setSeats] = useState(150);
   const [cycle, setCycle] = useState<'MONTHLY' | 'YEARLY'>('YEARLY');
   const [activating, setActivating] = useState(false);
   const [result, setResult] = useState<{ success: boolean; isNewUser: boolean; pricing: Record<string, unknown> } | null>(null);
@@ -845,23 +845,22 @@ function EnterpriseTab() {
 
   // Tiered pricing calculation (mirrors backend)
   const getTierPrice = (s: number) => {
-    if (s <= 100) return 29.9;
-    if (s <= 250) return 24.9;
-    if (s <= 500) return 19.9;
-    if (s <= 1000) return 14.9;
-    return 9.9;
+    if (s <= 250) return 19.9;
+    if (s <= 500) return 14.9;
+    if (s <= 1000) return 9.9;
+    return 7.9;
   };
   const pricePerSeat = Math.round(getTierPrice(seats) * (cycle === 'YEARLY' ? 0.8 : 1) * 100) / 100;
   const monthlyTotal = Math.round(pricePerSeat * seats * 100) / 100;
   const yearlyTotal = Math.round(monthlyTotal * 12 * 100) / 100;
-  const discount = Math.round((1 - pricePerSeat / 29.9) * 100);
+  const discount = Math.round((1 - pricePerSeat / 19.9) * 100);
 
   useEffect(() => {
     api.get('/admin/enterprise/clients').then((data: unknown) => setClients(data as Array<Record<string, unknown>>)).catch(() => {});
   }, [result]);
 
   const handleActivate = async () => {
-    if (!email || !companyName || seats < 50) return;
+    if (!email || !companyName || seats < 101) return;
     setActivating(true);
     try {
       const data: unknown = await api.post('/admin/enterprise/activate', { email, companyName, seats, billingCycle: cycle });
@@ -911,11 +910,10 @@ function EnterpriseTab() {
               <span className="text-sm text-white font-semibold">{seats} licenças</span>
               <span className="text-xs text-violet-300">R${pricePerSeat.toFixed(2).replace('.', ',')}/seat</span>
             </div>
-            <input type="range" min={50} max={1000} step={10} value={seats} onChange={(e) => setSeats(Number(e.target.value))} className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-violet-500" title="Licenças" />
+            <input type="range" min={101} max={2000} step={10} value={seats} onChange={(e) => setSeats(Number(e.target.value))} className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-violet-500" title="Licenças" />
             <div className="grid grid-cols-5 gap-1 mt-2 text-[8px]">
               {[
-                { range: '50-100', active: seats <= 100 },
-                { range: '101-250', active: seats > 100 && seats <= 250 },
+                { range: '101-250', active: seats <= 250 },
                 { range: '251-500', active: seats > 250 && seats <= 500 },
                 { range: '501-1k', active: seats > 500 && seats <= 1000 },
                 { range: '1k+', active: seats > 1000 },
@@ -928,7 +926,7 @@ function EnterpriseTab() {
           <button
             type="button"
             onClick={handleActivate}
-            disabled={activating || !email || !companyName || seats < 50}
+            disabled={activating || !email || !companyName || seats < 101}
             className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold text-sm transition hover:brightness-110 disabled:opacity-40"
           >
             {activating ? 'Ativando...' : 'Ativar Enterprise e Enviar Email'}
@@ -962,8 +960,8 @@ function EnterpriseTab() {
           </div>
 
           <div className="text-[10px] text-white/20 space-y-1">
-            <p>50-100: R$29,90 · 101-250: R$24,90 · 251-500: R$19,90</p>
-            <p>501-1000: R$14,90 · 1000+: R$9,90</p>
+            <p>101-250: R$19,90 · 251-500: R$14,90</p>
+            <p>501-1000: R$9,90 · 1000+: R$7,90</p>
           </div>
         </div>
       </div>
