@@ -603,7 +603,7 @@ export function EditorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-bg-dark text-white overflow-x-hidden">
+    <div className="min-h-screen bg-brand-bg-dark text-white" style={{ overflowX: 'clip' }}>
       <Header />
 
       {/* Onboarding Wizard */}
