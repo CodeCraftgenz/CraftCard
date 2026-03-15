@@ -55,15 +55,6 @@ export function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       <div className="absolute inset-0">
-        <img
-          src="/hero-tech.jpg"
-          alt=""
-          role="presentation"
-          className="absolute inset-0 w-full h-full object-cover opacity-30"
-          loading="eager"
-          decoding="async"
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-        />
         <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/80 via-[#020617]/70 to-[#020617]/95" />
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600/[0.08] via-indigo-600/[0.05] to-violet-700/[0.06]" />
       </div>
