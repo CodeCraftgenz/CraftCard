@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, X, ArrowRight, Building2, Crown, Info, GraduationCap } from 'lucide-react';
+import { Check, X, ArrowRight, Building2, Crown, Info, GraduationCap, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
 import { api } from '@/lib/api';
@@ -17,7 +17,7 @@ interface PlanFeature {
 
 const features: PlanFeature[] = [
   { label: 'Cartões pessoais', free: '1', pro: '3', business: '3', enterprise: '3' },
-  { label: 'Assentos na organização', free: false, pro: false, business: 'Até 10', enterprise: 'Até 10' },
+  { label: 'Licenças (seats)', free: false, pro: '1', business: '5-50', enterprise: 'Sob consulta' },
   { label: 'Botões de links no cartão', hint: 'Redes sociais e links personalizados exibidos no seu cartão digital', free: '5', pro: '20', business: '50', enterprise: '50' },
   { label: 'Temas visuais', free: '3', pro: 'Todos', business: 'Todos', enterprise: 'Todos' },
   { label: 'Conexões entre perfis', hint: 'Conecte-se com outros usuários e apareça na rede de contatos deles', free: '10', pro: '100', business: '500', enterprise: '1000' },
@@ -38,8 +38,11 @@ const features: PlanFeature[] = [
   { label: 'Mapa de conexões', hint: 'Visualize onde suas conexões foram feitas com geolocalização', free: false, pro: true, business: true, enterprise: true },
   { label: 'Tags de conexões', hint: 'Categorize conexões com etiquetas coloridas', free: false, pro: true, business: true, enterprise: true },
   { label: 'Wrapped anual', hint: 'Resumo anual das suas conexões estilo Spotify Wrapped', free: false, pro: true, business: true, enterprise: true },
+  { label: 'CRM de Conexões', hint: 'Timeline, mapa, tags e wrapped anual dos seus contatos', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Integrações (Webhooks)', hint: 'RD Station, HubSpot, Salesforce, Zapier', free: false, pro: false, business: true, enterprise: true },
+  { label: 'API Keys', hint: 'Bearer token para integração com seu ERP/sistema', free: false, pro: false, business: false, enterprise: true },
   { label: 'Domínio customizado', hint: 'Use o endereço da sua empresa, ex: cartões.suaempresa.com.br', free: false, pro: false, business: false, enterprise: true },
-  { label: 'Marca d\'agua CraftCard', free: 'Sim', pro: 'Nao', business: 'Nao', enterprise: 'Nao' },
+  { label: 'SLA 99.9% + Suporte VIP', free: false, pro: false, business: false, enterprise: true },
 ];
 
 function FeatureRow({ label, hint, value, highlighted }: { label: string; hint?: string; value: boolean | string; highlighted?: boolean }) {
@@ -80,13 +83,25 @@ export function PricingSection() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'YEARLY'>('YEARLY');
   const [businessSeats, setBusinessSeats] = useState(5);
+  const [showAllFeatures, setShowAllFeatures] = useState(false);
   const { data: hackathonSetting } = usePublicSetting('hackathon_active');
   const isHackathonActive = hackathonSetting?.value === 'true';
+  const visibleFeatures = showAllFeatures ? features : features.slice(0, 8);
 
   const isYearly = billingCycle === 'YEARLY';
-  const proPrice = isYearly ? 15.9 : 19.9; // ~20% discount yearly
-  const businessPricePerSeat = isYearly ? 39.9 : 49.9;
+  const proPrice = isYearly ? 15.9 : 19.9;
+
+  // Tiered pricing for BUSINESS — progressive volume discounts (max 50 seats)
+  const getBusinessTierPrice = (seats: number): number => {
+    if (seats <= 10) return 39.9;       // Base price
+    if (seats <= 20) return 34.9;       // ~12% off
+    if (seats <= 35) return 29.9;       // ~25% off
+    return 24.9;                         // ~38% off (36-50 seats)
+  };
+  const businessBasePricePerSeat = getBusinessTierPrice(businessSeats);
+  const businessPricePerSeat = isYearly ? Math.round(businessBasePricePerSeat * 0.8 * 100) / 100 : businessBasePricePerSeat;
   const businessTotal = Math.round(businessPricePerSeat * businessSeats * 100) / 100;
+  const businessSavingsPercent = Math.round((1 - businessPricePerSeat / 39.9) * 100);
 
   const handleCheckout = async (plan: 'PRO' | 'BUSINESS') => {
     if (!isAuthenticated) {
@@ -165,7 +180,7 @@ export function PricingSection() {
             </div>
 
             <div className="space-y-2.5 mb-8 flex-1">
-              {features.map((f, i) => (
+              {visibleFeatures.map((f, i) => (
                 <FeatureRow key={i} label={f.label} hint={f.hint} value={f.free} />
               ))}
             </div>
@@ -219,7 +234,7 @@ export function PricingSection() {
               </div>
 
               <div className="space-y-2.5 mb-8 flex-1">
-                {features.map((f, i) => (
+                {visibleFeatures.map((f, i) => (
                   <FeatureRow key={i} label={f.label} hint={f.hint} value={f.pro} highlighted />
                 ))}
               </div>
@@ -254,24 +269,29 @@ export function PricingSection() {
             <div className="mb-6">
               <p className="text-sm text-indigo-400 font-semibold uppercase tracking-wider mb-1">Business</p>
               <p className="text-xs text-slate-600 mb-3">Gestão de equipe centralizada</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-base text-white/40 line-through">R$79,90</span>
-                <span className="font-heading text-4xl font-extrabold text-white">R${businessPricePerSeat.toFixed(2).replace('.', ',')}</span>
-                <span className="text-sm text-slate-500">/mês por usuário</span>
+              <div className="flex items-baseline gap-1 flex-wrap">
+                {businessSavingsPercent > 0 && <span className="text-sm text-white/40 line-through">R$49,90</span>}
+                <span className="font-heading text-3xl sm:text-4xl font-extrabold text-white">R${businessPricePerSeat.toFixed(2).replace('.', ',')}</span>
+                <span className="text-xs text-slate-500">/mês por seat</span>
               </div>
-              {isYearly && (
-                <p className="text-sm mt-1">
-                  <span className="text-emerald-400 font-semibold">Economize 50%</span>
-                  <span className="text-white/30"> · cobrado anualmente</span>
-                </p>
-              )}
+              <p className="text-xs mt-1">
+                {businessSavingsPercent > 0 ? (
+                  <><span className="text-emerald-400 font-semibold">{businessSavingsPercent}% OFF por volume</span><span className="text-white/30"> · {businessSeats}× R${businessPricePerSeat.toFixed(2).replace('.', ',')}</span></>
+                ) : (
+                  <span className="text-white/30">{businessSeats} membros × R${businessPricePerSeat.toFixed(2).replace('.', ',')}</span>
+                )}
+              </p>
 
-              {/* Seats slider */}
-              <div className="mt-4 space-y-2">
+              {/* Seats selector — clear UI */}
+              <div className="mt-4 p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400">{businessSeats} colaboradores</span>
-                  <span className="text-sm font-bold text-white">R${businessTotal.toFixed(2).replace('.', ',')}
-                    <span className="text-slate-500 font-normal text-xs">/{isYearly ? 'mês' : 'mês'}</span>
+                  <div className="flex items-center gap-2">
+                    <Users size={14} className="text-indigo-400" />
+                    <span className="text-sm font-semibold text-white">{businessSeats} colaboradores</span>
+                  </div>
+                  <span className="text-lg font-bold text-white">
+                    R${businessTotal.toFixed(2).replace('.', ',')}
+                    <span className="text-slate-500 font-normal text-[10px]">/mês</span>
                   </span>
                 </div>
                 <input
@@ -280,18 +300,20 @@ export function PricingSection() {
                   max={50}
                   value={businessSeats}
                   onChange={(e) => setBusinessSeats(Number(e.target.value))}
-                  className="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-indigo-500"
+                  className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-indigo-500"
                   title="Número de colaboradores"
                 />
-                <div className="flex justify-between text-[10px] text-slate-600">
-                  <span>5 min</span>
-                  <span>50 max</span>
+                <div className="grid grid-cols-4 gap-1 text-[8px]">
+                  <span className={`text-center py-0.5 rounded ${businessSeats <= 10 ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-slate-600'}`}>5-10</span>
+                  <span className={`text-center py-0.5 rounded ${businessSeats > 10 && businessSeats <= 20 ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-slate-600'}`}>11-20 -12%</span>
+                  <span className={`text-center py-0.5 rounded ${businessSeats > 20 && businessSeats <= 35 ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-slate-600'}`}>21-35 -25%</span>
+                  <span className={`text-center py-0.5 rounded ${businessSeats > 35 ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-slate-600'}`}>36-50 -38%</span>
                 </div>
               </div>
             </div>
 
             <div className="space-y-2.5 mb-8 flex-1">
-              {features.map((f, i) => (
+              {visibleFeatures.map((f, i) => (
                 <FeatureRow key={i} label={f.label} hint={f.hint} value={f.business} />
               ))}
             </div>
@@ -339,7 +361,7 @@ export function PricingSection() {
               </div>
 
               <div className="space-y-2.5 mb-8 flex-1">
-                {features.map((f, i) => (
+                {visibleFeatures.map((f, i) => (
                   <FeatureRow key={i} label={f.label} hint={f.hint} value={f.enterprise} />
                 ))}
               </div>
@@ -356,6 +378,19 @@ export function PricingSection() {
             </div>
           </motion.div>
         </div>
+
+        {/* Expand/collapse features */}
+        {features.length > 8 && (
+          <div className="flex justify-center mt-4">
+            <button
+              type="button"
+              onClick={() => setShowAllFeatures(!showAllFeatures)}
+              className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition flex items-center gap-1"
+            >
+              {showAllFeatures ? 'Ver menos recursos ↑' : `Ver todos os ${features.length} recursos ↓`}
+            </button>
+          </div>
+        )}
 
         {/* HACKATHON SENAC — Special Event Card */}
         <motion.div

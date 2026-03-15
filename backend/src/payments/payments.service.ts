@@ -7,20 +7,31 @@ import type { EnvConfig } from '../common/config/env.config';
 import { getPlanLimits, type PlanType, type PlanLimits } from './plan-limits';
 import { PAYMENT_GATEWAY, type PaymentGateway } from './gateway/payment-gateway.interface';
 
-// Monthly prices (base) — yearly gets 20% discount
-const PLAN_MONTHLY_PRICES: Record<string, number> = {
-  PRO: 19.9,
-  BUSINESS: 49.9, // per seat
-};
-const PLAN_YEARLY_PRICES: Record<string, number> = {
-  PRO: 190.8,     // 19.90 * 12 * 0.8 = ~190.80/year
-  BUSINESS: 479.0, // 49.90 * 12 * 0.8 = ~479/year per seat
-};
-// Legacy flat prices (kept for backward compatibility with existing subscriptions)
+// PRO fixed pricing
+const PRO_MONTHLY = 19.9;
+const PRO_YEARLY_MONTH = 15.9; // ~20% discount
+
+// BUSINESS tiered pricing (per seat/month) — progressive volume discounts
+const BUSINESS_TIERS = [
+  { min: 1, max: 10, price: 39.9 },
+  { min: 11, max: 20, price: 34.9 },
+  { min: 21, max: 35, price: 29.9 },
+  { min: 36, max: 50, price: 24.9 },
+];
+
+/** Calculate per-seat price based on volume tier */
+function getBusinessPricePerSeat(seats: number): number {
+  for (const tier of BUSINESS_TIERS) {
+    if (seats >= tier.min && seats <= tier.max) return tier.price;
+  }
+  return BUSINESS_TIERS[BUSINESS_TIERS.length - 1].price;
+}
+
+// Legacy flat prices (backward compat)
 const PLAN_PRICES: Record<string, number> = {
   PRO: 19.9,
-  BUSINESS: 49.9,
-  ENTERPRISE: 0, // Enterprise is custom pricing via WhatsApp
+  BUSINESS: 19.9,
+  ENTERPRISE: 0,
 };
 const PLAN_TITLES: Record<string, string> = {
   PRO: 'CraftCard Pro - Cartão Digital Profissional',
@@ -178,12 +189,17 @@ export class PaymentsService {
       throw AppException.badRequest('Enterprise requer contato comercial via WhatsApp.');
     }
 
-    // Calculate price based on billing cycle and seats
+    // Calculate price with tiered volume discounts
     const seats = plan === 'BUSINESS' ? Math.max(seatsCount, 5) : 1;
-    const priceTable = billingCycle === 'YEARLY' ? PLAN_YEARLY_PRICES : PLAN_MONTHLY_PRICES;
-    const basePrice = priceTable[plan];
-    if (!basePrice) throw AppException.badRequest('Plano inválido.');
-    const totalPrice = Math.round(basePrice * seats * 100) / 100;
+    let monthlyPerSeat: number;
+    if (plan === 'PRO') {
+      monthlyPerSeat = billingCycle === 'YEARLY' ? PRO_YEARLY_MONTH : PRO_MONTHLY;
+    } else {
+      monthlyPerSeat = getBusinessPricePerSeat(seats);
+      if (billingCycle === 'YEARLY') monthlyPerSeat = Math.round(monthlyPerSeat * 0.8 * 100) / 100; // 20% annual discount
+    }
+    const months = billingCycle === 'YEARLY' ? 12 : 1;
+    const totalPrice = Math.round(monthlyPerSeat * seats * months * 100) / 100;
 
     const title = PLAN_TITLES[plan];
     const cycleLabel = billingCycle === 'YEARLY' ? 'Anual' : 'Mensal';
