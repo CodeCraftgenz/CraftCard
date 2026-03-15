@@ -1434,6 +1434,77 @@ export function EditorPage() {
                                     })}
                                   </div>
                                 </div>
+                                <div>
+                                  <label className="text-[10px] text-white/40 block mb-1.5 uppercase tracking-wider">Texto</label>
+                                  <div className="flex items-center gap-2">
+                                    {/* Text color */}
+                                    <input
+                                      type="color"
+                                      value={parseMetadata(link.metadata).textColor || '#ffffff'}
+                                      title="Cor do texto"
+                                      onChange={(e) => {
+                                        const links = [...form.socialLinks];
+                                        links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'textColor', e.target.value) };
+                                        updateField('socialLinks', links);
+                                      }}
+                                      className="w-7 h-7 rounded border border-white/20 bg-transparent cursor-pointer"
+                                    />
+                                    {/* Bold */}
+                                    <button
+                                      type="button"
+                                      title="Negrito"
+                                      onClick={() => {
+                                        const links = [...form.socialLinks];
+                                        const cur = parseMetadata(links[i].metadata).textBold === '1' ? '0' : '1';
+                                        links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'textBold', cur) };
+                                        updateField('socialLinks', links);
+                                      }}
+                                      className={`w-7 h-7 rounded border text-[11px] font-bold transition-all ${
+                                        parseMetadata(link.metadata).textBold === '1'
+                                          ? 'border-purple-400 bg-purple-400/15 text-purple-300'
+                                          : 'border-white/10 text-white/40 hover:border-white/20'
+                                      }`}
+                                    >
+                                      B
+                                    </button>
+                                    {/* Italic */}
+                                    <button
+                                      type="button"
+                                      title="Itálico"
+                                      onClick={() => {
+                                        const links = [...form.socialLinks];
+                                        const cur = parseMetadata(links[i].metadata).textItalic === '1' ? '0' : '1';
+                                        links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'textItalic', cur) };
+                                        updateField('socialLinks', links);
+                                      }}
+                                      className={`w-7 h-7 rounded border text-[11px] italic transition-all ${
+                                        parseMetadata(link.metadata).textItalic === '1'
+                                          ? 'border-purple-400 bg-purple-400/15 text-purple-300'
+                                          : 'border-white/10 text-white/40 hover:border-white/20'
+                                      }`}
+                                    >
+                                      I
+                                    </button>
+                                    {/* Uppercase */}
+                                    <button
+                                      type="button"
+                                      title="Maiúsculas"
+                                      onClick={() => {
+                                        const links = [...form.socialLinks];
+                                        const cur = parseMetadata(links[i].metadata).textUppercase === '1' ? '0' : '1';
+                                        links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'textUppercase', cur) };
+                                        updateField('socialLinks', links);
+                                      }}
+                                      className={`w-7 h-7 rounded border text-[9px] font-bold transition-all ${
+                                        parseMetadata(link.metadata).textUppercase === '1'
+                                          ? 'border-purple-400 bg-purple-400/15 text-purple-300'
+                                          : 'border-white/10 text-white/40 hover:border-white/20'
+                                      }`}
+                                    >
+                                      AA
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
                             )}
                             {/* Grid Size Selector — only when layout is grid */}
@@ -1688,6 +1759,73 @@ export function EditorPage() {
                                         </button>
                                       );
                                     })}
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-[10px] text-white/40 block mb-1.5 uppercase tracking-wider">Texto</label>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="color"
+                                      value={parseMetadata(link.metadata).textColor || '#ffffff'}
+                                      title="Cor do texto"
+                                      onChange={(e) => {
+                                        const links = [...form.socialLinks];
+                                        links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'textColor', e.target.value) };
+                                        updateField('socialLinks', links);
+                                      }}
+                                      className="w-7 h-7 rounded border border-white/20 bg-transparent cursor-pointer"
+                                    />
+                                    <button
+                                      type="button"
+                                      title="Negrito"
+                                      onClick={() => {
+                                        const links = [...form.socialLinks];
+                                        const cur = parseMetadata(links[i].metadata).textBold === '1' ? '0' : '1';
+                                        links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'textBold', cur) };
+                                        updateField('socialLinks', links);
+                                      }}
+                                      className={`w-7 h-7 rounded border text-[11px] font-bold transition-all ${
+                                        parseMetadata(link.metadata).textBold === '1'
+                                          ? 'border-purple-400 bg-purple-400/15 text-purple-300'
+                                          : 'border-white/10 text-white/40 hover:border-white/20'
+                                      }`}
+                                    >
+                                      B
+                                    </button>
+                                    <button
+                                      type="button"
+                                      title="Itálico"
+                                      onClick={() => {
+                                        const links = [...form.socialLinks];
+                                        const cur = parseMetadata(links[i].metadata).textItalic === '1' ? '0' : '1';
+                                        links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'textItalic', cur) };
+                                        updateField('socialLinks', links);
+                                      }}
+                                      className={`w-7 h-7 rounded border text-[11px] italic transition-all ${
+                                        parseMetadata(link.metadata).textItalic === '1'
+                                          ? 'border-purple-400 bg-purple-400/15 text-purple-300'
+                                          : 'border-white/10 text-white/40 hover:border-white/20'
+                                      }`}
+                                    >
+                                      I
+                                    </button>
+                                    <button
+                                      type="button"
+                                      title="Maiúsculas"
+                                      onClick={() => {
+                                        const links = [...form.socialLinks];
+                                        const cur = parseMetadata(links[i].metadata).textUppercase === '1' ? '0' : '1';
+                                        links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'textUppercase', cur) };
+                                        updateField('socialLinks', links);
+                                      }}
+                                      className={`w-7 h-7 rounded border text-[9px] font-bold transition-all ${
+                                        parseMetadata(link.metadata).textUppercase === '1'
+                                          ? 'border-purple-400 bg-purple-400/15 text-purple-300'
+                                          : 'border-white/10 text-white/40 hover:border-white/20'
+                                      }`}
+                                    >
+                                      AA
+                                    </button>
                                   </div>
                                 </div>
                               </div>

@@ -413,37 +413,60 @@ function LinkButton({
       >
         <Icon size={20} style={{ color: iconContainer.iconColor }} />
       </div>
-      <span className="font-medium truncate min-w-0 relative z-[1]" style={{ fontSize: '0.875em' }}>{link.label}</span>
+      <span
+        className={`truncate min-w-0 relative z-[1] ${meta.textBold === '1' ? 'font-bold' : 'font-medium'} ${meta.textUppercase === '1' ? 'uppercase tracking-wider' : ''}`}
+        style={{
+          fontSize: '0.875em',
+          ...(meta.textColor ? { color: meta.textColor } : {}),
+          ...(meta.textItalic === '1' ? { fontStyle: 'italic' } : {}),
+        }}
+      >
+        {link.label}
+      </span>
       <span className="ml-auto text-white/20 group-hover:text-white/40 transition-colors relative z-[1]">&rsaquo;</span>
     </motion.a>
   );
 }
 
+/** Check if a hex color is "light" (would be invisible on white/light bg) */
+function isLightColor(hex: string): boolean {
+  const c = hex.replace('#', '');
+  if (c.length < 6) return false;
+  const r = parseInt(c.slice(0, 2), 16);
+  const g = parseInt(c.slice(2, 4), 16);
+  const b = parseInt(c.slice(4, 6), 16);
+  // Perceived brightness formula
+  return (r * 299 + g * 587 + b * 114) / 1000 > 180;
+}
+
 function getIconContainerStyle(iconStyle: string, bgColor: string, accent: string): { style: React.CSSProperties; className: string; iconColor: string } {
+  // For styles with solid bg, use dark icon if bgColor is light (prevents white-on-white)
+  const solidIconColor = isLightColor(bgColor) ? '#1a1a2e' : '#ffffff';
+
   switch (iconStyle) {
     case 'filled':
-      return { style: { backgroundColor: bgColor }, className: '', iconColor: '#ffffff' };
+      return { style: { backgroundColor: bgColor }, className: '', iconColor: solidIconColor };
     case 'outline':
-      return { style: { border: `2px solid ${bgColor}`, backgroundColor: 'transparent' }, className: '', iconColor: bgColor };
+      return { style: { border: `2px solid ${bgColor}`, backgroundColor: 'transparent' }, className: '', iconColor: isLightColor(bgColor) ? accent : bgColor };
     case 'neomorph':
-      return { style: { backgroundColor: 'rgba(255,255,255,0.08)', boxShadow: `4px 4px 8px rgba(0,0,0,0.3), -2px -2px 6px rgba(255,255,255,0.05), inset 0 0 0 1px ${bgColor}30` }, className: '', iconColor: bgColor };
+      return { style: { backgroundColor: 'rgba(255,255,255,0.08)', boxShadow: `4px 4px 8px rgba(0,0,0,0.3), -2px -2px 6px rgba(255,255,255,0.05), inset 0 0 0 1px ${bgColor}30` }, className: '', iconColor: isLightColor(bgColor) ? accent : bgColor };
     case 'glass':
-      return { style: { backgroundColor: `${bgColor}15`, border: `1px solid ${bgColor}30`, boxShadow: `0 2px 8px ${bgColor}20`, backdropFilter: 'blur(8px)' }, className: '', iconColor: bgColor };
+      return { style: { backgroundColor: `${bgColor}15`, border: `1px solid ${bgColor}30`, boxShadow: `0 2px 8px ${bgColor}20`, backdropFilter: 'blur(8px)' }, className: '', iconColor: isLightColor(bgColor) ? accent : bgColor };
     case 'gradient':
-      return { style: { background: `linear-gradient(135deg, ${bgColor}, ${bgColor}88)` }, className: '', iconColor: '#ffffff' };
+      return { style: { background: `linear-gradient(135deg, ${bgColor}, ${bgColor}88)` }, className: '', iconColor: solidIconColor };
     case 'neon':
-      return { style: { backgroundColor: 'transparent', border: `1.5px solid ${bgColor}`, boxShadow: `0 0 8px ${bgColor}60, 0 0 20px ${bgColor}25, inset 0 0 8px ${bgColor}15` }, className: '', iconColor: bgColor };
+      return { style: { backgroundColor: 'transparent', border: `1.5px solid ${bgColor}`, boxShadow: `0 0 8px ${bgColor}60, 0 0 20px ${bgColor}25, inset 0 0 8px ${bgColor}15` }, className: '', iconColor: isLightColor(bgColor) ? accent : bgColor };
     case 'shadow':
-      return { style: { backgroundColor: bgColor, boxShadow: `0 4px 14px ${bgColor}50, 0 2px 6px rgba(0,0,0,0.3)` }, className: '', iconColor: '#ffffff' };
+      return { style: { backgroundColor: bgColor, boxShadow: `0 4px 14px ${bgColor}50, 0 2px 6px rgba(0,0,0,0.3)` }, className: '', iconColor: solidIconColor };
     case 'minimal':
-      return { style: { backgroundColor: 'transparent' }, className: '', iconColor: bgColor };
+      return { style: { backgroundColor: 'transparent' }, className: '', iconColor: isLightColor(bgColor) ? accent : bgColor };
     case 'circle':
-      return { style: { backgroundColor: `${bgColor}18`, borderRadius: '50%' }, className: '!rounded-full', iconColor: bgColor };
+      return { style: { backgroundColor: `${bgColor}18`, borderRadius: '50%' }, className: '!rounded-full', iconColor: isLightColor(bgColor) ? accent : bgColor };
     case 'soft':
-      return { style: { backgroundColor: `${bgColor}12`, border: `1px solid ${bgColor}10` }, className: '', iconColor: bgColor };
+      return { style: { backgroundColor: `${bgColor}12`, border: `1px solid ${bgColor}10` }, className: '', iconColor: isLightColor(bgColor) ? accent : bgColor };
     case 'default':
     default:
-      return { style: { backgroundColor: `${accent}20` }, className: '', iconColor: bgColor };
+      return { style: { backgroundColor: `${accent}20` }, className: '', iconColor: isLightColor(bgColor) ? accent : bgColor };
   }
 }
 
@@ -662,7 +685,13 @@ function GridLinkCard({
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center relative z-[1] ${iconContainer.className}`} style={iconContainer.style}>
         <Icon size={gs.cols >= 2 || gs.rows >= 2 ? 32 : 24} style={{ color: iconContainer.iconColor }} />
       </div>
-      <span className={`text-white/70 font-medium truncate max-w-full text-center leading-tight relative z-[1] ${gs.cols >= 2 ? 'text-sm' : 'text-[11px]'}`}>
+      <span
+        className={`truncate max-w-full text-center leading-tight relative z-[1] ${gs.cols >= 2 ? 'text-sm' : 'text-[11px]'} ${meta.textBold === '1' ? 'font-bold' : 'font-medium'} ${meta.textUppercase === '1' ? 'uppercase tracking-wider' : ''}`}
+        style={{
+          color: meta.textColor || 'rgba(255,255,255,0.7)',
+          ...(meta.textItalic === '1' ? { fontStyle: 'italic' } : {}),
+        }}
+      >
         {link.label}
       </span>
     </motion.a>

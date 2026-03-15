@@ -395,7 +395,12 @@ export const CardPreview = memo(function CardPreview({
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center relative z-[1]" style={gic.style}>
                       <Icon size={16} className="shrink-0" style={{ color: gic.iconColor }} />
                     </div>
-                    <span className="text-[9px] text-white/60 truncate max-w-full text-center leading-tight relative z-[1]">{link.label || 'Link'}</span>
+                    <span
+                      className={`text-[9px] truncate max-w-full text-center leading-tight relative z-[1] ${meta.textBold === '1' ? 'font-bold' : ''} ${meta.textUppercase === '1' ? 'uppercase' : ''}`}
+                      style={{ color: meta.textColor || 'rgba(255,255,255,0.6)', ...(meta.textItalic === '1' ? { fontStyle: 'italic' } : {}) }}
+                    >
+                      {link.label || 'Link'}
+                    </span>
                   </motion.div>
                 );
               }
@@ -431,7 +436,12 @@ export const CardPreview = memo(function CardPreview({
                       <Icon size={14} style={{ color: lic.iconColor }} />
                     </div>
                   ); })()}
-                  <span className="truncate min-w-0 relative z-[1]">{link.label || 'Link'}</span>
+                  <span
+                    className={`truncate min-w-0 relative z-[1] ${meta.textBold === '1' ? 'font-bold' : ''} ${meta.textUppercase === '1' ? 'uppercase tracking-wider' : ''}`}
+                    style={{ ...(meta.textColor ? { color: meta.textColor } : {}), ...(meta.textItalic === '1' ? { fontStyle: 'italic' } : {}) }}
+                  >
+                    {link.label || 'Link'}
+                  </span>
                   <span className="ml-auto text-white/30 relative z-[1]">&rsaquo;</span>
                 </motion.div>
               );
@@ -487,31 +497,41 @@ function getPreviewSkinBg(skin: string, accent: string): string {
   }
 }
 
+function isLightHex(hex: string): boolean {
+  const c = hex.replace('#', '');
+  if (c.length < 6) return false;
+  const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 180;
+}
+
 function getPreviewIconStyle(iconStyle: string, bgColor: string, accent: string): { style: React.CSSProperties; iconColor: string } {
+  const solidIcon = isLightHex(bgColor) ? '#1a1a2e' : '#ffffff';
+  const outlineIcon = isLightHex(bgColor) ? accent : bgColor;
+
   switch (iconStyle) {
     case 'filled':
-      return { style: { backgroundColor: bgColor }, iconColor: '#ffffff' };
+      return { style: { backgroundColor: bgColor }, iconColor: solidIcon };
     case 'outline':
-      return { style: { border: `2px solid ${bgColor}`, backgroundColor: 'transparent' }, iconColor: bgColor };
+      return { style: { border: `2px solid ${bgColor}`, backgroundColor: 'transparent' }, iconColor: outlineIcon };
     case 'neomorph':
-      return { style: { backgroundColor: 'rgba(255,255,255,0.08)', boxShadow: `3px 3px 6px rgba(0,0,0,0.3), -1px -1px 4px rgba(255,255,255,0.05), inset 0 0 0 1px ${bgColor}30` }, iconColor: bgColor };
+      return { style: { backgroundColor: 'rgba(255,255,255,0.08)', boxShadow: `3px 3px 6px rgba(0,0,0,0.3), -1px -1px 4px rgba(255,255,255,0.05), inset 0 0 0 1px ${bgColor}30` }, iconColor: outlineIcon };
     case 'glass':
-      return { style: { backgroundColor: `${bgColor}15`, border: `1px solid ${bgColor}30` }, iconColor: bgColor };
+      return { style: { backgroundColor: `${bgColor}15`, border: `1px solid ${bgColor}30` }, iconColor: outlineIcon };
     case 'gradient':
-      return { style: { background: `linear-gradient(135deg, ${bgColor}, ${bgColor}88)` }, iconColor: '#ffffff' };
+      return { style: { background: `linear-gradient(135deg, ${bgColor}, ${bgColor}88)` }, iconColor: solidIcon };
     case 'neon':
-      return { style: { backgroundColor: 'transparent', border: `1.5px solid ${bgColor}`, boxShadow: `0 0 6px ${bgColor}60, 0 0 16px ${bgColor}25, inset 0 0 6px ${bgColor}15` }, iconColor: bgColor };
+      return { style: { backgroundColor: 'transparent', border: `1.5px solid ${bgColor}`, boxShadow: `0 0 6px ${bgColor}60, 0 0 16px ${bgColor}25, inset 0 0 6px ${bgColor}15` }, iconColor: outlineIcon };
     case 'shadow':
-      return { style: { backgroundColor: bgColor, boxShadow: `0 3px 10px ${bgColor}50, 0 1px 4px rgba(0,0,0,0.3)` }, iconColor: '#ffffff' };
+      return { style: { backgroundColor: bgColor, boxShadow: `0 3px 10px ${bgColor}50, 0 1px 4px rgba(0,0,0,0.3)` }, iconColor: solidIcon };
     case 'minimal':
-      return { style: { backgroundColor: 'transparent' }, iconColor: bgColor };
+      return { style: { backgroundColor: 'transparent' }, iconColor: outlineIcon };
     case 'circle':
-      return { style: { backgroundColor: `${bgColor}18`, borderRadius: '50%' }, iconColor: bgColor };
+      return { style: { backgroundColor: `${bgColor}18`, borderRadius: '50%' }, iconColor: outlineIcon };
     case 'soft':
-      return { style: { backgroundColor: `${bgColor}12`, border: `1px solid ${bgColor}10` }, iconColor: bgColor };
+      return { style: { backgroundColor: `${bgColor}12`, border: `1px solid ${bgColor}10` }, iconColor: outlineIcon };
     case 'default':
     default:
-      return { style: { backgroundColor: `${accent}20` }, iconColor: bgColor };
+      return { style: { backgroundColor: `${accent}20` }, iconColor: outlineIcon };
   }
 }
 
