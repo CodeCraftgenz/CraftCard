@@ -10,7 +10,7 @@ import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
   useSensors, useSensor, type DragEndEvent,
 } from '@dnd-kit/core';
-import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { SortableContext, arrayMove, verticalListSortingStrategy, rectSortingStrategy } from '@dnd-kit/sortable';
 import { Header } from '@/components/organisms/Header';
 import { SortableLinkItem } from '@/components/organisms/SortableLinkItem';
 import { TemplatePicker } from '@/components/organisms/TemplatePicker';
@@ -40,7 +40,7 @@ import { useContacts, useMarkAsRead } from '@/hooks/useContacts';
 import { useTestimonials, useApproveTestimonial, useRejectTestimonial } from '@/hooks/useTestimonials';
 import { useGallery, useUploadGalleryImage, useDeleteGalleryImage } from '@/hooks/useGallery';
 import { useMySlots, useSaveSlots, useMyBookings, useUpdateBookingStatus } from '@/hooks/useBookings';
-import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, GRID_SIZES, BLOCK_SHAPES, BLOCK_TEXTURES, setMetadataField, getGridSize, parseMetadata, resolvePhotoUrl, API_URL } from '@/lib/constants';
+import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, GRID_SIZES, BLOCK_SHAPES, BLOCK_TEXTURES, BUTTON_SKINS, setMetadataField, getGridSize, parseMetadata, resolvePhotoUrl, API_URL } from '@/lib/constants';
 import { StyleEditor } from '@/components/organisms/StyleEditor';
 import { ServicesEditor } from '@/components/organisms/ServicesEditor';
 import { FaqEditor } from '@/components/organisms/FaqEditor';
@@ -1280,7 +1280,7 @@ export function EditorPage() {
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext
                       items={form.socialLinks.map((_, i) => i).filter(i => form.socialLinks[i].platform !== 'custom')}
-                      strategy={verticalListSortingStrategy}
+                      strategy={form.linkLayout === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}
                     >
                       {form.socialLinks.map((link, i) => {
                         if (link.platform === 'custom') return null;
@@ -1340,7 +1340,7 @@ export function EditorPage() {
                                     updateField('socialLinks', links);
                                   }}
                                   className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-all ${
-                                    parseMetadata(link.metadata).buttonShape || parseMetadata(link.metadata).buttonTexture
+                                    parseMetadata(link.metadata).buttonShape || parseMetadata(link.metadata).buttonTexture || (parseMetadata(link.metadata).buttonSkinUrl && parseMetadata(link.metadata).buttonSkinUrl !== 'none')
                                       ? 'text-purple-400 bg-purple-400/10'
                                       : 'text-white/30 hover:text-white/50 hover:bg-white/5'
                                   }`}
@@ -1402,6 +1402,33 @@ export function EditorPage() {
                                           }`}
                                         >
                                           {tex.label}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-[10px] text-white/40 block mb-1.5 uppercase tracking-wider">Skin Premium</label>
+                                  <div className="flex flex-wrap gap-1">
+                                    {BUTTON_SKINS.map((skin) => {
+                                      const currentSkin = parseMetadata(link.metadata).buttonSkinUrl || 'none';
+                                      return (
+                                        <button
+                                          key={skin.value}
+                                          type="button"
+                                          onClick={() => {
+                                            const links = [...form.socialLinks];
+                                            links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'buttonSkinUrl', skin.value) };
+                                            updateField('socialLinks', links);
+                                          }}
+                                          title={skin.desc}
+                                          className={`text-[10px] px-2 py-1 rounded-md border transition-all ${
+                                            currentSkin === skin.value
+                                              ? 'border-amber-400 bg-amber-400/15 text-amber-300'
+                                              : 'border-white/10 text-white/40 hover:border-white/20 hover:text-white/60'
+                                          }`}
+                                        >
+                                          {skin.label}
                                         </button>
                                       );
                                     })}
@@ -1525,7 +1552,7 @@ export function EditorPage() {
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext
                       items={form.socialLinks.map((_, i) => i).filter(i => form.socialLinks[i].platform === 'custom')}
-                      strategy={verticalListSortingStrategy}
+                      strategy={form.linkLayout === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}
                     >
                       {form.socialLinks.map((link, i) => {
                         if (link.platform !== 'custom') return null;
@@ -1631,6 +1658,33 @@ export function EditorPage() {
                                           }`}
                                         >
                                           {tex.label}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-[10px] text-white/40 block mb-1.5 uppercase tracking-wider">Skin Premium</label>
+                                  <div className="flex flex-wrap gap-1">
+                                    {BUTTON_SKINS.map((skin) => {
+                                      const currentSkin = parseMetadata(link.metadata).buttonSkinUrl || 'none';
+                                      return (
+                                        <button
+                                          key={skin.value}
+                                          type="button"
+                                          onClick={() => {
+                                            const links = [...form.socialLinks];
+                                            links[i] = { ...links[i], metadata: setMetadataField(links[i].metadata, 'buttonSkinUrl', skin.value) };
+                                            updateField('socialLinks', links);
+                                          }}
+                                          title={skin.desc}
+                                          className={`text-[10px] px-2 py-1 rounded-md border transition-all ${
+                                            currentSkin === skin.value
+                                              ? 'border-amber-400 bg-amber-400/15 text-amber-300'
+                                              : 'border-white/10 text-white/40 hover:border-white/20 hover:text-white/60'
+                                          }`}
+                                        >
+                                          {skin.label}
                                         </button>
                                       );
                                     })}

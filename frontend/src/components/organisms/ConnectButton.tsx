@@ -26,14 +26,14 @@ export function ConnectButton({ targetProfileId, accent, isLoggedIn }: ConnectBu
     return (
       <motion.button
         onClick={() => navigate('/login')}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.97 }}
-        className="w-full flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl font-semibold text-sm shadow-lg transition-all border border-white/10 bg-white/5 hover:bg-white/10 text-white"
+        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all border border-white/10 hover:bg-white/5 text-white/50 hover:text-white/80"
       >
-        <UserPlus size={16} style={{ color: accent }} />
+        <UserPlus size={14} style={{ color: accent }} />
         Conectar
       </motion.button>
     );
@@ -108,22 +108,22 @@ export function ConnectButton({ targetProfileId, accent, isLoggedIn }: ConnectBu
     );
   }
 
-  // No connection - show connect button
+  // No connection - show connect button (subtle footer style)
   return (
     <motion.button
       onClick={handleConnect}
       disabled={isLoading}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ delay: 0.5 }}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.97 }}
-      className="w-full flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl font-semibold text-sm shadow-lg transition-all border border-white/10 bg-white/5 hover:bg-white/10 text-white"
+      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all border border-white/10 hover:bg-white/5 text-white/50 hover:text-white/80"
     >
       {isLoading ? (
-        <Loader2 size={16} className="animate-spin" />
+        <Loader2 size={14} className="animate-spin" />
       ) : (
-        <UserPlus size={16} style={{ color: accent }} />
+        <UserPlus size={14} style={{ color: accent }} />
       )}
       Conectar
     </motion.button>

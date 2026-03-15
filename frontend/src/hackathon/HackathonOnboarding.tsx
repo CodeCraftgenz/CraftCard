@@ -6,7 +6,8 @@ import {
   GraduationCap, User, Mail, Lock, Eye, EyeOff, LogIn,
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
-import { useProfile, useUploadPhoto, useUpdateProfile } from '@/hooks/useProfile';
+import { useProfile, useUploadPhoto } from '@/hooks/useProfile';
+import { api } from '@/lib/api';
 import { usePublicSetting } from '@/hooks/useAdmin';
 import {
   SOFT_SKILLS, FORMATION_AREAS, MAX_SKILLS, HACKATHON_CONFIG,
@@ -27,7 +28,6 @@ export default function HackathonOnboarding() {
   const isEditMode = searchParams.get('edit') === '1';
   const { register, loginWithPassword, isAuthenticated } = useAuth();
   const uploadPhoto = useUploadPhoto();
-  const updateProfile = useUpdateProfile();
   const { data: hackathonSetting, isLoading: settingLoading } = usePublicSetting('hackathon_active');
   const isHackathonActive = hackathonSetting?.value === 'true';
 
@@ -216,46 +216,19 @@ export default function HackathonOnboarding() {
     setLoading(true);
     setError('');
     try {
-      const hackathonMeta = JSON.stringify({
-        hackathonArea: selectedArea,
-        hackathonSkills: selectedSkills,
-      });
       const area = FORMATION_AREAS.find(a => a.id === selectedArea);
 
-      // Preserve existing social links — only replace the hackathon_meta entry
-      const existingLinks = (existingProfile?.socialLinks || [])
-        .filter(l => l.linkType !== 'hackathon_meta')
-        .map(l => ({
-          platform: l.platform as 'custom',
-          label: l.label,
-          url: l.url,
-          order: l.order,
-          linkType: l.linkType || undefined,
-          metadata: l.metadata || undefined,
-        }));
+      // Dedicated endpoint: ONLY upserts hackathon_meta link.
+      // Never touches existing social links, bio, buttonColor, etc. of PRO users.
+      await api.put('/me/hackathon-meta', {
+        hackathonArea: selectedArea,
+        hackathonSkills: selectedSkills,
+        // Defaults — backend only applies these if profile has no custom values yet
+        displayName: name.trim() || undefined,
+        bio: area?.fullPhrase || undefined,
+        buttonColor: area?.color || undefined,
+      });
 
-      const hackathonLink = {
-        platform: 'custom' as const,
-        label: 'hackathon_meta',
-        url: '#',
-        order: 999,
-        linkType: 'hackathon_meta',
-        metadata: hackathonMeta,
-      };
-
-      // Only set displayName if user typed one (new registration); skip for existing users
-      const payload: Record<string, unknown> = {
-        isPublished: true,
-        socialLinks: [...existingLinks, hackathonLink],
-      };
-      if (name.trim()) payload.displayName = name.trim();
-      // Only set bio/buttonColor if user doesn't already have custom values
-      if (!existingProfile?.bio) payload.bio = area?.fullPhrase || null;
-      if (!existingProfile?.buttonColor || existingProfile.buttonColor === '#00E4F2') {
-        payload.buttonColor = area?.color || '#00E4F2';
-      }
-
-      await updateProfile.mutateAsync(payload as Parameters<typeof updateProfile.mutateAsync>[0]);
       setStep('done');
     } catch {
       setError('Erro ao salvar dados');

@@ -64,7 +64,7 @@ function generateSignatureHtml(props: EmailSignatureProps, template: SignatureTe
             <p style="margin:0;font-size:15px;font-weight:600;color:#1a1a1a;line-height:1.3;">${displayName}</p>
             ${subtitle ? `<p style="margin:2px 0 0;font-size:12px;color:#888;line-height:1.4;">${subtitle}</p>` : ''}
             <p style="margin:6px 0 0;">
-              <a href="${cardUrl}" style="font-size:12px;color:${buttonColor};text-decoration:none;font-weight:500;">Ver meu cartao digital &rarr;</a>
+              <a href="${cardUrl}" style="font-size:12px;color:${buttonColor};text-decoration:none;font-weight:500;">Ver meu CraftCard &rarr;</a>
             </p>
           </td>
         </tr>

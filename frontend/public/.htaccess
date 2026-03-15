@@ -1,4 +1,5 @@
 RewriteEngine On
+RewriteBase /
 
 # Nunca reescrever arquivos de upload (resumes, fotos, etc.)
 RewriteRule ^uploads/ - [L]
@@ -8,7 +9,7 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
 # Caso contrario, redireciona para index.html (SPA fallback)
-RewriteRule ^ index.html [QSA,L]
+RewriteRule ^ /index.html [QSA,L]
 
 # === Cache Control ===
 <IfModule mod_headers.c>

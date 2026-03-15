@@ -148,21 +148,21 @@ function getThemeCardClass(theme: string): string {
 function getLinkClasses(style: string): string {
   switch (style) {
     case 'pill':
-      return 'rounded-full';
+      return 'rounded-full bg-white/5 border border-white/10 hover:bg-white/10';
     case 'square':
-      return 'rounded-md';
+      return 'rounded-none bg-white/5 border border-white/10 hover:bg-white/10';
     case 'outline':
-      return 'rounded-xl bg-transparent !border';
+      return 'rounded-xl bg-transparent border border-white/20 hover:bg-white/5';
     case 'ghost':
-      return 'rounded-xl bg-transparent';
+      return 'rounded-xl bg-transparent hover:bg-white/5';
     case 'elevated':
-      return 'rounded-xl shadow-lg shadow-black/30';
+      return 'rounded-xl bg-white/[0.08] border border-white/5 shadow-lg shadow-black/30 hover:shadow-xl hover:bg-white/10';
     case 'glassmorphism':
-      return 'rounded-xl backdrop-blur-md';
+      return 'rounded-xl bg-white/[0.07] backdrop-blur-md border border-white/15 hover:bg-white/[0.12]';
     case 'neon-border':
-      return 'rounded-xl bg-transparent';
+      return 'rounded-xl bg-white/[0.03] border border-white/20 hover:bg-white/[0.06]';
     default:
-      return 'rounded-xl';
+      return 'rounded-xl bg-white/5 border border-white/10 hover:bg-white/10';
   }
 }
 
@@ -336,6 +336,8 @@ export const CardPreview = memo(function CardPreview({
               const meta = parseMetadata(link.metadata);
               const blockShape = meta.buttonShape || 'default';
               const blockTexture = meta.buttonTexture || 'none';
+              const buttonSkinUrl = meta.buttonSkinUrl || '';
+              const hasSkin = !!buttonSkinUrl && buttonSkinUrl !== 'none';
 
               // Determine effective style: per-link shape overrides global
               const effectiveStyle = blockShape !== 'default' ? blockShape : linkStyle;
@@ -373,7 +375,10 @@ export const CardPreview = memo(function CardPreview({
               }
 
               const listRadius = getPreviewShapeRadius(blockShape);
-              const effectiveLinkClass = blockShape !== 'default' ? '' : linkClass;
+              // When a per-link shape override exists, use per-link classes; otherwise global linkClass
+              const effectiveLinkClass = blockShape !== 'default'
+                ? getLinkClasses(blockShape)
+                : linkClass;
 
               return (
                 <motion.div
@@ -383,16 +388,18 @@ export const CardPreview = memo(function CardPreview({
                   className={`flex items-center gap-3 px-4 py-3 text-white font-medium transition-all cursor-pointer relative overflow-hidden ${effectiveLinkClass} ${linkAnimation === 'glow' ? 'hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]' : ''}`}
                   style={{
                     fontSize: '0.875em',
-                    backgroundColor: isGhost || isNeonBorder ? 'transparent' : isOutline ? 'transparent' : `${accent}20`,
-                    borderColor: isOutline ? `${accent}60` : isNeonBorder ? `${accent}60` : undefined,
-                    borderWidth: isOutline || isNeonBorder ? 1 : undefined,
-                    borderLeft: !noLeftBorder ? `3px solid ${accent}` : undefined,
-                    ...(isNeonBorder ? { boxShadow: `0 0 6px ${accent}30, inset 0 0 6px ${accent}08` } : {}),
+                    // Only override bg/border via inline for special styles that need accent color
+                    borderLeft: !noLeftBorder && effectiveStyle !== 'elevated' && effectiveStyle !== 'glassmorphism' ? `3px solid ${accent}` : undefined,
+                    ...(isOutline ? { borderColor: `${accent}60` } : {}),
+                    ...(isNeonBorder ? { borderColor: `${accent}60`, boxShadow: `0 0 6px ${accent}30, inset 0 0 6px ${accent}08` } : {}),
                     ...(blockShape !== 'default' ? { borderRadius: listRadius } : {}),
                     ...(blockShape === 'brutalist' ? { border: `2px solid ${accent}`, boxShadow: `2px 2px 0 ${accent}40` } : {}),
+                    ...(effectiveStyle === 'ticket' ? { borderRadius: '16px 4px 4px 16px' } : {}),
+                    ...(effectiveStyle === 'leaf' ? { borderRadius: '20px 4px 20px 4px' } : {}),
                   }}
                 >
-                  {blockTexture !== 'none' && <div className="absolute inset-0 pointer-events-none" style={getPreviewTextureStyle(blockTexture, accent)} />}
+                  {hasSkin && <div className="absolute inset-0 pointer-events-none transition-transform duration-300 group-hover:scale-105" style={{ background: getPreviewSkinBg(buttonSkinUrl, accent) }} />}
+                  {!hasSkin && blockTexture !== 'none' && <div className="absolute inset-0 pointer-events-none" style={getPreviewTextureStyle(blockTexture, accent)} />}
                   {(() => { const lic = getPreviewIconStyle(iconStyle, platColor, accent); return (
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 relative z-[1]" style={lic.style}>
                       <Icon size={14} style={{ color: lic.iconColor }} />
@@ -438,6 +445,19 @@ function getPreviewTextureStyle(texture: string, accent: string): React.CSSPrope
       return { background: `linear-gradient(135deg, ${accent}15, rgba(255,0,128,0.08), rgba(0,200,255,0.08), ${accent}15)` };
     default:
       return {};
+  }
+}
+
+function getPreviewSkinBg(skin: string, accent: string): string {
+  switch (skin) {
+    case 'watercolor': return `linear-gradient(135deg, ${accent}40, #ff6b9d30, ${accent}20)`;
+    case 'neon-glow': return `linear-gradient(135deg, ${accent}80, #0f0f23, ${accent}60)`;
+    case 'wood': return 'linear-gradient(135deg, #8B6914, #A0522D, #6B4226)';
+    case 'marble': return 'linear-gradient(135deg, #e8e8e8, #c9c9c9, #f5f5f5, #d0d0d0)';
+    case 'paper': return 'linear-gradient(135deg, #f5e6d3, #e8d5b7, #f0dfc8)';
+    case 'metal': return 'linear-gradient(135deg, #4a4a4a, #6a6a6a, #3a3a3a, #5a5a5a)';
+    case 'gradient-mesh': return `linear-gradient(135deg, ${accent}, #E84393, #6C5CE7, ${accent})`;
+    default: return `linear-gradient(135deg, ${accent}30, ${accent}10)`;
   }
 }
 

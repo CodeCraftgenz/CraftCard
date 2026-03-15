@@ -43,7 +43,7 @@ export interface FormationArea {
   color: string;
 }
 
-export const HACKATHON_LOGO = '/assets/hackathon/Logosenac.png';
+export const HACKATHON_LOGO = '/assets/hackathon/Logosenac.jpg';
 
 export const FORMATION_AREAS: FormationArea[] = [
   { id: 'beleza', name: 'Beleza e Estetica', phrase: 'pratica, empreendedora e responsavel', fullPhrase: 'Eu Sou pratica, empreendedora e responsavel', coverImage: '/assets/hackathon/cursos-de-beleza-e-estetica-senac-sp_reduzido.webp', color: '#E91E63' },

@@ -33,8 +33,10 @@ export function WidgetPage() {
 
   const { data: profile, isLoading, error } = useQuery<WidgetProfile>({
     queryKey: ['widget', slug],
-    queryFn: () => api.get(`/profile/${slug}`),
+    queryFn: () => api.get(`/profile/${slug}`, { headers: { 'Cache-Control': 'no-cache' } }),
     enabled: !!slug,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   if (isLoading) {

@@ -831,13 +831,6 @@ export function PublicCardPage() {
             Salvar Contato
           </motion.button>
 
-          {/* Connect Button (for logged-in visitors) */}
-          <ConnectButton
-            targetProfileId={profile.id}
-            accent={accent}
-            isLoggedIn={isAuthenticated}
-          />
-
           {/* Links (list or grid layout) */}
           <div className={linkLayout === 'grid' ? 'grid grid-cols-3 gap-2.5' : 'space-y-3'} style={linkLayout === 'grid' ? { gridAutoFlow: 'dense', gridAutoRows: 'minmax(90px, auto)' } : undefined}>
             {(() => {
@@ -1031,6 +1024,17 @@ export function PublicCardPage() {
               <CalendarDays size={16} />
               Agendar Reuniao
             </motion.button>
+          )}
+
+          {/* Connect Button — subtle footer placement for all plans */}
+          {!isOwner && (
+            <div className="mt-6">
+              <ConnectButton
+                targetProfileId={profile.id}
+                accent={accent}
+                isLoggedIn={isAuthenticated}
+              />
+            </div>
           )}
 
           {/* Share */}

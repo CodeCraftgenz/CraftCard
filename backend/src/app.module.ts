@@ -25,6 +25,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { MailModule } from './mail/mail.module';
 import { AdminModule } from './admin/admin.module';
+import { HackathonModule } from './hackathon/hackathon.module';
 import { AppController } from './app.controller';
 import configuration from './common/config/configuration';
 
@@ -104,6 +105,7 @@ import configuration from './common/config/configuration';
     WebhooksModule,
     MailModule,
     AdminModule,
+    HackathonModule,
   ],
   controllers: [AppController],
   providers: [

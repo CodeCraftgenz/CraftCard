@@ -13,7 +13,8 @@ import {
   HACKATHON_CONFIG, HACKATHON_LOGO,
   parseHackathonMeta, getAreaById, getSkillById,
 } from './constants';
-import { HackathonTeamButton } from './HackathonTeamButton';
+import { lazy, Suspense } from 'react';
+const HackathonTeamTab = lazy(() => import('./HackathonTeamTab'));
 
 export default function HackathonDashboard() {
   const navigate = useNavigate();
@@ -241,9 +242,6 @@ export default function HackathonDashboard() {
             <Share2 size={16} style={{ color: accentColor }} /> Compartilhar
           </button>
 
-          {/* Convidar para equipe */}
-          <HackathonTeamButton slug={profile.slug} accent={accentColor} />
-
           {/* PRO: Acessar Editor Completo */}
           {hasPaid && (
             <button
@@ -264,6 +262,24 @@ export default function HackathonDashboard() {
           >
             <Pencil size={14} /> Editar meu perfil
           </button>
+        </motion.div>
+
+        {/* ── Team Section ─────────────────────────────── */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="mt-4 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
+        >
+          <Suspense
+            fallback={
+              <div className="flex justify-center py-6">
+                <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              </div>
+            }
+          >
+            <HackathonTeamTab accent={accentColor} />
+          </Suspense>
         </motion.div>
 
         {/* ── Upsell Banner (FREE only) ─────────────────── */}

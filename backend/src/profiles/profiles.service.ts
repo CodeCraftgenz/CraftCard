@@ -425,6 +425,68 @@ export class ProfilesService {
     return { deleted: true };
   }
 
+  /**
+   * Upsert ONLY the hackathon_meta social link.
+   * Never touches other social links, never overwrites existing profile fields
+   * (displayName, bio, buttonColor, etc.) unless the profile has no custom values yet.
+   */
+  async upsertHackathonMeta(
+    userId: string,
+    hackathonData: { hackathonArea?: string; hackathonSkills?: string[] },
+    defaults?: { displayName?: string; bio?: string; buttonColor?: string },
+  ) {
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId, isPrimary: true },
+      include: { socialLinks: { where: { linkType: 'hackathon_meta' } } },
+    });
+    if (!profile) throw AppException.notFound('Perfil');
+
+    const metadata = JSON.stringify(hackathonData);
+
+    await this.prisma.$transaction(async (tx) => {
+      // 1. Remove only hackathon_meta links (leave everything else untouched)
+      await tx.socialLink.deleteMany({
+        where: { profileId: profile.id, linkType: 'hackathon_meta' },
+      });
+
+      // 2. Create the hackathon_meta link
+      await tx.socialLink.create({
+        data: {
+          profileId: profile.id,
+          platform: 'custom',
+          label: 'hackathon_meta',
+          url: '#',
+          order: 999,
+          linkType: 'hackathon_meta',
+          metadata,
+        },
+      });
+
+      // 3. Only update profile fields for brand-new profiles (no custom data yet)
+      const profileUpdates: Record<string, unknown> = {};
+      if (!profile.isPublished) profileUpdates.isPublished = true;
+      if (defaults?.displayName && (!profile.displayName || profile.displayName === 'Novo Cartao')) {
+        profileUpdates.displayName = defaults.displayName;
+      }
+      if (defaults?.bio && !profile.bio) {
+        profileUpdates.bio = defaults.bio;
+      }
+      if (defaults?.buttonColor && (!profile.buttonColor || profile.buttonColor === '#00E4F2')) {
+        profileUpdates.buttonColor = defaults.buttonColor;
+      }
+
+      if (Object.keys(profileUpdates).length > 0) {
+        await tx.profile.update({ where: { id: profile.id }, data: profileUpdates });
+      }
+    });
+
+    // Invalidate cache
+    await this.cache.del(`profile:${profile.slug}`);
+    await this.cache.del(`/api/profile/${profile.slug}`);
+
+    return { success: true };
+  }
+
   private async trackDailyView(profileId: string) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);

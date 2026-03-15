@@ -2,8 +2,9 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
-import { GraduationCap, Sparkles, Share2, Check } from 'lucide-react';
+import { GraduationCap, Sparkles, Share2, Check, QrCode } from 'lucide-react';
 import { useState } from 'react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { api } from '@/lib/api';
 import { resolvePhotoUrl } from '@/lib/constants';
 import {
@@ -253,7 +254,7 @@ export default function HackathonPublicCard() {
             )}
 
             {/* Actions */}
-            <div className="px-6 pb-6 flex gap-3">
+            <div className="px-6 pb-4 flex gap-3">
               <button
                 type="button"
                 onClick={handleShare}
@@ -263,6 +264,30 @@ export default function HackathonPublicCard() {
                 {copied ? <><Check size={16} /> Copiado!</> : <><Share2 size={16} /> Compartilhar</>}
               </button>
             </div>
+
+            {/* QR Code — always visible */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="px-6 pb-6 flex flex-col items-center gap-3"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <QrCode size={14} style={{ color: accentColor }} />
+                <span className="text-xs font-semibold uppercase tracking-wider text-white/40">QR Code</span>
+              </div>
+              <div className="p-4 bg-white rounded-2xl">
+                <QRCodeCanvas
+                  value={`${window.location.origin}/hackathon/card/${slug}`}
+                  size={180}
+                  level="H"
+                  fgColor={HACKATHON_CONFIG.senacBlue}
+                />
+              </div>
+              <p className="text-white/30 text-xs text-center">
+                Escaneie para ver este cartao
+              </p>
+            </motion.div>
           </motion.div>
 
           {/* Footer */}

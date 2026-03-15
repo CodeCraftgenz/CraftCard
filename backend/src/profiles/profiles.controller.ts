@@ -49,6 +49,25 @@ export class ProfilesController {
     return this.profilesService.setPrimary(user.sub, id);
   }
 
+  @Put('me/hackathon-meta')
+  async upsertHackathonMeta(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: {
+      hackathonArea?: string;
+      hackathonSkills?: string[];
+      displayName?: string;
+      bio?: string;
+      buttonColor?: string;
+    },
+  ) {
+    const { hackathonArea, hackathonSkills, displayName, bio, buttonColor } = body;
+    return this.profilesService.upsertHackathonMeta(
+      user.sub,
+      { hackathonArea, hackathonSkills },
+      { displayName, bio, buttonColor },
+    );
+  }
+
   @Public()
   @Throttle({ medium: { limit: 60, ttl: 60000 } })
   @UseInterceptors(CacheInterceptor)

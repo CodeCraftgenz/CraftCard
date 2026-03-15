@@ -133,8 +133,21 @@ export const BLOCK_TEXTURES = [
   { value: 'holographic', label: 'Holografico', desc: 'Efeito holografico' },
 ] as const;
 
+// ── Per-link button skins (premium PNG backgrounds) ──
+export const BUTTON_SKINS = [
+  { value: 'none', label: 'Nenhuma', desc: 'Sem skin' },
+  { value: 'watercolor', label: 'Aquarela', desc: 'Fundo pintado a mao' },
+  { value: 'neon-glow', label: 'Neon', desc: 'Brilho neon intenso' },
+  { value: 'wood', label: 'Madeira', desc: 'Textura de madeira' },
+  { value: 'marble', label: 'Marmore', desc: 'Pedra marmore polida' },
+  { value: 'paper', label: 'Papel', desc: 'Papel envelhecido' },
+  { value: 'metal', label: 'Metal', desc: 'Metal escovado premium' },
+  { value: 'gradient-mesh', label: 'Mesh', desc: 'Gradiente mesh colorido' },
+] as const;
+
 export type BlockShapeValue = typeof BLOCK_SHAPES[number]['value'];
 export type BlockTextureValue = typeof BLOCK_TEXTURES[number]['value'];
+export type ButtonSkinValue = typeof BUTTON_SKINS[number]['value'];
 
 export const GRID_SIZES = [
   { value: '1x1', label: 'Pequeno', desc: '400×400', cols: 1, rows: 1, w: 14, h: 14 },

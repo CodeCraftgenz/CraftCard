@@ -360,9 +360,12 @@ function LinkButton({
   const meta = parseMetadata(link.metadata);
   const blockShape = meta.buttonShape || 'default';
   const blockTexture = meta.buttonTexture || 'none';
+  const buttonSkinUrl = meta.buttonSkinUrl || '';
+  const hasSkin = !!buttonSkinUrl;
   const effectiveStyle = blockShape !== 'default' ? blockShape : linkStyle;
   const shapeClass = getShapeClass(effectiveStyle, linkStyle);
   const textureStyle = getTextureStyle(blockTexture, accent);
+  const skinBg = hasSkin ? getSkinBackground(buttonSkinUrl, accent) : null;
 
   return (
     <motion.a
@@ -378,15 +381,32 @@ function LinkButton({
       transition={{ delay: index * 0.08 }}
       whileHover={getHoverAnim(linkAnim)}
       whileTap={{ scale: 0.98 }}
-      className={`flex items-center gap-4 px-5 py-3.5 backdrop-blur-xl text-white transition-all group relative overflow-hidden ${shapeClass}`}
+      className={`flex items-center gap-4 px-5 py-3.5 backdrop-blur-xl text-white transition-all group relative overflow-hidden ${hasSkin ? getShapeClass(effectiveStyle, 'rounded') : shapeClass}`}
       style={{
-        borderLeft: effectiveStyle !== 'ghost' && effectiveStyle !== 'neon-border' && effectiveStyle !== 'ticket' ? `3px solid ${accent}` : undefined,
-        ...(effectiveStyle === 'neon-border' ? { border: `1px solid ${accent}60`, boxShadow: `0 0 8px ${accent}30, inset 0 0 8px ${accent}08` } : {}),
-        ...getShapeInlineStyle(effectiveStyle, accent),
+        ...(hasSkin ? {} : {
+          borderLeft: effectiveStyle !== 'ghost' && effectiveStyle !== 'neon-border' && effectiveStyle !== 'ticket' ? `3px solid ${accent}` : undefined,
+          ...(effectiveStyle === 'neon-border' ? { border: `1px solid ${accent}60`, boxShadow: `0 0 8px ${accent}30, inset 0 0 8px ${accent}08` } : {}),
+          ...getShapeInlineStyle(effectiveStyle, accent),
+        }),
       }}
     >
+      {/* Skin background (premium PNG or preset gradient) */}
+      {skinBg && (
+        skinBg.type === 'image' ? (
+          <img
+            src={skinBg.value}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 pointer-events-none"
+          />
+        ) : (
+          <div
+            className="absolute inset-0 pointer-events-none transition-transform duration-300 group-hover:scale-105"
+            style={{ background: skinBg.value }}
+          />
+        )
+      )}
       {/* Texture overlay */}
-      {blockTexture !== 'none' && <div className="absolute inset-0 pointer-events-none" style={textureStyle} />}
+      {!hasSkin && blockTexture !== 'none' && <div className="absolute inset-0 pointer-events-none" style={textureStyle} />}
       <div
         className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 relative z-[1] ${iconContainer.className}`}
         style={iconContainer.style}
@@ -482,6 +502,34 @@ function getStyleClass(style: string): string {
     case 'neon-border': return 'rounded-2xl bg-white/[0.03] border border-white/20 hover:bg-white/[0.06]';
     case 'rounded':
     default: return 'rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10';
+  }
+}
+
+/** Resolves a skin value to either a CSS gradient (preset) or an image URL */
+function getSkinBackground(skin: string, accent: string): { type: 'gradient' | 'image'; value: string } | null {
+  if (!skin || skin === 'none') return null;
+  // Preset skins — CSS gradients
+  switch (skin) {
+    case 'watercolor':
+      return { type: 'gradient', value: `linear-gradient(135deg, ${accent}40, #ff6b9d30, ${accent}20)` };
+    case 'neon-glow':
+      return { type: 'gradient', value: `linear-gradient(135deg, ${accent}80, #0f0f23, ${accent}60)` };
+    case 'wood':
+      return { type: 'gradient', value: 'linear-gradient(135deg, #8B6914, #A0522D, #6B4226)' };
+    case 'marble':
+      return { type: 'gradient', value: 'linear-gradient(135deg, #e8e8e8, #c9c9c9, #f5f5f5, #d0d0d0)' };
+    case 'paper':
+      return { type: 'gradient', value: 'linear-gradient(135deg, #f5e6d3, #e8d5b7, #f0dfc8)' };
+    case 'metal':
+      return { type: 'gradient', value: 'linear-gradient(135deg, #4a4a4a, #6a6a6a, #3a3a3a, #5a5a5a)' };
+    case 'gradient-mesh':
+      return { type: 'gradient', value: `linear-gradient(135deg, ${accent}, #E84393, #6C5CE7, ${accent})` };
+    default:
+      // Custom URL — treat as image
+      if (skin.startsWith('http') || skin.startsWith('/')) {
+        return { type: 'image', value: skin };
+      }
+      return null;
   }
 }
 
