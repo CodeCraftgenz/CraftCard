@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useAuth } from '@/providers/AuthProvider';
-import { useProfile } from '@/hooks/useProfile';
+import { useProfile, useCards } from '@/hooks/useProfile';
 import { resolvePhotoUrl } from '@/lib/constants';
 import {
   HACKATHON_CONFIG, HACKATHON_LOGO,
@@ -19,7 +19,11 @@ const HackathonTeamTab = lazy(() => import('./HackathonTeamTab'));
 export default function HackathonDashboard() {
   const navigate = useNavigate();
   const { logout, hasPaid, plan } = useAuth();
-  const { data: profile, isLoading } = useProfile();
+  const { data: cards, isLoading: cardsLoading } = useCards();
+  // Find the hackathon-specific profile (separate from the primary/paid card)
+  const hackCard = cards?.find((c: { label?: string }) => c.label === 'Hackathon Senac');
+  const { data: profile, isLoading: profileLoading } = useProfile(hackCard?.id, !!hackCard);
+  const isLoading = cardsLoading || profileLoading;
   const [copied, setCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
 

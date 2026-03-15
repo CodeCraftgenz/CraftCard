@@ -2,6 +2,7 @@ import {
   Controller,
   Delete,
   Post,
+  Query,
   UseGuards,
   UseInterceptors,
   UploadedFile,
@@ -43,16 +44,22 @@ export class StorageController {
       }),
     )
     file: Express.Multer.File,
+    @Query('cardId') cardId?: string,
   ) {
     const processed = await sharp(file.buffer)
       .resize(400, 400, { fit: 'cover' })
       .webp({ quality: 80 })
       .toBuffer();
 
-    const profile = await this.prisma.profile.findFirst({
-      where: { userId: user.sub, isPrimary: true },
-      select: { id: true, photoUrl: true },
-    });
+    const profile = cardId
+      ? await this.prisma.profile.findFirst({
+          where: { id: cardId, userId: user.sub },
+          select: { id: true, photoUrl: true },
+        })
+      : await this.prisma.profile.findFirst({
+          where: { userId: user.sub, isPrimary: true },
+          select: { id: true, photoUrl: true },
+        });
     if (!profile) throw AppException.notFound('Perfil');
 
     if (profile.photoUrl?.startsWith('http')) {

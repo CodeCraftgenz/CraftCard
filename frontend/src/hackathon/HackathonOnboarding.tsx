@@ -6,12 +6,11 @@ import {
   GraduationCap, User, Mail, Lock, Eye, EyeOff, LogIn,
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
-import { useProfile, useUploadPhoto } from '@/hooks/useProfile';
+import { useCards } from '@/hooks/useProfile';
 import { api } from '@/lib/api';
 import { usePublicSetting } from '@/hooks/useAdmin';
 import {
   SOFT_SKILLS, FORMATION_AREAS, MAX_SKILLS, HACKATHON_CONFIG,
-  parseHackathonMeta,
   type SoftSkill,
 } from './constants';
 
@@ -27,12 +26,13 @@ export default function HackathonOnboarding() {
   const [searchParams] = useSearchParams();
   const isEditMode = searchParams.get('edit') === '1';
   const { register, loginWithPassword, isAuthenticated } = useAuth();
-  const uploadPhoto = useUploadPhoto();
   const { data: hackathonSetting, isLoading: settingLoading } = usePublicSetting('hackathon_active');
   const isHackathonActive = hackathonSetting?.value === 'true';
 
-  // Fetch existing profile to detect returning users
-  const { data: existingProfile, isLoading: profileLoading } = useProfile(undefined, isAuthenticated);
+  // Check if user already has a hackathon profile (separate from primary)
+  const { data: cards, isLoading: cardsLoading } = useCards();
+  const hackCard = cards?.find((c: { label?: string }) => c.label === 'Hackathon Senac');
+  const profileLoading = cardsLoading;
 
   const [step, setStep] = useState<Step>(isAuthenticated ? 'photo' : 'account');
   const [error, setError] = useState('');
@@ -60,25 +60,18 @@ export default function HackathonOnboarding() {
     if (!isAuthenticated || profileLoading || redirectChecked) return;
     setRedirectChecked(true);
 
-    if (!existingProfile) return;
+    // Check if user already has a hackathon profile (separate card)
+    if (!hackCard) return; // New user, no hackathon profile yet
 
-    const metaLink = existingProfile.socialLinks?.find(
-      (l: { linkType?: string | null }) => l.linkType === 'hackathon_meta',
-    );
-    if (!metaLink) return; // New user, no hackathon data yet
-
-    // If editing, pre-populate fields and start at photo step
+    // If editing, start at photo step
     if (isEditMode) {
-      const meta = parseHackathonMeta(metaLink.metadata);
-      if (meta.hackathonArea) setSelectedArea(meta.hackathonArea);
-      if (meta.hackathonSkills) setSelectedSkills(meta.hackathonSkills);
       setStep('photo');
       return;
     }
 
     // Returning user who already completed onboarding → go to dashboard
     navigate('/hackathon/dashboard', { replace: true });
-  }, [isAuthenticated, profileLoading, existingProfile, redirectChecked, isEditMode, navigate]);
+  }, [isAuthenticated, profileLoading, hackCard, redirectChecked, isEditMode, navigate]);
 
   const stepIndex = STEPS.indexOf(step);
 
@@ -191,19 +184,9 @@ export default function HackathonOnboarding() {
   // ── Step: Photo ───────────────────────────────────────
 
   const handlePhotoUpload = async () => {
-    if (!photoFile) {
-      goNext();
-      return;
-    }
-    setLoading(true);
-    try {
-      await uploadPhoto.mutateAsync(photoFile);
-      goNext();
-    } catch {
-      setError('Erro ao enviar foto');
-    } finally {
-      setLoading(false);
-    }
+    // Just save the photo file for later — actual upload happens in handleFinish
+    // after the hackathon profile is created
+    goNext();
   };
 
   // ── Step: Skills (final save) ─────────────────────────
@@ -218,16 +201,21 @@ export default function HackathonOnboarding() {
     try {
       const area = FORMATION_AREAS.find(a => a.id === selectedArea);
 
-      // Dedicated endpoint: ONLY upserts hackathon_meta link.
-      // Never touches existing social links, bio, buttonColor, etc. of PRO users.
-      await api.put('/me/hackathon-meta', {
+      // Creates a SEPARATE hackathon profile (never touches the primary/paid card)
+      const result: { profileId: string; slug: string } = await api.put('/me/hackathon-meta', {
         hackathonArea: selectedArea,
         hackathonSkills: selectedSkills,
-        // Defaults — backend only applies these if profile has no custom values yet
         displayName: name.trim() || undefined,
         bio: area?.fullPhrase || undefined,
         buttonColor: area?.color || undefined,
       });
+
+      // Upload photo to the hackathon profile specifically (not the primary card)
+      if (photoFile && result.profileId) {
+        const formData = new FormData();
+        formData.append('file', photoFile);
+        await api.post(`/me/photo-upload?cardId=${result.profileId}`, formData);
+      }
 
       setStep('done');
     } catch (err: unknown) {

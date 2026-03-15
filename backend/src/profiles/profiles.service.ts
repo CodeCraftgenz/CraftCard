@@ -426,33 +426,50 @@ export class ProfilesService {
   }
 
   /**
-   * Upsert ONLY the hackathon_meta social link.
-   * Never touches other social links, never overwrites existing profile fields
-   * (displayName, bio, buttonColor, etc.) unless the profile has no custom values yet.
+   * Upsert hackathon profile — creates a SEPARATE profile (never touches the primary/paid card).
+   * The hackathon profile has label "Hackathon Senac" and isPrimary: false.
    */
   async upsertHackathonMeta(
     userId: string,
     hackathonData: { hackathonArea?: string; hackathonSkills?: string[] },
     defaults?: { displayName?: string; bio?: string; buttonColor?: string },
   ) {
-    const profile = await this.prisma.profile.findFirst({
-      where: { userId, isPrimary: true },
-      include: { socialLinks: { where: { linkType: 'hackathon_meta' } } },
-    });
-    if (!profile) throw AppException.notFound('Perfil');
-
     const metadata = JSON.stringify(hackathonData);
 
+    // Find or create a dedicated hackathon profile (NEVER the primary)
+    let hackProfile = await this.prisma.profile.findFirst({
+      where: { userId, label: 'Hackathon Senac' },
+      include: { socialLinks: { where: { linkType: 'hackathon_meta' } } },
+    });
+
+    if (!hackProfile) {
+      // Create a new separate profile for hackathon
+      const slug = `hack-${Date.now().toString(36)}`;
+      hackProfile = await this.prisma.profile.create({
+        data: {
+          userId,
+          displayName: defaults?.displayName || 'Participante',
+          label: 'Hackathon Senac',
+          slug,
+          isPrimary: false,
+          isPublished: true,
+          bio: defaults?.bio || null,
+          buttonColor: defaults?.buttonColor || '#004B87',
+        },
+        include: { socialLinks: { where: { linkType: 'hackathon_meta' } } },
+      });
+    }
+
     await this.prisma.$transaction(async (tx) => {
-      // 1. Remove only hackathon_meta links (leave everything else untouched)
+      // 1. Remove old hackathon_meta links
       await tx.socialLink.deleteMany({
-        where: { profileId: profile.id, linkType: 'hackathon_meta' },
+        where: { profileId: hackProfile!.id, linkType: 'hackathon_meta' },
       });
 
-      // 2. Create the hackathon_meta link
+      // 2. Create the hackathon_meta link on the hackathon profile
       await tx.socialLink.create({
         data: {
-          profileId: profile.id,
+          profileId: hackProfile!.id,
           platform: 'custom',
           label: 'hackathon_meta',
           url: '#',
@@ -462,29 +479,23 @@ export class ProfilesService {
         },
       });
 
-      // 3. Only update profile fields for brand-new profiles (no custom data yet)
-      const profileUpdates: Record<string, unknown> = {};
-      if (!profile.isPublished) profileUpdates.isPublished = true;
-      if (defaults?.displayName && (!profile.displayName || profile.displayName === 'Novo Cartão')) {
-        profileUpdates.displayName = defaults.displayName;
-      }
-      if (defaults?.bio && !profile.bio) {
-        profileUpdates.bio = defaults.bio;
-      }
-      if (defaults?.buttonColor && (!profile.buttonColor || profile.buttonColor === '#00E4F2')) {
-        profileUpdates.buttonColor = defaults.buttonColor;
-      }
-
-      if (Object.keys(profileUpdates).length > 0) {
-        await tx.profile.update({ where: { id: profile.id }, data: profileUpdates });
-      }
+      // 3. Update hackathon profile fields (safe — this is NOT the primary card)
+      await tx.profile.update({
+        where: { id: hackProfile!.id },
+        data: {
+          isPublished: true,
+          ...(defaults?.displayName && { displayName: defaults.displayName }),
+          ...(defaults?.bio && { bio: defaults.bio }),
+          ...(defaults?.buttonColor && { buttonColor: defaults.buttonColor }),
+        },
+      });
     });
 
     // Invalidate cache
-    await this.cache.del(`profile:${profile.slug}`);
-    await this.cache.del(`/api/profile/${profile.slug}`);
+    await this.cache.del(`profile:${hackProfile.slug}`);
+    await this.cache.del(`/api/profile/${hackProfile.slug}`);
 
-    return { success: true };
+    return { success: true, profileId: hackProfile.id, slug: hackProfile.slug };
   }
 
   private async trackDailyView(profileId: string) {
