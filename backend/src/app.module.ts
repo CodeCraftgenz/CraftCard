@@ -28,6 +28,7 @@ import { AdminModule } from './admin/admin.module';
 import { HackathonModule } from './hackathon/hackathon.module';
 import { TagsModule } from './tags/tags.module';
 import { EventsModule } from './events/events.module';
+import { PublicApiModule } from './public-api/public-api.module';
 import { AppController } from './app.controller';
 import configuration from './common/config/configuration';
 
@@ -110,6 +111,7 @@ import configuration from './common/config/configuration';
     HackathonModule,
     TagsModule,
     EventsModule,
+    PublicApiModule,
   ],
   controllers: [AppController],
   providers: [

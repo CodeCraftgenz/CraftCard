@@ -11,6 +11,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar,
 } from 'recharts';
+import { api } from '@/lib/api';
 import { Header } from '@/components/organisms/Header';
 import { FeatureLock } from '@/components/organisms/FeatureLock';
 import { useAuth } from '@/providers/AuthProvider';
@@ -34,7 +35,7 @@ import {
 import { AVAILABLE_FONTS } from '@/lib/google-fonts';
 import { API_URL } from '@/lib/constants';
 
-type Tab = 'overview' | 'members' | 'branding' | 'domain' | 'analytics' | 'leads';
+type Tab = 'overview' | 'members' | 'branding' | 'domain' | 'analytics' | 'leads' | 'api';
 
 export function OrgDashboardPage() {
   const { orgId } = useParams<{ orgId: string }>();
@@ -67,6 +68,7 @@ export function OrgDashboardPage() {
     { key: 'domain', label: 'Domínio', icon: Globe },
     { key: 'analytics', label: 'Analytics', icon: Eye },
     { key: 'leads', label: 'Leads', icon: Mail },
+    { key: 'api', label: 'API & Integrações', icon: ExternalLink },
   ];
 
   return (
@@ -135,6 +137,7 @@ export function OrgDashboardPage() {
         {tab === 'domain' && <DomainTab orgId={orgId!} org={org} />}
         {tab === 'analytics' && <AnalyticsTab orgId={orgId!} />}
         {tab === 'leads' && <LeadsTab orgId={orgId!} />}
+        {tab === 'api' && <ApiTab />}
       </div>
     </div>
   );
@@ -1278,6 +1281,138 @@ function LeadsTab({ orgId }: { orgId: string }) {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// --- API & Integrations Tab ---
+
+function ApiTab() {
+  const { plan } = useAuth();
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const isEnterprise = plan === 'ENTERPRISE';
+  const BASE_URL = 'https://craftcard.onrender.com/api';
+
+  const generateKey = async () => {
+    setLoading(true);
+    try {
+      const data: { apiKey: string } = await api.post('/me/api-key');
+      setApiKey(data.apiKey);
+    } catch { /* */ }
+    setLoading(false);
+  };
+
+  const revokeKey = async () => {
+    if (!confirm('Revogar a API Key atual? Todas as integrações que usam esta chave pararão de funcionar.')) return;
+    await api.delete('/me/api-key');
+    setApiKey(null);
+  };
+
+  const copyKey = () => {
+    if (apiKey) {
+      navigator.clipboard.writeText(apiKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const endpoints = [
+    { method: 'GET', path: '/api/v1/leads', desc: 'Lista todos os leads (mensagens recebidas)', params: 'page, limit, isRead' },
+    { method: 'GET', path: '/api/v1/connections', desc: 'Lista todas as conexões aceitas', params: 'page, limit' },
+    { method: 'GET', path: '/api/v1/profiles', desc: 'Lista seus cartões publicados com stats', params: '-' },
+    { method: 'GET', path: '/api/v1/analytics', desc: 'Métricas agregadas (views, leads, conexões)', params: '-' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* API Key Section */}
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+        <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
+          <Shield size={16} className="text-violet-400" /> API Key (Enterprise)
+        </h3>
+        <p className="text-white/40 text-xs mb-4">
+          Gere uma chave de API para integrar o CraftCard com seu ERP, CRM ou sistema interno.
+        </p>
+
+        {!isEnterprise ? (
+          <div className="p-4 rounded-xl bg-violet-500/10 border border-violet-500/20">
+            <p className="text-violet-300 text-sm font-medium">Disponível apenas no plano Enterprise</p>
+            <p className="text-violet-300/50 text-xs mt-1">Entre em contato com vendas para ativar.</p>
+          </div>
+        ) : apiKey ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <code className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-xs text-brand-cyan font-mono truncate">
+                {apiKey}
+              </code>
+              <button type="button" onClick={copyKey} title="Copiar" className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:text-white text-xs transition">
+                {copied ? '✓' : 'Copiar'}
+              </button>
+              <button type="button" onClick={revokeKey} className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs hover:bg-red-500/20 transition">
+                Revogar
+              </button>
+            </div>
+            <p className="text-white/30 text-[10px]">Guarde esta chave — ela não será exibida novamente após sair desta página.</p>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={generateKey}
+            disabled={loading}
+            className="px-5 py-2.5 rounded-xl bg-violet-500/20 border border-violet-500/30 text-violet-300 text-sm font-medium hover:bg-violet-500/30 transition disabled:opacity-50"
+          >
+            {loading ? 'Gerando...' : 'Gerar API Key'}
+          </button>
+        )}
+      </div>
+
+      {/* API Documentation */}
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+        <h3 className="text-white font-semibold mb-1">Documentação da API</h3>
+        <p className="text-white/40 text-xs mb-4">
+          Autentique com: <code className="text-brand-cyan">Authorization: Bearer {'<sua-api-key>'}</code>
+        </p>
+
+        <div className="space-y-2">
+          {endpoints.map((ep) => (
+            <div key={ep.path} className="p-3 rounded-xl bg-white/[0.03] border border-white/5 flex flex-col sm:flex-row sm:items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">{ep.method}</span>
+                <code className="text-xs text-white/70 font-mono">{ep.path}</code>
+              </div>
+              <p className="text-white/40 text-xs flex-1">{ep.desc}</p>
+              <span className="text-white/20 text-[10px] shrink-0">Params: {ep.params}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 p-3 rounded-xl bg-black/30 border border-white/5">
+          <p className="text-white/30 text-[10px] mb-1 font-semibold uppercase tracking-wider">Exemplo cURL</p>
+          <code className="text-[11px] text-brand-cyan/80 font-mono break-all leading-relaxed">
+            curl -H &quot;Authorization: Bearer SUA_API_KEY&quot; {BASE_URL}/v1/leads
+          </code>
+        </div>
+      </div>
+
+      {/* Webhooks Link */}
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+        <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
+          <ExternalLink size={16} className="text-indigo-400" /> Webhooks
+        </h3>
+        <p className="text-white/40 text-xs mb-4">
+          Configure webhooks para receber dados automaticamente quando leads, agendamentos ou depoimentos chegam.
+          Integre com RD Station, HubSpot, Salesforce ou Zapier.
+        </p>
+        <Link
+          to="/webhooks"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-sm font-medium hover:bg-indigo-500/30 transition"
+        >
+          Configurar Webhooks <ArrowLeft size={14} className="rotate-180" />
+        </Link>
+      </div>
     </div>
   );
 }
