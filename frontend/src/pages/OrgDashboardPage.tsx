@@ -5,7 +5,7 @@ import {
   Users, BarChart3, Mail, Settings, Plus, Trash2, Copy, Check,
   UserPlus, Shield, Crown, Download, Eye, MessageSquare, Calendar, ArrowLeft, Loader2, AlertTriangle,
   ExternalLink, Globe, Search, ChevronLeft, ChevronRight, CheckCheck, MailOpen,
-  MousePointerClick, Smartphone, Monitor, Tablet,
+  MousePointerClick, Smartphone, Monitor, Tablet, Link2,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -510,7 +510,9 @@ const LINK_ANIMATIONS = ['none', 'scale', 'slide', 'glow'] as const;
 interface BrandingOrg {
   primaryColor: string; secondaryColor: string; fontFamily: string; brandingActive: boolean;
   cardTheme: string | null; linkStyle: string | null; linkAnimation: string | null;
+  iconStyle: string | null; linkLayout: string | null;
   backgroundType: string | null; backgroundGradient: string | null;
+  coverUrl: string | null; backgroundImageUrl: string | null;
 }
 
 function BrandingTab({ orgId, org }: { orgId: string; org: BrandingOrg }) {
@@ -524,6 +526,8 @@ function BrandingTab({ orgId, org }: { orgId: string; org: BrandingOrg }) {
   const [theme, setTheme] = useState(org.cardTheme || 'default');
   const [linkStyle, setLinkStyle] = useState(org.linkStyle || 'rounded');
   const [linkAnim, setLinkAnim] = useState(org.linkAnimation || 'none');
+  const [iconStyle, setIconStyle] = useState(org.iconStyle || 'default');
+  const [linkLayout, setLinkLayout] = useState(org.linkLayout || 'list');
   const [bgType, setBgType] = useState(org.backgroundType || 'theme');
   const [bgGradient, setBgGradient] = useState(org.backgroundGradient || '');
   const [showBulkConfirm, setShowBulkConfirm] = useState(false);
@@ -531,7 +535,7 @@ function BrandingTab({ orgId, org }: { orgId: string; org: BrandingOrg }) {
   const save = () => {
     updateOrg.mutate({
       primaryColor: primary, secondaryColor: secondary, fontFamily: font, brandingActive: active,
-      cardTheme: theme, linkStyle, linkAnimation: linkAnim,
+      cardTheme: theme, linkStyle, linkAnimation: linkAnim, iconStyle, linkLayout,
       backgroundType: bgType, backgroundGradient: bgGradient || null,
     });
   };
@@ -660,28 +664,50 @@ function BrandingTab({ orgId, org }: { orgId: string; org: BrandingOrg }) {
           </div>
         </div>
 
+        {/* Icon Style */}
+        <div>
+          <label className="text-white/60 text-xs block mb-2">Estilo de Ícone</label>
+          <div className="grid grid-cols-4 gap-1.5">
+            {['default', 'filled', 'outline', 'glass', 'gradient', 'neon', 'shadow', 'circle'].map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setIconStyle(s)}
+                className={`py-1.5 text-[10px] font-medium transition-all border rounded-lg capitalize ${
+                  iconStyle === s ? 'bg-brand-cyan/20 text-brand-cyan border-brand-cyan' : 'bg-white/5 text-white/40 border-white/10'
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Link Layout */}
+        <div>
+          <label className="text-white/60 text-xs block mb-2">Layout dos Links</label>
+          <div className="flex gap-2">
+            {['list', 'grid'].map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => setLinkLayout(l)}
+                className={`flex-1 py-2 text-xs font-medium transition-all border rounded-xl capitalize ${
+                  linkLayout === l ? 'bg-brand-cyan/20 text-brand-cyan border-brand-cyan' : 'bg-white/5 text-white/50 border-white/10'
+                }`}
+              >
+                {l === 'list' ? 'Lista' : 'Grid (Bento)'}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Background Type */}
         <div>
           <label className="text-white/60 text-xs block mb-2">Tipo de Fundo</label>
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setBgType('theme')}
-              className={`flex-1 py-2 text-xs font-medium transition-all border rounded-xl ${
-                bgType === 'theme' ? 'bg-brand-cyan/20 text-brand-cyan border-brand-cyan' : 'bg-white/5 text-white/50 border-white/10'
-              }`}
-            >
-              Tema
-            </button>
-            <button
-              type="button"
-              onClick={() => setBgType('gradient')}
-              className={`flex-1 py-2 text-xs font-medium transition-all border rounded-xl ${
-                bgType === 'gradient' ? 'bg-brand-cyan/20 text-brand-cyan border-brand-cyan' : 'bg-white/5 text-white/50 border-white/10'
-              }`}
-            >
-              Gradiente
-            </button>
+            <button type="button" onClick={() => setBgType('theme')} className={`flex-1 py-2 text-xs font-medium transition-all border rounded-xl ${bgType === 'theme' ? 'bg-brand-cyan/20 text-brand-cyan border-brand-cyan' : 'bg-white/5 text-white/50 border-white/10'}`}>Tema</button>
+            <button type="button" onClick={() => setBgType('gradient')} className={`flex-1 py-2 text-xs font-medium transition-all border rounded-xl ${bgType === 'gradient' ? 'bg-brand-cyan/20 text-brand-cyan border-brand-cyan' : 'bg-white/5 text-white/50 border-white/10'}`}>Gradiente</button>
           </div>
           {bgType === 'gradient' && (
             <input
@@ -938,9 +964,10 @@ function AnalyticsTab({ orgId }: { orgId: string }) {
   return (
     <div className="space-y-6">
       {/* KPI Cards — Enterprise style */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         <StatCard icon={Eye} label="Total de Acessos" value={analytics.totalViews} />
         <StatCard icon={MessageSquare} label="Leads Capturados" value={analytics.totalMessages} />
+        <StatCard icon={Link2} label="Conexões da Equipe" value={analytics.totalConnections || 0} />
         <StatCard icon={MousePointerClick} label="Cliques em Links" value={analytics.totalLinkClicks} />
         <StatCard icon={Calendar} label="Agendamentos" value={analytics.totalBookings} />
         <StatCard icon={Mail} label="Não Lidas" value={analytics.unreadMessages} />

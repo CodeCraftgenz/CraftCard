@@ -27,8 +27,12 @@ export interface Organization {
   cardTheme: string | null;
   linkStyle: string | null;
   linkAnimation: string | null;
+  linkLayout: string | null;
+  iconStyle: string | null;
   backgroundType: string | null;
   backgroundGradient: string | null;
+  coverUrl: string | null;
+  backgroundImageUrl: string | null;
   memberCount: number;
   profileCount: number;
 }
@@ -61,6 +65,7 @@ export interface OrgAnalytics {
   totalViews: number;
   totalMessages: number;
   totalBookings: number;
+  totalConnections: number;
   memberProfiles: Array<{ id: string; displayName: string; slug: string; viewCount: number }>;
   dailyViews: Array<{ date: string; count: number }>;
   totalLinkClicks: number;

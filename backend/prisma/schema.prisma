@@ -379,6 +379,8 @@ model Organization {
   iconStyle          String?  @default("default") @map("icon_style") @db.VarChar(20)
   backgroundType     String?  @default("theme") @map("background_type") @db.VarChar(20)
   backgroundGradient String?  @map("background_gradient") @db.VarChar(200)
+  coverUrl           String?  @map("cover_url") @db.VarChar(500)
+  backgroundImageUrl String?  @map("background_image_url") @db.VarChar(500)
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 

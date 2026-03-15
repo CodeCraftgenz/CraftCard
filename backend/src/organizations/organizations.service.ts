@@ -81,8 +81,12 @@ export class OrganizationsService {
     cardTheme?: string;
     linkStyle?: string;
     linkAnimation?: string;
+    linkLayout?: string;
+    iconStyle?: string;
     backgroundType?: string;
     backgroundGradient?: string | null;
+    coverUrl?: string | null;
+    backgroundImageUrl?: string | null;
   }) {
     return this.prisma.organization.update({
       where: { id: orgId },
@@ -96,8 +100,12 @@ export class OrganizationsService {
         ...(data.cardTheme !== undefined && { cardTheme: data.cardTheme }),
         ...(data.linkStyle !== undefined && { linkStyle: data.linkStyle }),
         ...(data.linkAnimation !== undefined && { linkAnimation: data.linkAnimation }),
+        ...(data.linkLayout !== undefined && { linkLayout: data.linkLayout }),
+        ...(data.iconStyle !== undefined && { iconStyle: data.iconStyle }),
         ...(data.backgroundType !== undefined && { backgroundType: data.backgroundType }),
         ...(data.backgroundGradient !== undefined && { backgroundGradient: data.backgroundGradient }),
+        ...(data.coverUrl !== undefined && { coverUrl: data.coverUrl }),
+        ...(data.backgroundImageUrl !== undefined && { backgroundImageUrl: data.backgroundImageUrl }),
       },
     });
   }
@@ -115,8 +123,12 @@ export class OrganizationsService {
         fontSizeScale: 1.0,
         linkStyle: org.linkStyle || 'rounded',
         linkAnimation: org.linkAnimation || 'none',
+        linkLayout: org.linkLayout || 'list',
+        iconStyle: org.iconStyle || 'default',
         backgroundType: org.backgroundType || 'theme',
         backgroundGradient: org.backgroundGradient,
+        coverPhotoUrl: org.coverUrl,
+        backgroundImageUrl: org.backgroundImageUrl,
       },
     });
 
@@ -375,6 +387,7 @@ export class OrganizationsService {
       recentMessages,
       recentBookings,
       topLinksRaw,
+      totalConnections,
     ] = await Promise.all([
       this.prisma.profileView.findMany({
         where: { profileId: { in: profileIds }, date: { gte: thirtyDaysAgo } },
@@ -431,6 +444,16 @@ export class OrganizationsService {
         orderBy: { _sum: { count: 'desc' } },
         take: 5,
       }),
+      // Total connections for org members
+      this.prisma.connection.count({
+        where: {
+          status: 'ACCEPTED',
+          OR: [
+            { requesterId: { in: profileIds } },
+            { addresseeId: { in: profileIds } },
+          ],
+        },
+      }),
     ]);
 
     // Fetch link details for top links
@@ -479,6 +502,7 @@ export class OrganizationsService {
       totalViews,
       totalMessages,
       totalBookings,
+      totalConnections: totalConnections as number,
       memberProfiles: profiles.map((p) => ({
         id: p.id,
         displayName: p.displayName,
