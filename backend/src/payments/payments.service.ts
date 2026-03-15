@@ -7,17 +7,28 @@ import type { EnvConfig } from '../common/config/env.config';
 import { getPlanLimits, type PlanType, type PlanLimits } from './plan-limits';
 import { PAYMENT_GATEWAY, type PaymentGateway } from './gateway/payment-gateway.interface';
 
+// Monthly prices (base) — yearly gets 20% discount
+const PLAN_MONTHLY_PRICES: Record<string, number> = {
+  PRO: 19.9,
+  BUSINESS: 49.9, // per seat
+};
+const PLAN_YEARLY_PRICES: Record<string, number> = {
+  PRO: 190.8,     // 19.90 * 12 * 0.8 = ~190.80/year
+  BUSINESS: 479.0, // 49.90 * 12 * 0.8 = ~479/year per seat
+};
+// Legacy flat prices (kept for backward compatibility with existing subscriptions)
 const PLAN_PRICES: Record<string, number> = {
-  PRO: 30.0,
-  BUSINESS: 189.9,
-  ENTERPRISE: 299.9,
+  PRO: 19.9,
+  BUSINESS: 49.9,
+  ENTERPRISE: 0, // Enterprise is custom pricing via WhatsApp
 };
 const PLAN_TITLES: Record<string, string> = {
-  PRO: 'CraftCard Pro - Cartão Digital Profissional (Anual)',
-  BUSINESS: 'CraftCard Business - Plano Empresarial (Anual)',
-  ENTERPRISE: 'CraftCard Enterprise - Plano Completo (Anual)',
+  PRO: 'CraftCard Pro - Cartão Digital Profissional',
+  BUSINESS: 'CraftCard Business - Plano Empresarial',
+  ENTERPRISE: 'CraftCard Enterprise - Plano Completo',
 };
-const SUBSCRIPTION_DAYS = 365;
+const SUBSCRIPTION_DAYS_MONTHLY = 30;
+const SUBSCRIPTION_DAYS_YEARLY = 365;
 
 const PLAN_HIERARCHY: Record<string, number> = { FREE: 0, PRO: 1, BUSINESS: 2, ENTERPRISE: 3 };
 
@@ -147,7 +158,13 @@ export class PaymentsService {
     return bestPlan !== 'FREE' ? bestPlan : null;
   }
 
-  async createCheckoutPreference(userId: string, email: string, plan: 'PRO' | 'BUSINESS' | 'ENTERPRISE' = 'PRO'): Promise<{ url: string }> {
+  async createCheckoutPreference(
+    userId: string,
+    email: string,
+    plan: 'PRO' | 'BUSINESS' | 'ENTERPRISE' = 'PRO',
+    billingCycle: 'MONTHLY' | 'YEARLY' = 'YEARLY',
+    seatsCount = 1,
+  ): Promise<{ url: string }> {
     const planInfo = await this.getUserPlanInfo(userId);
     const planHierarchy: Record<string, number> = { FREE: 0, PRO: 1, BUSINESS: 2, ENTERPRISE: 3 };
     const currentLevel = planHierarchy[planInfo.plan] ?? 0;
@@ -157,11 +174,20 @@ export class PaymentsService {
       throw AppException.conflict('Você já possui este plano ou superior ativo');
     }
 
-    const price = PLAN_PRICES[plan];
-    const title = PLAN_TITLES[plan];
-    if (!price || !title) {
-      throw AppException.badRequest('Plano inválido. Use PRO, BUSINESS ou ENTERPRISE.');
+    if (plan === 'ENTERPRISE') {
+      throw AppException.badRequest('Enterprise requer contato comercial via WhatsApp.');
     }
+
+    // Calculate price based on billing cycle and seats
+    const seats = plan === 'BUSINESS' ? Math.max(seatsCount, 5) : 1;
+    const priceTable = billingCycle === 'YEARLY' ? PLAN_YEARLY_PRICES : PLAN_MONTHLY_PRICES;
+    const basePrice = priceTable[plan];
+    if (!basePrice) throw AppException.badRequest('Plano inválido.');
+    const totalPrice = Math.round(basePrice * seats * 100) / 100;
+
+    const title = PLAN_TITLES[plan];
+    const cycleLabel = billingCycle === 'YEARLY' ? 'Anual' : 'Mensal';
+    const subscriptionDays = billingCycle === 'YEARLY' ? SUBSCRIPTION_DAYS_YEARLY : SUBSCRIPTION_DAYS_MONTHLY;
 
     const frontendUrl = this.configService.get('FRONTEND_URL', { infer: true });
     const backendUrl = this.configService.get('BACKEND_URL', { infer: true });
@@ -170,19 +196,21 @@ export class PaymentsService {
     const payment = await this.prisma.payment.create({
       data: {
         userId,
-        amount: price,
+        amount: totalPrice,
         currency: 'BRL',
         status: 'pending',
         plan,
+        billingCycle,
+        seatsCount: seats,
         payerEmail: email,
       },
     });
 
     const result = await this.gateway.createPreference({
       paymentId: payment.id,
-      title,
-      description: `Assinatura anual CraftCard ${plan}`,
-      price,
+      title: `${title} (${cycleLabel}${seats > 1 ? ` - ${seats} licenças` : ''})`,
+      description: `CraftCard ${plan} ${cycleLabel}${seats > 1 ? ` × ${seats} licenças` : ''}`,
+      price: totalPrice,
       currency: 'BRL',
       payerEmail: email,
       backUrls: {
@@ -269,7 +297,8 @@ export class PaymentsService {
         for (const gatewayPayment of searchResult.payments) {
           if (gatewayPayment.status === 'approved' && payment.status !== 'approved') {
             const now = new Date();
-            const expiresAt = new Date(now.getTime() + SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000);
+            const subDays = payment.billingCycle === 'MONTHLY' ? SUBSCRIPTION_DAYS_MONTHLY : SUBSCRIPTION_DAYS_YEARLY;
+            const expiresAt = new Date(now.getTime() + subDays * 24 * 60 * 60 * 1000);
 
             // Atomic update to prevent race with concurrent webhook processing
             const { count } = await this.prisma.payment.updateMany({
@@ -330,7 +359,7 @@ export class PaymentsService {
     });
 
     // Create payment record for audit
-    const subscriptionDays = days || SUBSCRIPTION_DAYS;
+    const subscriptionDays = days || SUBSCRIPTION_DAYS_YEARLY;
     const now = new Date();
     const expiresAt = normalizedPlan === 'FREE' ? null : new Date(now.getTime() + subscriptionDays * 24 * 60 * 60 * 1000);
 
@@ -442,7 +471,7 @@ export class PaymentsService {
     }
 
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(now.getTime() + SUBSCRIPTION_DAYS_YEARLY * 24 * 60 * 60 * 1000);
 
     // Atomic update: only update if status has NOT been set to 'approved' by a concurrent request.
     // This prevents race conditions when duplicate webhooks arrive simultaneously.

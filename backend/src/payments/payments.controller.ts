@@ -14,11 +14,13 @@ export class PaymentsController {
   @Post('checkout')
   async createCheckout(
     @CurrentUser() user: JwtPayload,
-    @Body() body: { plan?: string },
+    @Body() body: { plan?: string; billingCycle?: string; seatsCount?: number },
   ) {
     const upperPlan = body?.plan?.toUpperCase();
     const plan = (upperPlan === 'BUSINESS' ? 'BUSINESS' : upperPlan === 'ENTERPRISE' ? 'ENTERPRISE' : 'PRO') as 'PRO' | 'BUSINESS' | 'ENTERPRISE';
-    return this.paymentsService.createCheckoutPreference(user.sub, user.email, plan);
+    const cycle = body?.billingCycle?.toUpperCase() === 'MONTHLY' ? 'MONTHLY' : 'YEARLY';
+    const seats = body?.seatsCount ?? 1;
+    return this.paymentsService.createCheckoutPreference(user.sub, user.email, plan, cycle as 'MONTHLY' | 'YEARLY', seats);
   }
 
   /** Admin: activate a plan for any user by email */

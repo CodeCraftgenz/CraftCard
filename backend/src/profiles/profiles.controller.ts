@@ -49,6 +49,26 @@ export class ProfilesController {
     return this.profilesService.setPrimary(user.sub, id);
   }
 
+  @Post('me/api-key')
+  async generateApiKey(@CurrentUser() user: JwtPayload) {
+    const { randomBytes } = await import('crypto');
+    const apiKey = randomBytes(32).toString('hex');
+    await this.profilesService['prisma'].user.update({
+      where: { id: user.sub },
+      data: { apiKey },
+    });
+    return { apiKey };
+  }
+
+  @Delete('me/api-key')
+  async revokeApiKey(@CurrentUser() user: JwtPayload) {
+    await this.profilesService['prisma'].user.update({
+      where: { id: user.sub },
+      data: { apiKey: null },
+    });
+    return { revoked: true };
+  }
+
   @Put('me/hackathon-meta')
   async upsertHackathonMeta(
     @CurrentUser() user: JwtPayload,

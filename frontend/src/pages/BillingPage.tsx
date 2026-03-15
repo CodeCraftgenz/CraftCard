@@ -126,28 +126,29 @@ export function BillingPage() {
                 <>
                   <PlanCard
                     name="PRO"
-                    price="R$ 30"
-                    period="/ano"
-                    features={['3 cartões', '20 links', 'Todos temas', 'Analytics', 'Sem marca d\u0027agua', '3 eventos', 'Mapa de conexões', 'Tags']}
+                    price="R$ 19,90"
+                    period="/mês"
+                    features={['3 cartões', '20 links', 'Todos temas', 'Analytics', 'Bento Grid', '3 eventos', 'CRM Timeline']}
                     onSelect={() => checkout.mutate({ plan: 'PRO' })}
                     loading={checkout.isPending}
                   />
                   <PlanCard
                     name="BUSINESS"
-                    price="R$ 189,90"
-                    period="/ano"
-                    features={['Até 10 membros', '50 links', 'Dashboard org', 'Branding', 'Webhooks', '10 eventos', 'Mapa + Tags + Wrapped']}
+                    price="R$ 49,90"
+                    period="/mês por usuário"
+                    features={['5-50 licenças', '50 links', 'Dashboard org', 'Brand Lock', 'Webhooks', 'BI Corporativo']}
                     onSelect={() => checkout.mutate({ plan: 'BUSINESS' })}
                     loading={checkout.isPending}
                   />
                   <PlanCard
                     name="ENTERPRISE"
-                    price="R$ 299,90"
-                    period="/ano"
-                    features={['Tudo do Business', 'Domínio customizado', 'Eventos ilimitados', 'Wrapped anual']}
-                    onSelect={() => checkout.mutate({ plan: 'ENTERPRISE' })}
-                    loading={checkout.isPending}
+                    price="Sob Consulta"
+                    period=""
+                    features={['Tudo do Business', 'Domínio customizado', 'API Keys', 'SLA 99.9%', 'Suporte VIP']}
+                    onSelect={() => { window.open('https://wa.me/5518997249438?text=Interesse no Enterprise', '_blank'); }}
+                    loading={false}
                     highlight
+                    cta="Falar com Vendas"
                   />
                 </>
               )}
@@ -155,31 +156,32 @@ export function BillingPage() {
                 <>
                   <PlanCard
                     name="BUSINESS"
-                    price="R$ 189,90"
-                    period="/ano"
-                    features={['Até 10 membros', '50 links', 'Dashboard org', 'Branding', 'Webhooks', '10 eventos', 'Mapa + Tags + Wrapped']}
+                    price="R$ 49,90"
+                    period="/mês por usuário"
+                    features={['5-50 licenças', '50 links', 'Dashboard org', 'Brand Lock', 'Webhooks', 'BI Corporativo']}
                     onSelect={() => checkout.mutate({ plan: 'BUSINESS' })}
                     loading={checkout.isPending}
                   />
                   <PlanCard
                     name="ENTERPRISE"
-                    price="R$ 299,90"
-                    period="/ano"
-                    features={['Tudo do Business', 'Domínio customizado', 'Eventos ilimitados', 'Wrapped anual']}
-                    onSelect={() => checkout.mutate({ plan: 'ENTERPRISE' })}
-                    loading={checkout.isPending}
+                    price="Sob Consulta"
+                    period=""
+                    features={['Tudo do Business', 'Domínio customizado', 'API Keys', 'SLA 99.9%']}
+                    onSelect={() => { window.open('https://wa.me/5518997249438?text=Interesse no Enterprise', '_blank'); }}
+                    loading={false}
                     highlight
+                    cta="Falar com Vendas"
                   />
                 </>
               )}
               {billing.canUpgrade && billing.plan === 'BUSINESS' && (
                 <PlanCard
                   name="ENTERPRISE"
-                  price="R$ 299,90"
-                  period="/ano"
-                  features={['Tudo do Business', 'Domínio customizado']}
-                  onSelect={() => checkout.mutate({ plan: 'ENTERPRISE' })}
-                  loading={checkout.isPending}
+                  price="Sob Consulta"
+                  period=""
+                  features={['Tudo do Business', 'Domínio customizado', 'API Keys', 'SLA 99.9%']}
+                  onSelect={() => { window.open('https://wa.me/5518997249438?text=Interesse no Enterprise', '_blank'); }}
+                  loading={false}
                   highlight
                 />
               )}

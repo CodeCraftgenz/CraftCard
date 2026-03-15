@@ -78,17 +78,28 @@ function FeatureRow({ label, hint, value, highlighted }: { label: string; hint?:
 export function PricingSection() {
   const { isAuthenticated } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'YEARLY'>('YEARLY');
+  const [businessSeats, setBusinessSeats] = useState(5);
   const { data: hackathonSetting } = usePublicSetting('hackathon_active');
   const isHackathonActive = hackathonSetting?.value === 'true';
 
-  const handleCheckout = async (plan: 'BUSINESS' | 'ENTERPRISE') => {
+  const isYearly = billingCycle === 'YEARLY';
+  const proPrice = isYearly ? 15.9 : 19.9; // ~20% discount yearly
+  const businessPricePerSeat = isYearly ? 39.9 : 49.9;
+  const businessTotal = Math.round(businessPricePerSeat * businessSeats * 100) / 100;
+
+  const handleCheckout = async (plan: 'PRO' | 'BUSINESS') => {
     if (!isAuthenticated) {
       window.location.href = '/login';
       return;
     }
     setLoadingPlan(plan);
     try {
-      const data: { url: string } = await api.post('/payments/checkout', { plan });
+      const data: { url: string } = await api.post('/payments/checkout', {
+        plan,
+        billingCycle,
+        seatsCount: plan === 'BUSINESS' ? businessSeats : 1,
+      });
       window.location.href = data.url;
     } catch {
       setLoadingPlan(null);
@@ -108,6 +119,29 @@ export function PricingSection() {
           <h2 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight">
             Escolha seu <span className="gradient-text">plano</span>
           </h2>
+          {/* Billing cycle toggle */}
+          <div className="mt-6 inline-flex items-center gap-3 p-1 rounded-full bg-white/[0.06] border border-white/10">
+            <button
+              type="button"
+              onClick={() => setBillingCycle('MONTHLY')}
+              className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                !isYearly ? 'bg-white/10 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Mensal
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingCycle('YEARLY')}
+              className={`px-5 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                isYearly ? 'bg-brand-cyan/20 text-brand-cyan shadow-sm' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Anual
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">-20%</span>
+            </button>
+          </div>
+
           <p className="mt-4 text-slate-400 max-w-2xl mx-auto">
             Comece grátis e faça upgrade quando precisar de mais recursos
           </p>
@@ -168,11 +202,13 @@ export function PricingSection() {
                 <p className="text-sm text-indigo-300 font-semibold uppercase tracking-wider mb-1">Pro</p>
                 <p className="text-xs text-white/50 mb-3">Para profissionais individuais</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-base text-white/40 line-through">R$99,90</span>
-                  <span className="font-heading text-4xl font-extrabold gradient-text">R$30</span>
-                  <span className="text-sm text-white/50">/ano</span>
+                  {isYearly && <span className="text-base text-white/40 line-through">R${(19.9 * 12).toFixed(0)}</span>}
+                  <span className="font-heading text-4xl font-extrabold gradient-text">R${proPrice.toFixed(2).replace('.', ',')}</span>
+                  <span className="text-sm text-white/50">/{isYearly ? 'mês' : 'mês'}</span>
                 </div>
-                <p className="text-sm text-white/50 mt-2">Menos de R$2,50 por mes</p>
+                <p className="text-sm text-white/50 mt-2">
+                  {isYearly ? `R$${(proPrice * 12).toFixed(2).replace('.', ',')} cobrado anualmente` : '1 licença individual'}
+                </p>
               </div>
 
               <div className="space-y-2.5 mb-8 flex-1">
@@ -181,13 +217,15 @@ export function PricingSection() {
                 ))}
               </div>
 
-              <Link
-                to={isAuthenticated ? '/editor' : '/login'}
-                className="btn-glossy btn-glow-hover group/btn w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl gradient-bg text-white font-semibold transition-all shadow-lg shadow-indigo-500/20 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/50"
+              <button
+                type="button"
+                onClick={() => handleCheckout('PRO')}
+                disabled={loadingPlan === 'PRO'}
+                className="btn-glossy btn-glow-hover group/btn w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl gradient-bg text-white font-semibold transition-all shadow-lg shadow-indigo-500/20 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/50 disabled:opacity-50"
               >
-                Assinar Pro
-                <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform duration-200" />
-              </Link>
+                {loadingPlan === 'PRO' ? 'Redirecionando...' : 'Assinar Pro'}
+                {loadingPlan !== 'PRO' && <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform duration-200" />}
+              </button>
             </div>
           </motion.div>
 
@@ -210,10 +248,32 @@ export function PricingSection() {
               <p className="text-sm text-indigo-400 font-semibold uppercase tracking-wider mb-1">Business</p>
               <p className="text-xs text-slate-600 mb-3">Gestão de equipe centralizada</p>
               <div className="flex items-baseline gap-1">
-                <span className="font-heading text-4xl font-extrabold text-white">R$189,90</span>
-                <span className="text-sm text-slate-500">/ano</span>
+                <span className="font-heading text-4xl font-extrabold text-white">R${businessPricePerSeat.toFixed(2).replace('.', ',')}</span>
+                <span className="text-sm text-slate-500">/{isYearly ? 'mês' : 'mês'} por usuário</span>
               </div>
-              <p className="text-sm text-slate-500 mt-2">Até 10 membros · ~R$15,83/mes</p>
+
+              {/* Seats slider */}
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">{businessSeats} colaboradores</span>
+                  <span className="text-sm font-bold text-white">R${businessTotal.toFixed(2).replace('.', ',')}
+                    <span className="text-slate-500 font-normal text-xs">/{isYearly ? 'mês' : 'mês'}</span>
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={5}
+                  max={50}
+                  value={businessSeats}
+                  onChange={(e) => setBusinessSeats(Number(e.target.value))}
+                  className="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-indigo-500"
+                  title="Número de colaboradores"
+                />
+                <div className="flex justify-between text-[10px] text-slate-600">
+                  <span>5 min</span>
+                  <span>50 max</span>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2.5 mb-8 flex-1">
@@ -257,12 +317,11 @@ export function PricingSection() {
 
               <div className="mb-6">
                 <p className="text-sm text-violet-400 font-semibold uppercase tracking-wider mb-1">Enterprise</p>
-                <p className="text-xs text-slate-600 mb-3">Tudo + domínio customizado</p>
+                <p className="text-xs text-slate-600 mb-3">+50 colaboradores · vendas complexas</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="font-heading text-4xl font-extrabold text-white">R$299,90</span>
-                  <span className="text-sm text-slate-500">/ano</span>
+                  <span className="font-heading text-3xl font-extrabold text-white">Sob Consulta</span>
                 </div>
-                <p className="text-sm text-slate-500 mt-2">Até 10 membros · ~R$24,99/mes</p>
+                <p className="text-sm text-slate-500 mt-2">Preço personalizado para sua empresa</p>
               </div>
 
               <div className="space-y-2.5 mb-8 flex-1">
@@ -271,15 +330,15 @@ export function PricingSection() {
                 ))}
               </div>
 
-              <button
-                type="button"
-                onClick={() => handleCheckout('ENTERPRISE')}
-                disabled={loadingPlan !== null}
-                className="btn-glossy btn-glow-hover group w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl gradient-bg text-white font-semibold transition-all shadow-lg shadow-violet-600/25 disabled:opacity-50 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/50"
+              <a
+                href="https://wa.me/5518997249438?text=Olá! Tenho interesse no plano Enterprise do CraftCard para minha empresa."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-glossy btn-glow-hover group w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl gradient-bg text-white font-semibold transition-all shadow-lg shadow-violet-600/25 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/50"
               >
-                {loadingPlan === 'ENTERPRISE' ? 'Redirecionando...' : 'Assinar Enterprise'}
-                {loadingPlan !== 'ENTERPRISE' && <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-200" />}
-              </button>
+                Falar com Vendas
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-200" />
+              </a>
             </div>
           </motion.div>
         </div>

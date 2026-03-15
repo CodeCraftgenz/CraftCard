@@ -21,6 +21,7 @@ model User {
   totpBackupCodes        String?   @map("totp_backup_codes") @db.Text
   plan                   String    @default("FREE") // FREE, PRO, BUSINESS, ENTERPRISE
   role                   String    @default("USER") @db.VarChar(20) // USER, ADMIN, SUPER_ADMIN
+  apiKey                 String?   @unique @map("api_key") @db.VarChar(64)
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
 
@@ -183,6 +184,8 @@ model Payment {
   currency       String    @default("BRL")
   status         String    @default("pending")
   plan           String?   @db.VarChar(20)
+  billingCycle   String?   @default("YEARLY") @map("billing_cycle") @db.VarChar(10) // MONTHLY | YEARLY
+  seatsCount     Int       @default(1) @map("seats_count")
   payerEmail     String?   @map("payer_email")
   mpResponseJson String?   @map("mp_response_json") @db.Text
   paidAt         DateTime? @map("paid_at")
