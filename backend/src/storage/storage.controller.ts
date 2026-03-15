@@ -17,8 +17,8 @@ import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.
 import { AppException } from '../common/exceptions/app.exception';
 import { PlanGuard, RequiresFeature } from '../payments/guards/plan.guard';
 
-const MAX_PHOTO_SIZE = 2 * 1024 * 1024; // 2MB — optimized for mobile uploads
-const MAX_BG_SIZE = 3 * 1024 * 1024; // 3MB — backgrounds need slightly more
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB — sharp compresses to WebP 400x400 after upload
+const MAX_BG_SIZE = 8 * 1024 * 1024; // 8MB — sharp compresses to WebP 1920x1080 after upload
 const MAX_RESUME_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
 
