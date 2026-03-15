@@ -139,9 +139,9 @@ export default function HackathonTeamTab({ accent }: HackathonTeamTabProps) {
           }}
         >
           <Users size={14} /> Minha Equipe
-          {invites.length > 0 && (
+          {(invites?.length ?? 0) > 0 && (
             <span className="w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-              {invites.length}
+              {invites?.length ?? 0}
             </span>
           )}
         </button>
@@ -162,12 +162,12 @@ export default function HackathonTeamTab({ accent }: HackathonTeamTabProps) {
       {tab === 'team' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
           {/* Pending invites */}
-          {invites.length > 0 && (
+          {(invites?.length ?? 0) > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wider text-white/40 flex items-center gap-1.5">
                 <Mail size={12} /> Convites recebidos
               </p>
-              {invites.map((inv) => (
+              {(invites ?? []).map((inv) => (
                 <div key={inv.id} className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate">{inv.teamName}</p>
@@ -248,7 +248,7 @@ export default function HackathonTeamTab({ accent }: HackathonTeamTabProps) {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-bold text-white truncate">{team.name}</h3>
                     <p className="text-xs text-white/40">
-                      {team.members.length}/{team.maxMembers} membros
+                      {team.members?.length ?? 0}/{team.maxMembers ?? 5} membros
                     </p>
                   </div>
                   {team.myRole === 'OWNER' && (
@@ -263,7 +263,7 @@ export default function HackathonTeamTab({ accent }: HackathonTeamTabProps) {
 
                 {/* Members */}
                 <div className="space-y-2">
-                  {team.members.map((member) => {
+                  {(team.members ?? []).map((member) => {
                     const meta = parseHackathonMeta(member.hackathonMeta);
                     const area = meta.hackathonArea ? getAreaById(meta.hackathonArea) : null;
                     return (
@@ -349,7 +349,7 @@ export default function HackathonTeamTab({ accent }: HackathonTeamTabProps) {
               {filteredParticipants.map((p) => {
                 const meta = parseHackathonMeta(p.hackathonMeta);
                 const area = meta.hackathonArea ? getAreaById(meta.hackathonArea) : null;
-                const isInMyTeam = team?.members.some((m) => m.slug === p.slug);
+                const isInMyTeam = team?.members?.some((m) => m.slug === p.slug);
                 const hasTeam = !!p.teamName;
 
                 return (
