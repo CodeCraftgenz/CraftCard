@@ -5,8 +5,12 @@ import {
   Users, BarChart3, Mail, Settings, Plus, Trash2, Copy, Check,
   UserPlus, Shield, Crown, Download, Eye, MessageSquare, Calendar, ArrowLeft, Loader2, AlertTriangle,
   ExternalLink, Globe, Search, ChevronLeft, ChevronRight, CheckCheck, MailOpen,
-  MousePointerClick, Smartphone, Monitor, Tablet, Link2,
+  MousePointerClick, Smartphone, Monitor, Tablet,
 } from 'lucide-react';
+import {
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  BarChart, Bar,
+} from 'recharts';
 import { Header } from '@/components/organisms/Header';
 import { FeatureLock } from '@/components/organisms/FeatureLock';
 import { useAuth } from '@/providers/AuthProvider';
@@ -916,110 +920,142 @@ const DEVICE_ICONS: Record<string, typeof Monitor> = {
   tablet: Tablet,
 };
 
-function MiniBarChart({ data, color, label }: {
-  data: { date: string; count: number }[];
-  color: string;
-  label: string;
-}) {
-  if (!data || data.length === 0) return <p className="text-white/30 text-sm text-center py-4">Sem dados</p>;
-  const max = Math.max(...data.map((d) => d.count), 1);
-  return (
-    <div>
-      <div className="flex items-end gap-1 h-24">
-        {data.map((d) => (
-          <div
-            key={d.date}
-            className={`flex-1 ${color} rounded-t hover:opacity-80 transition-opacity`}
-            style={{ height: `${(d.count / max) * 100}%`, minHeight: d.count > 0 ? '2px' : '0' }}
-            title={`${d.date}: ${d.count} ${label}`}
-          />
-        ))}
-      </div>
-      <div className="flex justify-between mt-1">
-        <span className="text-[10px] text-white/30">{data[0]?.date.slice(5)}</span>
-        <span className="text-[10px] text-white/30">{data[data.length - 1]?.date.slice(5)}</span>
-      </div>
-    </div>
-  );
-}
 
 function AnalyticsTab({ orgId }: { orgId: string }) {
   const { data: analytics } = useOrgAnalytics(orgId);
 
   if (!analytics) return <div className="text-white/50 text-center py-8">Carregando...</div>;
 
-  const maxViews = Math.max(...(analytics.dailyViews.map((v) => v.count) || [1]), 1);
+  // Prepare chart data for Recharts
+  const chartData = (analytics.dailyViews || []).map((v) => {
+    const msgDay = (analytics.dailyMessages || []).find((m) => m.date === v.date);
+    return { date: v.date.slice(5), views: v.count, leads: msgDay?.count || 0 };
+  });
+
+  const leaderboard = [...(analytics.memberProfiles || [])]
+    .sort((a, b) => b.viewCount - a.viewCount);
 
   return (
     <div className="space-y-6">
-      {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-        <StatCard icon={Eye} label="Total Views" value={analytics.totalViews} />
-        <StatCard icon={MessageSquare} label="Mensagens" value={analytics.totalMessages} />
-        <StatCard icon={Calendar} label="Agendamentos" value={analytics.totalBookings} />
+      {/* KPI Cards — Enterprise style */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+        <StatCard icon={Eye} label="Total de Acessos" value={analytics.totalViews} />
+        <StatCard icon={MessageSquare} label="Leads Capturados" value={analytics.totalMessages} />
         <StatCard icon={MousePointerClick} label="Cliques em Links" value={analytics.totalLinkClicks} />
+        <StatCard icon={Calendar} label="Agendamentos" value={analytics.totalBookings} />
         <StatCard icon={Mail} label="Não Lidas" value={analytics.unreadMessages} />
       </div>
 
-      {/* Daily views chart */}
-      {analytics.dailyViews.length > 0 && (
+      {/* Area Chart — Views + Leads over time (Recharts) */}
+      {chartData.length > 0 && (
         <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-          <h3 className="text-white font-semibold mb-4">Visualizações (ultimos 30 dias)</h3>
-          <div className="flex items-end gap-1 h-32">
-            {analytics.dailyViews.map((v) => (
-              <div
-                key={v.date}
-                className="flex-1 bg-brand-cyan/40 rounded-t hover:bg-brand-cyan/60 transition-colors"
-                style={{ height: `${(v.count / maxViews) * 100}%`, minHeight: '2px' }}
-                title={`${v.date}: ${v.count} views`}
-              />
-            ))}
-          </div>
-          <div className="flex justify-between mt-1">
-            <span className="text-[10px] text-white/30">{analytics.dailyViews[0]?.date.slice(5)}</span>
-            <span className="text-[10px] text-white/30">{analytics.dailyViews[analytics.dailyViews.length - 1]?.date.slice(5)}</span>
+          <h3 className="text-white font-semibold text-sm mb-4">Acessos e Leads (últimos 30 dias)</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="orgGradViews" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#00E4F2" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#00E4F2" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="orgGradLeads" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="date" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#fff', fontSize: 12 }} />
+              <Area type="monotone" dataKey="views" name="Acessos" stroke="#00E4F2" fill="url(#orgGradViews)" strokeWidth={2} />
+              <Area type="monotone" dataKey="leads" name="Leads" stroke="#F59E0B" fill="url(#orgGradLeads)" strokeWidth={2} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Leaderboard — Team ranking (Gamification) */}
+      {leaderboard.length > 0 && (
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h3 className="text-white font-semibold text-sm mb-4 flex items-center gap-2">
+            <Crown size={14} className="text-amber-400" /> Leaderboard da Equipe
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-white/40 text-xs border-b border-white/5">
+                  <th className="text-left py-2 pr-4">#</th>
+                  <th className="text-left py-2 pr-4">Membro</th>
+                  <th className="text-right py-2 px-3">Scans</th>
+                  <th className="text-right py-2 pl-3">% do Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboard.map((p, i) => {
+                  const pct = analytics.totalViews > 0 ? Math.round((p.viewCount / analytics.totalViews) * 100) : 0;
+                  return (
+                    <tr key={p.id} className="border-b border-white/5 hover:bg-white/[0.02] transition">
+                      <td className="py-3 pr-4">
+                        <span className={`text-sm font-bold tabular-nums ${i === 0 ? 'text-amber-400' : i === 1 ? 'text-slate-300' : i === 2 ? 'text-amber-600' : 'text-white/30'}`}>
+                          {i + 1}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-4">
+                        <div>
+                          <span className="text-white text-sm font-medium">{p.displayName}</span>
+                          <p className="text-white/30 text-[10px]">/{p.slug}</p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <span className="text-brand-cyan text-sm font-bold tabular-nums">{p.viewCount.toLocaleString()}</span>
+                      </td>
+                      <td className="py-3 pl-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <div className="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-brand-cyan/50 rounded-full" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-white/40 text-xs tabular-nums w-8">{pct}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {/* Messages + Bookings trends (side by side) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Top 5 Links — Bar Chart (Recharts) */}
+      {analytics.topLinks && analytics.topLinks.length > 0 && (
         <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-          <h3 className="text-white font-semibold mb-4">Mensagens (30 dias)</h3>
-          <MiniBarChart data={analytics.dailyMessages} color="bg-yellow-500/50" label="mensagens" />
+          <h3 className="text-white font-semibold text-sm mb-4">Links Mais Clicados</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={analytics.topLinks} layout="vertical" margin={{ left: 0, right: 20 }}>
+              <XAxis type="number" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} />
+              <YAxis type="category" dataKey="label" tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 11 }} width={100} axisLine={false} />
+              <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#fff', fontSize: 12 }} />
+              <Bar dataKey="clicks" fill="#00E4F2" radius={[0, 6, 6, 0]} barSize={14} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-          <h3 className="text-white font-semibold mb-4">Agendamentos (30 dias)</h3>
-          <MiniBarChart data={analytics.dailyBookings} color="bg-purple-500/50" label="agendamentos" />
-        </div>
-      </div>
+      )}
 
-      {/* Devices + Referrers (side by side) */}
+      {/* Devices + Referrers */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Device Distribution */}
         <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-          <h3 className="text-white font-semibold mb-4">Dispositivos</h3>
-          {analytics.deviceDistribution && analytics.deviceDistribution.length > 0 ? (
+          <h3 className="text-white font-semibold text-sm mb-4">Dispositivos</h3>
+          {analytics.deviceDistribution?.length > 0 ? (
             <div className="space-y-3">
               {(() => {
-                const maxDevice = Math.max(...analytics.deviceDistribution.map((d) => d.count), 1);
-                const totalDevices = analytics.deviceDistribution.reduce((sum, d) => sum + d.count, 0);
+                const total = analytics.deviceDistribution.reduce((s, d) => s + d.count, 0);
                 return analytics.deviceDistribution.map((d) => {
                   const DeviceIcon = DEVICE_ICONS[d.device] || Monitor;
-                  const pct = totalDevices > 0 ? Math.round((d.count / totalDevices) * 100) : 0;
+                  const pct = total > 0 ? Math.round((d.count / total) * 100) : 0;
                   return (
                     <div key={d.device} className="flex items-center gap-3">
-                      <DeviceIcon size={16} className="text-white/50 shrink-0" />
-                      <span className="text-white/70 text-sm w-16 capitalize">{d.device}</span>
-                      <div className="flex-1 bg-white/5 rounded-full h-4 overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${(d.count / maxDevice) * 100}%` }}
-                          transition={{ duration: 0.6 }}
-                          className="h-full bg-brand-cyan/40 rounded-full flex items-center justify-end pr-1.5"
-                        >
-                          <span className="text-[10px] text-white font-medium">{d.count}</span>
-                        </motion.div>
+                      <DeviceIcon size={14} className="text-white/40" />
+                      <span className="text-white/60 text-sm w-16 capitalize">{d.device}</span>
+                      <div className="flex-1 bg-white/5 rounded-full h-2 overflow-hidden">
+                        <div className="h-full bg-brand-cyan/40 rounded-full" style={{ width: `${pct}%` }} />
                       </div>
                       <span className="text-white/40 text-xs w-10 text-right">{pct}%</span>
                     </div>
@@ -1027,114 +1063,21 @@ function AnalyticsTab({ orgId }: { orgId: string }) {
                 });
               })()}
             </div>
-          ) : (
-            <p className="text-white/30 text-sm text-center py-4">Sem dados de dispositivos</p>
-          )}
+          ) : <p className="text-white/30 text-sm text-center py-4">Sem dados</p>}
         </div>
-
-        {/* Top Referrers */}
         <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-          <h3 className="text-white font-semibold mb-4">Principais Origens</h3>
-          {analytics.topReferrers && analytics.topReferrers.length > 0 ? (
+          <h3 className="text-white font-semibold text-sm mb-4">Principais Origens</h3>
+          {analytics.topReferrers?.length > 0 ? (
             <div className="space-y-3">
-              {(() => {
-                const maxRef = Math.max(...analytics.topReferrers.map((r) => r.count), 1);
-                return analytics.topReferrers.map((r) => (
-                  <div key={r.referrer} className="flex items-center gap-3">
-                    <Globe size={14} className="text-white/40 shrink-0" />
-                    <span className="text-white/70 text-sm flex-1 truncate">{r.referrer}</span>
-                    <div className="w-24 bg-white/5 rounded-full h-3 overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(r.count / maxRef) * 100}%` }}
-                        transition={{ duration: 0.6 }}
-                        className="h-full bg-indigo-500/50 rounded-full"
-                      />
-                    </div>
-                    <span className="text-white/50 text-xs w-10 text-right">{r.count}</span>
-                  </div>
-                ));
-              })()}
-            </div>
-          ) : (
-            <p className="text-white/30 text-sm text-center py-4">Sem dados de origem</p>
-          )}
-        </div>
-      </div>
-
-      {/* Top Countries + Top Links (side by side) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Top Countries */}
-        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-          <h3 className="text-white font-semibold mb-4">Principais Paises</h3>
-          {analytics.topCountries && analytics.topCountries.length > 0 ? (
-            <div className="space-y-3">
-              {(() => {
-                const maxCountry = Math.max(...analytics.topCountries.map((c) => c.count), 1);
-                return analytics.topCountries.map((c) => (
-                  <div key={c.country} className="flex items-center gap-3">
-                    <Globe size={14} className="text-white/40 shrink-0" />
-                    <span className="text-white/70 text-sm flex-1">{c.country}</span>
-                    <div className="w-24 bg-white/5 rounded-full h-3 overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(c.count / maxCountry) * 100}%` }}
-                        transition={{ duration: 0.6 }}
-                        className="h-full bg-green-500/50 rounded-full"
-                      />
-                    </div>
-                    <span className="text-white/50 text-xs w-10 text-right">{c.count}</span>
-                  </div>
-                ));
-              })()}
-            </div>
-          ) : (
-            <p className="text-white/30 text-sm text-center py-4">Sem dados de paises</p>
-          )}
-        </div>
-
-        {/* Top Links */}
-        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-          <h3 className="text-white font-semibold mb-4">Links Mais Clicados</h3>
-          {analytics.topLinks && analytics.topLinks.length > 0 ? (
-            <div className="space-y-3">
-              {analytics.topLinks.map((link, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <Link2 size={14} className="text-white/40 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm truncate">{link.label}</p>
-                    <p className="text-white/30 text-xs">{link.platform}</p>
-                  </div>
-                  <span className="text-brand-cyan text-sm font-semibold">{link.clicks.toLocaleString()}</span>
+              {analytics.topReferrers.map((r) => (
+                <div key={r.referrer} className="flex items-center gap-3">
+                  <Globe size={12} className="text-white/30" />
+                  <span className="text-white/60 text-sm flex-1 truncate">{r.referrer}</span>
+                  <span className="text-white/40 text-xs">{r.count}</span>
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-white/30 text-sm text-center py-4">Sem cliques em links</p>
-          )}
-        </div>
-      </div>
-
-      {/* Per-card breakdown */}
-      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h3 className="text-white font-semibold mb-4">Por Cartão</h3>
-        <div className="space-y-3">
-          {analytics.memberProfiles
-            .sort((a, b) => b.viewCount - a.viewCount)
-            .map((p) => (
-              <div key={p.id} className="flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <span className="text-white text-sm">{p.displayName}</span>
-                </div>
-                <div className="w-32 h-2 bg-white/5 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-brand-cyan/60 rounded-full"
-                    style={{ width: `${(p.viewCount / (analytics.totalViews || 1)) * 100}%` }}
-                  />
-                </div>
-                <span className="text-white/50 text-xs w-16 text-right">{p.viewCount}</span>
-              </div>
-            ))}
+          ) : <p className="text-white/30 text-sm text-center py-4">Sem dados</p>}
         </div>
       </div>
     </div>

@@ -202,13 +202,20 @@ export function PricingSection() {
                 <p className="text-sm text-indigo-300 font-semibold uppercase tracking-wider mb-1">Pro</p>
                 <p className="text-xs text-white/50 mb-3">Para profissionais individuais</p>
                 <div className="flex items-baseline gap-2">
-                  {isYearly && <span className="text-base text-white/40 line-through">R${(19.9 * 12).toFixed(0)}</span>}
+                  <span className="text-base text-white/40 line-through">R$29,90</span>
                   <span className="font-heading text-4xl font-extrabold gradient-text">R${proPrice.toFixed(2).replace('.', ',')}</span>
-                  <span className="text-sm text-white/50">/{isYearly ? 'mês' : 'mês'}</span>
+                  <span className="text-sm text-white/50">/mês</span>
                 </div>
-                <p className="text-sm text-white/50 mt-2">
-                  {isYearly ? `R$${(proPrice * 12).toFixed(2).replace('.', ',')} cobrado anualmente` : '1 licença individual'}
-                </p>
+                {isYearly ? (
+                  <p className="text-sm mt-2">
+                    <span className="text-emerald-400 font-semibold">Economize R${((29.9 - proPrice) * 12).toFixed(0)}/ano</span>
+                    <span className="text-white/30"> · R${(proPrice * 12).toFixed(2).replace('.', ',')} cobrado anualmente</span>
+                  </p>
+                ) : (
+                  <p className="text-sm text-white/40 mt-2">
+                    <span className="text-amber-400 font-medium">33% OFF</span> — de R$29,90 por R$19,90
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2.5 mb-8 flex-1">
@@ -247,10 +254,17 @@ export function PricingSection() {
             <div className="mb-6">
               <p className="text-sm text-indigo-400 font-semibold uppercase tracking-wider mb-1">Business</p>
               <p className="text-xs text-slate-600 mb-3">Gestão de equipe centralizada</p>
-              <div className="flex items-baseline gap-1">
+              <div className="flex items-baseline gap-2">
+                <span className="text-base text-white/40 line-through">R$79,90</span>
                 <span className="font-heading text-4xl font-extrabold text-white">R${businessPricePerSeat.toFixed(2).replace('.', ',')}</span>
-                <span className="text-sm text-slate-500">/{isYearly ? 'mês' : 'mês'} por usuário</span>
+                <span className="text-sm text-slate-500">/mês por usuário</span>
               </div>
+              {isYearly && (
+                <p className="text-sm mt-1">
+                  <span className="text-emerald-400 font-semibold">Economize 50%</span>
+                  <span className="text-white/30"> · cobrado anualmente</span>
+                </p>
+              )}
 
               {/* Seats slider */}
               <div className="mt-4 space-y-2">
