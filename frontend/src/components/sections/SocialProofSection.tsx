@@ -36,7 +36,7 @@ const testimonials = [
   {
     name: 'Fernanda Lima',
     role: 'Marketing Digital',
-    text: 'O analytics me mostra exatamente quem visualizou meu cartao. Dados valiosos para networking.',
+    text: 'O analytics me mostra exatamente quem visualizou meu cartão. Dados valiosos para networking.',
   },
   {
     name: 'Lucas Almeida',
@@ -46,7 +46,7 @@ const testimonials = [
   {
     name: 'Beatriz Rocha',
     role: 'Nutricionista',
-    text: 'Meus pacientes agendam consultas direto pelo cartao. Simples, rapido e funcional.',
+    text: 'Meus pacientes agendam consultas direto pelo cartão. Simples, rápido e funcional.',
   },
 ];
 

@@ -70,7 +70,7 @@ export function HackathonTeamButton({ slug, accent = HACKATHON_CONFIG.senacOrang
               </div>
 
               <p className="text-sm text-white/50 mb-5">
-                Escaneie o QR code ou compartilhe o link para convidar alguem para sua equipe no {HACKATHON_CONFIG.name}.
+                Escaneie o QR code ou compartilhe o link para convidar alguém para sua equipe no {HACKATHON_CONFIG.name}.
               </p>
 
               {/* QR Code */}

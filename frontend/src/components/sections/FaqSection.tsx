@@ -9,7 +9,7 @@ const faqs = [
   },
   {
     q: 'Qual a diferenca entre os planos?',
-    a: 'O plano Free e ideal para experimentar (1 cartao, 5 links, 3 temas). O Pro (R$30/ano) libera analytics, galeria, agendamentos, depoimentos, serviços, FAQ, currículo, video, customizacao visual completa, imagem de fundo personalizada, export de leads e ate 3 cartões. O Business (R$189,90/ano) adiciona organização com ate 10 membros, dashboard centralizado, branding e webhooks. O Enterprise (R$299,90/ano) inclui tudo do Business + domínio customizado.',
+    a: 'O plano Free e ideal para experimentar (1 cartão, 5 links, 3 temas). O Pro (R$30/ano) libera analytics, galeria, agendamentos, depoimentos, serviços, FAQ, currículo, video, customizacao visual completa, imagem de fundo personalizada, export de leads e ate 3 cartões. O Business (R$189,90/ano) adiciona organização com ate 10 membros, dashboard centralizado, branding e webhooks. O Enterprise (R$299,90/ano) inclui tudo do Business + domínio customizado.',
   },
   {
     q: 'Como funciona para empresas?',

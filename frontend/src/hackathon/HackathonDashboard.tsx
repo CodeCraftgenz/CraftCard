@@ -223,7 +223,7 @@ export default function HackathonDashboard() {
           transition={{ delay: 0.15 }}
           className="space-y-3"
         >
-          {/* Ver cartão publico */}
+          {/* Ver cartão público */}
           <button
             type="button"
             onClick={() => window.open(`/hackathon/card/${profile.slug}`, '_blank')}

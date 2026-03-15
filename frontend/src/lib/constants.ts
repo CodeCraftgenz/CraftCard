@@ -192,7 +192,7 @@ export const SOCIAL_PLATFORMS = [
   { value: 'phone', label: 'Telefone', icon: 'Phone', urlPrefix: 'tel:', placeholder: 'tel:+5511999999999' },
   { value: 'pix', label: 'Pix', icon: 'QrCode', urlPrefix: '', placeholder: 'Chave Pix' },
   { value: 'video_embed', label: 'Video (YouTube)', icon: 'Play', urlPrefix: 'https://', placeholder: 'https://youtube.com/watch?v=...' },
-  { value: 'music_embed', label: 'Musica (Spotify)', icon: 'Music2', urlPrefix: 'https://', placeholder: 'https://open.spotify.com/track/...' },
+  { value: 'music_embed', label: 'Música (Spotify)', icon: 'Music2', urlPrefix: 'https://', placeholder: 'https://open.spotify.com/track/...' },
   { value: 'file', label: 'Arquivo', icon: 'FileDown', urlPrefix: 'https://', placeholder: 'https://link-do-arquivo.pdf' },
   { value: 'map', label: 'Mapa', icon: 'MapPin', urlPrefix: '', placeholder: 'Av. Paulista, 1000 - Sao Paulo, SP' },
 ] as const;

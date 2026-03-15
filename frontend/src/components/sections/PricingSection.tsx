@@ -18,7 +18,7 @@ interface PlanFeature {
 const features: PlanFeature[] = [
   { label: 'Cartões pessoais', free: '1', pro: '3', business: '3', enterprise: '3' },
   { label: 'Assentos na organização', free: false, pro: false, business: 'Ate 10', enterprise: 'Ate 10' },
-  { label: 'Botões de links no cartao', hint: 'Redes sociais e links personalizados exibidos no seu cartão digital', free: '5', pro: '20', business: '50', enterprise: '50' },
+  { label: 'Botões de links no cartão', hint: 'Redes sociais e links personalizados exibidos no seu cartão digital', free: '5', pro: '20', business: '50', enterprise: '50' },
   { label: 'Temas visuais', free: '3', pro: 'Todos', business: 'Todos', enterprise: 'Todos' },
   { label: 'Conexões entre perfis', hint: 'Conecte-se com outros usuários e apareça na rede de contatos deles', free: '10', pro: '100', business: '500', enterprise: '1000' },
   { label: 'Analytics de visitas e cliques', free: false, pro: true, business: true, enterprise: true },

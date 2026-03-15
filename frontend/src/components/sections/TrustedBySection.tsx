@@ -15,7 +15,7 @@ const stats: StatItem[] = [
   { icon: Users, end: 500, suffix: '+', label: 'Cartões criados' },
   { icon: Eye, end: 10, suffix: 'k+', label: 'Visualizações' },
   { icon: Star, end: 4.9, suffix: '', label: 'Avaliacao media', decimals: 1 },
-  { icon: Clock, end: 30, suffix: 's', label: 'Para criar seu cartao' },
+  { icon: Clock, end: 30, suffix: 's', label: 'Para criar seu cartão' },
 ];
 
 function AnimatedCounter({ end, suffix, decimals = 0, started }: { end: number; suffix: string; decimals?: number; started: boolean }) {

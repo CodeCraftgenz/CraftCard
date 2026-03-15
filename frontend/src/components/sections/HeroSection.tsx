@@ -124,7 +124,7 @@ export function HeroSection() {
                 className="btn-glossy btn-hero-glow group inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl gradient-bg text-white font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus:ring-offset-2 focus:ring-offset-[#020617]"
               >
                 <Sparkles size={16} className="opacity-70" />
-                Criar meu cartao
+                Criar meu cartão
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform duration-200" />
               </Link>
             </MagneticButton>

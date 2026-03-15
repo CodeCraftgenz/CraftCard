@@ -26,7 +26,7 @@ export const SOFT_SKILLS: SoftSkill[] = [
   { id: 'resolucao', label: 'Resolução de problemas', emoji: '🔧', description: 'Encontrar soluções quando algonão sai como o esperado.' },
   { id: 'criatividade', label: 'Criatividade', emoji: '💡', description: 'Pensar em ideias novas ou diferentes para resolver situações ou criar algo.' },
   { id: 'inteligencia_emocional', label: 'Inteligência emocional', emoji: '🧘', description: 'Saber lidar com emoções, pressao e conflitos sem perder o equilíbrio.' },
-  { id: 'proatividade', label: 'Proatividade', emoji: '🚀', description: 'Tomar iniciativa e agir sem precisar que alguem mande.' },
+  { id: 'proatividade', label: 'Proatividade', emoji: '🚀', description: 'Tomar iniciativa e agir sem precisar que alguém mande.' },
   { id: 'etica', label: 'Postura etica', emoji: '⚖️', description: 'Agir com honestidade, respeito e responsabilidade com as pessoas e regras.' },
   { id: 'foco_cliente', label: 'Foco no cliente', emoji: '🎯', description: 'Pensar em como seu trabalho pode ajudar ou melhorar a experiencia de quem usa o servico.' },
   { id: 'aprendizado', label: 'Aprendizado continuo', emoji: '📚', description: 'Ter interesse em aprender coisas novas e melhorar sempre suas habilidades.' },

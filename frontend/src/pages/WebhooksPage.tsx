@@ -17,7 +17,7 @@ import {
 } from '@/hooks/useWebhooks';
 
 const AVAILABLE_EVENTS = [
-  { key: 'new_message', label: 'Nova mensagem', description: 'Quando um visitante envia mensagem pelo cartao' },
+  { key: 'new_message', label: 'Nova mensagem', description: 'Quando um visitante envia mensagem pelo cartão' },
   { key: 'new_booking', label: 'Novo agendamento', description: 'Quando um visitante agenda um horario' },
   { key: 'new_testimonial', label: 'Novo depoimento', description: 'Quando um visitante deixa um depoimento' },
 ] as const;
@@ -82,7 +82,7 @@ function WebhooksContent() {
       >
         <h3 className="text-brand-cyan font-medium text-sm mb-2">Como funciona?</h3>
         <p className="text-white/50 text-xs leading-relaxed">
-          Webhooks enviam dados automaticamente para uma URL quando eventos acontecem no seu cartao.
+          Webhooks enviam dados automaticamente para uma URL quando eventos acontecem no seu cartão.
           Use com Zapier, Make, HubSpot ou qualquer ferramenta que aceite webhooks.
           Cada envio inclui assinatura HMAC-SHA256 no header <code className="text-brand-cyan/80 bg-white/5 px-1 rounded">X-CraftCard-Signature</code> para validacao.
         </p>

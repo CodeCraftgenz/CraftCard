@@ -551,7 +551,7 @@ export function PublicCardPage() {
         useCORS: true,
       });
       const link = document.createElement('a');
-      link.download = `cartao-${slug}.png`;
+      link.download = `cartão-${slug}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch {
@@ -619,7 +619,7 @@ export function PublicCardPage() {
             )}
             <h2 className="text-xl font-bold text-white text-center">{profile.displayName}</h2>
             <p className="text-sm text-white/50 text-center mt-2">
-              Preencha seus dados para acessar o cartao
+              Preencha seus dados para acessar o cartão
             </p>
           </div>
           <div className="space-y-3">

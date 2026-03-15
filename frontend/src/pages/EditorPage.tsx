@@ -819,7 +819,7 @@ export function EditorPage() {
                     <CreditCard size={22} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg">Desbloqueie seu cartao</h3>
+                    <h3 className="font-bold text-lg">Desbloqueie seu cartão</h3>
                     <p className="text-sm text-white/50">
                       De <span className="line-through text-white/30">R$99,90</span> por apenas R$30/ano para publicar e compartilhar
                     </p>
@@ -968,7 +968,7 @@ export function EditorPage() {
                   <div>
                     <h3 className="font-semibold text-white">Instalar no celular</h3>
                     <p className="text-xs text-white/40 mt-0.5">
-                      Adicione o CraftCard na tela inicial para acesso rapido
+                      Adicione o CraftCard na tela inicial para acesso rápido
                     </p>
                   </div>
                 </div>
@@ -1768,7 +1768,7 @@ export function EditorPage() {
                   <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
                     <ExternalLink size={24} className="mx-auto text-white/15 mb-2" />
                     <p className="text-sm text-white/30">Nenhum link personalizado</p>
-                    <p className="text-xs text-white/15 mt-1">Adicione links para exibir como botões no cartao</p>
+                    <p className="text-xs text-white/15 mt-1">Adicione links para exibir como botões no cartão</p>
                   </div>
                 )}
               </div>
@@ -1843,7 +1843,7 @@ export function EditorPage() {
               <div className="space-y-5">
                 {/* Card Theme */}
                 <div>
-                  <label className="text-xs font-medium text-white/50 mb-3 block uppercase tracking-wider">Tema do cartao</label>
+                  <label className="text-xs font-medium text-white/50 mb-3 block uppercase tracking-wider">Tema do cartão</label>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                     {CARD_THEMES.map((theme) => (
                       <button
@@ -1909,7 +1909,7 @@ export function EditorPage() {
                         setSlugInput(val);
                       }}
                       className="flex-1 px-4 py-3 bg-transparent text-white text-sm focus:outline-none"
-                      placeholder="meu-cartao"
+                      placeholder="meu-cartão"
                     />
                   </div>
                   {slugCheck && slugInput !== profile?.slug && (
@@ -2264,7 +2264,7 @@ export function EditorPage() {
                   <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
                     <MessageSquare size={24} className="mx-auto text-white/15 mb-2" />
                     <p className="text-sm text-white/30">Nenhum lead ainda</p>
-                    <p className="text-xs text-white/15 mt-1">Quando alguem enviar uma mensagem pelo seu cartao, ela aparecerá aqui</p>
+                    <p className="text-xs text-white/15 mt-1">Quando alguém enviar uma mensagem pelo seu cartão, ela aparecerá aqui</p>
                   </div>
                 )}
               </div>
@@ -2365,7 +2365,7 @@ export function EditorPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-sm">Conexões</h3>
-                    <p className="text-[11px] text-white/40">Mostrar perfis conectados no seu cartao</p>
+                    <p className="text-[11px] text-white/40">Mostrar perfis conectados no seu cartão</p>
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -2540,7 +2540,7 @@ export function EditorPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold">Captura de Leads</h3>
-                    <p className="text-xs text-white/40 mt-0.5">Visitantes preenchem nome e email antes de ver o cartao</p>
+                    <p className="text-xs text-white/40 mt-0.5">Visitantes preenchem nome e email antes de ver o cartão</p>
                   </div>
                   <button
                     type="button"
@@ -2578,7 +2578,7 @@ export function EditorPage() {
 
                 {/* Quick Slot Config */}
                 <div className="space-y-3 mb-4">
-                  <p className="text-xs text-white/40">Configure seus horários disponiveis. Visitantes poderao agendar reunioes.</p>
+                  <p className="text-xs text-white/40">Configure seus horários disponíveis. Visitantes poderao agendar reunioes.</p>
                   {['Seg', 'Ter', 'Qua', 'Qui', 'Sex'].map((day, i) => {
                     const dayOfWeek = i + 1; // 1=Mon, 5=Fri
                     const slot = mySlots?.find((s) => s.dayOfWeek === dayOfWeek);
@@ -2749,7 +2749,7 @@ export function EditorPage() {
                   <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
                     <Star size={24} className="mx-auto text-white/15 mb-2" />
                     <p className="text-sm text-white/30">Nenhum depoimento ainda</p>
-                    <p className="text-xs text-white/15 mt-1">Quando alguem deixar um depoimento no seu cartao, ele aparecerá aqui</p>
+                    <p className="text-xs text-white/15 mt-1">Quando alguém deixar um depoimento no seu cartão, ele aparecerá aqui</p>
                   </div>
                 )}
               </div>

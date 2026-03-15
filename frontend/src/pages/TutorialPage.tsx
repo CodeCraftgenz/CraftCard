@@ -32,7 +32,7 @@ interface TutorialCard {
 const GETTING_STARTED: TutorialCard[] = [
   {
     icon: <UserCircle size={20} />,
-    title: 'Edite seu cartao',
+    title: 'Edite seu cartão',
     description: 'Personalize seu nome, bio, foto de perfil e foto de capa. Escolha um slug único (ex: craftcardgenz.com/seu-nome).',
     link: '/editor',
   },
@@ -45,7 +45,7 @@ const GETTING_STARTED: TutorialCard[] = [
   {
     icon: <Share2 size={20} />,
     title: 'Publique e compartilhe',
-    description: 'Ative a publicacao do cartao, copie seu link e compartilhe nas redes sociais ou via QR Code personalizado.',
+    description: 'Ative a publicação do cartão, copie seu link e compartilhe nas redes sociais ou via QR Code personalizado.',
     link: '/editor',
   },
   {
@@ -56,14 +56,14 @@ const GETTING_STARTED: TutorialCard[] = [
   },
   {
     icon: <QrCode size={20} />,
-    title: 'Pix no cartao',
+    title: 'Pix no cartão',
     description: 'Adicione sua chave Pix como link. Visitantes veem um QR Code e podem copiar a chave ou o payload Copia e Cola.',
     link: '/editor',
   },
   {
     icon: <MapPin size={20} />,
     title: 'Mapa interativo',
-    description: 'Adicione um endereço como link tipo "Mapa". Ele aparece como um mapa visual do Google Maps embutido no cartao.',
+    description: 'Adicione um endereço como link tipo "Mapa". Ele aparece como um mapa visual do Google Maps embutido no cartão.',
     link: '/editor',
   },
   {
@@ -75,7 +75,7 @@ const GETTING_STARTED: TutorialCard[] = [
   {
     icon: <Clock size={20} />,
     title: 'Agendamento de links',
-    description: 'Programe quando um link aparece no cartao. Defina data de início e fim — o link so fica visivel durante o período. Ideal para promocoes temporarias.',
+    description: 'Programe quando um link aparece no cartão. Defina data de início e fim — o link so fica visível durante o período. Ideal para promoções temporárias.',
     link: '/editor',
   },
 ];
@@ -112,14 +112,14 @@ const PRO_FEATURES: TutorialCard[] = [
   {
     icon: <HelpCircle size={20} />,
     title: 'FAQ',
-    description: 'Adicione perguntas frequentes ao cartao. O accordion aparece no cartão publico automaticamente.',
+    description: 'Adicione perguntas frequentes ao cartão. O accordion aparece no cartão público automaticamente.',
     feature: 'faq',
     link: '/editor',
   },
   {
     icon: <CalendarDays size={20} />,
     title: 'Agendamento online',
-    description: 'Configure seus horários disponiveis e receba agendamentos diretamente pelo cartao. Gerencie tudo pelo editor.',
+    description: 'Configure seus horários disponíveis e receba agendamentos diretamente pelo cartão. Gerencie tudo pelo editor.',
     feature: 'bookings',
     link: '/editor',
   },
@@ -133,28 +133,28 @@ const PRO_FEATURES: TutorialCard[] = [
   {
     icon: <MessageSquare size={20} />,
     title: 'Depoimentos',
-    description: 'Receba e aprove depoimentos de clientes que aparecem no seu cartão publico.',
+    description: 'Receba e aprove depoimentos de clientes que aparecem no seu cartão público.',
     feature: 'testimonials',
     link: '/editor',
   },
   {
     icon: <Mail size={20} />,
     title: 'Formulário de contato',
-    description: 'Receba mensagens diretamente pelo cartao. As mensagens aparecem no editor com notificação.',
+    description: 'Receba mensagens diretamente pelo cartão. As mensagens aparecem no editor com notificação.',
     feature: 'contacts',
     link: '/editor',
   },
   {
     icon: <FileText size={20} />,
     title: 'Currículo e Video',
-    description: 'Faca upload do seu currículo em PDF e adicione um vídeo de apresentacao. Embed de YouTube e Spotify tambem funciona nos links.',
+    description: 'Faca upload do seu currículo em PDF e adicione um vídeo de apresentacao. Embed de YouTube e Spotify também funciona nos links.',
     feature: 'resume',
     link: '/editor',
   },
   {
     icon: <Video size={20} />,
     title: 'Embeds de vídeo e musica',
-    description: 'Adicione links tipo "Video (YouTube)" ou "Musica (Spotify)". Eles abrem como players embutidos diretamente no cartao.',
+    description: 'Adicione links tipo "Video (YouTube)" ou "Música (Spotify)". Eles abrem como players embutidos diretamente no cartão.',
     feature: 'resume',
     link: '/editor',
   },
@@ -168,7 +168,7 @@ const PRO_FEATURES: TutorialCard[] = [
   {
     icon: <UserPlus size={20} />,
     title: 'Conexões entre perfis',
-    description: 'Conecte-se com outros usuários do CraftCard. Visitantes logados podem enviar pedidos de conexão pelo botao no seu cartao. Gerencie na página de Conexões.',
+    description: 'Conecte-se com outros usuários do CraftCard. Visitantes logados podem enviar pedidos de conexão pelo botao no seu cartão. Gerencie na página de Conexões.',
     link: '/connections',
   },
   {
@@ -375,11 +375,11 @@ export function TutorialPage() {
               <h3 className="text-sm font-semibold text-white mb-2">Tipos de links especiais</h3>
               <ul className="text-xs text-white/50 space-y-1.5 leading-relaxed">
                 <li><span className="text-brand-cyan">Separador:</span> Cria um título visual para organizar seus links em secoes</li>
-                <li><span className="text-brand-cyan">Pix:</span> Exibe QR Code + chave copiavel no cartao</li>
+                <li><span className="text-brand-cyan">Pix:</span> Exibe QR Code + chave copiável no cartão</li>
                 <li><span className="text-brand-cyan">Mapa:</span> Mostra Google Maps embutido com seu endereço</li>
                 <li><span className="text-brand-cyan">Telefone:</span> Inicia ligacao ao clicar</li>
                 <li><span className="text-brand-cyan">Video:</span> Embed do YouTube com player inline</li>
-                <li><span className="text-brand-cyan">Musica:</span> Embed do Spotify com player inline</li>
+                <li><span className="text-brand-cyan">Música:</span> Embed do Spotify com player inline</li>
                 <li><span className="text-brand-cyan">Arquivo:</span> Link com download automatico (PDF, etc)</li>
               </ul>
             </div>

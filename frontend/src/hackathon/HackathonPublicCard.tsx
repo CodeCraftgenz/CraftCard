@@ -285,7 +285,7 @@ export default function HackathonPublicCard() {
                 />
               </div>
               <p className="text-white/30 text-xs text-center">
-                Escaneie para ver este cartao
+                Escaneie para ver este cartão
               </p>
             </motion.div>
           </motion.div>

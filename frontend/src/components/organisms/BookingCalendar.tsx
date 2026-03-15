@@ -115,7 +115,7 @@ export function BookingCalendar({ slug, accent, onClose }: BookingCalendarProps)
           >
             <p className="text-xs text-white/50 mb-2 font-medium flex items-center gap-1">
               <Clock size={12} />
-              Horarios disponiveis
+              Horarios disponíveis
             </p>
             {timesLoading ? (
               <div className="flex justify-center py-4">

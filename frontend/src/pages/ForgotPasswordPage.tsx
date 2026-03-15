@@ -57,7 +57,7 @@ export function ForgotPasswordPage() {
               Se o email <strong className="text-white">{email}</strong> estiver cadastrado, enviaremos um link de recuperacao.
             </p>
             <p className="text-white/40 text-xs">
-              Verifique tambem a pasta de spam.
+              Verifique também a pasta de spam.
             </p>
             <Link
               to="/login"

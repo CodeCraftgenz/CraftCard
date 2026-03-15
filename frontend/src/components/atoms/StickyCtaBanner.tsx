@@ -33,7 +33,7 @@ export function StickyCtaBanner() {
             to={isAuthenticated ? '/editor' : '/login'}
             className="btn-glossy btn-glow-hover group inline-flex items-center gap-2 px-6 py-3 rounded-xl gradient-bg text-white font-semibold text-sm shadow-xl shadow-indigo-500/25 focus:outline-none focus:ring-2 focus:ring-indigo-400/50"
           >
-            Criar meu cartao
+            Criar meu cartão
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-200" />
           </Link>
         </motion.div>

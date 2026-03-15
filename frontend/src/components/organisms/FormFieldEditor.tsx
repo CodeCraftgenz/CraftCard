@@ -44,7 +44,7 @@ export function FormFieldEditor({ cardId }: FormFieldEditorProps) {
         Campos do Formulário
       </div>
       <p className="text-xs text-white/40">
-        Personalize os campos do formulário de contato do seu cartao.
+        Personalize os campos do formulário de contato do seu cartão.
       </p>
 
       {/* Existing fields */}

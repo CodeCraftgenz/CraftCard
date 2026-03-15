@@ -419,7 +419,7 @@ function MembersTab({ orgId, myRole, org }: { orgId: string; myRole: string; org
                     )}
                   </button>
                 ) : (
-                  <span className="text-xs text-white/20 shrink-0">Sem cartao</span>
+                  <span className="text-xs text-white/20 shrink-0">Sem cartão</span>
                 )}
                 {canChangeRole ? (
                   <select

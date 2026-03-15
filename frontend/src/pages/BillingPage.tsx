@@ -20,10 +20,10 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const PLAN_FEATURES: Record<string, string[]> = {
-  FREE: ['1 cartao', '5 links', '3 temas', 'Marca d\u0027agua'],
+  FREE: ['1 cartão', '5 links', '3 temas', 'Marca d\u0027agua'],
   PRO: ['5 cartões', '20 links', 'Todos temas', 'Analytics', 'Sem marca d\u0027agua', 'Fontes personalizadas'],
   BUSINESS: ['50 cartões', '50 links', 'Dashboard org', 'Branding', 'Webhooks', 'Export leads'],
-  ENTERPRISE: ['Todos recursos', 'Domínio customizado', 'Suporte prioritario'],
+  ENTERPRISE: ['Todos recursos', 'Domínio customizado', 'Suporte prioritário'],
 };
 
 export function BillingPage() {
