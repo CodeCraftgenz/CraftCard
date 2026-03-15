@@ -26,14 +26,15 @@ export function ConnectButton({ targetProfileId, accent, isLoggedIn }: ConnectBu
     return (
       <motion.button
         onClick={() => navigate('/login')}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        whileHover={{ scale: 1.02 }}
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all border border-white/10 hover:bg-white/5 text-white/50 hover:text-white/80"
+        className="w-full flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold transition-all text-white"
+        style={{ background: `linear-gradient(135deg, ${accent}40, ${accent}20)`, border: `1px solid ${accent}30` }}
       >
-        <UserPlus size={14} style={{ color: accent }} />
+        <UserPlus size={16} style={{ color: accent }} />
         Conectar
       </motion.button>
     );
@@ -140,22 +141,23 @@ export function ConnectButton({ targetProfileId, accent, isLoggedIn }: ConnectBu
     );
   }
 
-  // No connection - show connect button (subtle footer style)
+  // No connection - show connect button
   return (
     <motion.button
       onClick={handleConnect}
       disabled={isLoading}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.5 }}
-      whileHover={{ scale: 1.02 }}
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+      whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.97 }}
-      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all border border-white/10 hover:bg-white/5 text-white/50 hover:text-white/80"
+      className="w-full flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold transition-all text-white"
+      style={{ background: `linear-gradient(135deg, ${accent}40, ${accent}20)`, border: `1px solid ${accent}30` }}
     >
       {isLoading ? (
-        <Loader2 size={14} className="animate-spin" />
+        <Loader2 size={16} className="animate-spin" />
       ) : (
-        <UserPlus size={14} style={{ color: accent }} />
+        <UserPlus size={16} style={{ color: accent }} />
       )}
       Conectar
     </motion.button>
