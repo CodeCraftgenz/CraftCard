@@ -4,13 +4,13 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { AppException } from '../common/exceptions/app.exception';
 
-/** Enterprise tiered pricing */
+/** Enterprise tiered pricing — always above Business max (R$24,90) at base */
 const ENTERPRISE_TIERS = [
-  { min: 50, max: 100, price: 9.9 },
-  { min: 101, max: 250, price: 7.9 },
-  { min: 251, max: 500, price: 5.9 },
-  { min: 501, max: 1000, price: 4.9 },
-  { min: 1001, max: 99999, price: 3.9 },
+  { min: 50, max: 100, price: 29.9 },
+  { min: 101, max: 250, price: 24.9 },
+  { min: 251, max: 500, price: 19.9 },
+  { min: 501, max: 1000, price: 14.9 },
+  { min: 1001, max: 99999, price: 9.9 },
 ];
 
 function getEnterprisePricePerSeat(seats: number): number {

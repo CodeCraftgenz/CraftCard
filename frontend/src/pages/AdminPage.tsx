@@ -845,16 +845,16 @@ function EnterpriseTab() {
 
   // Tiered pricing calculation (mirrors backend)
   const getTierPrice = (s: number) => {
-    if (s <= 100) return 9.9;
-    if (s <= 250) return 7.9;
-    if (s <= 500) return 5.9;
-    if (s <= 1000) return 4.9;
-    return 3.9;
+    if (s <= 100) return 29.9;
+    if (s <= 250) return 24.9;
+    if (s <= 500) return 19.9;
+    if (s <= 1000) return 14.9;
+    return 9.9;
   };
-  const pricePerSeat = getTierPrice(seats) * (cycle === 'YEARLY' ? 0.8 : 1);
+  const pricePerSeat = Math.round(getTierPrice(seats) * (cycle === 'YEARLY' ? 0.8 : 1) * 100) / 100;
   const monthlyTotal = Math.round(pricePerSeat * seats * 100) / 100;
   const yearlyTotal = Math.round(monthlyTotal * 12 * 100) / 100;
-  const discount = Math.round((1 - pricePerSeat / 9.9) * 100);
+  const discount = Math.round((1 - pricePerSeat / 29.9) * 100);
 
   useEffect(() => {
     api.get('/admin/enterprise/clients').then((data: unknown) => setClients(data as Array<Record<string, unknown>>)).catch(() => {});
@@ -962,8 +962,8 @@ function EnterpriseTab() {
           </div>
 
           <div className="text-[10px] text-white/20 space-y-1">
-            <p>50-100 seats: R$9,90 · 101-250: R$7,90 · 251-500: R$5,90</p>
-            <p>501-1000: R$4,90 · 1000+: R$3,90 (sob consulta)</p>
+            <p>50-100: R$29,90 · 101-250: R$24,90 · 251-500: R$19,90</p>
+            <p>501-1000: R$14,90 · 1000+: R$9,90</p>
           </div>
         </div>
       </div>
