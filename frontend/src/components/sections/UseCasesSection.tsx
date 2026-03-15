@@ -35,7 +35,7 @@ const useCases = [
     icon: Building2,
     title: 'Empresas e Equipes',
     description:
-      'Cartões padronizados para toda a equipe com gestao centralizada.',
+      'Cartões padronizados para toda a equipe com gestão centralizada.',
     bullets: [
       { icon: Users, text: 'Cartões padronizados para a equipe' },
       { icon: Palette, text: 'Branding centralizado (cores, logo, fonte)' },

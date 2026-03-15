@@ -202,13 +202,13 @@ export function PricingSection() {
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xs font-bold bg-gradient-to-r from-indigo-500/10 to-violet-500/10 text-indigo-400 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
                 <Building2 size={12} />
-                Para equipas
+                Para equipes
               </span>
             </div>
 
             <div className="mb-6">
               <p className="text-sm text-indigo-400 font-semibold uppercase tracking-wider mb-1">Business</p>
-              <p className="text-xs text-slate-600 mb-3">Gestao de equipa centralizada</p>
+              <p className="text-xs text-slate-600 mb-3">Gestão de equipe centralizada</p>
               <div className="flex items-baseline gap-1">
                 <span className="font-heading text-4xl font-extrabold text-white">R$189,90</span>
                 <span className="text-sm text-slate-500">/ano</span>

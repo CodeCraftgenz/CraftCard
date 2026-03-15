@@ -47,7 +47,7 @@ const UPSELL_BY_PLAN: Record<string, UpsellConfig> = {
   PRO: {
     targetPlan: 'BUSINESS',
     icon: Building2,
-    title: 'Tem uma equipa? Gira todos os cartões num só lugar.',
+    title: 'Tem uma equipe? Gerencie todos os cartões em um só lugar.',
     description: 'Conheca o plano Business — dashboard de organização, branding centralizado e webhooks por R$189,90/ano.',
     accentColor: 'text-brand-magenta',
     bgColor: 'bg-brand-magenta/5',

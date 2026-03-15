@@ -14,7 +14,7 @@ interface StatItem {
 const stats: StatItem[] = [
   { icon: Users, end: 500, suffix: '+', label: 'Cartões criados' },
   { icon: Eye, end: 10, suffix: 'k+', label: 'Visualizações' },
-  { icon: Star, end: 4.9, suffix: '', label: 'Avaliacao media', decimals: 1 },
+  { icon: Star, end: 4.9, suffix: '', label: 'Avaliação média', decimals: 1 },
   { icon: Clock, end: 30, suffix: 's', label: 'Para criar seu cartão' },
 ];
 

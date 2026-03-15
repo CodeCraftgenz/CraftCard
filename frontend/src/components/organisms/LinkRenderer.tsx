@@ -175,7 +175,7 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim, iconSty
           >
             <iframe
               src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
-              className="w-full aspect-vídeo rounded-xl"
+              className="w-full aspect-video rounded-xl"
               allow="autoplay; encrypted-media"
               allowFullScreen
               title={link.label}
@@ -730,7 +730,7 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, ico
         />
         {embedOpen && videoId && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-2 rounded-xl overflow-hidden col-span-3">
-            <iframe src={`https://www.youtube.com/embed/${videoId}?autoplay=1`} className="w-full aspect-vídeo rounded-xl" allow="autoplay; encrypted-media" allowFullScreen title={link.label} />
+            <iframe src={`https://www.youtube.com/embed/${videoId}?autoplay=1`} className="w-full aspect-video rounded-xl" allow="autoplay; encrypted-media" allowFullScreen title={link.label} />
           </motion.div>
         )}
       </div>

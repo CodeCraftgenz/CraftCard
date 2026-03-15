@@ -726,7 +726,7 @@ function OrgDetailPanel({ orgId, onClose }: { orgId: string; onClose: () => void
 
       {/* Seats management */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-4">
-        <h4 className="text-white font-semibold">Gestao de Assentos</h4>
+        <h4 className="text-white font-semibold">Gestão de Assentos</h4>
 
         {/* Usage bar */}
         <div>

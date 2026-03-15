@@ -16,7 +16,7 @@ const testimonials = [
   {
     name: 'Ana Oliveira',
     role: 'CEO - Studio Criativo',
-    text: 'Usamos o plano Business para toda a equipe. A gestao centralizada e excelente.',
+    text: 'Usamos o plano Business para toda a equipe. A gestão centralizada e excelente.',
   },
   {
     name: 'Rafael Costa',
