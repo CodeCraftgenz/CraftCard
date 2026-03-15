@@ -8,7 +8,7 @@ import { useMyEvents, useCreateEvent, useDeleteEvent, type EventSummary } from '
 import { useAuth } from '@/providers/AuthProvider';
 
 export default function EventsTab() {
-  const { hasPaid, plan } = useAuth();
+  const { hasPaid } = useAuth();
   const { data: events = [], isLoading } = useMyEvents();
   const createEvent = useCreateEvent();
   const deleteEvent = useDeleteEvent();
