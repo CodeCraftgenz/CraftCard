@@ -7,7 +7,12 @@ import { getPlanLimits } from '../payments/plan-limits';
 export class ConnectionsService {
   constructor(private prisma: PrismaService) {}
 
-  async requestConnection(userId: string, fromProfileId: string, toProfileId: string) {
+  async requestConnection(
+    userId: string,
+    fromProfileId: string,
+    toProfileId: string,
+    geo?: { latitude?: number; longitude?: number; locationLabel?: string; eventId?: string },
+  ) {
     if (fromProfileId === toProfileId) {
       throw AppException.badRequest('Nao e possivel conectar consigo mesmo');
     }
@@ -72,6 +77,10 @@ export class ConnectionsService {
       data: {
         requesterId: fromProfileId,
         addresseeId: toProfileId,
+        latitude: geo?.latitude ?? null,
+        longitude: geo?.longitude ?? null,
+        locationLabel: geo?.locationLabel ?? null,
+        eventId: geo?.eventId ?? null,
       },
     });
 
@@ -339,5 +348,174 @@ export class ConnectionsService {
     ]);
 
     return { profiles, total, page, totalPages: Math.ceil(total / limit) };
+  }
+
+  // ── Timeline ─────────────────────────────────────────
+
+  async getTimeline(userId: string, page = 1, limit = 20, tagId?: string) {
+    const profiles = await this.prisma.profile.findMany({
+      where: { userId },
+      select: { id: true },
+    });
+    const profileIds = profiles.map((p) => p.id);
+
+    const where: Record<string, unknown> = {
+      status: 'ACCEPTED',
+      OR: [
+        { requesterId: { in: profileIds } },
+        { addresseeId: { in: profileIds } },
+      ],
+    };
+
+    if (tagId) {
+      where.tags = { some: { tagId } };
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [connections, total] = await Promise.all([
+      this.prisma.connection.findMany({
+        where,
+        include: {
+          requester: { select: { id: true, displayName: true, photoUrl: true, slug: true, tagline: true } },
+          addressee: { select: { id: true, displayName: true, photoUrl: true, slug: true, tagline: true } },
+          event: { select: { id: true, name: true, slug: true } },
+          tags: { include: { tag: { select: { id: true, name: true, color: true } } } },
+        },
+        orderBy: { acceptedAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.connection.count({ where }),
+    ]);
+
+    const items = connections.map((c) => {
+      const isRequester = profileIds.includes(c.requesterId);
+      const other = isRequester ? c.addressee : c.requester;
+      return {
+        id: c.id,
+        connectedAt: c.acceptedAt,
+        createdAt: c.createdAt,
+        profile: other,
+        latitude: c.latitude,
+        longitude: c.longitude,
+        locationLabel: c.locationLabel,
+        event: c.event,
+        tags: c.tags.map((ct) => ct.tag),
+      };
+    });
+
+    return { items, total, page, totalPages: Math.ceil(total / limit) };
+  }
+
+  // ── Map Data ─────────────────────────────────────────
+
+  async getMapData(userId: string) {
+    const profiles = await this.prisma.profile.findMany({
+      where: { userId },
+      select: { id: true },
+    });
+    const profileIds = profiles.map((p) => p.id);
+
+    const connections = await this.prisma.connection.findMany({
+      where: {
+        status: 'ACCEPTED',
+        latitude: { not: null },
+        longitude: { not: null },
+        OR: [
+          { requesterId: { in: profileIds } },
+          { addresseeId: { in: profileIds } },
+        ],
+      },
+      include: {
+        requester: { select: { id: true, displayName: true, photoUrl: true, slug: true } },
+        addressee: { select: { id: true, displayName: true, photoUrl: true, slug: true } },
+      },
+    });
+
+    return connections.map((c) => {
+      const isRequester = profileIds.includes(c.requesterId);
+      const other = isRequester ? c.addressee : c.requester;
+      return {
+        id: c.id,
+        profile: other,
+        latitude: c.latitude!,
+        longitude: c.longitude!,
+        locationLabel: c.locationLabel,
+        connectedAt: c.acceptedAt,
+      };
+    });
+  }
+
+  // ── Wrapped (Annual Stats) ───────────────────────────
+
+  async getWrappedStats(userId: string, year: number) {
+    const profiles = await this.prisma.profile.findMany({
+      where: { userId },
+      select: { id: true },
+    });
+    const profileIds = profiles.map((p) => p.id);
+
+    const startOfYear = new Date(year, 0, 1);
+    const endOfYear = new Date(year + 1, 0, 1);
+
+    const connections = await this.prisma.connection.findMany({
+      where: {
+        status: 'ACCEPTED',
+        acceptedAt: { gte: startOfYear, lt: endOfYear },
+        OR: [
+          { requesterId: { in: profileIds } },
+          { addresseeId: { in: profileIds } },
+        ],
+      },
+      include: {
+        requester: { select: { id: true, displayName: true, photoUrl: true, slug: true } },
+        addressee: { select: { id: true, displayName: true, photoUrl: true, slug: true } },
+        tags: { include: { tag: { select: { name: true } } } },
+      },
+      orderBy: { acceptedAt: 'asc' },
+    });
+
+    const totalConnections = connections.length;
+
+    // First connection of the year
+    const firstConnection = connections[0]
+      ? {
+          profile: profileIds.includes(connections[0].requesterId) ? connections[0].addressee : connections[0].requester,
+          date: connections[0].acceptedAt,
+        }
+      : null;
+
+    // Top month
+    const monthCounts = new Array(12).fill(0);
+    for (const c of connections) {
+      if (c.acceptedAt) monthCounts[c.acceptedAt.getMonth()]++;
+    }
+    const topMonthIndex = monthCounts.indexOf(Math.max(...monthCounts));
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+    // Top location
+    const locationCounts = new Map<string, number>();
+    for (const c of connections) {
+      if (c.locationLabel) locationCounts.set(c.locationLabel, (locationCounts.get(c.locationLabel) || 0) + 1);
+    }
+    const topLocation = [...locationCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+    // Top tag
+    const tagCounts = new Map<string, number>();
+    for (const c of connections) {
+      for (const ct of c.tags) tagCounts.set(ct.tag.name, (tagCounts.get(ct.tag.name) || 0) + 1);
+    }
+    const topTag = [...tagCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+    return {
+      year,
+      totalConnections,
+      firstConnection,
+      topMonth: totalConnections > 0 ? { name: months[topMonthIndex], count: monthCounts[topMonthIndex] } : null,
+      monthlyData: months.map((name, i) => ({ name, count: monthCounts[i] })),
+      topLocation,
+      topTag,
+    };
   }
 }

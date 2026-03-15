@@ -24,6 +24,8 @@ export interface PlanLimits {
   webhooks: boolean;
   connections: boolean;
   maxConnections: number;
+  maxEvents: number;
+  mapGeo: boolean;
 }
 
 const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
@@ -51,6 +53,8 @@ const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     webhooks: false,
     connections: true,
     maxConnections: 10,
+    maxEvents: 0,
+    mapGeo: false,
   },
   PRO: {
     maxCards: 3,
@@ -76,6 +80,8 @@ const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     webhooks: false,
     connections: true,
     maxConnections: 100,
+    maxEvents: 3,
+    mapGeo: true,
   },
   BUSINESS: {
     maxCards: 3,
@@ -101,6 +107,8 @@ const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     webhooks: true,
     connections: true,
     maxConnections: 500,
+    maxEvents: 10,
+    mapGeo: true,
   },
   ENTERPRISE: {
     maxCards: 3,
@@ -126,6 +134,8 @@ const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     webhooks: true,
     connections: true,
     maxConnections: 1000,
+    maxEvents: 9999,
+    mapGeo: true,
   },
 };
 

@@ -13,7 +13,8 @@ export class ConnectionsController {
   async request(@CurrentUser() user: JwtPayload, @Body() body: unknown) {
     const parsed = requestConnectionSchema.safeParse(body);
     if (!parsed.success) throw AppException.badRequest('Dados invalidos', parsed.error.flatten());
-    return this.connectionsService.requestConnection(user.sub, parsed.data.fromProfileId, parsed.data.toProfileId);
+    const { fromProfileId, toProfileId, ...geo } = parsed.data;
+    return this.connectionsService.requestConnection(user.sub, fromProfileId, toProfileId, geo);
   }
 
   @Post('request-by-slug')
@@ -71,5 +72,30 @@ export class ConnectionsController {
       page ? parseInt(page, 10) : 1,
       limit ? Math.min(parseInt(limit, 10), 50) : 20,
     );
+  }
+
+  @Get('timeline')
+  async timeline(
+    @CurrentUser() user: JwtPayload,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('tagId') tagId?: string,
+  ) {
+    return this.connectionsService.getTimeline(
+      user.sub,
+      page ? parseInt(page, 10) : 1,
+      limit ? Math.min(parseInt(limit, 10), 50) : 20,
+      tagId || undefined,
+    );
+  }
+
+  @Get('map')
+  async mapData(@CurrentUser() user: JwtPayload) {
+    return this.connectionsService.getMapData(user.sub);
+  }
+
+  @Get('wrapped/:year')
+  async wrapped(@CurrentUser() user: JwtPayload, @Param('year') year: string) {
+    return this.connectionsService.getWrappedStats(user.sub, parseInt(year, 10));
   }
 }

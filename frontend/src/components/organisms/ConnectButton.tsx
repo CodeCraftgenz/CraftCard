@@ -46,10 +46,42 @@ export function ConnectButton({ targetProfileId, accent, isLoggedIn }: ConnectBu
   if (myProfile.id === targetProfileId) return null;
 
   const handleConnect = () => {
-    requestMutation.mutate(
-      { fromProfileId: myProfile.id, toProfileId: targetProfileId },
-      { onSuccess: () => setJustSent(true) },
-    );
+    // Try to capture geolocation for the connection map
+    const cachedGeo = sessionStorage.getItem('craftcard_geo');
+    if (cachedGeo) {
+      const geo = JSON.parse(cachedGeo);
+      requestMutation.mutate(
+        { fromProfileId: myProfile.id, toProfileId: targetProfileId, ...geo },
+        { onSuccess: () => setJustSent(true) },
+      );
+      return;
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const geo = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+          sessionStorage.setItem('craftcard_geo', JSON.stringify(geo));
+          requestMutation.mutate(
+            { fromProfileId: myProfile.id, toProfileId: targetProfileId, ...geo },
+            { onSuccess: () => setJustSent(true) },
+          );
+        },
+        () => {
+          // Geo denied — connect without location
+          requestMutation.mutate(
+            { fromProfileId: myProfile.id, toProfileId: targetProfileId },
+            { onSuccess: () => setJustSent(true) },
+          );
+        },
+        { timeout: 5000, enableHighAccuracy: false },
+      );
+    } else {
+      requestMutation.mutate(
+        { fromProfileId: myProfile.id, toProfileId: targetProfileId },
+        { onSuccess: () => setJustSent(true) },
+      );
+    }
   };
 
   const handleAccept = () => {

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Clock, Search, User, Trash2, Check, X, Loader2, ArrowLeft } from 'lucide-react';
+import { Users, Clock, Search, User, Trash2, Check, X, Loader2, ArrowLeft, MapIcon, Calendar, Tag, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
   useMyConnections,
@@ -14,14 +14,29 @@ import {
 import { useProfile } from '@/hooks/useProfile';
 import { resolvePhotoUrl } from '@/lib/constants';
 
-type Tab = 'connections' | 'pending' | 'discover';
+const TimelineTab = lazy(() => import('./connections/TimelineTab'));
+const MapTab = lazy(() => import('./connections/MapTab'));
+const EventsTab = lazy(() => import('./connections/EventsTab'));
+const TagsTab = lazy(() => import('./connections/TagsTab'));
+const WrappedTab = lazy(() => import('./connections/WrappedTab'));
+
+type Tab = 'timeline' | 'connections' | 'pending' | 'discover' | 'map' | 'events' | 'tags' | 'wrapped';
+
+const TabLoader = () => (
+  <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-white/20" /></div>
+);
 
 export default function ConnectionsPage() {
-  const [tab, setTab] = useState<Tab>('connections');
+  const [tab, setTab] = useState<Tab>('timeline');
   const [searchQuery, setSearchQuery] = useState('');
   const { data: profile } = useProfile();
 
   const tabs: { key: Tab; label: string; icon: typeof Users }[] = [
+    { key: 'timeline', label: 'Timeline', icon: Clock },
+    { key: 'map', label: 'Mapa', icon: MapIcon },
+    { key: 'events', label: 'Eventos', icon: Calendar },
+    { key: 'tags', label: 'Tags', icon: Tag },
+    { key: 'wrapped', label: 'Wrapped', icon: Sparkles },
     { key: 'connections', label: 'Conexoes', icon: Users },
     { key: 'pending', label: 'Pendentes', icon: Clock },
     { key: 'discover', label: 'Descobrir', icon: Search },
@@ -35,11 +50,14 @@ export default function ConnectionsPage() {
           <Link to="/editor" className="text-white/50 hover:text-white transition-colors">
             <ArrowLeft size={20} />
           </Link>
-          <h1 className="text-xl font-bold">Conexoes</h1>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold">Conexoes e Memorias</h1>
+            <p className="text-xs text-white/40">Sua rede de contatos</p>
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6">
+        {/* Tabs — scrollable */}
+        <div className="flex gap-1.5 mb-6 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10 -mx-1 px-1">
           {tabs.map((t) => {
             const Icon = t.icon;
             return (
@@ -47,13 +65,13 @@ export default function ConnectionsPage() {
                 key={t.key}
                 type="button"
                 onClick={() => setTab(t.key)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all whitespace-nowrap shrink-0 ${
                   tab === t.key
-                    ? 'bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/30'
-                    : 'bg-white/5 text-white/50 border border-white/10 hover:border-white/20'
+                    ? 'bg-white/10 text-white shadow-sm'
+                    : 'text-white/40 hover:text-white/60 hover:bg-white/5'
                 }`}
               >
-                <Icon size={14} />
+                <Icon size={12} />
                 {t.label}
                 {t.key === 'pending' && <PendingBadge />}
               </button>
@@ -62,6 +80,13 @@ export default function ConnectionsPage() {
         </div>
 
         {/* Content */}
+        <Suspense fallback={<TabLoader />}>
+          {tab === 'timeline' && <TimelineTab />}
+          {tab === 'map' && <MapTab />}
+          {tab === 'events' && <EventsTab />}
+          {tab === 'tags' && <TagsTab />}
+          {tab === 'wrapped' && <WrappedTab />}
+        </Suspense>
         {tab === 'connections' && <MyConnectionsTab />}
         {tab === 'pending' && <PendingTab />}
         {tab === 'discover' && (

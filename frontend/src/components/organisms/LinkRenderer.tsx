@@ -561,7 +561,7 @@ function tryParseJson(str: string): Record<string, string> | null {
 // ──────────────────────────────────────────────
 
 function GridLinkCard({
-  link, href, index, accent, linkAnim, iconStyle = 'default', onClick,
+  link, href, index, accent, linkStyle = 'rounded', linkAnim, iconStyle = 'default', onClick,
 }: {
   link: SocialLink;
   href: string;
@@ -579,21 +579,48 @@ function GridLinkCard({
   const iconContainer = getIconContainerStyle(iconStyle, bgColor, accent);
   const gs = getGridSize(link.metadata);
 
-  // Per-link overrides
+  // Per-link overrides from metadata
   const meta = parseMetadata(link.metadata);
   const blockShape = meta.buttonShape || 'default';
   const blockTexture = meta.buttonTexture || 'none';
+  const buttonSkinUrl = meta.buttonSkinUrl || '';
+  const hasSkin = !!buttonSkinUrl && buttonSkinUrl !== 'none';
+  const effectiveStyle = blockShape !== 'default' ? blockShape : linkStyle;
   const textureStyle = getTextureStyle(blockTexture, accent);
+  const skinBg = hasSkin ? getSkinBackground(buttonSkinUrl, accent) : null;
 
+  // Grid shape radius respects effectiveStyle (global linkStyle fallback)
   const gridShapeRadius = (() => {
-    switch (blockShape) {
+    switch (effectiveStyle) {
       case 'pill': return '9999px';
-      case 'square': return '0';
+      case 'square': case 'brutalist': return '0';
       case 'rounded': return '16px';
       case 'ticket': return '16px 4px 4px 16px';
       case 'leaf': return '20px 4px 20px 4px';
-      case 'brutalist': return '0';
+      case 'outline': case 'ghost': case 'elevated': case 'glassmorphism': case 'neon-border': return '16px';
       default: return '16px';
+    }
+  })();
+
+  // Grid background + border based on effective style
+  const gridBg = (() => {
+    switch (effectiveStyle) {
+      case 'ghost': return 'transparent';
+      case 'outline': return 'transparent';
+      case 'glassmorphism': return `rgba(255,255,255,0.07)`;
+      case 'neon-border': return `rgba(255,255,255,0.03)`;
+      case 'elevated': return `rgba(255,255,255,0.08)`;
+      default: return `${bgColor}12`;
+    }
+  })();
+
+  const gridBorder = (() => {
+    switch (effectiveStyle) {
+      case 'outline': return `1px solid ${accent}60`;
+      case 'neon-border': return `1px solid ${accent}60`;
+      case 'ghost': return 'none';
+      case 'brutalist': return `2px solid ${accent}`;
+      default: return `1px solid ${bgColor}20`;
     }
   })();
 
@@ -610,17 +637,28 @@ function GridLinkCard({
       transition={{ delay: index * 0.05 }}
       whileHover={getHoverAnim(linkAnim)}
       whileTap={{ scale: 0.95 }}
-      className="flex flex-col items-center justify-center gap-1.5 py-4 px-2 text-white transition-all group relative overflow-hidden"
+      className={`flex flex-col items-center justify-center gap-1.5 py-4 px-2 text-white transition-all group relative overflow-hidden ${
+        effectiveStyle === 'glassmorphism' ? 'backdrop-blur-md' : ''
+      } ${effectiveStyle === 'elevated' ? 'shadow-lg shadow-black/30' : ''}`}
       style={{
-        backgroundColor: `${bgColor}12`,
-        border: blockShape === 'brutalist' ? `2px solid ${accent}` : `1px solid ${bgColor}20`,
+        backgroundColor: gridBg,
+        border: gridBorder,
         borderRadius: gridShapeRadius,
         gridColumn: `span ${gs.cols}`,
         gridRow: `span ${gs.rows}`,
-        ...(blockShape === 'brutalist' ? { boxShadow: `3px 3px 0 ${accent}40` } : {}),
+        ...(effectiveStyle === 'brutalist' ? { boxShadow: `3px 3px 0 ${accent}40` } : {}),
+        ...(effectiveStyle === 'neon-border' ? { boxShadow: `0 0 8px ${accent}30, inset 0 0 8px ${accent}08` } : {}),
       }}
     >
-      {blockTexture !== 'none' && <div className="absolute inset-0 pointer-events-none" style={textureStyle} />}
+      {/* Skin background */}
+      {skinBg && (
+        skinBg.type === 'image' ? (
+          <img src={skinBg.value} alt="" className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-transform duration-300 group-hover:scale-105" />
+        ) : (
+          <div className="absolute inset-0 pointer-events-none transition-transform duration-300 group-hover:scale-105" style={{ background: skinBg.value }} />
+        )
+      )}
+      {!hasSkin && blockTexture !== 'none' && <div className="absolute inset-0 pointer-events-none" style={textureStyle} />}
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center relative z-[1] ${iconContainer.className}`} style={iconContainer.style}>
         <Icon size={gs.cols >= 2 || gs.rows >= 2 ? 32 : 24} style={{ color: iconContainer.iconColor }} />
       </div>

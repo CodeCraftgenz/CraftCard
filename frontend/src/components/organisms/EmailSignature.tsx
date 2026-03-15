@@ -90,7 +90,7 @@ function generateSignatureHtml(props: EmailSignatureProps, template: SignatureTe
             <table cellpadding="0" cellspacing="0" border="0" style="margin-top:10px;">
               <tr>
                 <td>
-                  <a href="${cardUrl}" style="display:inline-block;background:${buttonColor};color:#ffffff;padding:8px 20px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:0.3px;">Ver Cartao Digital</a>
+                  <a href="${cardUrl}" style="display:inline-block;background:${buttonColor};color:#ffffff;padding:8px 20px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:0.3px;">Ver meu CraftCard</a>
                 </td>
               </tr>
             </table>
@@ -118,7 +118,7 @@ function generateSignatureHtml(props: EmailSignatureProps, template: SignatureTe
             <table cellpadding="0" cellspacing="0" border="0" style="margin-top:10px;">
               <tr>
                 <td>
-                  <a href="${cardUrl}" style="display:inline-block;background:${buttonColor};color:#000000;padding:7px 18px;border-radius:20px;text-decoration:none;font-size:12px;font-weight:600;">Cartao Digital &rarr;</a>
+                  <a href="${cardUrl}" style="display:inline-block;background:${buttonColor};color:#000000;padding:7px 18px;border-radius:20px;text-decoration:none;font-size:12px;font-weight:600;">Ver meu CraftCard &rarr;</a>
                 </td>
               </tr>
             </table>

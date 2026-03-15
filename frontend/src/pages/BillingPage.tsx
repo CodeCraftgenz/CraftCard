@@ -128,7 +128,7 @@ export function BillingPage() {
                     name="PRO"
                     price="R$ 30"
                     period="/ano"
-                    features={['3 cartoes', '20 links', 'Todos temas', 'Analytics', 'Sem marca dagua']}
+                    features={['3 cartoes', '20 links', 'Todos temas', 'Analytics', 'Sem marca dagua', '3 eventos', 'Mapa de conexoes', 'Tags']}
                     onSelect={() => checkout.mutate({ plan: 'PRO' })}
                     loading={checkout.isPending}
                   />
@@ -136,7 +136,7 @@ export function BillingPage() {
                     name="BUSINESS"
                     price="R$ 189,90"
                     period="/ano"
-                    features={['Ate 10 membros', '50 links', 'Dashboard org', 'Branding', 'Webhooks']}
+                    features={['Ate 10 membros', '50 links', 'Dashboard org', 'Branding', 'Webhooks', '10 eventos', 'Mapa + Tags + Wrapped']}
                     onSelect={() => checkout.mutate({ plan: 'BUSINESS' })}
                     loading={checkout.isPending}
                   />
@@ -144,7 +144,7 @@ export function BillingPage() {
                     name="ENTERPRISE"
                     price="R$ 299,90"
                     period="/ano"
-                    features={['Tudo do Business', 'Dominio customizado', 'Ate 10 membros']}
+                    features={['Tudo do Business', 'Dominio customizado', 'Eventos ilimitados', 'Wrapped anual']}
                     onSelect={() => checkout.mutate({ plan: 'ENTERPRISE' })}
                     loading={checkout.isPending}
                     highlight
@@ -157,7 +157,7 @@ export function BillingPage() {
                     name="BUSINESS"
                     price="R$ 189,90"
                     period="/ano"
-                    features={['Ate 10 membros', '50 links', 'Dashboard org', 'Branding', 'Webhooks']}
+                    features={['Ate 10 membros', '50 links', 'Dashboard org', 'Branding', 'Webhooks', '10 eventos', 'Mapa + Tags + Wrapped']}
                     onSelect={() => checkout.mutate({ plan: 'BUSINESS' })}
                     loading={checkout.isPending}
                   />
@@ -165,7 +165,7 @@ export function BillingPage() {
                     name="ENTERPRISE"
                     price="R$ 299,90"
                     period="/ano"
-                    features={['Tudo do Business', 'Dominio customizado', 'Ate 10 membros']}
+                    features={['Tudo do Business', 'Dominio customizado', 'Eventos ilimitados', 'Wrapped anual']}
                     onSelect={() => checkout.mutate({ plan: 'ENTERPRISE' })}
                     loading={checkout.isPending}
                     highlight

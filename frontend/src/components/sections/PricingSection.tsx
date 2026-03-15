@@ -34,6 +34,10 @@ const features: PlanFeature[] = [
   { label: 'Dashboard da organizacao', free: false, pro: false, business: true, enterprise: true },
   { label: 'Branding centralizado', hint: 'Aplique cores, fontes e logo da sua empresa em todos os cartoes', free: false, pro: false, business: true, enterprise: true },
   { label: 'Webhooks e integracoes', free: false, pro: false, business: true, enterprise: true },
+  { label: 'Eventos', hint: 'Crie eventos para agrupar conexoes por conferencia ou encontro', free: false, pro: '3', business: '10', enterprise: 'Ilimitados' },
+  { label: 'Mapa de conexoes', hint: 'Visualize onde suas conexoes foram feitas com geolocalizacao', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Tags de conexoes', hint: 'Categorize conexoes com etiquetas coloridas', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Wrapped anual', hint: 'Resumo anual das suas conexoes estilo Spotify Wrapped', free: false, pro: true, business: true, enterprise: true },
   { label: 'Dominio customizado', hint: 'Use o endereco da sua empresa, ex: cartoes.suaempresa.com.br', free: false, pro: false, business: false, enterprise: true },
   { label: 'Marca d\'agua CraftCard', free: 'Sim', pro: 'Nao', business: 'Nao', enterprise: 'Nao' },
 ];

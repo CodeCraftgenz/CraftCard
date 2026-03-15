@@ -41,7 +41,7 @@ export function WidgetPage() {
 
   if (isLoading) {
     return (
-      <div className="w-[300px] h-[400px] bg-[#1A1A2E] rounded-2xl flex items-center justify-center">
+      <div className="w-full h-full min-h-[380px] bg-[#1A1A2E] rounded-2xl flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-brand-cyan border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -49,7 +49,7 @@ export function WidgetPage() {
 
   if (error || !profile) {
     return (
-      <div className="w-[300px] h-[400px] bg-[#1A1A2E] rounded-2xl flex items-center justify-center p-4">
+      <div className="w-full h-full min-h-[380px] bg-[#1A1A2E] rounded-2xl flex items-center justify-center p-4">
         <p className="text-white/50 text-sm text-center">Cartao nao encontrado</p>
       </div>
     );
@@ -63,8 +63,8 @@ export function WidgetPage() {
 
   return (
     <div
-      className="w-[300px] bg-[#1A1A2E] rounded-2xl overflow-hidden border border-white/10 flex flex-col"
-      style={{ minHeight: 380 }}
+      className="w-full bg-[#1A1A2E] rounded-2xl overflow-hidden border border-white/10 flex flex-col"
+      style={{ minHeight: 380, height: '100%' }}
     >
       {/* Header accent bar */}
       <div className="h-1.5" style={{ background: `linear-gradient(90deg, ${accent}, #D12BF2)` }} />

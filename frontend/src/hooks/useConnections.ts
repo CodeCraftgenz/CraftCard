@@ -61,7 +61,7 @@ export function useConnectionStatus(profileId: string | undefined) {
 export function useRequestConnection() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { fromProfileId: string; toProfileId: string }) =>
+    mutationFn: (data: { fromProfileId: string; toProfileId: string; latitude?: number; longitude?: number; locationLabel?: string; eventId?: string }) =>
       api.post('/connections/request', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['connections'] });
@@ -115,5 +115,74 @@ export function useDiscoverProfiles(query: string, page = 1) {
     queryKey: ['connections', 'discover', query, page],
     queryFn: () => api.get(`/connections/discover?q=${encodeURIComponent(query)}&page=${page}`),
     enabled: true,
+  });
+}
+
+// ── Timeline, Map, Wrapped ─────────────────────────────
+
+export interface TimelineTag {
+  id: string;
+  name: string;
+  color: string | null;
+}
+
+export interface TimelineItem {
+  id: string;
+  connectedAt: string | null;
+  createdAt: string;
+  profile: ConnectionProfile;
+  latitude: number | null;
+  longitude: number | null;
+  locationLabel: string | null;
+  event: { id: string; name: string; slug: string } | null;
+  tags: TimelineTag[];
+}
+
+export interface TimelineResult {
+  items: TimelineItem[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+export function useTimeline(page = 1, tagId?: string) {
+  const params = new URLSearchParams({ page: String(page) });
+  if (tagId) params.set('tagId', tagId);
+  return useQuery<TimelineResult>({
+    queryKey: ['timeline', page, tagId],
+    queryFn: () => api.get(`/connections/timeline?${params}`),
+  });
+}
+
+export interface MapConnection {
+  id: string;
+  profile: ConnectionProfile;
+  latitude: number;
+  longitude: number;
+  locationLabel: string | null;
+  connectedAt: string | null;
+}
+
+export function useMapConnections() {
+  return useQuery<MapConnection[]>({
+    queryKey: ['connections', 'map'],
+    queryFn: () => api.get('/connections/map'),
+  });
+}
+
+export interface WrappedStats {
+  year: number;
+  totalConnections: number;
+  firstConnection: { profile: ConnectionProfile; date: string } | null;
+  topMonth: { name: string; count: number } | null;
+  monthlyData: Array<{ name: string; count: number }>;
+  topLocation: string | null;
+  topTag: string | null;
+}
+
+export function useWrappedStats(year: number) {
+  return useQuery<WrappedStats>({
+    queryKey: ['connections', 'wrapped', year],
+    queryFn: () => api.get(`/connections/wrapped/${year}`),
   });
 }
