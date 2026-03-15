@@ -18,7 +18,7 @@ import {
 
 const AVAILABLE_EVENTS = [
   { key: 'new_message', label: 'Nova mensagem', description: 'Quando um visitante envia mensagem pelo cartão' },
-  { key: 'new_booking', label: 'Novo agendamento', description: 'Quando um visitante agenda um horario' },
+  { key: 'new_booking', label: 'Novo agendamento', description: 'Quando um visitante agenda um horário' },
   { key: 'new_testimonial', label: 'Novo depoimento', description: 'Quando um visitante deixa um depoimento' },
 ] as const;
 

@@ -306,8 +306,8 @@ export const CardPreview = memo(function CardPreview({
                 card.availabilityStatus === 'busy' ? 'bg-yellow-400' : 'bg-red-400'
               }`} />
               <span className="text-white/50" style={{ fontSize: '0.6875em' }}>
-                {card.availabilityStatus === 'available' ? 'Disponivel' :
-                 card.availabilityStatus === 'busy' ? 'Ocupado' : 'Indisponivel'}
+                {card.availabilityStatus === 'available' ? 'Disponível' :
+                 card.availabilityStatus === 'busy' ? 'Ocupado' : 'Indisponível'}
               </span>
             </div>
           )}

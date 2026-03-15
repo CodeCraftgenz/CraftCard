@@ -43,7 +43,7 @@ export function CtaSection() {
             </Link>
           </MagneticButton>
           <p className="mt-4 text-sm text-slate-600">
-            Comece gratis &middot; Preco promocional de R$30/ano por tempo limitado
+            Comece grátis &middot; Preço promocional de R$30/ano por tempo limitado
           </p>
         </div>
       </motion.div>

@@ -419,8 +419,8 @@ export default function HackathonOnboarding() {
           {/* ── STEP: Area ──────────────────────── */}
           {step === 'area' && (
             <motion.div key="area" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
-              <h2 className="text-xl font-bold text-white mb-1">Area de Formação</h2>
-              <p className="text-sm text-white/50 mb-4">Selecione a area que mais combina com voce</p>
+              <h2 className="text-xl font-bold text-white mb-1">Área de Formação</h2>
+              <p className="text-sm text-white/50 mb-4">Selecione a área que mais combina com você</p>
 
               <div className="grid grid-cols-2 gap-2 max-h-[45vh] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                 {FORMATION_AREAS.map(area => {

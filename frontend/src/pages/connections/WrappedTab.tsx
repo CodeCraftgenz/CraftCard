@@ -104,7 +104,7 @@ export default function WrappedTab() {
                     {stats.firstConnection.profile.displayName}
                   </p>
                 </div>
-                <p className="text-[10px] text-white/40 mt-1">Primeira conexao</p>
+                <p className="text-[10px] text-white/40 mt-1">Primeira conexão</p>
               </motion.div>
             )}
 

@@ -327,7 +327,7 @@ export function DemoShowcaseSection() {
                 className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl gradient-bg text-white font-semibold text-sm transition-all hover:shadow-lg hover:shadow-indigo-500/20"
               >
                 <Sparkles size={16} className="opacity-70" />
-                Criar meu cartão gratis
+                Criar meu cartão grátis
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </Link>
             </motion.div>

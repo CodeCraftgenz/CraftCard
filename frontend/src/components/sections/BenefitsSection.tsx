@@ -36,7 +36,7 @@ const benefits = [
   {
     icon: Globe,
     title: 'Alcance global',
-    desc: 'Acessivel de qualquer lugar do mundo, 24 horas por dia.',
+    desc: 'Acessível de qualquer lugar do mundo, 24 horas por dia.',
     span: 'col-span-1 md:col-span-2 lg:col-span-1',
   },
 ];

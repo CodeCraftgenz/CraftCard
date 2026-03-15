@@ -777,8 +777,8 @@ export function PublicCardPage() {
                   profile.availabilityStatus === 'available' ? 'text-green-400' :
                   profile.availabilityStatus === 'busy' ? 'text-yellow-400' : 'text-red-400'
                 }`}>
-                  {profile.availabilityStatus === 'available' ? 'Disponivel' :
-                   profile.availabilityStatus === 'busy' ? 'Ocupado' : 'Indisponivel'}
+                  {profile.availabilityStatus === 'available' ? 'Disponível' :
+                   profile.availabilityStatus === 'busy' ? 'Ocupado' : 'Indisponível'}
                 </span>
               </div>
             )}

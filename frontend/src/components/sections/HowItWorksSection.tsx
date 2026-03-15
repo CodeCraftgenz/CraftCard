@@ -13,7 +13,7 @@ const steps = [
     icon: CreditCard,
     step: '02',
     title: 'Escolha seu plano',
-    desc: 'Comece gratis ou escolha o plano ideal para voce. Profissionais e empresas.',
+    desc: 'Comece grátis ou escolha o plano ideal para você. Profissionais e empresas.',
   },
   {
     icon: Rocket,

@@ -1200,7 +1200,7 @@ export function EditorPage() {
                     rows={3}
                     maxLength={500}
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 focus:bg-white/[0.07] transition-all resize-none"
-                    placeholder="Conte um pouco sobre voce..."
+                    placeholder="Conte um pouco sobre você..."
                   />
                   <div className="flex justify-end mt-1">
                     <span className={`text-xs ${form.bio.length > 450 ? 'text-yellow-400' : 'text-white/20'}`}>
@@ -1214,9 +1214,9 @@ export function EditorPage() {
                   <label className="text-xs font-medium text-white/50 mb-2 block uppercase tracking-wider">Status de disponibilidade</label>
                   <div className="flex gap-2">
                     {([
-                      { value: 'available', label: 'Disponivel', color: 'bg-green-500', ring: 'ring-green-500/30' },
+                      { value: 'available', label: 'Disponível', color: 'bg-green-500', ring: 'ring-green-500/30' },
                       { value: 'busy', label: 'Ocupado', color: 'bg-yellow-500', ring: 'ring-yellow-500/30' },
-                      { value: 'unavailable', label: 'Indisponivel', color: 'bg-red-500', ring: 'ring-red-500/30' },
+                      { value: 'unavailable', label: 'Indisponível', color: 'bg-red-500', ring: 'ring-red-500/30' },
                     ] as const).map((opt) => (
                       <button
                         type="button"
@@ -1919,7 +1919,7 @@ export function EditorPage() {
                       className={`text-xs mt-1.5 flex items-center gap-1 ${slugCheck.available ? 'text-green-400' : 'text-red-400'}`}
                     >
                       {slugCheck.available ? <Check size={12} /> : <X size={12} />}
-                      {slugCheck.available ? 'Disponivel!' : 'Slug já em uso'}
+                      {slugCheck.available ? 'Disponível!' : 'Slug já em uso'}
                     </motion.p>
                   )}
                 </div>
@@ -1971,7 +1971,7 @@ export function EditorPage() {
                       })}
                     </div>
                   ) : (
-                    <p className="text-sm text-white/30 text-center py-4">Nenhuma visualizacao ainda</p>
+                    <p className="text-sm text-white/30 text-center py-4">Nenhuma visualização ainda</p>
                   )}
                   <div className="flex justify-between mt-2">
                     <span className="text-[10px] text-white/20">30 dias atras</span>
@@ -2622,7 +2622,7 @@ export function EditorPage() {
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm hover:bg-blue-500/20 transition-all disabled:opacity-40"
                   >
                     <Save size={14} />
-                    {saveSlots.isPending ? 'Salvando...' : 'Salvar Horarios'}
+                    {saveSlots.isPending ? 'Salvando...' : 'Salvar Horários'}
                   </button>
                 </div>
 

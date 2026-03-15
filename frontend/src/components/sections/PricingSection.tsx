@@ -17,7 +17,7 @@ interface PlanFeature {
 
 const features: PlanFeature[] = [
   { label: 'Cartões pessoais', free: '1', pro: '3', business: '3', enterprise: '3' },
-  { label: 'Assentos na organização', free: false, pro: false, business: 'Ate 10', enterprise: 'Ate 10' },
+  { label: 'Assentos na organização', free: false, pro: false, business: 'Até 10', enterprise: 'Até 10' },
   { label: 'Botões de links no cartão', hint: 'Redes sociais e links personalizados exibidos no seu cartão digital', free: '5', pro: '20', business: '50', enterprise: '50' },
   { label: 'Temas visuais', free: '3', pro: 'Todos', business: 'Todos', enterprise: 'Todos' },
   { label: 'Conexões entre perfis', hint: 'Conecte-se com outros usuários e apareça na rede de contatos deles', free: '10', pro: '100', business: '500', enterprise: '1000' },
@@ -109,7 +109,7 @@ export function PricingSection() {
             Escolha seu <span className="gradient-text">plano</span>
           </h2>
           <p className="mt-4 text-slate-400 max-w-2xl mx-auto">
-            Comece gratis e faca upgrade quando precisar de mais recursos
+            Comece grátis e faça upgrade quando precisar de mais recursos
           </p>
         </motion.div>
 
@@ -127,7 +127,7 @@ export function PricingSection() {
               <div className="flex items-baseline gap-1">
                 <span className="font-heading text-4xl font-extrabold text-white">R$0</span>
               </div>
-              <p className="text-sm text-slate-600 mt-2">Gratis para sempre</p>
+              <p className="text-sm text-slate-600 mt-2">Grátis para sempre</p>
             </div>
 
             <div className="space-y-2.5 mb-8 flex-1">
@@ -140,7 +140,7 @@ export function PricingSection() {
               to={isAuthenticated ? '/editor' : '/login'}
               className="group w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-white/[0.10] text-white font-semibold hover:bg-white/[0.04] transition-all duration-250 text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
             >
-              Comecar gratis
+              Comecar grátis
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-200" />
             </Link>
           </motion.div>
@@ -213,7 +213,7 @@ export function PricingSection() {
                 <span className="font-heading text-4xl font-extrabold text-white">R$189,90</span>
                 <span className="text-sm text-slate-500">/ano</span>
               </div>
-              <p className="text-sm text-slate-500 mt-2">Ate 10 membros · ~R$15,83/mes</p>
+              <p className="text-sm text-slate-500 mt-2">Até 10 membros · ~R$15,83/mes</p>
             </div>
 
             <div className="space-y-2.5 mb-8 flex-1">
@@ -262,7 +262,7 @@ export function PricingSection() {
                   <span className="font-heading text-4xl font-extrabold text-white">R$299,90</span>
                   <span className="text-sm text-slate-500">/ano</span>
                 </div>
-                <p className="text-sm text-slate-500 mt-2">Ate 10 membros · ~R$24,99/mes</p>
+                <p className="text-sm text-slate-500 mt-2">Até 10 membros · ~R$24,99/mes</p>
               </div>
 
               <div className="space-y-2.5 mb-8 flex-1">
@@ -321,7 +321,7 @@ export function PricingSection() {
                   disabled
                   className="shrink-0 px-6 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold text-sm cursor-not-allowed opacity-70 border border-white/20"
                 >
-                  Disponivel em breve
+                  Disponível em breve
                 </button>
               )}
             </div>

@@ -115,7 +115,7 @@ export function BookingCalendar({ slug, accent, onClose }: BookingCalendarProps)
           >
             <p className="text-xs text-white/50 mb-2 font-medium flex items-center gap-1">
               <Clock size={12} />
-              Horarios disponíveis
+              Horários disponíveis
             </p>
             {timesLoading ? (
               <div className="flex justify-center py-4">
@@ -139,7 +139,7 @@ export function BookingCalendar({ slug, accent, onClose }: BookingCalendarProps)
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-white/30 text-center py-3">Nenhum horario disponivel nesta data</p>
+              <p className="text-sm text-white/30 text-center py-3">Nenhum horário disponível nesta data</p>
             )}
           </motion.div>
         )}

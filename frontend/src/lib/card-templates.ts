@@ -75,7 +75,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     name: 'Freelancer',
     description: 'Para freelancers e autonomos',
     displayName: 'Seu Nome',
-    bio: 'Freelancer dedicado a entregar projetos de alta qualidade. Disponivel para novos desafios e parcerias.',
+    bio: 'Freelancer dedicado a entregar projetos de alta qualidade. Disponível para novos desafios e parcerias.',
     cardTheme: 'ocean',
     buttonColor: '#06B6D4',
     suggestedLinks: [

@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react';
 
 const faqs = [
   {
-    q: 'Posso começar gratis?',
+    q: 'Posso começar grátis?',
     a: 'Sim! O plano Free permite criar 1 cartão digital com ate 5 links, 3 temas e publicar gratuitamente. Você pode fazer upgrade para o Pro, Business ou Enterprise a qualquer momento.',
   },
   {
@@ -13,15 +13,15 @@ const faqs = [
   },
   {
     q: 'Como funciona para empresas?',
-    a: 'Nos planos Business e Enterprise, você cria uma organização, convida membros por email e gerencia todos os cartões de um so lugar. A empresa define cores, logo e fonte — os membros editam apenas o conteudo. O dashboard mostra analytics e leads consolidados de toda a equipe, com export CSV e filtros avancados. O Enterprise adiciona domínio customizado (ex: cartões.suaempresa.com.br).',
+    a: 'Nos planos Business e Enterprise, você cria uma organização, convida membros por email e gerencia todos os cartões de um só lugar. A empresa define cores, logo e fonte — os membros editam apenas o conteúdo. O dashboard mostra analytics e leads consolidados de toda a equipe, com export CSV e filtros avançados. O Enterprise adiciona domínio customizado (ex: cartões.suaempresa.com.br).',
   },
   {
-    q: 'Posso começar gratis e fazer upgrade depois?',
-    a: 'Com certeza! Comece no plano Free e faca upgrade quando precisar de mais recursos. Seus dados e cartão sao mantidos ao trocar de plano.',
+    q: 'Posso começar grátis e fazer upgrade depois?',
+    a: 'Com certeza! Comece no plano Free e faça upgrade quando precisar de mais recursos. Seus dados e cartão sao mantidos ao trocar de plano.',
   },
   {
     q: 'Como funciona a assinatura Pro?',
-    a: 'A assinatura Pro e anual por R$30 (preco promocional — valor original R$99,90). Você tem acesso completo por 365 dias. Ao final do período, basta renovar para continuar com todos os recursos.',
+    a: 'A assinatura Pro é anual por R$30 (preço promocional — valor original R$99,90). Você tem acesso completo por 365 dias. Ao final do período, basta renovar para continuar com todos os recursos.',
   },
   {
     q: 'Quais formas de pagamento sao aceitas?',

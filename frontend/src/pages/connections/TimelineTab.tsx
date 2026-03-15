@@ -206,7 +206,7 @@ export default function TimelineTab() {
                       {/* Delete */}
                       <button
                         type="button"
-                        onClick={() => { if (confirm('Remover conexao?')) removeMutation.mutate(item.id); }}
+                        onClick={() => { if (confirm('Remover conexão?')) removeMutation.mutate(item.id); }}
                         className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5 p-1.5 rounded-full hover:bg-red-500/10"
                       >
                         <Trash2 size={12} className="text-red-400/50" />

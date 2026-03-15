@@ -61,7 +61,7 @@ export function ServicesEditor({ enabled, onToggle }: { enabled?: boolean; onTog
                   defaultValue={s.price || ''}
                   onBlur={(e) => updateService.mutate({ id: s.id, price: e.target.value })}
                   className="w-full bg-transparent text-xs text-brand-cyan focus:outline-none"
-                  placeholder="Preco (ex: R$150)"
+                  placeholder="Preço (ex: R$150)"
                 />
               </div>
               <button

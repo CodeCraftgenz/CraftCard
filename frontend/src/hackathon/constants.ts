@@ -46,7 +46,7 @@ export interface FormationArea {
 export const HACKATHON_LOGO = '/assets/hackathon/Logosenac.jpg';
 
 export const FORMATION_AREAS: FormationArea[] = [
-  { id: 'beleza', name: 'Beleza e Estetica', phrase: 'prática, empreendedora e responsável', fullPhrase: 'Eu Sou prática, empreendedora e responsável', coverImage: '/assets/hackathon/cursos-de-beleza-e-estetica-senac-sp_reduzido.webp', color: '#E91E63' },
+  { id: 'beleza', name: 'Beleza e Estética', phrase: 'prática, empreendedora e responsável', fullPhrase: 'Eu Sou prática, empreendedora e responsável', coverImage: '/assets/hackathon/cursos-de-beleza-e-estética-senac-sp_reduzido.webp', color: '#E91E63' },
   { id: 'bem-estar', name: 'Bem-estar', phrase: 'integrativa, prática e essencial', fullPhrase: 'Eu Sou integrativa, prática e essencial', coverImage: '/assets/hackathon/cursos-de-bem-estar-senac-sp.jpg', color: '#4CAF50' },
   { id: 'comunicação', name: 'Comunicação e Marketing', phrase: 'criativa, conectada e estratégica', fullPhrase: 'Eu Sou criativa, conectada e estratégica', coverImage: '/assets/hackathon/cursos-de-comunicação-e-marketing-senac-sp.jpg', color: '#FF9800' },
   { id: 'social', name: 'Desenvolvimento Social', phrase: 'mais portas abertas, diversidade e inclusão', fullPhrase: 'Eu Sou mais portas abertas, diversidade e inclusão', coverImage: '/assets/hackathon/cursos-de-desenvolvimento-social-senac-sp.jpg', color: '#9C27B0' },
@@ -55,9 +55,9 @@ export const FORMATION_AREAS: FormationArea[] = [
   { id: 'gastronomia', name: 'Gastronomia e Alimentacao', phrase: 'prática, multipla e transformadora', fullPhrase: 'Eu Sou prática, multipla e transformadora', coverImage: '/assets/hackathon/cursos-de-gastronomia-e-alimentacao-senac-sp.jpg', color: '#F44336' },
   { id: 'gestao', name: 'Gestao e Negocios', phrase: 'visao estratégica, empreendedora e transformadora', fullPhrase: 'Eu Sou visao estratégica, empreendedora e transformadora', coverImage: '/assets/hackathon/cursos-de-gestao-e-negocios-senac-sp.jpg', color: '#607D8B' },
   { id: 'idiomas', name: 'Idiomas', phrase: 'mais interacao, prática e para a vida toda', fullPhrase: 'Eu Sou mais interacao, prática e para a vida toda', coverImage: '/assets/hackathon/cursos-de-idiomas-senac-sp.jpg', color: '#00BCD4' },
-  { id: 'meio-ambiente', name: 'Meio Ambiente, Seguranca e Saude', phrase: 'sustentável, preventiva e responsável', fullPhrase: 'Eu Sou sustentável, preventiva e responsável', coverImage: '/assets/hackathon/cursos-de-meio-ambiente-seguranca-e-saude-no-trabalho-senac-sp.jpg', color: '#8BC34A' },
+  { id: 'meio-ambiente', name: 'Meio Ambiente, Segurança e Saúde', phrase: 'sustentável, preventiva e responsável', fullPhrase: 'Eu Sou sustentável, preventiva e responsável', coverImage: '/assets/hackathon/cursos-de-meio-ambiente-segurança-e-saude-no-trabalho-senac-sp.jpg', color: '#8BC34A' },
   { id: 'moda', name: 'Moda', phrase: 'inovadora, sustentável e plural', fullPhrase: 'Eu Sou inovadora, sustentável e plural', coverImage: '/assets/hackathon/cursos-de-moda-senac-sp.jpg', color: '#E040FB' },
-  { id: 'saude', name: 'Saude', phrase: 'multiprofissional, humanizada e tecnologica', fullPhrase: 'Eu Sou multiprofissional, humanizada e tecnologica', coverImage: '/assets/hackathon/cursos-de-saude-senac-sp.jpg', color: '#00897B' },
+  { id: 'saude', name: 'Saúde', phrase: 'multiprofissional, humanizada e tecnológica', fullPhrase: 'Eu Sou multiprofissional, humanizada e tecnológica', coverImage: '/assets/hackathon/cursos-de-saude-senac-sp.jpg', color: '#00897B' },
   { id: 'ti', name: 'Tecnologia da Informação', phrase: 'prática, conectada e para todo mundo', fullPhrase: 'Eu Sou prática, conectada e para todo mundo', coverImage: '/assets/hackathon/cursos-de-ti-senac-sp.jpg', color: '#3F51B5' },
   { id: 'turismo', name: 'Turismo e Hospitalidade', phrase: 'mais experiencia, acolhimento e cultura', fullPhrase: 'Eu Sou mais experiencia, acolhimento e cultura', coverImage: '/assets/hackathon/cursos-de-turismo-e-hospitalidade-senac-sp.jpg', color: '#FF7043' },
 ];

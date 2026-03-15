@@ -150,7 +150,7 @@ function LegacyDashboardContent({ stats, maxPlanCount }: { stats: NonNullable<Re
 
       {/* Plan distribution */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h3 className="text-white font-semibold mb-4">Distribuicao por Plano</h3>
+        <h3 className="text-white font-semibold mb-4">Distribuição por Plano</h3>
         <div className="space-y-3">
           {(['FREE', 'PRO', 'BUSINESS', 'ENTERPRISE'] as const).map((plan) => (
             <div key={plan} className="flex items-center gap-3">
@@ -259,7 +259,7 @@ function LegacyDashboardContent({ stats, maxPlanCount }: { stats: NonNullable<Re
       {/* Device Distribution */}
       {stats.deviceDistribution && stats.deviceDistribution.length > 0 && (
         <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-          <h3 className="text-white font-semibold mb-4">Distribuicao de Dispositivos</h3>
+          <h3 className="text-white font-semibold mb-4">Distribuição de Dispositivos</h3>
           <div className="space-y-3">
             {(() => {
               const maxDevice = Math.max(...stats.deviceDistribution.map((d) => d.count), 1);

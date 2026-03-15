@@ -115,7 +115,7 @@ export function SaaSMetricsDashboard() {
 
         {/* Donut Chart — Plan Distribution */}
         <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
-          <h3 className="text-white font-semibold text-sm mb-4">Distribuicao por Plano</h3>
+          <h3 className="text-white font-semibold text-sm mb-4">Distribuição por Plano</h3>
           {planData.length > 0 ? (
             <>
               <ResponsiveContainer width="100%" height={180}>

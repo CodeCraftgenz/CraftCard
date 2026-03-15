@@ -47,7 +47,7 @@ const UPSELL_BY_PLAN: Record<string, UpsellConfig> = {
   PRO: {
     targetPlan: 'BUSINESS',
     icon: Building2,
-    title: 'Tem uma equipa? Gira todos os cartões num so lugar.',
+    title: 'Tem uma equipa? Gira todos os cartões num só lugar.',
     description: 'Conheca o plano Business — dashboard de organização, branding centralizado e webhooks por R$189,90/ano.',
     accentColor: 'text-brand-magenta',
     bgColor: 'bg-brand-magenta/5',
@@ -112,7 +112,7 @@ export function UpgradeBanner({ feature, compact }: UpgradeBannerProps) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-white">
-            {featureLabel ? `${featureLabel} — disponivel no plano ${config.targetPlan}` : config.title}
+            {featureLabel ? `${featureLabel} — disponível no plano ${config.targetPlan}` : config.title}
           </p>
           <p className="text-xs text-white/50 mt-0.5">
             {config.description}

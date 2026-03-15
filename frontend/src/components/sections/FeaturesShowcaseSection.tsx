@@ -31,11 +31,11 @@ const features: Feature[] = [
     image: '/feature-social-links.jpg',
     imageAlt: 'Redes sociais conectadas com rastreamento',
     badge: 'Redes sociais',
-    title: 'Todos os seus links em um so lugar',
+    title: 'Todos os seus links em um só lugar',
     description:
       'Conecte Instagram, LinkedIn, WhatsApp, TikTok e muito mais. Cada clique e rastreado para você entender o que funciona.',
     bullets: [
-      { icon: Link2, text: 'Links ilimitados com ícones automaticos' },
+      { icon: Link2, text: 'Links ilimitados com ícones automáticos' },
       { icon: BarChart3, text: 'Analytics por link e plataforma' },
       { icon: Wifi, text: 'Atualize links sem trocar o QR Code' },
     ],
@@ -47,7 +47,7 @@ const features: Feature[] = [
     badge: 'Tecnologia',
     title: 'Instale como app nativo',
     description:
-      'Seu cartão funciona como um app instalado no celular. Acesso offline, notificações push e carregamento instantaneo.',
+      'Seu cartão funciona como um app instalado no celular. Acesso offline, notificações push e carregamento instantâneo.',
     bullets: [
       { icon: Smartphone, text: 'PWA com acesso direto na tela inicial' },
       { icon: Wifi, text: 'Funciona mesmo sem internet' },

@@ -75,7 +75,7 @@ const GETTING_STARTED: TutorialCard[] = [
   {
     icon: <Clock size={20} />,
     title: 'Agendamento de links',
-    description: 'Programe quando um link aparece no cartão. Defina data de início e fim — o link so fica visível durante o período. Ideal para promoções temporárias.',
+    description: 'Programe quando um link aparece no cartão. Defina data de início e fim — o link só fica visível durante o período. Ideal para promoções temporárias.',
     link: '/editor',
   },
 ];
@@ -197,7 +197,7 @@ const BUSINESS_FEATURES: TutorialCard[] = [
   {
     icon: <Users size={20} />,
     title: 'Gerenciar equipe',
-    description: 'Convide membros por email, defina roles (Admin/Membro) e gerencie permissoes. Ate 10 assentos por organização.',
+    description: 'Convide membros por email, defina roles (Admin/Membro) e gerencie permissoes. Até 10 assentos por organização.',
     feature: 'orgDashboard',
   },
   {
@@ -380,7 +380,7 @@ export function TutorialPage() {
                 <li><span className="text-brand-cyan">Telefone:</span> Inicia ligacao ao clicar</li>
                 <li><span className="text-brand-cyan">Video:</span> Embed do YouTube com player inline</li>
                 <li><span className="text-brand-cyan">Música:</span> Embed do Spotify com player inline</li>
-                <li><span className="text-brand-cyan">Arquivo:</span> Link com download automatico (PDF, etc)</li>
+                <li><span className="text-brand-cyan">Arquivo:</span> Link com download automático (PDF, etc)</li>
               </ul>
             </div>
             <div className="p-5 rounded-2xl bg-white/[0.05] border border-white/10">

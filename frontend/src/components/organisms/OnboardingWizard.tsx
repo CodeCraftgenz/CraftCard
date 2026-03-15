@@ -21,7 +21,7 @@ const QUICK_LINKS = [
 
 const STEPS = [
   { icon: User, title: 'Seu nome', subtitle: 'Como você quer ser conhecido' },
-  { icon: FileText, title: 'Sobre voce', subtitle: 'Uma bio curta sobre o que você faz' },
+  { icon: FileText, title: 'Sobre você', subtitle: 'Uma bio curta sobre o que você faz' },
   { icon: Link2, title: 'Seus links', subtitle: 'Adicione seus principais contatos' },
   { icon: Sparkles, title: 'Pronto!', subtitle: 'Seu cartão está quase la' },
 ];

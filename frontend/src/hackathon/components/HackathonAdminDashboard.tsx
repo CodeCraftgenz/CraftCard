@@ -187,7 +187,7 @@ function AnalyticsBIPanel() {
         {/* Pie Chart — Area distribution */}
         {areaChartData.length > 0 && (
           <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
-            <h3 className="text-white font-semibold text-sm mb-4">Distribuicao por Area de Formação</h3>
+            <h3 className="text-white font-semibold text-sm mb-4">Distribuição por Área de Formação</h3>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
