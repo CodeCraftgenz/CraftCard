@@ -255,7 +255,7 @@ export function LoginPage() {
           {invitePreview && (
             <div className="mb-6 p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
               <p className="text-sm text-indigo-300">
-                Voce foi convidado para <strong className="text-white">{invitePreview.orgName}</strong>.
+                Você foi convidado para <strong className="text-white">{invitePreview.orgName}</strong>.
                 Faca login ou crie sua conta para entrar.
               </p>
             </div>
@@ -364,7 +364,7 @@ export function LoginPage() {
 
           {/* Register link */}
           <p className="text-sm text-white/40 text-center mt-6">
-            Nao tem conta?{' '}
+            Não tem conta?{' '}
             <Link to={registerUrl} className="text-brand-cyan hover:text-brand-cyan/80 font-medium transition-colors">
               Criar conta
             </Link>
@@ -372,7 +372,7 @@ export function LoginPage() {
 
           {/* Terms */}
           <p className="text-xs text-white/25 mt-6">
-            Ao continuar, voce concorda com nossos{' '}
+            Ao continuar, você concorda com nossos{' '}
             <a href="/termos" className="underline hover:text-white/40 transition-colors">
               Termos de Uso
             </a>{' '}
@@ -427,7 +427,7 @@ export function LoginPage() {
           transition={{ delay: 0.6, duration: 0.6 }}
           className="absolute bottom-16 text-white/30 text-sm tracking-[0.2em] uppercase"
         >
-          Seu cartao digital profissional
+          Seu cartão digital profissional
         </motion.p>
       </div>
     </div>

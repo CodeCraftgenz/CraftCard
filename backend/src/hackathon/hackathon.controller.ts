@@ -11,7 +11,7 @@ export class HackathonController {
 
   @Post('teams')
   async createTeam(@CurrentUser() user: JwtPayload, @Body('name') name: string) {
-    if (!name?.trim()) throw new Error('Nome da equipe e obrigatorio');
+    if (!name?.trim()) throw new Error('Nome da equipe e obrigatório');
     return this.hackathonService.createTeam(user.sub, name.trim());
   }
 
@@ -32,7 +32,7 @@ export class HackathonController {
 
   @Post('teams/invite')
   async invite(@CurrentUser() user: JwtPayload, @Body('slug') slug: string) {
-    if (!slug?.trim()) throw new Error('Slug do perfil e obrigatorio');
+    if (!slug?.trim()) throw new Error('Slug do perfil e obrigatório');
     return this.hackathonService.inviteByProfileSlug(user.sub, slug.trim());
   }
 

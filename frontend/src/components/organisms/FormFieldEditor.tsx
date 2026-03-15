@@ -41,10 +41,10 @@ export function FormFieldEditor({ cardId }: FormFieldEditorProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-sm font-semibold text-white">
         <FileText size={16} className="text-brand-cyan" />
-        Campos do Formulario
+        Campos do Formulário
       </div>
       <p className="text-xs text-white/40">
-        Personalize os campos do formulario de contato do seu cartao.
+        Personalize os campos do formulário de contato do seu cartao.
       </p>
 
       {/* Existing fields */}
@@ -113,7 +113,7 @@ function FieldRow({ field, onUpdate, onDelete }: {
           onChange={(e) => onUpdate({ required: e.target.checked })}
           className="rounded"
         />
-        Obrigatorio
+        Obrigatório
       </label>
       <button
         type="button"

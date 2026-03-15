@@ -1,23 +1,23 @@
 import { z } from 'zod';
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().email('Email invalido'),
+  email: z.string().email('Email inválido'),
 });
 
 export type ForgotPasswordDto = z.infer<typeof forgotPasswordSchema>;
 
 export const resetPasswordSchema = z
   .object({
-    token: z.string().min(1, 'Token obrigatorio'),
+    token: z.string().min(1, 'Token obrigatório'),
     password: z
       .string()
-      .min(8, 'Senha deve ter no minimo 8 caracteres')
+      .min(8, 'Senha deve ter no mínimo 8 caracteres')
       .regex(/[A-Z]/, 'Senha deve conter pelo menos 1 letra maiuscula')
-      .regex(/[0-9]/, 'Senha deve conter pelo menos 1 numero'),
+      .regex(/[0-9]/, 'Senha deve conter pelo menos 1 número'),
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
-    message: 'Senhas nao conferem',
+    message: 'Senhasnão conferem',
     path: ['confirmPassword'],
   });
 

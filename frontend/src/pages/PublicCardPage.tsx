@@ -573,7 +573,7 @@ export function PublicCardPage() {
     return (
       <div className="min-h-screen bg-brand-bg-dark flex flex-col items-center justify-center text-white gap-4 px-4">
         <h1 className="text-4xl font-bold">404</h1>
-        <p className="text-white/50">Este cartao nao existe ou nao esta publicado</p>
+        <p className="text-white/50">Este cartãonão existe ounão está publicado</p>
         <Link to="/" className="text-brand-cyan hover:underline text-sm">
           Crie o seu no {APP_NAME}
         </Link>
@@ -644,7 +644,7 @@ export function PublicCardPage() {
               className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ backgroundColor: accent }}
             >
-              {leadSubmitting ? 'Acessando...' : 'Acessar Cartao'}
+              {leadSubmitting ? 'Acessando...' : 'Acessar Cartão'}
             </button>
           </div>
         </motion.div>
@@ -656,9 +656,9 @@ export function PublicCardPage() {
     <>
       <Helmet>
         <title>{`${profile.displayName} — ${APP_NAME}`}</title>
-        <meta name="description" content={profile.bio || `Cartao digital de ${profile.displayName}`} />
+        <meta name="description" content={profile.bio || `Cartão digital de ${profile.displayName}`} />
         <meta property="og:title" content={`${profile.displayName} — ${APP_NAME}`} />
-        <meta property="og:description" content={profile.bio || `Cartao digital de ${profile.displayName}`} />
+        <meta property="og:description" content={profile.bio || `Cartão digital de ${profile.displayName}`} />
         <meta property="og:type" content="profile" />
         <meta property="og:url" content={pageUrl} />
         <meta property="og:image" content={`${API_BASE}/api/og/image/${slug}`} />
@@ -666,7 +666,7 @@ export function PublicCardPage() {
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={`${profile.displayName} — ${APP_NAME}`} />
-        <meta name="twitter:description" content={profile.bio || `Cartao digital de ${profile.displayName}`} />
+        <meta name="twitter:description" content={profile.bio || `Cartão digital de ${profile.displayName}`} />
         <meta name="twitter:image" content={`${API_BASE}/api/og/image/${slug}`} />
         <script type="application/ld+json">
           {JSON.stringify({
@@ -888,7 +888,7 @@ export function PublicCardPage() {
             <div className="mt-6">
               <div className="flex items-center gap-2 mb-3 px-1">
                 <Briefcase size={14} className="text-amber-400/60" />
-                <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">Servicos</span>
+                <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">Serviços</span>
               </div>
               <div className="space-y-2">
                 {profile.services.map((s) => (
@@ -991,7 +991,7 @@ export function PublicCardPage() {
               className="mt-4 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-white/10 text-white/70 hover:text-white hover:bg-white/5 transition-all text-sm"
             >
               <FileText size={16} />
-              Ver Curriculo
+              Ver Currículo
             </motion.a>
           )}
 
@@ -1047,7 +1047,7 @@ export function PublicCardPage() {
                   try {
                     await navigator.share({
                       title: `${displayName} — CraftCard`,
-                      text: `Confira o cartao digital de ${displayName}`,
+                      text: `Confira o cartão digital de ${displayName}`,
                       url: pageUrl,
                     });
                     return;
@@ -1204,7 +1204,7 @@ export function PublicCardPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(`Confira o cartao de ${displayName}: ${pageUrl}`)}`}
+                  href={`https://wa.me/?text=${encodeURIComponent(`Confira o cartão de ${displayName}: ${pageUrl}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-green-500/10 hover:border-green-500/30 transition-all"
@@ -1213,7 +1213,7 @@ export function PublicCardPage() {
                   <span className="text-xs text-white/70">WhatsApp</span>
                 </a>
                 <a
-                  href={`https://t.me/share/url?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(`Confira o cartao de ${displayName}`)}`}
+                  href={`https://t.me/share/url?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(`Confira o cartão de ${displayName}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-blue-500/10 hover:border-blue-500/30 transition-all"
@@ -1222,7 +1222,7 @@ export function PublicCardPage() {
                   <span className="text-xs text-white/70">Telegram</span>
                 </a>
                 <a
-                  href={`mailto:?subject=${encodeURIComponent(`Cartao de ${displayName}`)}&body=${encodeURIComponent(`Confira: ${pageUrl}`)}`}
+                  href={`mailto:?subject=${encodeURIComponent(`Cartão de ${displayName}`)}&body=${encodeURIComponent(`Confira: ${pageUrl}`)}`}
                   className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-red-500/10 hover:border-red-500/30 transition-all"
                 >
                   <Mail size={24} className="text-red-400" />

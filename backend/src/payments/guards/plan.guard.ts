@@ -61,7 +61,7 @@ export class PlanGuard implements CanActivate {
     if (!hasFeature(planInfo.plan, feature)) {
       const minPlan = FEATURE_MIN_PLAN[feature] || 'Pro';
       throw AppException.forbidden(
-        `Recurso disponivel a partir do plano ${minPlan}. Faca upgrade para acessar.`,
+        `Recurso disponivel a partir do plano ${minPlan}. Faça upgrade para acessar.`,
       );
     }
 

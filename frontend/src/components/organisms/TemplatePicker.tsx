@@ -41,7 +41,7 @@ export function TemplatePicker({ open, onClose, onApply }: Props) {
               </button>
             </div>
             <p className="text-sm text-white/40 mb-5">
-              Comece rapidamente com um template pre-pronto. Voce pode personalizar tudo depois.
+              Comece rapidamente com um template pre-pronto. Você pode personalizar tudo depois.
             </p>
 
             <div className="space-y-3">

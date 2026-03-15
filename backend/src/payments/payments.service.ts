@@ -13,7 +13,7 @@ const PLAN_PRICES: Record<string, number> = {
   ENTERPRISE: 299.9,
 };
 const PLAN_TITLES: Record<string, string> = {
-  PRO: 'CraftCard Pro - Cartao Digital Profissional (Anual)',
+  PRO: 'CraftCard Pro - Cartão Digital Profissional (Anual)',
   BUSINESS: 'CraftCard Business - Plano Empresarial (Anual)',
   ENTERPRISE: 'CraftCard Enterprise - Plano Completo (Anual)',
 };
@@ -154,13 +154,13 @@ export class PaymentsService {
     const targetLevel = planHierarchy[plan] ?? 0;
 
     if (currentLevel >= targetLevel && planInfo.plan !== 'FREE') {
-      throw AppException.conflict('Voce ja possui este plano ou superior ativo');
+      throw AppException.conflict('Você já possui este plano ou superior ativo');
     }
 
     const price = PLAN_PRICES[plan];
     const title = PLAN_TITLES[plan];
     if (!price || !title) {
-      throw AppException.badRequest('Plano invalido. Use PRO, BUSINESS ou ENTERPRISE.');
+      throw AppException.badRequest('Plano inválido. Use PRO, BUSINESS ou ENTERPRISE.');
     }
 
     const frontendUrl = this.configService.get('FRONTEND_URL', { infer: true });
@@ -312,7 +312,7 @@ export class PaymentsService {
     const validPlans = ['FREE', 'PRO', 'BUSINESS', 'ENTERPRISE'];
     const normalizedPlan = plan.toUpperCase();
     if (!validPlans.includes(normalizedPlan)) {
-      throw AppException.badRequest(`Plano invalido. Use: ${validPlans.join(', ')}`);
+      throw AppException.badRequest(`Plano inválido. Use: ${validPlans.join(', ')}`);
     }
 
     const targetUser = await this.prisma.user.findFirst({
@@ -320,7 +320,7 @@ export class PaymentsService {
       select: { id: true, email: true, name: true },
     });
     if (!targetUser) {
-      throw AppException.notFound(`Usuario com email ${targetEmail}`);
+      throw AppException.notFound(`Usuário com email ${targetEmail}`);
     }
 
     // Update user plan

@@ -70,7 +70,7 @@ describe('Data Integrity & Race Conditions', () => {
 
       await expect(
         service.requestConnection(USER_A, PROFILE_A, PROFILE_B),
-      ).rejects.toThrow(/ja estao conectados/);
+      ).rejects.toThrow(/já estão conectados/);
     });
 
     it('should create only 1 connection even if called rapidly', async () => {
@@ -100,7 +100,7 @@ describe('Data Integrity & Race Conditions', () => {
 
       await expect(
         service.acceptConnection(USER_A, 'conn-1'), // USER_A is requester, not addressee
-      ).rejects.toThrow(/nao pode aceitar/);
+      ).rejects.toThrow(/não pode aceitar/);
     });
 
     it('should BLOCK non-addressee from rejecting', async () => {
@@ -112,7 +112,7 @@ describe('Data Integrity & Race Conditions', () => {
 
       await expect(
         service.rejectConnection(USER_A, 'conn-1'),
-      ).rejects.toThrow(/nao pode rejeitar/);
+      ).rejects.toThrow(/não pode rejeitar/);
     });
 
     it('should BLOCK accepting non-PENDING connection', async () => {
@@ -125,7 +125,7 @@ describe('Data Integrity & Race Conditions', () => {
 
       await expect(
         service.acceptConnection(USER_A, 'conn-1'),
-      ).rejects.toThrow(/nao esta pendente/);
+      ).rejects.toThrow(/não está pendente/);
     });
   });
 
@@ -163,7 +163,7 @@ describe('Data Integrity & Race Conditions', () => {
 
       await expect(
         service.removeConnection('user-c', 'conn-1'),
-      ).rejects.toThrow(/nao pode remover/);
+      ).rejects.toThrow(/não pode remover/);
     });
   });
 
@@ -194,7 +194,7 @@ describe('Data Integrity & Race Conditions', () => {
 
       await expect(
         service.acceptConnection(USER_A, 'nonexistent'),
-      ).rejects.toThrow(/Conexao/);
+      ).rejects.toThrow(/Conexão/);
     });
 
     it('should throw when connection not found for reject', async () => {
@@ -202,7 +202,7 @@ describe('Data Integrity & Race Conditions', () => {
 
       await expect(
         service.rejectConnection(USER_A, 'nonexistent'),
-      ).rejects.toThrow(/Conexao/);
+      ).rejects.toThrow(/Conexão/);
     });
 
     it('should throw when connection not found for remove', async () => {
@@ -210,7 +210,7 @@ describe('Data Integrity & Race Conditions', () => {
 
       await expect(
         service.removeConnection(USER_A, 'nonexistent'),
-      ).rejects.toThrow(/Conexao/);
+      ).rejects.toThrow(/Conexão/);
     });
   });
 

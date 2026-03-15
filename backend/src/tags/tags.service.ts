@@ -10,7 +10,7 @@ export class TagsService {
     const existing = await this.prisma.tag.findUnique({
       where: { userId_name: { userId, name: name.trim() } },
     });
-    if (existing) throw AppException.conflict('Tag ja existe');
+    if (existing) throw AppException.conflict('Tag já existe');
 
     return this.prisma.tag.create({
       data: { userId, name: name.trim(), color: color || null },
@@ -69,7 +69,7 @@ export class TagsService {
         ],
       },
     });
-    if (!connection) throw AppException.notFound('Conexao');
+    if (!connection) throw AppException.notFound('Conexão');
 
     // Check if already assigned
     const existing = await this.prisma.connectionTag.findUnique({

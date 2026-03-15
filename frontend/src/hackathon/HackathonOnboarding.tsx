@@ -103,14 +103,14 @@ export default function HackathonOnboarding() {
       >
         <div className="text-center max-w-md">
           <GraduationCap size={48} className="mx-auto mb-4 text-white/30" />
-          <h1 className="text-2xl font-bold text-white mb-2">Inscricoes encerradas</h1>
-          <p className="text-white/50 text-sm mb-6">O evento {HACKATHON_CONFIG.name} ainda nao esta com inscricoes abertas ou ja foi encerrado.</p>
+          <h1 className="text-2xl font-bold text-white mb-2">Inscrições encerradas</h1>
+          <p className="text-white/50 text-sm mb-6">O evento {HACKATHON_CONFIG.name} aindanão está com inscrições abertas ou já foi encerrado.</p>
           <button
             type="button"
             onClick={() => navigate('/')}
             className="px-6 py-3 rounded-xl text-white font-semibold text-sm border border-white/20 hover:bg-white/10 transition"
           >
-            Voltar ao inicio
+            Voltar ao início
           </button>
         </div>
       </div>
@@ -361,7 +361,7 @@ export default function HackathonOnboarding() {
                 onClick={() => { setIsLoginMode(!isLoginMode); setError(''); }}
                 className="w-full mt-3 py-2 text-sm text-white/50 hover:text-white/80 transition text-center"
               >
-                {isLoginMode ? 'Nao tenho conta — Criar agora' : 'Ja tenho conta — Entrar'}
+                {isLoginMode ? 'Não tenho conta — Criar agora' : 'Já tenho conta — Entrar'}
               </button>
             </motion.div>
           )}
@@ -419,7 +419,7 @@ export default function HackathonOnboarding() {
           {/* ── STEP: Area ──────────────────────── */}
           {step === 'area' && (
             <motion.div key="area" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
-              <h2 className="text-xl font-bold text-white mb-1">Area de Formacao</h2>
+              <h2 className="text-xl font-bold text-white mb-1">Area de Formação</h2>
               <p className="text-sm text-white/50 mb-4">Selecione a area que mais combina com voce</p>
 
               <div className="grid grid-cols-2 gap-2 max-h-[45vh] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
@@ -539,7 +539,7 @@ export default function HackathonOnboarding() {
                 className="w-full py-3 rounded-xl font-semibold text-white transition-all hover:brightness-110"
                 style={{ background: `linear-gradient(135deg, ${HACKATHON_CONFIG.senacBlue}, ${HACKATHON_CONFIG.senacOrange})` }}
               >
-                Ver meu Cartao
+                Ver meu Cartão
               </button>
             </motion.div>
           )}

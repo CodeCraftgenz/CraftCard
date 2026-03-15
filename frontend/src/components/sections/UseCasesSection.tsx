@@ -17,11 +17,11 @@ const useCases = [
     icon: User,
     title: 'Profissionais e Freelancers',
     description:
-      'Seu cartao digital como link na bio, QR code em eventos e portfolio online.',
+      'Seu cartão digital como link na bio, QR code em eventos e portfolio online.',
     bullets: [
       { icon: QrCode, text: 'QR Code para eventos e networking' },
       { icon: Calendar, text: 'Receba agendamentos online' },
-      { icon: Briefcase, text: 'Exiba seus servicos e portfolio' },
+      { icon: Briefcase, text: 'Exiba seus serviços e portfolio' },
       { icon: BarChart3, text: 'Analytics de visitas e cliques' },
     ],
     accentFrom: 'from-blue-600/[0.12]',
@@ -35,9 +35,9 @@ const useCases = [
     icon: Building2,
     title: 'Empresas e Equipes',
     description:
-      'Cartoes padronizados para toda a equipe com gestao centralizada.',
+      'Cartões padronizados para toda a equipe com gestao centralizada.',
     bullets: [
-      { icon: Users, text: 'Cartoes padronizados para a equipe' },
+      { icon: Users, text: 'Cartões padronizados para a equipe' },
       { icon: Palette, text: 'Branding centralizado (cores, logo, fonte)' },
       { icon: Mail, text: 'Dashboard com leads de todos os membros' },
       { icon: Shield, text: 'Controle visual e convites por email' },
@@ -67,7 +67,7 @@ export function UseCasesSection() {
             Para quem <span className="gradient-text">e</span>
           </h2>
           <p className="mt-4 text-slate-400 max-w-2xl mx-auto">
-            Seja voce um profissional independente ou uma empresa, o CraftCard
+            Seja você um profissional independente ou uma empresa, o CraftCard
             se adapta a sua necessidade
           </p>
         </motion.div>

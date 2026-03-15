@@ -30,10 +30,10 @@ export default function MapTab() {
         <div className="mx-auto w-14 h-14 rounded-full bg-white/5 flex items-center justify-center mb-3">
           <Locate size={24} className="text-white/30" />
         </div>
-        <p className="text-sm font-semibold text-white mb-1">Nenhuma conexao com localizacao</p>
+        <p className="text-sm font-semibold text-white mb-1">Nenhuma conexão com localização</p>
         <p className="text-xs text-white/40 max-w-xs mx-auto leading-relaxed">
-          Para registrar a localizacao das suas conexoes, permita o acesso a geolocalizacao no navegador ao visitar um perfil.
-          As proximas conexoes serao exibidas no mapa automaticamente.
+          Para registrar a localização das suas conexões, permita o acesso a geolocalização no navegador ao visitar um perfil.
+          As próximas conexões serão exibidas no mapa automaticamente.
         </p>
       </div>
     );

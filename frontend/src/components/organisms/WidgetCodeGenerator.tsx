@@ -7,7 +7,7 @@ interface WidgetCodeGeneratorProps {
 
 const SIZES = [
   { label: 'Compacto', value: 'compact', icon: Minimize2, width: 280, height: 380 },
-  { label: 'Padrao', value: 'standard', icon: Monitor, width: 320, height: 450 },
+  { label: 'Padrão', value: 'standard', icon: Monitor, width: 320, height: 450 },
   { label: 'Grande', value: 'large', icon: Maximize2, width: 380, height: 550 },
 ] as const;
 
@@ -38,7 +38,7 @@ export function WidgetCodeGenerator({ slug }: WidgetCodeGeneratorProps) {
       </div>
 
       <p className="text-xs text-white/40">
-        Adicione seu cartao em qualquer site colando o codigo abaixo.
+        Adicione seu cartão em qualquer site colando o código abaixo.
       </p>
 
       {/* Size selector */}
@@ -102,7 +102,7 @@ export function WidgetCodeGenerator({ slug }: WidgetCodeGeneratorProps) {
         }`}
       >
         {copied ? <Check size={14} /> : <Copy size={14} />}
-        {copied ? 'Codigo copiado!' : 'Copiar codigo'}
+        {copied ? 'Código copiado!' : 'Copiar código'}
       </button>
     </div>
   );

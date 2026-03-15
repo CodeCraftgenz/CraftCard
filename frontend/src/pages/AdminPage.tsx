@@ -45,7 +45,7 @@ export function AdminPage() {
 
   const tabs: { key: Tab; label: string; icon: typeof Users }[] = [
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { key: 'users', label: 'Usuarios', icon: Users },
+    { key: 'users', label: 'Usuários', icon: Users },
     { key: 'payments', label: 'Pagamentos', icon: CreditCard },
     { key: 'organizations', label: 'Organizacoes', icon: Building2 },
     { key: 'hackathon', label: 'Hackathon', icon: GraduationCap },
@@ -134,7 +134,7 @@ function LegacyDashboardContent({ stats, maxPlanCount }: { stats: NonNullable<Re
     <div className="space-y-6">
       {/* KPI Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Total Usuarios" value={stats.totalUsers} icon={Users} />
+        <StatCard label="Total Usuários" value={stats.totalUsers} icon={Users} />
         <StatCard label="Total Perfis" value={stats.totalProfiles} />
         <StatCard label="Total Organizacoes" value={stats.totalOrgs} icon={Building2} />
         <StatCard label="Receita Total" value={`R$ ${stats.revenue.total.toFixed(2)}`} icon={CreditCard} />
@@ -294,7 +294,7 @@ function LegacyDashboardContent({ stats, maxPlanCount }: { stats: NonNullable<Re
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Recent Unread Leads */}
         <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-          <h3 className="text-white font-semibold mb-4">Leads Recentes (Nao Lidos)</h3>
+          <h3 className="text-white font-semibold mb-4">Leads Recentes (Não Lidos)</h3>
           {stats.recentLeads && stats.recentLeads.length > 0 ? (
             <div className="space-y-3">
               {stats.recentLeads.map((lead) => (
@@ -314,7 +314,7 @@ function LegacyDashboardContent({ stats, maxPlanCount }: { stats: NonNullable<Re
               ))}
             </div>
           ) : (
-            <p className="text-white/30 text-sm text-center py-4">Nenhum lead nao lido</p>
+            <p className="text-white/30 text-sm text-center py-4">Nenhum leadnão lido</p>
           )}
         </div>
 
@@ -350,7 +350,7 @@ function LegacyDashboardContent({ stats, maxPlanCount }: { stats: NonNullable<Re
       {/* New users chart */}
       {stats.newUsersLast30Days.length > 0 && (
         <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-          <h3 className="text-white font-semibold mb-4">Novos Usuarios (30 dias)</h3>
+          <h3 className="text-white font-semibold mb-4">Novos Usuários (30 dias)</h3>
           <div className="flex items-end gap-1 h-32">
             {stats.newUsersLast30Days.map((d) => {
               const max = Math.max(...stats.newUsersLast30Days.map((x) => x.count), 1);
@@ -400,7 +400,7 @@ function UsersTab() {
   };
 
   const handleDelete = (user: AdminUser) => {
-    if (!confirm(`Deletar usuario ${user.email}? Esta acao nao pode ser desfeita.`)) return;
+    if (!confirm(`Deletar usuário ${user.email}? Esta acaonão pode ser desfeita.`)) return;
     deleteUser.mutate(user.id);
   };
 
@@ -442,7 +442,7 @@ function UsersTab() {
       </div>
 
       {/* User count */}
-      <p className="text-white/40 text-xs">{data?.total ?? 0} usuarios</p>
+      <p className="text-white/40 text-xs">{data?.total ?? 0} usuários</p>
 
       {/* User list */}
       <div className="bg-white/5 rounded-2xl border border-white/10 divide-y divide-white/5">
@@ -474,7 +474,7 @@ function UsersTab() {
             {/* Plan badge */}
             {editingUser === user.id ? (
               <select
-                aria-label="Alterar plano do usuario"
+                aria-label="Alterar plano do usuário"
                 value={user.plan}
                 onChange={(e) => handlePlanChange(user, e.target.value)}
                 onBlur={() => setEditingUser(null)}
@@ -519,7 +519,7 @@ function UsersTab() {
             <button
               onClick={() => handleDelete(user)}
               className="p-1.5 rounded-lg text-red-400/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-              title="Deletar usuario"
+              title="Deletar usuário"
             >
               <Trash2 size={14} />
             </button>
@@ -527,7 +527,7 @@ function UsersTab() {
         ))}
 
         {users?.length === 0 && (
-          <div className="py-8 text-center text-white/30 text-sm">Nenhum usuario encontrado</div>
+          <div className="py-8 text-center text-white/30 text-sm">Nenhum usuário encontrado</div>
         )}
       </div>
 
@@ -666,7 +666,7 @@ function OrganizationsTab() {
         ))}
 
         {orgs?.length === 0 && (
-          <div className="py-8 text-center text-white/30 text-sm">Nenhuma organizacao encontrada</div>
+          <div className="py-8 text-center text-white/30 text-sm">Nenhuma organização encontrada</div>
         )}
       </div>
 

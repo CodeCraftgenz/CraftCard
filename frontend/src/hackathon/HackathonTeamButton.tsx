@@ -102,7 +102,7 @@ export function HackathonTeamButton({ slug, accent = HACKATHON_CONFIG.senacOrang
 
               {/* Team size note */}
               <p className="text-center text-white/20 text-xs mt-4">
-                Maximo de {HACKATHON_CONFIG.maxTeamSize} membros por equipe
+                Máximo de {HACKATHON_CONFIG.maxTeamSize} membros por equipe
               </p>
             </motion.div>
           </motion.div>

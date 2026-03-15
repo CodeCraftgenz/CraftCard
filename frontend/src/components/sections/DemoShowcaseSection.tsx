@@ -23,13 +23,13 @@ const DEMO_LINKS = [
   { icon: Globe, label: 'Portfolio', color: '#8B5CF6', bg: 'from-violet-500/20 to-indigo-500/20' },
   { icon: Mail, label: 'Email', color: '#EA4335', bg: 'from-red-500/20 to-orange-500/20' },
   { icon: Music, label: 'Spotify', color: '#1DB954', bg: 'from-green-400/20 to-green-600/20' },
-  { icon: MapPin, label: 'Localizacao', color: '#F59E0B', bg: 'from-amber-500/20 to-yellow-500/20' },
+  { icon: MapPin, label: 'Localização', color: '#F59E0B', bg: 'from-amber-500/20 to-yellow-500/20' },
   { icon: Play, label: 'YouTube', color: '#FF0000', bg: 'from-red-500/20 to-red-600/20' },
 ];
 
 const ACTION_PILLS = [
   { icon: UserPlus, label: 'Salvar contato', delay: 0.3 },
-  { icon: CreditCard, label: 'Cartao Virtual', delay: 0.4 },
+  { icon: CreditCard, label: 'Cartão Virtual', delay: 0.4 },
   { icon: Users, label: 'Perfis conectados', delay: 0.5 },
 ];
 
@@ -149,7 +149,7 @@ function PhoneContent() {
 
         {/* Connected profiles */}
         <div className="mt-4 p-3 rounded-xl bg-white/[0.03] border border-white/5">
-          <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Conexoes</p>
+          <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Conexões</p>
           <div className="flex -space-x-2">
             {CONNECTED_PROFILES.map((p, i) => (
               <div
@@ -172,7 +172,7 @@ function PhoneContent() {
             src="https://www.google.com/maps?q=Sao+Paulo,SP,Brasil&output=embed"
             className="w-full h-full border-0 pointer-events-none"
             loading="lazy"
-            title="Localizacao"
+            title="Localização"
           />
           <div className="absolute bottom-0 inset-x-0 h-6 bg-gradient-to-t from-[#0f172a] to-transparent" />
           <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm">
@@ -280,14 +280,14 @@ export function DemoShowcaseSection() {
               {...fadeUp(0)}
               className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 mb-6"
             >
-              Veja na pratica
+              Veja na prática
             </motion.span>
 
             <motion.h2
               {...fadeUp(0.1)}
               className="font-heading text-3xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight leading-tight"
             >
-              Seu cartao digital,{' '}
+              Seu cartão digital,{' '}
               <span className="bg-gradient-to-r from-cyan-400 via-indigo-400 to-violet-400 bg-clip-text text-transparent">
                 sempre no bolso
               </span>
@@ -297,9 +297,9 @@ export function DemoShowcaseSection() {
               {...fadeUp(0.2)}
               className="mt-5 text-slate-400 leading-relaxed max-w-md"
             >
-              Compartilhe seu perfil profissional com um unico link ou QR Code.
-              Todos os seus contatos, redes sociais e informacoes reunidos em um
-              cartao elegante e interativo.
+              Compartilhe seu perfil profissional com um único link ou QR Code.
+              Todos os seus contatos, redes sociais e informações reunidos em um
+              cartão elegante e interativo.
             </motion.p>
 
             {/* Action pills */}
@@ -327,7 +327,7 @@ export function DemoShowcaseSection() {
                 className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl gradient-bg text-white font-semibold text-sm transition-all hover:shadow-lg hover:shadow-indigo-500/20"
               >
                 <Sparkles size={16} className="opacity-70" />
-                Criar meu cartao gratis
+                Criar meu cartão gratis
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </Link>
             </motion.div>

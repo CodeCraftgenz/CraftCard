@@ -18,8 +18,8 @@ export class EventsController {
     longitude?: number;
     isPublic?: boolean;
   }) {
-    if (!body.name?.trim()) throw new Error('Nome do evento e obrigatorio');
-    if (!body.startDate) throw new Error('Data de inicio e obrigatoria');
+    if (!body.name?.trim()) throw new Error('Nome do evento e obrigatório');
+    if (!body.startDate) throw new Error('Data de início e obrigatoria');
     return this.eventsService.create(user.sub, {
       ...body,
       startDate: new Date(body.startDate),

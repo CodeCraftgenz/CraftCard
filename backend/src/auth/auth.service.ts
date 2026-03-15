@@ -97,7 +97,7 @@ export class AuthService {
 
     if (existing) {
       if (existing.passwordHash) {
-        throw AppException.conflict('Email ja cadastrado');
+        throw AppException.conflict('Email já cadastrado');
       }
       // Has Google account but no password → link (add password)
       await this.usersService.addPasswordToUser(existing.id, passwordHash);
@@ -155,7 +155,7 @@ export class AuthService {
     }
 
     if (!user.passwordHash) {
-      throw AppException.unauthorized('Use o login com Google para esta conta');
+      throw AppException.unauthorized('Use o login com Google para está conta');
     }
 
     const valid = await bcrypt.compare(password, user.passwordHash);
@@ -163,7 +163,7 @@ export class AuthService {
       throw AppException.unauthorized('Credenciais invalidas');
     }
 
-    // Se 2FA esta ativo, retornar flag sem emitir tokens
+    // Se 2FA está ativo, retornar flag sem emitir tokens
     if (user.totpEnabled) {
       return {
         requires2FA: true,
@@ -205,7 +205,7 @@ export class AuthService {
     const user = await this.usersService.findByPasswordResetToken(tokenHash);
 
     if (!user) {
-      throw AppException.badRequest('Token invalido ou expirado');
+      throw AppException.badRequest('Token inválido ou expirado');
     }
 
     const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
@@ -227,7 +227,7 @@ export class AuthService {
     });
 
     if (!storedToken) {
-      throw AppException.unauthorized('Token invalido');
+      throw AppException.unauthorized('Token inválido');
     }
 
     // Replay detection: if token was already revoked, revoke all user tokens
@@ -274,7 +274,7 @@ export class AuthService {
       });
       const payload = ticket.getPayload();
       if (!payload || !payload.email) {
-        throw AppException.unauthorized('Google token invalido');
+        throw AppException.unauthorized('Google token inválido');
       }
       return payload;
     } catch (error) {
@@ -331,10 +331,10 @@ export class AuthService {
 
   async setupTotp(userId: string) {
     const user = await this.usersService.findById(userId);
-    if (!user) throw AppException.notFound('Usuario');
+    if (!user) throw AppException.notFound('Usuário');
 
     if (user.totpEnabled) {
-      throw AppException.conflict('2FA ja esta ativado');
+      throw AppException.conflict('2FA já está ativado');
     }
 
     const secret = new OTPAuth.Secret({ size: 20 });
@@ -347,7 +347,7 @@ export class AuthService {
       secret,
     });
 
-    // Salvar o secret (ainda nao ativado — sera ativado apos verificar codigo)
+    // Salvar o secret (aindanão ativado — será ativado apos verificar código)
     await this.usersService.setTotpSecret(userId, secret.base32);
 
     const otpauthUrl = totp.toString();
@@ -362,8 +362,8 @@ export class AuthService {
 
   async verifyAndEnableTotp(userId: string, code: string) {
     const user = await this.usersService.findById(userId);
-    if (!user) throw AppException.notFound('Usuario');
-    if (user.totpEnabled) throw AppException.conflict('2FA ja esta ativado');
+    if (!user) throw AppException.notFound('Usuário');
+    if (user.totpEnabled) throw AppException.conflict('2FA já está ativado');
     if (!user.totpSecret) throw AppException.badRequest('Configure o 2FA primeiro (POST /auth/setup-2fa)');
 
     const totp = new OTPAuth.TOTP({
@@ -377,10 +377,10 @@ export class AuthService {
 
     const delta = totp.validate({ token: code, window: 1 });
     if (delta === null) {
-      throw AppException.unauthorized('Codigo TOTP invalido');
+      throw AppException.unauthorized('Código TOTP inválido');
     }
 
-    // Gerar 8 codigos de backup
+    // Gerar 8 códigos de backup
     const backupCodes = Array.from({ length: 8 }, () =>
       randomBytes(4).toString('hex'),
     );
@@ -394,10 +394,10 @@ export class AuthService {
 
   async disableTotp(userId: string, code: string) {
     const user = await this.usersService.findById(userId);
-    if (!user) throw AppException.notFound('Usuario');
-    if (!user.totpEnabled) throw AppException.badRequest('2FA nao esta ativado');
+    if (!user) throw AppException.notFound('Usuário');
+    if (!user.totpEnabled) throw AppException.badRequest('2FAnão está ativado');
 
-    // Verificar codigo antes de desativar
+    // Verificar código antes de desativar
     const totp = new OTPAuth.TOTP({
       issuer: 'CraftCard',
       label: user.email,
@@ -409,7 +409,7 @@ export class AuthService {
 
     const delta = totp.validate({ token: code, window: 1 });
     if (delta === null) {
-      throw AppException.unauthorized('Codigo TOTP invalido');
+      throw AppException.unauthorized('Código TOTP inválido');
     }
 
     await this.usersService.disableTotp(userId);
@@ -424,7 +424,7 @@ export class AuthService {
       throw AppException.unauthorized('Credenciais invalidas');
     }
 
-    // Tentar como codigo TOTP (6 digitos)
+    // Tentar como código TOTP (6 digitos)
     if (/^\d{6}$/.test(code)) {
       const totp = new OTPAuth.TOTP({
         issuer: 'CraftCard',
@@ -437,18 +437,18 @@ export class AuthService {
 
       const delta = totp.validate({ token: code, window: 1 });
       if (delta === null) {
-        throw AppException.unauthorized('Codigo TOTP invalido');
+        throw AppException.unauthorized('Código TOTP inválido');
       }
     } else {
-      // Tentar como codigo de backup
+      // Tentar como código de backup
       const backupCodes: string[] = user.totpBackupCodes ? JSON.parse(user.totpBackupCodes) : [];
       const codeIndex = backupCodes.indexOf(code);
 
       if (codeIndex === -1) {
-        throw AppException.unauthorized('Codigo invalido');
+        throw AppException.unauthorized('Código inválido');
       }
 
-      // Consumir o codigo de backup (one-time use)
+      // Consumir o código de backup (one-time use)
       backupCodes.splice(codeIndex, 1);
       await this.usersService.consumeBackupCode(user.id, backupCodes);
       this.logger.log(`Backup code used for ${user.email}, ${backupCodes.length} remaining`);
@@ -466,7 +466,7 @@ export class AuthService {
 
   async devLogin(email: string, name: string) {
     if (process.env.NODE_ENV === 'production') {
-      throw AppException.forbidden('Dev login nao disponivel em producao');
+      throw AppException.forbidden('Dev loginnão disponivel em producao');
     }
 
     const fakeGoogleId = `dev-${createHash('sha256').update(email).digest('hex').slice(0, 16)}`;

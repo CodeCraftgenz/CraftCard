@@ -16,13 +16,13 @@ interface Feature {
 const features: Feature[] = [
   {
     image: '/feature-qrcode.jpg',
-    imageAlt: 'QR Code holografico com cartao digital',
+    imageAlt: 'QR Code holografico com cartão digital',
     badge: 'Compartilhamento',
     title: 'QR Code inteligente',
     description:
-      'Gere um QR Code exclusivo para seu cartao digital. Perfeito para eventos, reunioes e networking presencial.',
+      'Gere um QR Code exclusivo para seu cartão digital. Perfeito para eventos, reunioes e networking presencial.',
     bullets: [
-      { icon: QrCode, text: 'QR Code unico e personalizado' },
+      { icon: QrCode, text: 'QR Code único e personalizado' },
       { icon: Share2, text: 'Compartilhe em qualquer lugar' },
       { icon: BarChart3, text: 'Rastreie cada scan em tempo real' },
     ],
@@ -33,9 +33,9 @@ const features: Feature[] = [
     badge: 'Redes sociais',
     title: 'Todos os seus links em um so lugar',
     description:
-      'Conecte Instagram, LinkedIn, WhatsApp, TikTok e muito mais. Cada clique e rastreado para voce entender o que funciona.',
+      'Conecte Instagram, LinkedIn, WhatsApp, TikTok e muito mais. Cada clique e rastreado para você entender o que funciona.',
     bullets: [
-      { icon: Link2, text: 'Links ilimitados com icones automaticos' },
+      { icon: Link2, text: 'Links ilimitados com ícones automaticos' },
       { icon: BarChart3, text: 'Analytics por link e plataforma' },
       { icon: Wifi, text: 'Atualize links sem trocar o QR Code' },
     ],
@@ -47,11 +47,11 @@ const features: Feature[] = [
     badge: 'Tecnologia',
     title: 'Instale como app nativo',
     description:
-      'Seu cartao funciona como um app instalado no celular. Acesso offline, notificacoes push e carregamento instantaneo.',
+      'Seu cartão funciona como um app instalado no celular. Acesso offline, notificações push e carregamento instantaneo.',
     bullets: [
       { icon: Smartphone, text: 'PWA com acesso direto na tela inicial' },
       { icon: Wifi, text: 'Funciona mesmo sem internet' },
-      { icon: QrCode, text: 'Abra seu cartao em 1 segundo' },
+      { icon: QrCode, text: 'Abra seu cartão em 1 segundo' },
     ],
   },
 ];
@@ -156,7 +156,7 @@ export function FeaturesShowcaseSection() {
             Recursos que fazem a <span className="gradient-text">diferenca</span>
           </h2>
           <p className="mt-4 text-slate-400 max-w-2xl mx-auto">
-            Tecnologia de ponta para voce se destacar no mundo digital
+            Tecnologia de ponta para você se destacar no mundo digital
           </p>
         </motion.div>
 

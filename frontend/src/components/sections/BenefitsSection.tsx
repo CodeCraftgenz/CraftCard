@@ -12,13 +12,13 @@ const benefits = [
   {
     icon: Zap,
     title: 'Pronto em minutos',
-    desc: 'Crie e publique seu cartao digital em menos de 5 minutos.',
+    desc: 'Crie e publique seu cartão digital em menos de 5 minutos.',
     span: 'col-span-1 md:col-span-2 lg:col-span-1',
   },
   {
     icon: Share2,
-    title: 'Link unico',
-    desc: 'Compartilhe um unico link com todos os seus contatos e redes.',
+    title: 'Link único',
+    desc: 'Compartilhe um único link com todos os seus contatos e redes.',
     span: 'col-span-1 lg:col-span-1',
   },
   {
@@ -73,7 +73,7 @@ export function BenefitsSection() {
             Por que escolher o <span className="gradient-text">CraftCard</span>?
           </h2>
           <p className="mt-4 text-slate-400 max-w-2xl mx-auto">
-            Tudo o que voce precisa para ter uma presenca digital profissional
+            Tudo o que você precisa para ter uma presenca digital profissional
           </p>
         </motion.div>
 

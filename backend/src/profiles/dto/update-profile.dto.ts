@@ -8,7 +8,7 @@ const emptyToUndefined = (val: unknown) =>
 
 const safeUrlSchema = z.string().url().refine(
   (url) => !DANGEROUS_PROTOCOLS.test(url),
-  { message: 'Protocolo nao permitido' },
+  { message: 'Protocolonão permitido' },
 );
 
 /** URL schema for social links — accepts http(s), mailto:, and tel: */
@@ -17,7 +17,7 @@ const socialUrlSchema = z.string().min(1).refine(
   { message: 'URL invalida' },
 ).refine(
   (url) => !DANGEROUS_PROTOCOLS.test(url),
-  { message: 'Protocolo nao permitido' },
+  { message: 'Protocolonão permitido' },
 );
 
 const EXPANDED_PLATFORMS = [
@@ -57,7 +57,7 @@ export const socialLinkSchema = z.object({
     if (link.startsAt && link.endsAt) return link.endsAt > link.startsAt;
     return true;
   },
-  { message: 'Data de fim deve ser posterior a data de inicio', path: ['endsAt'] },
+  { message: 'Data de fim deve ser posterior a data de início', path: ['endsAt'] },
 );
 
 export const updateProfileSchema = z.object({
@@ -66,9 +66,9 @@ export const updateProfileSchema = z.object({
   buttonColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Cor invalida').optional(),
   slug: z.preprocess(emptyToUndefined, z
     .string()
-    .min(3, 'Slug deve ter no minimo 3 caracteres')
-    .max(40, 'Slug deve ter no maximo 40 caracteres')
-    .regex(/^[a-z0-9-]+$/, 'Slug so pode conter letras minusculas, numeros e hifens')
+    .min(3, 'Slug deve ter no mínimo 3 caracteres')
+    .max(40, 'Slug deve ter no máximo 40 caracteres')
+    .regex(/^[a-z0-9-]+$/, 'Slug so pode conter letras minusculas, números e hifens')
     .optional(),
   ),
   isPublished: z.boolean().optional(),

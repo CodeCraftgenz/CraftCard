@@ -119,7 +119,7 @@ export interface AdminOrgDetail {
   members: Array<{ user: { id: string; name: string; email: string }; role: string }>;
 }
 
-export interface PaginatedResponse<T> {
+export interface PáginatedResponse<T> {
   items: T[];
   total: number;
   page: number;
@@ -144,7 +144,7 @@ export function useAdminUsers(search: string, plan: string, role: string, page =
   if (page > 1) params.set('page', String(page));
   const qs = params.toString();
 
-  return useQuery<PaginatedResponse<AdminUser>>({
+  return useQuery<PáginatedResponse<AdminUser>>({
     queryKey: ['admin', 'users', search, plan, role, page],
     queryFn: () => api.get(`/admin/users${qs ? `?${qs}` : ''}`),
   });
@@ -165,7 +165,7 @@ export function useAdminPayments(status: string, plan: string, page = 1) {
   if (page > 1) params.set('page', String(page));
   const qs = params.toString();
 
-  return useQuery<PaginatedResponse<AdminPayment>>({
+  return useQuery<PáginatedResponse<AdminPayment>>({
     queryKey: ['admin', 'payments', status, plan, page],
     queryFn: () => api.get(`/admin/payments${qs ? `?${qs}` : ''}`),
   });
@@ -177,7 +177,7 @@ export function useAdminOrgs(search: string, page = 1) {
   if (page > 1) params.set('page', String(page));
   const qs = params.toString();
 
-  return useQuery<PaginatedResponse<AdminOrg>>({
+  return useQuery<PáginatedResponse<AdminOrg>>({
     queryKey: ['admin', 'organizations', search, page],
     queryFn: () => api.get(`/admin/organizations${qs ? `?${qs}` : ''}`),
   });
@@ -315,7 +315,7 @@ export function useHackathonParticipants(search: string, area: string, page = 1)
   if (page > 1) params.set('page', String(page));
   const qs = params.toString();
 
-  return useQuery<PaginatedResponse<HackathonParticipant>>({
+  return useQuery<PáginatedResponse<HackathonParticipant>>({
     queryKey: ['admin', 'hackathon', 'participants', search, area, page],
     queryFn: () => api.get(`/admin/hackathon/participants${qs ? `?${qs}` : ''}`),
     refetchInterval: 30_000,

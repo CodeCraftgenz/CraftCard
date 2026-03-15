@@ -102,7 +102,7 @@ export function Header() {
                     className="flex items-center gap-2 px-4 py-2.5 text-sm text-white/70 hover:bg-white/5 transition-colors"
                   >
                     <User size={14} />
-                    Meu Cartao
+                    Meu Cartão
                   </Link>
                   <Link
                     to="/tutorial"
@@ -217,7 +217,7 @@ export function Header() {
                   className="text-sm text-white/70 py-2"
                   onClick={() => setIsOpen(false)}
                 >
-                  Meu Cartao
+                  Meu Cartão
                 </Link>
                 <Link
                   to="/tutorial"

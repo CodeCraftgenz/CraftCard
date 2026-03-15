@@ -113,7 +113,7 @@ export const LINK_ANIMATIONS = [
 
 // ── Per-link button shape (border-radius / clip-path) ──
 export const BLOCK_SHAPES = [
-  { value: 'default', label: 'Padrao', desc: 'Usa estilo global' },
+  { value: 'default', label: 'Padrão', desc: 'Usa estilo global' },
   { value: 'rounded', label: 'Arredondado', desc: 'rounded-2xl' },
   { value: 'pill', label: 'Pilula', desc: 'Totalmente arredondado' },
   { value: 'square', label: 'Quadrado', desc: 'Cantos retos' },
@@ -178,17 +178,17 @@ export function getGridSize(metadata: string | null | undefined): typeof GRID_SI
 
 export const SOCIAL_PLATFORMS = [
   { value: 'whatsapp', label: 'WhatsApp', icon: 'MessageCircle', urlPrefix: 'https://wa.me/', placeholder: 'https://wa.me/5511999999999' },
-  { value: 'instagram', label: 'Instagram', icon: 'Instagram', urlPrefix: 'https://instagram.com/', placeholder: 'https://instagram.com/seu_usuario' },
+  { value: 'instagram', label: 'Instagram', icon: 'Instagram', urlPrefix: 'https://instagram.com/', placeholder: 'https://instagram.com/seu_usuário' },
   { value: 'linkedin', label: 'LinkedIn', icon: 'Linkedin', urlPrefix: 'https://linkedin.com/in/', placeholder: 'https://linkedin.com/in/seu-perfil' },
-  { value: 'github', label: 'GitHub', icon: 'Github', urlPrefix: 'https://github.com/', placeholder: 'https://github.com/seu_usuario' },
-  { value: 'twitter', label: 'X (Twitter)', icon: 'Twitter', urlPrefix: 'https://x.com/', placeholder: 'https://x.com/seu_usuario' },
-  { value: 'tiktok', label: 'TikTok', icon: 'Music2', urlPrefix: 'https://tiktok.com/@', placeholder: 'https://tiktok.com/@seu_usuario' },
+  { value: 'github', label: 'GitHub', icon: 'Github', urlPrefix: 'https://github.com/', placeholder: 'https://github.com/seu_usuário' },
+  { value: 'twitter', label: 'X (Twitter)', icon: 'Twitter', urlPrefix: 'https://x.com/', placeholder: 'https://x.com/seu_usuário' },
+  { value: 'tiktok', label: 'TikTok', icon: 'Music2', urlPrefix: 'https://tiktok.com/@', placeholder: 'https://tiktok.com/@seu_usuário' },
   { value: 'youtube', label: 'YouTube', icon: 'Youtube', urlPrefix: 'https://youtube.com/@', placeholder: 'https://youtube.com/@seu_canal' },
   { value: 'website', label: 'Site', icon: 'Globe', urlPrefix: 'https://', placeholder: 'https://seu-site.com' },
   { value: 'email', label: 'Email', icon: 'Mail', urlPrefix: 'mailto:', placeholder: 'mailto:seu@email.com' },
   { value: 'other', label: 'Outro', icon: 'Link', urlPrefix: 'https://', placeholder: 'https://...' },
   { value: 'custom', label: 'Link Personalizado', icon: 'ExternalLink', urlPrefix: 'https://', placeholder: 'https://...' },
-  { value: 'header', label: 'Separador', icon: 'Minus', urlPrefix: '', placeholder: 'Titulo da secao' },
+  { value: 'header', label: 'Separador', icon: 'Minus', urlPrefix: '', placeholder: 'Título da secao' },
   { value: 'phone', label: 'Telefone', icon: 'Phone', urlPrefix: 'tel:', placeholder: 'tel:+5511999999999' },
   { value: 'pix', label: 'Pix', icon: 'QrCode', urlPrefix: '', placeholder: 'Chave Pix' },
   { value: 'video_embed', label: 'Video (YouTube)', icon: 'Play', urlPrefix: 'https://', placeholder: 'https://youtube.com/watch?v=...' },

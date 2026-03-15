@@ -163,7 +163,7 @@ function AnalyticsBIPanel() {
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border border-white/10 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition disabled:opacity-50"
         >
           <Download size={14} />
-          {exporting ? 'Exportando...' : 'Exportar Relatorio CSV'}
+          {exporting ? 'Exportando...' : 'Exportar Relatório CSV'}
         </button>
       </div>
 
@@ -171,13 +171,13 @@ function AnalyticsBIPanel() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiCard label="Total Participantes" value={kpis.totalParticipants} icon={Users} color={HACKATHON_CONFIG.senacBlue} />
         <KpiCard label="Scans de QR Code" value={kpis.totalViews} icon={Eye} color="#8b5cf6" />
-        <KpiCard label="Conexoes Geradas" value={kpis.totalConnections} icon={Link2} color="#22c55e" />
+        <KpiCard label="Conexões Geradas" value={kpis.totalConnections} icon={Link2} color="#22c55e" />
         <KpiCard label="Equipes Formadas" value={kpis.teamsFormed} icon={Trophy} color={HACKATHON_CONFIG.senacOrange} />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiCard label="Media por Equipe" value={kpis.avgPerTeam} icon={BarChart3} color="#06b6d4" />
-        <KpiCard label="Conexoes/Participante" value={kpis.avgConnectionsPerParticipant} icon={UserCheck} color="#f97316" />
+        <KpiCard label="Conexões/Participante" value={kpis.avgConnectionsPerParticipant} icon={UserCheck} color="#f97316" />
         <KpiCard label="Em Equipe" value={`${kpis.teamCoverage}%`} icon={Users} color="#22c55e" />
         <KpiCard label="Sem Equipe" value={kpis.orphanCount} icon={UserX} color="#ef4444" />
       </div>
@@ -187,7 +187,7 @@ function AnalyticsBIPanel() {
         {/* Pie Chart — Area distribution */}
         {areaChartData.length > 0 && (
           <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
-            <h3 className="text-white font-semibold text-sm mb-4">Distribuicao por Area de Formacao</h3>
+            <h3 className="text-white font-semibold text-sm mb-4">Distribuicao por Area de Formação</h3>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie

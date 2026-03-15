@@ -20,7 +20,7 @@ import {
   TEST_USERS,
 } from '../../test/helpers/test-utils';
 
-// ── Helper: gerar TOTP valido para um secret ──
+// ── Helper: gerar TOTP válido para um secret ──
 function generateValidTotp(secretBase32: string): string {
   const totp = new OTPAuth.TOTP({
     issuer: 'CraftCard',
@@ -115,16 +115,16 @@ describe('AuthService — 2FA/TOTP', () => {
       );
     });
 
-    it('deve rejeitar se usuario nao existe', async () => {
+    it('deve rejeitar se usuárionão existe', async () => {
       prismaMock.user.findUnique.mockResolvedValue(null);
 
       await expect(authService.setupTotp('non-existent')).rejects.toThrow(AppException);
     });
 
-    it('deve rejeitar se 2FA ja esta ativado', async () => {
+    it('deve rejeitar se 2FA já está ativado', async () => {
       prismaMock.user.findUnique.mockResolvedValue({ ...baseUser, totpEnabled: true });
 
-      await expect(authService.setupTotp(baseUser.id)).rejects.toThrow('2FA ja esta ativado');
+      await expect(authService.setupTotp(baseUser.id)).rejects.toThrow('2FA já está ativado');
     });
   });
 
@@ -133,7 +133,7 @@ describe('AuthService — 2FA/TOTP', () => {
   // ──────────────────────────────────────────────
 
   describe('verifyAndEnableTotp', () => {
-    it('deve ativar 2FA com codigo TOTP valido', async () => {
+    it('deve ativar 2FA com código TOTP válido', async () => {
       prismaMock.user.findUnique.mockResolvedValue({
         ...baseUser,
         totpSecret: testSecretBase32,
@@ -169,7 +169,7 @@ describe('AuthService — 2FA/TOTP', () => {
       );
     });
 
-    it('deve rejeitar codigo TOTP invalido', async () => {
+    it('deve rejeitar código TOTP inválido', async () => {
       prismaMock.user.findUnique.mockResolvedValue({
         ...baseUser,
         totpSecret: testSecretBase32,
@@ -177,10 +177,10 @@ describe('AuthService — 2FA/TOTP', () => {
 
       await expect(
         authService.verifyAndEnableTotp(baseUser.id, '000000'),
-      ).rejects.toThrow('Codigo TOTP invalido');
+      ).rejects.toThrow('Código TOTP inválido');
     });
 
-    it('deve rejeitar se 2FA ja esta ativado', async () => {
+    it('deve rejeitar se 2FA já está ativado', async () => {
       prismaMock.user.findUnique.mockResolvedValue({
         ...baseUser,
         totpEnabled: true,
@@ -189,10 +189,10 @@ describe('AuthService — 2FA/TOTP', () => {
 
       await expect(
         authService.verifyAndEnableTotp(baseUser.id, '123456'),
-      ).rejects.toThrow('2FA ja esta ativado');
+      ).rejects.toThrow('2FA já está ativado');
     });
 
-    it('deve rejeitar se nao tem secret configurado', async () => {
+    it('deve rejeitar senão tem secret configurado', async () => {
       prismaMock.user.findUnique.mockResolvedValue({
         ...baseUser,
         totpSecret: null,
@@ -209,7 +209,7 @@ describe('AuthService — 2FA/TOTP', () => {
   // ──────────────────────────────────────────────
 
   describe('disableTotp', () => {
-    it('deve desativar 2FA com codigo valido', async () => {
+    it('deve desativar 2FA com código válido', async () => {
       prismaMock.user.findUnique.mockResolvedValue({
         ...baseUser,
         totpEnabled: true,
@@ -246,7 +246,7 @@ describe('AuthService — 2FA/TOTP', () => {
       );
     });
 
-    it('deve rejeitar codigo invalido', async () => {
+    it('deve rejeitar código inválido', async () => {
       prismaMock.user.findUnique.mockResolvedValue({
         ...baseUser,
         totpEnabled: true,
@@ -255,10 +255,10 @@ describe('AuthService — 2FA/TOTP', () => {
 
       await expect(
         authService.disableTotp(baseUser.id, '000000'),
-      ).rejects.toThrow('Codigo TOTP invalido');
+      ).rejects.toThrow('Código TOTP inválido');
     });
 
-    it('deve rejeitar se 2FA nao esta ativado', async () => {
+    it('deve rejeitar se 2FAnão está ativado', async () => {
       prismaMock.user.findUnique.mockResolvedValue({
         ...baseUser,
         totpEnabled: false,
@@ -266,7 +266,7 @@ describe('AuthService — 2FA/TOTP', () => {
 
       await expect(
         authService.disableTotp(baseUser.id, '123456'),
-      ).rejects.toThrow('2FA nao esta ativado');
+      ).rejects.toThrow('2FAnão está ativado');
     });
   });
 
@@ -282,7 +282,7 @@ describe('AuthService — 2FA/TOTP', () => {
       totpBackupCodes: JSON.stringify(testBackupCodes),
     };
 
-    it('deve logar com codigo TOTP valido', async () => {
+    it('deve logar com código TOTP válido', async () => {
       prismaMock.user.findUnique.mockResolvedValue({ ...userWith2FA });
       prismaMock.refreshToken.create.mockResolvedValue({});
 
@@ -294,7 +294,7 @@ describe('AuthService — 2FA/TOTP', () => {
       expect(result.user.email).toBe(userWith2FA.email);
     });
 
-    it('deve logar com backup code valido e consumir o codigo', async () => {
+    it('deve logar com backup code válido e consumir o código', async () => {
       prismaMock.user.findUnique.mockResolvedValue({ ...userWith2FA });
       prismaMock.user.update.mockResolvedValue({});
       prismaMock.refreshToken.create.mockResolvedValue({});
@@ -315,23 +315,23 @@ describe('AuthService — 2FA/TOTP', () => {
       );
     });
 
-    it('deve rejeitar codigo TOTP invalido', async () => {
+    it('deve rejeitar código TOTP inválido', async () => {
       prismaMock.user.findUnique.mockResolvedValue({ ...userWith2FA });
 
       await expect(
         authService.loginWith2FA(userWith2FA.email, '000000'),
-      ).rejects.toThrow('Codigo TOTP invalido');
+      ).rejects.toThrow('Código TOTP inválido');
     });
 
-    it('deve rejeitar backup code invalido', async () => {
+    it('deve rejeitar backup code inválido', async () => {
       prismaMock.user.findUnique.mockResolvedValue({ ...userWith2FA });
 
       await expect(
         authService.loginWith2FA(userWith2FA.email, 'invalidc'),
-      ).rejects.toThrow('Codigo invalido');
+      ).rejects.toThrow('Código inválido');
     });
 
-    it('deve rejeitar se usuario nao existe', async () => {
+    it('deve rejeitar se usuárionão existe', async () => {
       prismaMock.user.findUnique.mockResolvedValue(null);
 
       await expect(
@@ -339,7 +339,7 @@ describe('AuthService — 2FA/TOTP', () => {
       ).rejects.toThrow('Credenciais invalidas');
     });
 
-    it('deve rejeitar se 2FA nao esta ativado', async () => {
+    it('deve rejeitar se 2FAnão está ativado', async () => {
       prismaMock.user.findUnique.mockResolvedValue({ ...baseUser, totpEnabled: false });
 
       await expect(

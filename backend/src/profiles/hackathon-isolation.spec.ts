@@ -102,7 +102,7 @@ describe('Hackathon Data Isolation', () => {
 
       await service.upsertHackathonMeta(
         USER_ID,
-        { hackathonArea: 'ti', hackathonSkills: ['comunicacao'] },
+        { hackathonArea: 'ti', hackathonSkills: ['comunicação'] },
       );
 
       // Must delete ONLY hackathon_meta links
@@ -124,7 +124,7 @@ describe('Hackathon Data Isolation', () => {
 
       await service.upsertHackathonMeta(
         USER_ID,
-        { hackathonArea: 'ti', hackathonSkills: ['comunicacao'] },
+        { hackathonArea: 'ti', hackathonSkills: ['comunicação'] },
         { displayName: 'Hackathon User' },
       );
 
@@ -143,8 +143,8 @@ describe('Hackathon Data Isolation', () => {
 
       await service.upsertHackathonMeta(
         USER_ID,
-        { hackathonArea: 'ti', hackathonSkills: ['comunicacao'] },
-        { bio: 'Eu sou pratica, conectada e para todo mundo' },
+        { hackathonArea: 'ti', hackathonSkills: ['comunicação'] },
+        { bio: 'Eu sou prática, conectada e para todo mundo' },
       );
 
       // profile.bio = 'Senior Developer | Tech Lead' — must not be overwritten
@@ -162,7 +162,7 @@ describe('Hackathon Data Isolation', () => {
 
       await service.upsertHackathonMeta(
         USER_ID,
-        { hackathonArea: 'ti', hackathonSkills: ['comunicacao'] },
+        { hackathonArea: 'ti', hackathonSkills: ['comunicação'] },
         { buttonColor: '#3F51B5' },
       );
 
@@ -176,7 +176,7 @@ describe('Hackathon Data Isolation', () => {
     it('should SET defaults for brand-new profiles (no custom data)', async () => {
       const newProfile = {
         ...mockProProfile,
-        displayName: 'Novo Cartao',
+        displayName: 'Novo Cartão',
         bio: null,
         buttonColor: '#00E4F2', // default color
         isPublished: false,
@@ -186,7 +186,7 @@ describe('Hackathon Data Isolation', () => {
 
       await service.upsertHackathonMeta(
         USER_ID,
-        { hackathonArea: 'ti', hackathonSkills: ['comunicacao'] },
+        { hackathonArea: 'ti', hackathonSkills: ['comunicação'] },
         { displayName: 'Hackathon User', bio: 'Nova bio', buttonColor: '#3F51B5' },
       );
 
@@ -207,7 +207,7 @@ describe('Hackathon Data Isolation', () => {
 
       await service.upsertHackathonMeta(
         USER_ID,
-        { hackathonArea: 'ti', hackathonSkills: ['comunicacao', 'equipe', 'proatividade'] },
+        { hackathonArea: 'ti', hackathonSkills: ['comunicação', 'equipe', 'proatividade'] },
       );
 
       expect(prisma.socialLink.create).toHaveBeenCalledWith({
@@ -219,7 +219,7 @@ describe('Hackathon Data Isolation', () => {
           order: 999,
           metadata: JSON.stringify({
             hackathonArea: 'ti',
-            hackathonSkills: ['comunicacao', 'equipe', 'proatividade'],
+            hackathonSkills: ['comunicação', 'equipe', 'proatividade'],
           }),
         }),
       });

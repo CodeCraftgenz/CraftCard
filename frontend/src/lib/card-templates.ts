@@ -15,7 +15,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     name: 'Desenvolvedor',
     description: 'Para devs e engenheiros de software',
     displayName: 'Seu Nome',
-    bio: 'Desenvolvedor apaixonado por criar solucoes inovadoras. Especialista em tecnologia e sempre aprendendo.',
+    bio: 'Desenvolvedor apaixonado por criar soluções inovadoras. Especialista em tecnologia e sempre aprendendo.',
     cardTheme: 'neon',
     buttonColor: '#00E4F2',
     suggestedLinks: [
@@ -45,7 +45,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     name: 'Marketing',
     description: 'Para profissionais de marketing digital',
     displayName: 'Seu Nome',
-    bio: 'Especialista em marketing digital e estrategias de crescimento. Ajudando marcas a alcancarem seu potencial maximo.',
+    bio: 'Especialista em marketing digital e estrategias de crescimento. Ajudando marcas a alcancarem seu potencial máximo.',
     cardTheme: 'bold',
     buttonColor: '#F59E0B',
     suggestedLinks: [

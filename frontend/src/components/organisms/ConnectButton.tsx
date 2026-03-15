@@ -115,7 +115,7 @@ export function ConnectButton({ targetProfileId, accent, isLoggedIn }: ConnectBu
         className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-sm font-medium border border-white/10 bg-white/5 text-white/40"
       >
         <Clock size={16} />
-        Solicitacao Enviada
+        Solicitação Enviada
       </motion.div>
     );
   }
@@ -135,7 +135,7 @@ export function ConnectButton({ targetProfileId, accent, isLoggedIn }: ConnectBu
         }}
       >
         {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-        Aceitar Conexao
+        Aceitar Conexão
       </motion.button>
     );
   }

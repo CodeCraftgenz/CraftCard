@@ -20,10 +20,10 @@ const QUICK_LINKS = [
 ];
 
 const STEPS = [
-  { icon: User, title: 'Seu nome', subtitle: 'Como voce quer ser conhecido' },
-  { icon: FileText, title: 'Sobre voce', subtitle: 'Uma bio curta sobre o que voce faz' },
+  { icon: User, title: 'Seu nome', subtitle: 'Como você quer ser conhecido' },
+  { icon: FileText, title: 'Sobre voce', subtitle: 'Uma bio curta sobre o que você faz' },
   { icon: Link2, title: 'Seus links', subtitle: 'Adicione seus principais contatos' },
-  { icon: Sparkles, title: 'Pronto!', subtitle: 'Seu cartao esta quase la' },
+  { icon: Sparkles, title: 'Pronto!', subtitle: 'Seu cartão está quase la' },
 ];
 
 export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) {
@@ -152,7 +152,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                   </div>
                   <h4 className="text-lg font-bold text-white mb-2">Tudo pronto!</h4>
                   <p className="text-sm text-white/50">
-                    Seu cartao digital esta configurado. Voce pode personalizar mais detalhes no editor.
+                    Seu cartão digital está configurado. Você pode personalizar mais detalhes no editor.
                   </p>
                 </div>
               )}

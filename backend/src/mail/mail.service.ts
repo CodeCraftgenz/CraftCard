@@ -135,7 +135,7 @@ export class MailService {
     try {
       await this.enqueue(
         toEmail,
-        `${inviterName} convidou voce para ${orgName}`,
+        `${inviterName} convidou você para ${orgName}`,
         this.buildInviteEmail(orgName, inviterName, joinUrl),
       );
       this.logger.log(`Org invite queued for ${toEmail}`);
@@ -151,12 +151,12 @@ export class MailService {
       toEmail,
       `Bem-vindo ao CraftCard, ${name}!`,
       this.buildEmail({
-          preheader: 'Seu cartao digital profissional esta pronto',
+          preheader: 'Seu cartão digital profissional está pronto',
           title: `Bem-vindo, ${this.esc(name)}!`,
           icon: '🎉',
           body: `
             <p style="color:#e0e0e0;font-size:15px;line-height:1.6;margin:0 0 16px;">
-              Estamos felizes em ter voce no CraftCard! Seu cartao digital ja esta pronto para ser personalizado.
+              Estamos felizes em ter você no CraftCard! Seu cartão digital já está pronto para ser personalizado.
             </p>
             <div style="background:#0D0D1A;border-radius:12px;padding:20px;margin:0 0 20px;">
               <p style="color:#fff;font-size:14px;font-weight:600;margin:0 0 12px;">Proximos passos:</p>
@@ -189,18 +189,18 @@ export class MailService {
         toEmail,
         'Redefinir sua senha — CraftCard',
         this.buildEmail({
-          preheader: 'Voce solicitou a redefinicao da sua senha no CraftCard',
+          preheader: 'Você solicitou a redefinicao da sua senha no CraftCard',
           title: 'Redefinir Senha',
           icon: '🔐',
           body: `
             <p style="color:#e0e0e0;font-size:15px;line-height:1.6;margin:0 0 16px;">
-              Recebemos uma solicitacao para redefinir a senha da sua conta CraftCard.
+              Recebemos uma solicitação para redefinir a senha da sua conta CraftCard.
             </p>
             <p style="color:#999;font-size:14px;line-height:1.6;margin:0 0 20px;">
               Clique no botao abaixo para criar uma nova senha. Este link expira em <strong style="color:#fff;">1 hora</strong>.
             </p>
             <p style="color:#666;font-size:12px;margin:0;">
-              Se voce nao solicitou esta alteracao, ignore este email — sua senha nao sera modificada.
+              Se vocenão solicitou está alteração, ignore este email — sua senhanão será modificada.
             </p>
           `,
           ctaText: 'Redefinir Senha',
@@ -220,7 +220,7 @@ export class MailService {
       toEmail,
       `Plano ${plan} ativado com sucesso!`,
       this.buildEmail({
-          preheader: `Seu plano ${plan} esta ativo`,
+          preheader: `Seu plano ${plan} está ativo`,
           title: 'Pagamento Confirmado!',
           icon: '✅',
           body: `
@@ -229,7 +229,7 @@ export class MailService {
               <strong style="color:#00E4F2;">${this.esc(plan)}</strong> foi ativado com sucesso!
             </p>
             <p style="color:#999;font-size:14px;line-height:1.6;margin:0 0 20px;">
-              Agora voce tem acesso a todas as funcionalidades do plano. Confira o tutorial para aproveitar ao maximo.
+              Agora você tem acesso a todas as funcionalidades do plano. Confira o tutorial para aproveitar ao máximo.
             </p>
           `,
           ctaText: 'Ver tutorial',
@@ -334,7 +334,7 @@ export class MailService {
             <td style="padding:16px 32px 28px;">
               <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:0 0 16px;" />
               <p style="color:#666;font-size:12px;line-height:1.5;margin:0;text-align:center;">
-                CraftCard — Seu cartao digital profissional<br />
+                CraftCard — Seu cartão digital profissional<br />
                 <a href="${this.frontendUrl}" style="color:#00E4F2;text-decoration:none;">craftcardgenz.com</a>
               </p>
             </td>
@@ -353,19 +353,19 @@ export class MailService {
 
   private buildInviteEmail(orgName: string, inviterName: string, joinUrl: string): string {
     return this.buildEmail({
-      preheader: `${inviterName} convidou voce para a organizacao ${orgName} no CraftCard`,
-      title: 'Voce foi convidado!',
+      preheader: `${inviterName} convidou você para a organização ${orgName} no CraftCard`,
+      title: 'Você foi convidado!',
       icon: '🏢',
       body: `
         <p style="color:#e0e0e0;font-size:15px;line-height:1.7;margin:0 0 20px;text-align:center;">
-          <strong style="color:#fff;">${this.esc(inviterName)}</strong> convidou voce para fazer parte da organizacao
+          <strong style="color:#fff;">${this.esc(inviterName)}</strong> convidou você para fazer parte da organização
         </p>
 
         <!-- Org Name Card -->
         <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
           <tr>
             <td style="background:#0D0D1A;border:1px solid rgba(139,92,246,0.3);border-radius:14px;padding:20px;text-align:center;">
-              <p style="color:#8B5CF6;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 8px;">Organizacao</p>
+              <p style="color:#8B5CF6;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 8px;">Organização</p>
               <p style="color:#ffffff;font-size:22px;font-weight:800;margin:0;letter-spacing:-0.3px;">${this.esc(orgName)}</p>
             </td>
           </tr>
@@ -393,7 +393,7 @@ export class MailService {
             <td style="padding:10px 0;">
               <table cellpadding="0" cellspacing="0"><tr>
                 <td style="width:32px;vertical-align:top;padding-top:2px;"><span style="font-size:16px;">🚀</span></td>
-                <td style="color:#ccc;font-size:14px;line-height:1.5;">Agendamento, galeria, servicos e mais</td>
+                <td style="color:#ccc;font-size:14px;line-height:1.5;">Agendamento, galeria, serviços e mais</td>
               </tr></table>
             </td>
           </tr>

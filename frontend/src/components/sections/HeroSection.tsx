@@ -50,7 +50,7 @@ export function HeroSection() {
     setIsCardHovered(false);
   }, []);
 
-  const headlineWords = ['Seu', 'cartao', 'digital', 'profissional'];
+  const headlineWords = ['Seu', 'cartão', 'digital', 'profissional'];
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
@@ -80,7 +80,7 @@ export function HeroSection() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-indigo opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-indigo" />
             </span>
-            <span className="text-xs font-medium text-brand-indigo tracking-wide">Plataforma #1 de Cartoes Digitais</span>
+            <span className="text-xs font-medium text-brand-indigo tracking-wide">Plataforma #1 de Cartões Digitais</span>
           </motion.div>
 
           {/* Headline — staggered word reveal */}
@@ -107,7 +107,7 @@ export function HeroSection() {
             className="mt-6 text-lg text-slate-400 max-w-lg mx-auto lg:mx-0 leading-relaxed"
           >
             <Typewriter
-              text="Crie um cartao digital completo com foto, bio, redes sociais e WhatsApp. Compartilhe com um unico link e cause uma otima primeira impressao."
+              text="Crie um cartão digital completo com foto, bio, redes sociais e WhatsApp. Compartilhe com um único link e cause uma otima primeira impressao."
               speed={25}
               delay={1200}
             />

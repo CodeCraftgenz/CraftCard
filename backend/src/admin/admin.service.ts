@@ -155,7 +155,7 @@ export class AdminService {
         .filter((p) => p.paidAt)
         .map((p) => ({
           type: 'payment' as const,
-          label: `${p.user.name || 'Usuario'} — R$${Number(p.amount).toFixed(2)} (${p.plan})`,
+          label: `${p.user.name || 'Usuário'} — R$${Number(p.amount).toFixed(2)} (${p.plan})`,
           date: p.paidAt!,
         })),
       ...recentContactMessages.map((m) => ({
@@ -388,13 +388,13 @@ export class AdminService {
       },
     });
 
-    if (!user) throw AppException.notFound('Usuario');
+    if (!user) throw AppException.notFound('Usuário');
     return user;
   }
 
   async updateUser(userId: string, data: { role?: string; plan?: string }) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw AppException.notFound('Usuario');
+    if (!user) throw AppException.notFound('Usuário');
 
     const updated = await this.prisma.user.update({
       where: { id: userId },
@@ -411,7 +411,7 @@ export class AdminService {
 
   async deleteUser(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw AppException.notFound('Usuario');
+    if (!user) throw AppException.notFound('Usuário');
 
     await this.prisma.user.delete({ where: { id: userId } });
     this.logger.log(`Admin deleted user ${userId} (${user.email})`);
@@ -508,13 +508,13 @@ export class AdminService {
         },
       },
     });
-    if (!org) throw AppException.notFound('Organizacao');
+    if (!org) throw AppException.notFound('Organização');
     return org;
   }
 
   async updateOrg(orgId: string, data: { extraSeats?: number }) {
     const org = await this.prisma.organization.findUnique({ where: { id: orgId } });
-    if (!org) throw AppException.notFound('Organizacao');
+    if (!org) throw AppException.notFound('Organização');
 
     return this.prisma.organization.update({
       where: { id: orgId },

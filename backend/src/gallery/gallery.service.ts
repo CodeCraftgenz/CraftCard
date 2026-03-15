@@ -58,7 +58,7 @@ export class GalleryService {
       where: { profileId: profile.id },
     });
     if (count >= MAX_GALLERY_IMAGES) {
-      throw AppException.badRequest(`Maximo de ${MAX_GALLERY_IMAGES} imagens atingido`);
+      throw AppException.badRequest(`Máximo de ${MAX_GALLERY_IMAGES} imagens atingido`);
     }
 
     const processed = await sharp(file)

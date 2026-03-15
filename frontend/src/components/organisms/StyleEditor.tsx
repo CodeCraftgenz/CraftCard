@@ -117,7 +117,7 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, 
                     : 'bg-white/5 text-white/50 border border-white/10 hover:border-white/20'
                 }`}
               >
-                {type === 'theme' ? 'Tema' : type === 'gradient' ? 'Gradiente' : type === 'image' ? 'Imagem' : type === 'pattern' ? 'Padrao' : 'Animado'}
+                {type === 'theme' ? 'Tema' : type === 'gradient' ? 'Gradiente' : type === 'image' ? 'Imagem' : type === 'pattern' ? 'Padrão' : 'Animado'}
               </button>
             ))}
           </div>
@@ -344,7 +344,7 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, 
         {/* Icon Style */}
         <div>
           <label className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider flex items-center gap-1.5">
-            <Palette size={12} /> Estilo dos Icones
+            <Palette size={12} /> Estilo dos Ícones
           </label>
           <div className="grid grid-cols-3 gap-2">
             {ICON_STYLES.map((s) => (

@@ -104,14 +104,14 @@ describe('ProfilesService', () => {
       prisma.profile.count.mockResolvedValue(2);
       prisma.profile.create.mockResolvedValue({
         id: 'new-id',
-        displayName: 'Novo Cartao',
+        displayName: 'Novo Cartão',
         slug: 'card-test',
         label: 'Trabalho',
         isPrimary: false,
       });
 
       const result = await service.createCard('user-1', 'Trabalho');
-      expect(result.displayName).toBe('Novo Cartao');
+      expect(result.displayName).toBe('Novo Cartão');
       expect(result.label).toBe('Trabalho');
       expect(prisma.profile.count).toHaveBeenCalledWith({ where: { userId: 'user-1', orgId: null } });
     });
@@ -121,7 +121,7 @@ describe('ProfilesService', () => {
       prisma.profile.count.mockResolvedValue(1);
 
       await expect(service.createCard('user-1', 'Extra')).rejects.toThrow(
-        'Maximo de 1 cartao pessoal no plano FREE',
+        'Máximo de 1 cartão pessoal no plano FREE',
       );
     });
 
@@ -130,7 +130,7 @@ describe('ProfilesService', () => {
       prisma.profile.count.mockResolvedValue(3);
 
       await expect(service.createCard('user-1', 'Extra')).rejects.toThrow(
-        'Maximo de 3 cartoes pessoais no plano PRO',
+        'Máximo de 3 cartões pessoais no plano PRO',
       );
     });
 
@@ -139,7 +139,7 @@ describe('ProfilesService', () => {
       prisma.profile.count.mockResolvedValue(3);
 
       await expect(service.createCard('user-1', 'Extra')).rejects.toThrow(
-        'Maximo de 3 cartoes pessoais no plano BUSINESS',
+        'Máximo de 3 cartões pessoais no plano BUSINESS',
       );
     });
   });
@@ -152,14 +152,14 @@ describe('ProfilesService', () => {
       prisma.profile.count.mockResolvedValue(5);
       prisma.profile.create.mockResolvedValue({
         id: 'new-id',
-        displayName: 'Novo Cartao',
+        displayName: 'Novo Cartão',
         slug: 'card-test',
         label: 'Corp',
         isPrimary: false,
       });
 
       const result = await service.createCard('user-1', 'Corp', 'org-1');
-      expect(result.displayName).toBe('Novo Cartao');
+      expect(result.displayName).toBe('Novo Cartão');
       expect(prisma.profile.count).toHaveBeenCalledWith({ where: { orgId: 'org-1' } });
     });
 
@@ -167,7 +167,7 @@ describe('ProfilesService', () => {
       paymentsService.getUserPlanInfo.mockResolvedValue(mockPlanInfo('BUSINESS'));
       prisma.organization.findUnique.mockResolvedValue(null);
 
-      await expect(service.createCard('user-1', 'Corp', 'org-invalid')).rejects.toThrow('Organizacao');
+      await expect(service.createCard('user-1', 'Corp', 'org-invalid')).rejects.toThrow('Organização');
     });
 
     it('should throw when user is not org member', async () => {
@@ -176,7 +176,7 @@ describe('ProfilesService', () => {
       prisma.organizationMember.findUnique.mockResolvedValue(null);
 
       await expect(service.createCard('user-1', 'Corp', 'org-1')).rejects.toThrow(
-        'Voce nao e membro desta organizacao',
+        'Vocenão e membro desta organização',
       );
     });
 
@@ -187,7 +187,7 @@ describe('ProfilesService', () => {
       prisma.profile.count.mockResolvedValue(5);
 
       await expect(service.createCard('user-1', 'Corp', 'org-1')).rejects.toThrow(
-        'Limite de 5 assentos na organizacao atingido',
+        'Limite de 5 assentos na organização atingido',
       );
     });
   });
@@ -205,7 +205,7 @@ describe('ProfilesService', () => {
       prisma.profile.findFirst.mockResolvedValue({ id: 'card-1', isPrimary: true });
 
       await expect(service.deleteCard('user-1', 'card-1')).rejects.toThrow(
-        'Nao e possivel excluir o cartao principal',
+        'Não é possível excluir o cartão principal',
       );
     });
 
@@ -306,7 +306,7 @@ describe('ProfilesService', () => {
 
       await expect(
         service.update('user-1', { socialLinks: links } as any),
-      ).rejects.toThrow('Maximo de 5 links no plano FREE');
+      ).rejects.toThrow('Máximo de 5 links no plano FREE');
     });
 
     it('should throw when FREE user uses premium theme', async () => {
@@ -315,7 +315,7 @@ describe('ProfilesService', () => {
 
       await expect(
         service.update('user-1', { cardTheme: 'neon' } as any),
-      ).rejects.toThrow('Tema "neon" nao disponivel no plano gratuito');
+      ).rejects.toThrow('Tema "neon"não disponivel no plano gratuito');
     });
 
     it('should allow FREE user to use default theme', async () => {
@@ -334,7 +334,7 @@ describe('ProfilesService', () => {
 
       await expect(
         service.update('user-1', { slug: 'taken-slug' } as any),
-      ).rejects.toThrow('Slug ja esta em uso');
+      ).rejects.toThrow('Slug já está em uso');
     });
   });
 });

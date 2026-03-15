@@ -29,7 +29,7 @@ export function ConnectionsSection({ connections, accent }: ConnectionsSectionPr
       <div className="flex items-center gap-2 mb-3 px-1">
         <Users size={14} style={{ color: accent }} className="opacity-70" />
         <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">
-          Conexoes
+          Conexões
         </span>
         <span className="text-[10px] text-white/30 ml-1">({connections.length})</span>
       </div>

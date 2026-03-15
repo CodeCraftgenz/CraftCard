@@ -69,7 +69,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return {
         status: HttpStatus.BAD_REQUEST,
         code: 'VALIDATION_ERROR',
-        message: 'Dados invalidos',
+        message: 'Dados inválidos',
         details: exception.flatten().fieldErrors,
       };
     }
@@ -129,7 +129,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         return {
           status: HttpStatus.NOT_FOUND,
           code: 'NOT_FOUND',
-          message: 'Registro nao encontrado',
+          message: 'Registronão encontrado',
         };
       case 'P2003':
         return {

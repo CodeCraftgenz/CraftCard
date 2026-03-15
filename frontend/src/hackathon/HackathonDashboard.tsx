@@ -104,7 +104,7 @@ export default function HackathonDashboard() {
         >
           <div className="flex items-center gap-2 mb-2">
             <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-sm font-medium text-green-400">Seu cartao esta no ar!</span>
+            <span className="text-sm font-medium text-green-400">Seu cartão está no ar!</span>
             {hasPaid && (
               <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30">
                 {plan}
@@ -223,14 +223,14 @@ export default function HackathonDashboard() {
           transition={{ delay: 0.15 }}
           className="space-y-3"
         >
-          {/* Ver cartao publico */}
+          {/* Ver cartão publico */}
           <button
             type="button"
             onClick={() => window.open(`/hackathon/card/${profile.slug}`, '_blank')}
             className="w-full py-3.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all hover:brightness-110"
             style={{ background: `linear-gradient(135deg, ${HACKATHON_CONFIG.senacBlue}, ${accentColor})` }}
           >
-            <ExternalLink size={16} /> Ver meu Cartao Publico
+            <ExternalLink size={16} /> Ver meu Cartão Publico
           </button>
 
           {/* Compartilhar */}
@@ -308,7 +308,7 @@ export default function HackathonDashboard() {
 
               <p className="text-xs text-white/60 mb-4 leading-relaxed">
                 Desbloqueie o editor completo com temas exclusivos, analytics, links ilimitados
-                e muito mais. Seu cartao do hackathon continua funcionando normalmente!
+                e muito mais. Seu cartão do hackathon continua funcionando normalmente!
               </p>
 
               {/* Feature highlights */}
@@ -317,7 +317,7 @@ export default function HackathonDashboard() {
                   { icon: Palette, label: 'Temas exclusivos' },
                   { icon: BarChart3, label: 'Analytics' },
                   { icon: Link2, label: '20 links' },
-                  { icon: Crown, label: 'Sem marca dagua' },
+                  { icon: Crown, label: "Sem marca d'agua" },
                 ].map(({ icon: Icon, label }) => (
                   <div key={label} className="flex items-center gap-1.5 text-white/50">
                     <Icon size={12} className="text-purple-400" />
@@ -336,7 +336,7 @@ export default function HackathonDashboard() {
               </button>
 
               <p className="text-center text-white/20 text-[10px] mt-2">
-                Pagamento unico anual. Cancele quando quiser.
+                Pagamento único anual. Cancele quando quiser.
               </p>
             </div>
           </motion.div>

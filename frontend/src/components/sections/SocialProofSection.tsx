@@ -11,7 +11,7 @@ const testimonials = [
   {
     name: 'Pedro Santos',
     role: 'Consultor de TI',
-    text: 'Meus clientes sempre elogiam meu cartao digital. O QR code e um diferencial em eventos.',
+    text: 'Meus clientes sempre elogiam meu cartão digital. O QR code e um diferencial em eventos.',
   },
   {
     name: 'Ana Oliveira',
@@ -26,12 +26,12 @@ const testimonials = [
   {
     name: 'Juliana Mendes',
     role: 'Fotografa Profissional',
-    text: 'A galeria integrada no cartao e perfeita para mostrar meu portfolio. Clientes adoram!',
+    text: 'A galeria integrada no cartão e perfeita para mostrar meu portfolio. Clientes adoram!',
   },
   {
     name: 'Carlos Eduardo',
     role: 'Advogado',
-    text: 'Substituiu meu cartao de visita tradicional. Muito mais pratico e sempre atualizado.',
+    text: 'Substituiu meu cartão de visita tradicional. Muito mais pratico e sempre atualizado.',
   },
   {
     name: 'Fernanda Lima',
@@ -73,7 +73,7 @@ export function SocialProofSection() {
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState(1);
 
-  const paginate = useCallback(
+  const páginate = useCallback(
     (newDirection: number) => {
       setDirection(newDirection);
       setPage((prev) => {
@@ -87,9 +87,9 @@ export function SocialProofSection() {
   );
 
   useEffect(() => {
-    const timer = setInterval(() => paginate(1), AUTO_PLAY_INTERVAL);
+    const timer = setInterval(() => páginate(1), AUTO_PLAY_INTERVAL);
     return () => clearInterval(timer);
-  }, [paginate]);
+  }, [páginate]);
 
   const visibleCards = testimonials.slice(
     page * CARDS_PER_VIEW,
@@ -107,10 +107,10 @@ export function SocialProofSection() {
           className="text-center mb-16"
         >
           <h2 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight">
-            O que nossos <span className="gradient-text">usuarios</span> dizem
+            O que nossos <span className="gradient-text">usuários</span> dizem
           </h2>
           <p className="mt-4 text-slate-400 max-w-2xl mx-auto">
-            Profissionais e empresas que ja transformaram sua presenca digital
+            Profissionais e empresas que já transformaram sua presenca digital
           </p>
         </motion.div>
 
@@ -119,7 +119,7 @@ export function SocialProofSection() {
           {/* Navigation arrows */}
           <button
             type="button"
-            onClick={() => paginate(-1)}
+            onClick={() => páginate(-1)}
             className="absolute -left-4 sm:-left-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-400 hover:bg-white/[0.08] hover:text-white transition-all duration-200"
             aria-label="Depoimentos anteriores"
           >
@@ -127,7 +127,7 @@ export function SocialProofSection() {
           </button>
           <button
             type="button"
-            onClick={() => paginate(1)}
+            onClick={() => páginate(1)}
             className="absolute -right-4 sm:-right-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-400 hover:bg-white/[0.08] hover:text-white transition-all duration-200"
             aria-label="Proximos depoimentos"
           >
@@ -191,7 +191,7 @@ export function SocialProofSection() {
                     ? 'w-6 bg-brand-indigo'
                     : 'w-2 bg-white/[0.12] hover:bg-white/[0.20]'
                 }`}
-                aria-label={`Pagina ${i + 1} de depoimentos`}
+                aria-label={`Página ${i + 1} de depoimentos`}
               />
             ))}
           </div>

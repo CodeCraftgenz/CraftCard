@@ -16,7 +16,7 @@ export class WebhooksService {
   async create(userId: string, data: { url: string; events: WebhookEvent[] }) {
     const count = await this.prisma.webhook.count({ where: { userId } });
     if (count >= 5) {
-      throw AppException.badRequest('Maximo de 5 webhooks');
+      throw AppException.badRequest('Máximo de 5 webhooks');
     }
 
     const secret = randomBytes(32).toString('hex');

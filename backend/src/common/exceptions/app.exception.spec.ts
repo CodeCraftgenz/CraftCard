@@ -25,7 +25,7 @@ describe('AppException', () => {
   it('should create a notFound exception', () => {
     const ex = AppException.notFound('User');
     const response = ex.getResponse() as { message: string };
-    expect(response.message).toBe('User nao encontrado');
+    expect(response.message).toBe('Usernão encontrado');
   });
 
   it('should create a conflict exception', () => {

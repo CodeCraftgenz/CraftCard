@@ -23,7 +23,7 @@ export class MeController {
       },
     });
 
-    if (!userData) throw AppException.notFound('Usuario');
+    if (!userData) throw AppException.notFound('Usuário');
 
     const planInfo = await this.paymentsService.getUserPlanInfo(user.sub);
     const primaryProfile = userData.profiles.find((p) => p.isPrimary) || userData.profiles[0] || null;

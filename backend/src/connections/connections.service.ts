@@ -14,7 +14,7 @@ export class ConnectionsService {
     geo?: { latitude?: number; longitude?: number; locationLabel?: string; eventId?: string },
   ) {
     if (fromProfileId === toProfileId) {
-      throw AppException.badRequest('Nao e possivel conectar consigo mesmo');
+      throw AppException.badRequest('Não é possível conectar consigo mesmo');
     }
 
     // Validate fromProfile belongs to user
@@ -37,7 +37,7 @@ export class ConnectionsService {
       },
     });
     if (currentCount >= limits.maxConnections) {
-      throw AppException.badRequest(`Limite de ${limits.maxConnections} conexoes atingido. Faca upgrade do plano para mais conexoes.`);
+      throw AppException.badRequest(`Limite de ${limits.maxConnections} conexões atingido. Faça upgrade do plano para mais conexões.`);
     }
 
     // Validate toProfile exists and is published
@@ -50,7 +50,7 @@ export class ConnectionsService {
 
     // Check not connecting to own profile
     if (toProfile.userId === userId) {
-      throw AppException.badRequest('Nao e possivel conectar com seu proprio perfil');
+      throw AppException.badRequest('Não é possível conectar com seu próprio perfil');
     }
 
     // Check for existing connection (either direction)
@@ -64,10 +64,10 @@ export class ConnectionsService {
     });
     if (existing) {
       if (existing.status === 'ACCEPTED') {
-        throw AppException.conflict('Voces ja estao conectados');
+        throw AppException.conflict('Vocês já estão conectados');
       }
       if (existing.status === 'PENDING') {
-        throw AppException.conflict('Ja existe um pedido de conexao pendente');
+        throw AppException.conflict('Já existe um pedido de conexão pendente');
       }
       // If REJECTED, allow re-requesting by deleting old and creating new
       await this.prisma.connection.delete({ where: { id: existing.id } });
@@ -90,7 +90,7 @@ export class ConnectionsService {
         data: {
           userId: toProfile.userId,
           type: 'connection_request',
-          title: 'Novo pedido de conexao',
+          title: 'Novo pedido de conexão',
           message: `${fromProfile.displayName} quer se conectar com voce`,
         },
       });
@@ -120,13 +120,13 @@ export class ConnectionsService {
       },
     });
     if (!connection) {
-      throw AppException.notFound('Conexao');
+      throw AppException.notFound('Conexão');
     }
     if (connection.addressee.userId !== userId) {
-      throw AppException.forbidden('Voce nao pode aceitar esta conexao');
+      throw AppException.forbidden('Vocenão pode aceitar está conexão');
     }
     if (connection.status !== 'PENDING') {
-      throw AppException.badRequest('Esta conexao nao esta pendente');
+      throw AppException.badRequest('Esta conexãonão está pendente');
     }
 
     const updated = await this.prisma.connection.update({
@@ -140,8 +140,8 @@ export class ConnectionsService {
         data: {
           userId: connection.requester.userId,
           type: 'connection_accepted',
-          title: 'Conexao aceita',
-          message: `Sua conexao foi aceita!`,
+          title: 'Conexão aceita',
+          message: `Sua conexão foi aceita!`,
         },
       });
     } catch {
@@ -157,13 +157,13 @@ export class ConnectionsService {
       include: { addressee: { select: { userId: true } } },
     });
     if (!connection) {
-      throw AppException.notFound('Conexao');
+      throw AppException.notFound('Conexão');
     }
     if (connection.addressee.userId !== userId) {
-      throw AppException.forbidden('Voce nao pode rejeitar esta conexao');
+      throw AppException.forbidden('Vocenão pode rejeitar está conexão');
     }
     if (connection.status !== 'PENDING') {
-      throw AppException.badRequest('Esta conexao nao esta pendente');
+      throw AppException.badRequest('Esta conexãonão está pendente');
     }
 
     return this.prisma.connection.update({
@@ -181,10 +181,10 @@ export class ConnectionsService {
       },
     });
     if (!connection) {
-      throw AppException.notFound('Conexao');
+      throw AppException.notFound('Conexão');
     }
     if (connection.requester.userId !== userId && connection.addressee.userId !== userId) {
-      throw AppException.forbidden('Voce nao pode remover esta conexao');
+      throw AppException.forbidden('Vocenão pode remover está conexão');
     }
 
     return this.prisma.connection.delete({ where: { id: connectionId } });

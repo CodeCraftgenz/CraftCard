@@ -8,7 +8,7 @@ export class TagsController {
 
   @Post()
   async create(@CurrentUser() user: JwtPayload, @Body() body: { name: string; color?: string }) {
-    if (!body.name?.trim()) throw new Error('Nome da tag e obrigatorio');
+    if (!body.name?.trim()) throw new Error('Nome da tag e obrigatório');
     return this.tagsService.create(user.sub, body.name, body.color);
   }
 

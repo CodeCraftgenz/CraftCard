@@ -99,7 +99,7 @@ export function CardSwitcher({
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onDelete(card.id); }}
                         className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
-                        title="Excluir cartao"
+                        title="Excluir cartão"
                       >
                         <Trash2 size={12} className="text-white/40 hover:text-red-400" />
                       </button>
@@ -113,23 +113,23 @@ export function CardSwitcher({
               <button
                 type="button"
                 onClick={() => {
-                  onCreate('Novo Cartao');
+                  onCreate('Novo Cartão');
                   setIsOpen(false);
                 }}
                 className="w-full flex items-center gap-2 p-3 rounded-xl text-sm text-brand-cyan hover:bg-brand-cyan/5 transition-colors"
               >
                 <Plus size={14} />
-                Novo Cartao
+                Novo Cartão
               </button>
             ) : (
               <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
                 <div className="flex items-center gap-2 text-sm text-white/30">
                   <Lock size={14} />
-                  <span>Limite de {maxCards} {maxCards === 1 ? 'cartao' : 'cartoes'} atingido</span>
+                  <span>Limite de {maxCards} {maxCards === 1 ? 'cartão' : 'cartões'} atingido</span>
                 </div>
                 {maxCards < 3 && (
                   <p className="text-xs text-brand-cyan/60 mt-1 ml-6">
-                    Faca upgrade para o Pro e tenha ate 3 cartoes
+                    Faça upgrade para o Pro e tenha ate 3 cartões
                   </p>
                 )}
               </div>

@@ -64,7 +64,7 @@ export default function WrappedTab() {
           >
             <Users size={20} className="mx-auto mb-2 text-brand-cyan" />
             <p className="text-3xl font-bold text-white">{stats.totalConnections}</p>
-            <p className="text-xs text-white/50 mt-1">conexoes em {year}</p>
+            <p className="text-xs text-white/50 mt-1">conexões em {year}</p>
           </motion.div>
 
           {/* Stats grid */}
@@ -144,7 +144,7 @@ export default function WrappedTab() {
             transition={{ delay: 0.3 }}
             className="p-4 rounded-xl bg-white/5 border border-white/10"
           >
-            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Conexoes por mes</p>
+            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Conexões por mes</p>
             <div className="flex items-end gap-1 h-24">
               {stats.monthlyData.map((m, i) => {
                 const maxCount = Math.max(...stats.monthlyData.map((d) => d.count), 1);

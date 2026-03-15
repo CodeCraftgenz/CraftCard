@@ -62,7 +62,7 @@ export class AuthController {
     const { email, password } = loginSchema.parse(body);
     const result = await this.authService.loginWithPassword(email, password);
 
-    // Se 2FA esta ativo, retornar sem tokens (frontend deve chamar /auth/login-2fa)
+    // Se 2FA está ativo, retornar sem tokens (frontend deve chamar /auth/login-2fa)
     if (result.requires2FA) {
       return {
         requires2FA: true,

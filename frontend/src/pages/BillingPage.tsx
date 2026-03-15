@@ -20,10 +20,10 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const PLAN_FEATURES: Record<string, string[]> = {
-  FREE: ['1 cartao', '5 links', '3 temas', 'Marca dagua'],
-  PRO: ['5 cartoes', '20 links', 'Todos temas', 'Analytics', 'Sem marca dagua', 'Fontes personalizadas'],
-  BUSINESS: ['50 cartoes', '50 links', 'Dashboard org', 'Branding', 'Webhooks', 'Export leads'],
-  ENTERPRISE: ['Todos recursos', 'Dominio customizado', 'Suporte prioritario'],
+  FREE: ['1 cartao', '5 links', '3 temas', 'Marca d\u0027agua'],
+  PRO: ['5 cartões', '20 links', 'Todos temas', 'Analytics', 'Sem marca d\u0027agua', 'Fontes personalizadas'],
+  BUSINESS: ['50 cartões', '50 links', 'Dashboard org', 'Branding', 'Webhooks', 'Export leads'],
+  ENTERPRISE: ['Todos recursos', 'Domínio customizado', 'Suporte prioritario'],
 };
 
 export function BillingPage() {
@@ -128,7 +128,7 @@ export function BillingPage() {
                     name="PRO"
                     price="R$ 30"
                     period="/ano"
-                    features={['3 cartoes', '20 links', 'Todos temas', 'Analytics', 'Sem marca dagua', '3 eventos', 'Mapa de conexoes', 'Tags']}
+                    features={['3 cartões', '20 links', 'Todos temas', 'Analytics', 'Sem marca d\u0027agua', '3 eventos', 'Mapa de conexões', 'Tags']}
                     onSelect={() => checkout.mutate({ plan: 'PRO' })}
                     loading={checkout.isPending}
                   />
@@ -144,7 +144,7 @@ export function BillingPage() {
                     name="ENTERPRISE"
                     price="R$ 299,90"
                     period="/ano"
-                    features={['Tudo do Business', 'Dominio customizado', 'Eventos ilimitados', 'Wrapped anual']}
+                    features={['Tudo do Business', 'Domínio customizado', 'Eventos ilimitados', 'Wrapped anual']}
                     onSelect={() => checkout.mutate({ plan: 'ENTERPRISE' })}
                     loading={checkout.isPending}
                     highlight
@@ -165,7 +165,7 @@ export function BillingPage() {
                     name="ENTERPRISE"
                     price="R$ 299,90"
                     period="/ano"
-                    features={['Tudo do Business', 'Dominio customizado', 'Eventos ilimitados', 'Wrapped anual']}
+                    features={['Tudo do Business', 'Domínio customizado', 'Eventos ilimitados', 'Wrapped anual']}
                     onSelect={() => checkout.mutate({ plan: 'ENTERPRISE' })}
                     loading={checkout.isPending}
                     highlight
@@ -177,7 +177,7 @@ export function BillingPage() {
                   name="ENTERPRISE"
                   price="R$ 299,90"
                   period="/ano"
-                  features={['Tudo do Business', 'Dominio customizado']}
+                  features={['Tudo do Business', 'Domínio customizado']}
                   onSelect={() => checkout.mutate({ plan: 'ENTERPRISE' })}
                   loading={checkout.isPending}
                   highlight
@@ -200,7 +200,7 @@ export function BillingPage() {
 
         {/* Payment history */}
         <div>
-          <h2 className="text-white font-semibold mb-4">Historico de Pagamentos</h2>
+          <h2 className="text-white font-semibold mb-4">Histórico de Pagamentos</h2>
           {billing.payments.length === 0 ? (
             <div className="bg-white/5 rounded-2xl p-6 border border-white/10 text-center text-white/30 text-sm">
               Nenhum pagamento encontrado

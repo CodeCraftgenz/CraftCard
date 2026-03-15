@@ -26,12 +26,12 @@ async function main() {
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      console.log(`  ⚠  ${email} — nao encontrado no banco (crie a conta primeiro)`);
+      console.log(`  ⚠  ${email} —não encontrado no banco (crie a conta primeiro)`);
       continue;
     }
 
     if (user.role === 'SUPER_ADMIN') {
-      console.log(`  ✓  ${email} — ja e SUPER_ADMIN`);
+      console.log(`  ✓  ${email} — já e SUPER_ADMIN`);
       continue;
     }
 

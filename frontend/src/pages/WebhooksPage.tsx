@@ -48,7 +48,7 @@ export function WebhooksPage() {
           <Webhook size={28} className="text-brand-cyan" />
           <div>
             <h1 className="text-2xl font-bold text-white">Integracoes & Webhooks</h1>
-            <p className="text-white/40 text-sm">Conecte seu cartao a ferramentas externas como Zapier, HubSpot e Make</p>
+            <p className="text-white/40 text-sm">Conecte seu cartão a ferramentas externas como Zapier, HubSpot e Make</p>
           </div>
         </div>
 
@@ -97,7 +97,7 @@ function WebhooksContent() {
         >
           <Plus size={18} />
           <span className="text-sm font-medium">Adicionar Webhook</span>
-          {(webhooks?.length ?? 0) >= 5 && <span className="text-xs">(maximo 5)</span>}
+          {(webhooks?.length ?? 0) >= 5 && <span className="text-xs">(máximo 5)</span>}
         </button>
       )}
 
@@ -117,7 +117,7 @@ function WebhooksContent() {
         <div className="text-center py-12">
           <Webhook size={48} className="text-white/10 mx-auto mb-4" />
           <p className="text-white/30 text-sm">Nenhum webhook configurado</p>
-          <p className="text-white/20 text-xs mt-1">Adicione um webhook para comecar a receber dados em tempo real</p>
+          <p className="text-white/20 text-xs mt-1">Adicione um webhook para começar a receber dados em tempo real</p>
         </div>
       ) : null}
 

@@ -31,9 +31,9 @@ export default function TimelineTab() {
         <div className="mx-auto w-14 h-14 rounded-full bg-white/5 flex items-center justify-center mb-3">
           <Clock size={24} className="text-white/30" />
         </div>
-        <p className="text-sm font-semibold text-white mb-1">Nenhuma conexao ainda</p>
+        <p className="text-sm font-semibold text-white mb-1">Nenhuma conexão ainda</p>
         <p className="text-xs text-white/40 max-w-xs mx-auto">
-          Quando voce se conectar com outras pessoas, o historico aparecera aqui.
+          Quando você se conectar com outras pessoas, o histórico aparecerá aqui.
         </p>
       </div>
     );

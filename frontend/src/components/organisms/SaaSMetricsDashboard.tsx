@@ -67,18 +67,18 @@ export function SaaSMetricsDashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <KpiStat label="Usuarios" value={kpis.totalUsers} delta={kpis.userGrowth} icon={Users} color="#00E4F2" subValue={`+${kpis.usersInPeriod} no periodo`} />
-        <KpiStat label="Cartoes Ativos" value={kpis.totalProfiles} icon={CreditCard} color="#8B5CF6" />
+        <KpiStat label="Usuários" value={kpis.totalUsers} delta={kpis.userGrowth} icon={Users} color="#00E4F2" subValue={`+${kpis.usersInPeriod} no período`} />
+        <KpiStat label="Cartões Ativos" value={kpis.totalProfiles} icon={CreditCard} color="#8B5CF6" />
         <KpiStat label="Pageviews" value={kpis.totalViews} icon={Eye} color="#F59E0B" />
-        <KpiStat label="Conexoes" value={kpis.totalConnections} delta={kpis.connectionsInPeriod > 0 ? Math.round((kpis.connectionsInPeriod / Math.max(kpis.totalConnections - kpis.connectionsInPeriod, 1)) * 100) : 0} icon={Link2} color="#22C55E" subValue={`+${kpis.connectionsInPeriod} no periodo`} />
-        <KpiStat label="Leads" value={kpis.totalLeads} icon={MessageSquare} color="#EF4444" subValue={`+${kpis.leadsInPeriod} no periodo`} />
+        <KpiStat label="Conexões" value={kpis.totalConnections} delta={kpis.connectionsInPeriod > 0 ? Math.round((kpis.connectionsInPeriod / Math.max(kpis.totalConnections - kpis.connectionsInPeriod, 1)) * 100) : 0} icon={Link2} color="#22C55E" subValue={`+${kpis.connectionsInPeriod} no período`} />
+        <KpiStat label="Leads" value={kpis.totalLeads} icon={MessageSquare} color="#EF4444" subValue={`+${kpis.leadsInPeriod} no período`} />
       </div>
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Area Chart — Users vs Connections over time */}
         <div className="lg:col-span-2 bg-white/5 rounded-2xl p-5 border border-white/10">
-          <h3 className="text-white font-semibold text-sm mb-4">Crescimento: Usuarios vs Conexoes</h3>
+          <h3 className="text-white font-semibold text-sm mb-4">Crescimento: Usuários vs Conexões</h3>
           {timeSeries.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
               <AreaChart data={timeSeries}>
@@ -104,12 +104,12 @@ export function SaaSMetricsDashboard() {
                   contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#fff', fontSize: 12 }}
                   labelFormatter={(d) => `Data: ${d}`}
                 />
-                <Area type="monotone" dataKey="users" name="Novos Usuarios" stroke="#00E4F2" fill="url(#gradUsers)" strokeWidth={2} />
-                <Area type="monotone" dataKey="connections" name="Conexoes" stroke="#22C55E" fill="url(#gradConns)" strokeWidth={2} />
+                <Area type="monotone" dataKey="users" name="Novos Usuários" stroke="#00E4F2" fill="url(#gradUsers)" strokeWidth={2} />
+                <Area type="monotone" dataKey="connections" name="Conexões" stroke="#22C55E" fill="url(#gradConns)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-white/30 text-sm text-center py-12">Sem dados no periodo</p>
+            <p className="text-white/30 text-sm text-center py-12">Sem dados no período</p>
           )}
         </div>
 
@@ -135,7 +135,7 @@ export function SaaSMetricsDashboard() {
                   </Pie>
                   <Tooltip
                     contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#fff', fontSize: 12 }}
-                    formatter={(value: unknown) => [`${value} usuarios`, '']}
+                    formatter={(value: unknown) => [`${value} usuários`, '']}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -162,7 +162,7 @@ export function SaaSMetricsDashboard() {
       {/* Top Profiles Bar Chart */}
       {topProfiles.length > 0 && (
         <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
-          <h3 className="text-white font-semibold text-sm mb-4">Top 5 Cartoes Mais Acessados</h3>
+          <h3 className="text-white font-semibold text-sm mb-4">Top 5 Cartões Mais Acessados</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={topProfiles} layout="vertical" margin={{ left: 0, right: 20 }}>
               <XAxis type="number" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} />
@@ -208,7 +208,7 @@ export function SaaSMetricsDashboard() {
               ))}
             </div>
           ) : (
-            <p className="text-white/30 text-sm text-center py-8">Nenhum upgrade no periodo</p>
+            <p className="text-white/30 text-sm text-center py-8">Nenhum upgrade no período</p>
           )}
         </div>
 

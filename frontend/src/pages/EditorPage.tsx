@@ -230,7 +230,7 @@ export function EditorPage() {
 
       // Show onboarding for new users (default displayName, no links)
       const onboardingDone = localStorage.getItem('craftcard_onboarding_done');
-      if (!onboardingDone && profile.displayName === 'Novo Cartao' && profile.socialLinks.length === 0) {
+      if (!onboardingDone && profile.displayName === 'Novo Cartão' && profile.socialLinks.length === 0) {
         setShowOnboarding(true);
       }
     }
@@ -402,7 +402,7 @@ export function EditorPage() {
     try {
       await uploadResume.mutateAsync(file);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Erro ao enviar curriculo';
+      const msg = err instanceof Error ? err.message : 'Erro ao enviar currículo';
       setUploadError(msg);
     }
   };
@@ -626,9 +626,9 @@ export function EditorPage() {
         >
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Sparkles size={22} className="text-brand-cyan" />
-            Editor do Cartao
+            Editor do Cartão
           </h1>
-          <p className="text-sm text-white/40 mt-1">Personalize seu cartao digital profissional</p>
+          <p className="text-sm text-white/40 mt-1">Personalize seu cartão digital profissional</p>
         </motion.div>
 
         {/* Card Switcher (multiple cards) */}
@@ -690,7 +690,7 @@ export function EditorPage() {
             </div>
           )}
           {completeness.total === 100 && (
-            <p className="text-xs text-green-400 mt-2">Perfil completo! Seu cartao esta pronto.</p>
+            <p className="text-xs text-green-400 mt-2">Perfil completo! Seu cartão está pronto.</p>
           )}
         </motion.div>
 
@@ -729,7 +729,7 @@ export function EditorPage() {
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-amber-400 text-sm">Painel Super Admin</h3>
-              <p className="text-xs text-white/40 mt-0.5">Gerenciar usuarios, pagamentos e organizacoes da plataforma</p>
+              <p className="text-xs text-white/40 mt-0.5">Gerenciar usuários, pagamentos e organizacoes da plataforma</p>
             </div>
             <ExternalLink size={16} className="text-amber-400 shrink-0" />
           </motion.a>
@@ -754,7 +754,7 @@ export function EditorPage() {
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-purple-400 text-sm">{org.name}</h3>
                   <p className="text-xs text-white/40 mt-0.5">
-                    Dashboard da organizacao · {org.role === 'OWNER' ? 'Proprietario' : 'Admin'}
+                    Dashboard da organização · {org.role === 'OWNER' ? 'Proprietario' : 'Admin'}
                     {org.brandingActive && ' · Branding ativo'}
                   </p>
                 </div>
@@ -795,7 +795,7 @@ export function EditorPage() {
                 {profile?.viewCount !== undefined && profile.viewCount > 0 && (
                   <div className="flex items-center gap-2 text-sm text-white/50 bg-white/5 px-4 py-2 rounded-xl">
                     <BarChart3 size={16} className="text-brand-cyan" />
-                    <span><strong className="text-white">{profile.viewCount}</strong> visualizacoes</span>
+                    <span><strong className="text-white">{profile.viewCount}</strong> visualizações</span>
                   </div>
                 )}
               </div>
@@ -852,7 +852,7 @@ export function EditorPage() {
                     <ExternalLink size={18} className="text-brand-cyan" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-white/40 mb-1">Seu cartao esta no ar!</p>
+                    <p className="text-xs text-white/40 mb-1">Seu cartão está no ar!</p>
                     <a
                       href={cardUrl}
                       target="_blank"
@@ -1262,7 +1262,7 @@ export function EditorPage() {
                   )}
                 </div>
                 {form.socialLinks.length >= planLimits.maxLinks ? (
-                  <span className="text-xs text-white/30 px-3 py-1.5" title={`Maximo de ${planLimits.maxLinks} links no plano ${plan}`}>
+                  <span className="text-xs text-white/30 px-3 py-1.5" title={`Máximo de ${planLimits.maxLinks} links no plano ${plan}`}>
                     {form.socialLinks.length}/{planLimits.maxLinks} links
                   </span>
                 ) : (
@@ -1473,7 +1473,7 @@ export function EditorPage() {
                                   <label className="text-[10px] text-white/30 block mb-1">Inicio</label>
                                   <input
                                     type="datetime-local"
-                                    title="Data de inicio"
+                                    title="Data de início"
                                     value={link.startsAt || ''}
                                     onChange={(e) => {
                                       const links = [...form.socialLinks];
@@ -1512,7 +1512,7 @@ export function EditorPage() {
                   <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
                     <Link2 size={24} className="mx-auto text-white/15 mb-2" />
                     <p className="text-sm text-white/30">Nenhum link adicionado</p>
-                    <p className="text-xs text-white/15 mt-1">Clique em "Adicionar" para comecar</p>
+                    <p className="text-xs text-white/15 mt-1">Clique em "Adicionar" para começar</p>
                   </div>
                 )}
               </div>
@@ -1533,7 +1533,7 @@ export function EditorPage() {
                   )}
                 </div>
                 {form.socialLinks.length >= planLimits.maxLinks ? (
-                  <span className="text-xs text-white/30 px-3 py-1.5" title={`Maximo de ${planLimits.maxLinks} links no plano ${plan}`}>
+                  <span className="text-xs text-white/30 px-3 py-1.5" title={`Máximo de ${planLimits.maxLinks} links no plano ${plan}`}>
                     {form.socialLinks.length}/{planLimits.maxLinks} links
                   </span>
                 ) : (
@@ -1546,7 +1546,7 @@ export function EditorPage() {
                   </button>
                 )}
               </div>
-              <p className="text-xs text-white/30 mb-4">Links exibidos como botoes no seu cartao (estilo Linktree)</p>
+              <p className="text-xs text-white/30 mb-4">Links exibidos como botões no seu cartão (estilo Linktree)</p>
               <div className="space-y-3">
                 <div className={`space-y-3 ${form.socialLinks.filter(l => l.platform === 'custom').length > 3 ? 'max-h-[480px] overflow-y-auto pr-1 scrollbar-thin' : ''}`}>
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -1562,7 +1562,7 @@ export function EditorPage() {
                               type="text"
                               value={link.label}
                               onChange={(e) => updateSocialLink(i, 'label', e.target.value)}
-                              placeholder="Titulo do link (ex: Meu Portfolio)"
+                              placeholder="Título do link (ex: Meu Portfolio)"
                               className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 transition-all"
                             />
                             <input
@@ -1729,7 +1729,7 @@ export function EditorPage() {
                                   <label className="text-[10px] text-white/30 block mb-1">Inicio</label>
                                   <input
                                     type="datetime-local"
-                                    title="Data de inicio"
+                                    title="Data de início"
                                     value={link.startsAt || ''}
                                     onChange={(e) => {
                                       const links = [...form.socialLinks];
@@ -1768,7 +1768,7 @@ export function EditorPage() {
                   <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
                     <ExternalLink size={24} className="mx-auto text-white/15 mb-2" />
                     <p className="text-sm text-white/30">Nenhum link personalizado</p>
-                    <p className="text-xs text-white/15 mt-1">Adicione links para exibir como botoes no cartao</p>
+                    <p className="text-xs text-white/15 mt-1">Adicione links para exibir como botões no cartao</p>
                   </div>
                 )}
               </div>
@@ -1786,12 +1786,12 @@ export function EditorPage() {
                 <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
                   <FileText size={16} className="text-green-400" />
                 </div>
-                <h3 className="font-semibold flex-1">Curriculo</h3>
+                <h3 className="font-semibold flex-1">Currículo</h3>
                 <button
                   type="button"
                   onClick={() => updateField('resumeEnabled', !form.resumeEnabled)}
                   className={`relative w-11 h-6 rounded-full transition-colors ${form.resumeEnabled ? 'bg-green-500' : 'bg-white/10'}`}
-                  title="Ativar/desativar curriculo"
+                  title="Ativar/desativar currículo"
                 >
                   <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${form.resumeEnabled ? 'left-[22px]' : 'left-0.5'}`} />
                 </button>
@@ -1804,7 +1804,7 @@ export function EditorPage() {
                     rel="noopener noreferrer"
                     className="text-sm text-brand-cyan hover:underline flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand-cyan/5"
                   >
-                    <ExternalLink size={14} /> Ver curriculo atual
+                    <ExternalLink size={14} /> Ver currículo atual
                   </a>
                 )}
                 <label className="px-5 py-2.5 rounded-xl border border-white/10 text-sm cursor-pointer hover:bg-white/5 hover:border-white/20 transition-all font-medium inline-flex items-center gap-2">
@@ -1830,7 +1830,7 @@ export function EditorPage() {
                     <Lock size={24} className="text-yellow-400" />
                   </div>
                   <p className="text-sm text-white/70 text-center max-w-xs">
-                    Visual controlado pela organizacao. Contacte o administrador para alterar cores, tema ou fontes.
+                    Visual controlado pela organização. Contacte o administrador para alterar cores, tema ou fontes.
                   </p>
                 </div>
               )}
@@ -1864,7 +1864,7 @@ export function EditorPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-white/50 mb-3 block uppercase tracking-wider">Cor dos botoes</label>
+                  <label className="text-xs font-medium text-white/50 mb-3 block uppercase tracking-wider">Cor dos botões</label>
                   <div className="flex flex-wrap gap-2.5">
                     {PRESET_BUTTON_COLORS.map((color) => (
                       <button
@@ -1919,7 +1919,7 @@ export function EditorPage() {
                       className={`text-xs mt-1.5 flex items-center gap-1 ${slugCheck.available ? 'text-green-400' : 'text-red-400'}`}
                     >
                       {slugCheck.available ? <Check size={12} /> : <X size={12} />}
-                      {slugCheck.available ? 'Disponivel!' : 'Slug ja em uso'}
+                      {slugCheck.available ? 'Disponivel!' : 'Slug já em uso'}
                     </motion.p>
                   )}
                 </div>
@@ -1954,7 +1954,7 @@ export function EditorPage() {
 
                 {/* Daily Views Chart */}
                 <div className="mb-6">
-                  <p className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider">Visualizacoes por dia</p>
+                  <p className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider">Visualizações por dia</p>
                   {analytics.dailyViews.length > 0 ? (
                     <div className="flex items-end gap-1 h-24">
                       {getLast30Days(analytics.dailyViews).map((day) => {
@@ -2076,7 +2076,7 @@ export function EditorPage() {
                     <p className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider">Funil de conversao</p>
                     <div className="space-y-2">
                       {[
-                        { label: 'Visualizacoes', value: analytics.conversionFunnel.views },
+                        { label: 'Visualizações', value: analytics.conversionFunnel.views },
                         { label: 'Cliques em links', value: analytics.conversionFunnel.clicks },
                         { label: 'Mensagens', value: analytics.conversionFunnel.messages },
                         { label: 'Agendamentos', value: analytics.conversionFunnel.bookings },
@@ -2171,7 +2171,7 @@ export function EditorPage() {
                       type="button"
                       onClick={() => updateField('contactFormEnabled', !form.contactFormEnabled)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${form.contactFormEnabled ? 'bg-purple-500' : 'bg-white/10'}`}
-                      title="Ativar/desativar formulario de contato"
+                      title="Ativar/desativar formulário de contato"
                     >
                       <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${form.contactFormEnabled ? 'left-[22px]' : 'left-0.5'}`} />
                     </button>
@@ -2264,7 +2264,7 @@ export function EditorPage() {
                   <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
                     <MessageSquare size={24} className="mx-auto text-white/15 mb-2" />
                     <p className="text-sm text-white/30">Nenhum lead ainda</p>
-                    <p className="text-xs text-white/15 mt-1">Quando alguem enviar uma mensagem pelo seu cartao, ela aparecera aqui</p>
+                    <p className="text-xs text-white/15 mt-1">Quando alguem enviar uma mensagem pelo seu cartao, ela aparecerá aqui</p>
                   </div>
                 )}
               </div>
@@ -2364,7 +2364,7 @@ export function EditorPage() {
                     <Users size={16} className="text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-sm">Conexoes</h3>
+                    <h3 className="font-semibold text-sm">Conexões</h3>
                     <p className="text-[11px] text-white/40">Mostrar perfis conectados no seu cartao</p>
                   </div>
                 </div>
@@ -2380,7 +2380,7 @@ export function EditorPage() {
                 </label>
               </div>
               <a href="/connections" className="mt-3 flex items-center gap-1 text-xs text-brand-cyan hover:underline">
-                Gerenciar conexoes →
+                Gerenciar conexões →
               </a>
             </div>
 
@@ -2432,7 +2432,7 @@ export function EditorPage() {
                           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-white/20 text-white/50 text-sm hover:bg-white/5 hover:text-white/70 transition-colors"
                         >
                           <UserPlus size={14} />
-                          Criar organizacao
+                          Criar organização
                         </button>
                       ) : (
                         <div className="space-y-2">
@@ -2440,7 +2440,7 @@ export function EditorPage() {
                             type="text"
                             value={newOrgName}
                             onChange={(e) => setNewOrgName(e.target.value)}
-                            placeholder="Nome da organizacao"
+                            placeholder="Nome da organização"
                             className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50"
                           />
                           <div className="flex gap-2">
@@ -2578,7 +2578,7 @@ export function EditorPage() {
 
                 {/* Quick Slot Config */}
                 <div className="space-y-3 mb-4">
-                  <p className="text-xs text-white/40">Configure seus horarios disponiveis. Visitantes poderao agendar reunioes.</p>
+                  <p className="text-xs text-white/40">Configure seus horários disponiveis. Visitantes poderao agendar reunioes.</p>
                   {['Seg', 'Ter', 'Qua', 'Qui', 'Sex'].map((day, i) => {
                     const dayOfWeek = i + 1; // 1=Mon, 5=Fri
                     const slot = mySlots?.find((s) => s.dayOfWeek === dayOfWeek);
@@ -2749,7 +2749,7 @@ export function EditorPage() {
                   <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
                     <Star size={24} className="mx-auto text-white/15 mb-2" />
                     <p className="text-sm text-white/30">Nenhum depoimento ainda</p>
-                    <p className="text-xs text-white/15 mt-1">Quando alguem deixar um depoimento no seu cartao, ele aparecera aqui</p>
+                    <p className="text-xs text-white/15 mt-1">Quando alguem deixar um depoimento no seu cartao, ele aparecerá aqui</p>
                   </div>
                 )}
               </div>

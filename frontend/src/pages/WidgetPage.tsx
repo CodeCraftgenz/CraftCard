@@ -65,7 +65,7 @@ export function WidgetPage() {
   if (error || !profile) {
     return (
       <div className="w-full h-full min-h-[380px] bg-[#1A1A2E] rounded-2xl flex items-center justify-center p-4">
-        <p className="text-white/50 text-sm text-center">Cartao nao encontrado</p>
+        <p className="text-white/50 text-sm text-center">Cartão não encontrado</p>
       </div>
     );
   }
@@ -130,7 +130,7 @@ export function WidgetPage() {
           className="block w-full text-center py-2.5 rounded-xl text-white text-xs font-semibold transition-opacity hover:opacity-90"
           style={{ backgroundColor: accent }}
         >
-          Ver cartao completo
+          Ver cartão completo
         </a>
         <p className="mt-2 text-center text-[9px] text-white/20">
           {APP_NAME}

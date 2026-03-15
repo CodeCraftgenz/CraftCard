@@ -1,5 +1,5 @@
 const items = [
-  'Cartao digital profissional',
+  'Cartão digital profissional',
   'QR Code para eventos',
   'Analytics em tempo real',
   'Agendamentos online',
@@ -8,7 +8,7 @@ const items = [
   'Links personalizados',
   'Depoimentos integrados',
   'Export de leads CSV',
-  'Dominio customizado',
+  'Domínio customizado',
 ];
 
 export function Marquee() {

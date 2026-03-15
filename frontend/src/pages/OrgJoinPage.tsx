@@ -63,8 +63,8 @@ export function OrgJoinPage() {
               <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <X className="text-red-400" size={24} />
               </div>
-              <h2 className="text-white text-lg font-semibold mb-2">Convite invalido</h2>
-              <p className="text-white/50 text-sm mb-4">{previewErrMsg || 'Convite nao encontrado'}</p>
+              <h2 className="text-white text-lg font-semibold mb-2">Convite inválido</h2>
+              <p className="text-white/50 text-sm mb-4">{previewErrMsg || 'Convitenão encontrado'}</p>
               <button
                 type="button"
                 onClick={() => navigate('/editor')}
@@ -85,9 +85,9 @@ export function OrgJoinPage() {
                   <Building2 className="text-purple-400" size={28} />
                 )}
               </div>
-              <h2 className="text-white text-lg font-semibold mb-1">Voce foi convidado!</h2>
+              <h2 className="text-white text-lg font-semibold mb-1">Você foi convidado!</h2>
               <p className="text-white/50 text-sm mb-4">
-                Para fazer parte da organizacao
+                Para fazer parte da organização
               </p>
               <div className="bg-white/5 border border-purple-500/20 rounded-xl p-4 mb-4">
                 <p className="text-white font-bold text-lg">{previewData.orgName}</p>
@@ -105,7 +105,7 @@ export function OrgJoinPage() {
                     <span className="text-yellow-400 text-xs font-medium">Email diferente</span>
                   </div>
                   <p className="text-white/40 text-xs mt-1">
-                    Voce esta logado como <strong className="text-brand-cyan">{user.email}</strong>.
+                    Você está logado como <strong className="text-brand-cyan">{user.email}</strong>.
                     O convite foi enviado para outro email.
                   </p>
                   <button
@@ -140,7 +140,7 @@ export function OrgJoinPage() {
               </div>
               <h2 className="text-white text-lg font-semibold mb-2">Convite aceito!</h2>
               <p className="text-white/50 text-sm">
-                Voce agora e membro de <strong className="text-white">{orgName}</strong>. Redirecionando...
+                Você agora e membro de <strong className="text-white">{orgName}</strong>. Redirecionando...
               </p>
             </>
           )}
@@ -161,7 +161,7 @@ export function OrgJoinPage() {
               <p className="text-white/50 text-sm mb-2">{errorMsg}</p>
               {isEmailMismatch && user && (
                 <p className="text-white/40 text-xs mb-4">
-                  Voce esta logado como <strong className="text-brand-cyan">{user.email}</strong>.
+                  Você está logado como <strong className="text-brand-cyan">{user.email}</strong>.
                   Faca login com o email que recebeu o convite.
                 </p>
               )}

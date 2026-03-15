@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { MercadoPagoProvider } from './mercadopago.provider';
 import { createConfigMock, mockFetchMpApi, buildMpApiResponse } from '../../../test/helpers/test-utils';
 
-// Mock do MercadoPago SDK para nao precisar de token real
+// Mock do MercadoPago SDK paranão precisar de token real
 jest.mock('mercadopago', () => ({
   MercadoPagoConfig: jest.fn().mockImplementation(() => ({})),
   Preference: jest.fn().mockImplementation(() => ({

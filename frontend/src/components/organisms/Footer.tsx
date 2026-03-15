@@ -8,7 +8,7 @@ export function Footer() {
           <div className="flex flex-col items-center md:items-start gap-2">
             <Logo />
             <p className="text-sm text-white/50">
-              Seu cartao digital profissional
+              Seu cartão digital profissional
             </p>
           </div>
           <div className="flex items-center gap-6 text-sm text-white/50">

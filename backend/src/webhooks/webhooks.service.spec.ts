@@ -80,7 +80,7 @@ describe('WebhooksService', () => {
 
       await expect(
         service.create(userId, { url: 'https://example.com/hook', events: ['new_message'] }),
-      ).rejects.toThrow('Maximo de 5 webhooks');
+      ).rejects.toThrow('Máximo de 5 webhooks');
     });
   });
 
@@ -107,7 +107,7 @@ describe('WebhooksService', () => {
       expect(result.isActive).toBe(false);
     });
 
-    it('deve rejeitar se webhook nao pertence ao usuario', async () => {
+    it('deve rejeitar se webhooknão pertence ao usuário', async () => {
       prismaMock.webhook.findFirst.mockResolvedValue(null);
 
       await expect(
@@ -126,7 +126,7 @@ describe('WebhooksService', () => {
       expect(result).toEqual({ deleted: true });
     });
 
-    it('deve rejeitar se webhook nao existe', async () => {
+    it('deve rejeitar se webhooknão existe', async () => {
       prismaMock.webhook.findFirst.mockResolvedValue(null);
 
       await expect(service.remove(userId, webhookId)).rejects.toThrow(AppException);
@@ -147,7 +147,7 @@ describe('WebhooksService', () => {
 
       prismaMock.webhook.findMany.mockResolvedValue([mockWebhook, webhookNoMatch]);
 
-      // Mock sendWebhookWithLog para nao fazer HTTP real
+      // Mock sendWebhookWithLog paranão fazer HTTP real
       const sendSpy = jest.spyOn(service as any, 'sendWebhookWithLog').mockResolvedValue(undefined);
 
       await service.dispatch(userId, 'new_message', { test: true });
@@ -180,7 +180,7 @@ describe('WebhooksService', () => {
       );
     });
 
-    it('nao deve disparar para webhooks inativos', async () => {
+    it('não deve disparar para webhooks inativos', async () => {
       prismaMock.webhook.findMany.mockResolvedValue([]); // query already filters isActive
 
       const sendSpy = jest.spyOn(service as any, 'sendWebhookWithLog').mockResolvedValue(undefined);
@@ -211,7 +211,7 @@ describe('WebhooksService', () => {
       expect(result[1].success).toBe(false);
     });
 
-    it('deve rejeitar se webhook nao pertence ao usuario', async () => {
+    it('deve rejeitar se webhooknão pertence ao usuário', async () => {
       prismaMock.webhook.findFirst.mockResolvedValue(null);
 
       await expect(service.getLogs(userId, 'non-existent')).rejects.toThrow(AppException);
@@ -230,7 +230,7 @@ describe('WebhooksService', () => {
         'secret',
         'new_message',
         { test: true },
-        1, // apenas 1 retry para nao demorar
+        1, // apenas 1 retry paranão demorar
       );
 
       expect(result.success).toBe(false);
@@ -283,7 +283,7 @@ describe('WebhooksService', () => {
       });
     });
 
-    it('deve nao quebrar se log falhar ao salvar', async () => {
+    it('devenão quebrar se log falhar ao salvar', async () => {
       jest.spyOn(service as any, 'sendWebhook').mockResolvedValue({
         statusCode: 200,
         success: true,
@@ -291,7 +291,7 @@ describe('WebhooksService', () => {
       });
       prismaMock.webhookLog.create.mockRejectedValue(new Error('DB error'));
 
-      // Nao deve lancar exception
+      // Não deve lancar exception
       await expect(
         (service as any).sendWebhookWithLog(webhookId, 'https://example.com', 'secret', 'new_message', {}),
       ).resolves.not.toThrow();

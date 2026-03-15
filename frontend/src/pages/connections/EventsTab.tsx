@@ -91,7 +91,7 @@ export default function EventsTab() {
                   type="date"
                   value={form.startDate}
                   onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                  title="Data de inicio"
+                  title="Data de início"
                   className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-white/30"
                 />
                 <input
@@ -135,7 +135,7 @@ export default function EventsTab() {
           </div>
           <p className="text-sm font-semibold text-white mb-1">Nenhum evento</p>
           <p className="text-xs text-white/40 max-w-xs mx-auto">
-            Crie eventos para agrupar conexoes por contexto, conferencia ou encontro.
+            Crie eventos para agrupar conexões por contexto, conferência ou encontro.
           </p>
         </div>
       ) : (
@@ -165,7 +165,7 @@ export default function EventsTab() {
                       </span>
                     )}
                     <span className="flex items-center gap-1 text-[11px] text-white/40">
-                      <Users size={10} /> {evt.connectionCount} conexoes
+                      <Users size={10} /> {evt.connectionCount} conexões
                     </span>
                   </div>
                 </div>

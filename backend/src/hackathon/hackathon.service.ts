@@ -19,7 +19,7 @@ export class HackathonService {
 
     // Check user doesn't already own/belong to a team
     const existing = await this.getMyTeam(userId);
-    if (existing) throw AppException.badRequest('Voce ja faz parte de uma equipe');
+    if (existing) throw AppException.badRequest('Você já faz parte de uma equipe');
 
     const slug = `hackathon-${Date.now().toString(36)}`;
 
@@ -122,11 +122,11 @@ export class HackathonService {
 
   async inviteByProfileSlug(userId: string, targetSlug: string) {
     const team = await this.getMyTeam(userId);
-    if (!team) throw AppException.badRequest('Voce precisa criar uma equipe primeiro');
+    if (!team) throw AppException.badRequest('Você precisa criar uma equipe primeiro');
 
     // Check team size
     if (team.members.length >= team.maxMembers) {
-      throw AppException.badRequest(`Equipe cheia (maximo ${team.maxMembers} membros)`);
+      throw AppException.badRequest(`Equipe cheia (máximo ${team.maxMembers} membros)`);
     }
 
     // Find target user by profile slug
@@ -140,13 +140,13 @@ export class HackathonService {
     const hasHackathonMeta = await this.prisma.socialLink.findFirst({
       where: { profileId: targetProfile.id, linkType: 'hackathon_meta' },
     });
-    if (!hasHackathonMeta) throw AppException.badRequest('Esta pessoa nao e participante do hackathon');
+    if (!hasHackathonMeta) throw AppException.badRequest('Esta pessoanão e participante do hackathon');
 
     // Check not already a member
     const alreadyMember = await this.prisma.organizationMember.findUnique({
       where: { orgId_userId: { orgId: team.id, userId: targetProfile.user.id } },
     });
-    if (alreadyMember) throw AppException.conflict('Esta pessoa ja faz parte da equipe');
+    if (alreadyMember) throw AppException.conflict('Esta pessoa já faz parte da equipe');
 
     // Check target not in another team
     const targetInTeam = await this.prisma.organizationMember.findFirst({
@@ -155,13 +155,13 @@ export class HackathonService {
         org: { slug: { startsWith: 'hackathon-' } },
       },
     });
-    if (targetInTeam) throw AppException.conflict('Esta pessoa ja faz parte de outra equipe');
+    if (targetInTeam) throw AppException.conflict('Esta pessoa já faz parte de outra equipe');
 
     // Check for pending invite
     const existingInvite = await this.prisma.organizationInvite.findFirst({
       where: { orgId: team.id, email: targetProfile.user.email, usedAt: null, expiresAt: { gt: new Date() } },
     });
-    if (existingInvite) throw AppException.conflict('Convite pendente ja existe para esta pessoa');
+    if (existingInvite) throw AppException.conflict('Convite pendente já existe para está pessoa');
 
     const token = randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -216,32 +216,32 @@ export class HackathonService {
 
   async acceptInvite(userId: string, inviteId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true, email: true } });
-    if (!user) throw AppException.notFound('Usuario');
+    if (!user) throw AppException.notFound('Usuário');
 
     const invite = await this.prisma.organizationInvite.findUnique({
       where: { id: inviteId },
       include: { org: { select: { slug: true, maxMembers: true, _count: { select: { members: true } } } } },
     });
     if (!invite) throw AppException.notFound('Convite');
-    if (invite.usedAt) throw AppException.badRequest('Convite ja foi utilizado');
+    if (invite.usedAt) throw AppException.badRequest('Convite já foi utilizado');
     if (invite.expiresAt < new Date()) throw AppException.badRequest('Convite expirado');
     if (user.email.toLowerCase() !== invite.email.toLowerCase()) {
       throw AppException.forbidden('Este convite foi enviado para outro email');
     }
     if (!invite.org.slug.startsWith('hackathon-')) {
-      throw AppException.badRequest('Este convite nao e de equipe do hackathon');
+      throw AppException.badRequest('Este convitenão e de equipe do hackathon');
     }
 
     // Check team not full
     if (invite.org._count.members >= invite.org.maxMembers) {
-      throw AppException.badRequest('Equipe ja esta cheia');
+      throw AppException.badRequest('Equipe já está cheia');
     }
 
     // Check user not already in a hackathon team
     const existingTeam = await this.prisma.organizationMember.findFirst({
       where: { userId, org: { slug: { startsWith: 'hackathon-' } } },
     });
-    if (existingTeam) throw AppException.badRequest('Voce ja faz parte de uma equipe');
+    if (existingTeam) throw AppException.badRequest('Você já faz parte de uma equipe');
 
     return this.prisma.$transaction(async (tx) => {
       await tx.organizationInvite.update({
@@ -260,7 +260,7 @@ export class HackathonService {
 
   async declineInvite(userId: string, inviteId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
-    if (!user) throw AppException.notFound('Usuario');
+    if (!user) throw AppException.notFound('Usuário');
 
     const invite = await this.prisma.organizationInvite.findUnique({ where: { id: inviteId } });
     if (!invite || user.email.toLowerCase() !== invite.email.toLowerCase()) {
@@ -360,7 +360,7 @@ export class HackathonService {
       },
     });
     if (!hasHackathonMeta) {
-      throw AppException.forbidden('Voce nao e participante do hackathon');
+      throw AppException.forbidden('Vocenão e participante do hackathon');
     }
   }
 }

@@ -60,8 +60,8 @@ export default function HackathonPublicCard() {
       >
         <div className="text-center">
           <GraduationCap size={48} className="mx-auto mb-4 text-white/30" />
-          <h1 className="text-xl font-bold text-white mb-2">Perfil nao encontrado</h1>
-          <p className="text-white/50 text-sm">Esse cartao do hackathon nao existe ou foi removido.</p>
+          <h1 className="text-xl font-bold text-white mb-2">Perfilnão encontrado</h1>
+          <p className="text-white/50 text-sm">Esse cartão do hackathonnão existe ou foi removido.</p>
         </div>
       </div>
     );

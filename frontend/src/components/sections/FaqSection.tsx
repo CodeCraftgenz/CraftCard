@@ -4,40 +4,40 @@ import { ChevronDown } from 'lucide-react';
 
 const faqs = [
   {
-    q: 'Posso comecar gratis?',
-    a: 'Sim! O plano Free permite criar 1 cartao digital com ate 5 links, 3 temas e publicar gratuitamente. Voce pode fazer upgrade para o Pro, Business ou Enterprise a qualquer momento.',
+    q: 'Posso começar gratis?',
+    a: 'Sim! O plano Free permite criar 1 cartão digital com ate 5 links, 3 temas e publicar gratuitamente. Você pode fazer upgrade para o Pro, Business ou Enterprise a qualquer momento.',
   },
   {
     q: 'Qual a diferenca entre os planos?',
-    a: 'O plano Free e ideal para experimentar (1 cartao, 5 links, 3 temas). O Pro (R$30/ano) libera analytics, galeria, agendamentos, depoimentos, servicos, FAQ, curriculo, video, customizacao visual completa, imagem de fundo personalizada, export de leads e ate 3 cartoes. O Business (R$189,90/ano) adiciona organizacao com ate 10 membros, dashboard centralizado, branding e webhooks. O Enterprise (R$299,90/ano) inclui tudo do Business + dominio customizado.',
+    a: 'O plano Free e ideal para experimentar (1 cartao, 5 links, 3 temas). O Pro (R$30/ano) libera analytics, galeria, agendamentos, depoimentos, serviços, FAQ, currículo, video, customizacao visual completa, imagem de fundo personalizada, export de leads e ate 3 cartões. O Business (R$189,90/ano) adiciona organização com ate 10 membros, dashboard centralizado, branding e webhooks. O Enterprise (R$299,90/ano) inclui tudo do Business + domínio customizado.',
   },
   {
     q: 'Como funciona para empresas?',
-    a: 'Nos planos Business e Enterprise, voce cria uma organizacao, convida membros por email e gerencia todos os cartoes de um so lugar. A empresa define cores, logo e fonte — os membros editam apenas o conteudo. O dashboard mostra analytics e leads consolidados de toda a equipe, com export CSV e filtros avancados. O Enterprise adiciona dominio customizado (ex: cartoes.suaempresa.com.br).',
+    a: 'Nos planos Business e Enterprise, você cria uma organização, convida membros por email e gerencia todos os cartões de um so lugar. A empresa define cores, logo e fonte — os membros editam apenas o conteudo. O dashboard mostra analytics e leads consolidados de toda a equipe, com export CSV e filtros avancados. O Enterprise adiciona domínio customizado (ex: cartões.suaempresa.com.br).',
   },
   {
-    q: 'Posso comecar gratis e fazer upgrade depois?',
-    a: 'Com certeza! Comece no plano Free e faca upgrade quando precisar de mais recursos. Seus dados e cartao sao mantidos ao trocar de plano.',
+    q: 'Posso começar gratis e fazer upgrade depois?',
+    a: 'Com certeza! Comece no plano Free e faca upgrade quando precisar de mais recursos. Seus dados e cartão sao mantidos ao trocar de plano.',
   },
   {
     q: 'Como funciona a assinatura Pro?',
-    a: 'A assinatura Pro e anual por R$30 (preco promocional — valor original R$99,90). Voce tem acesso completo por 365 dias. Ao final do periodo, basta renovar para continuar com todos os recursos.',
+    a: 'A assinatura Pro e anual por R$30 (preco promocional — valor original R$99,90). Você tem acesso completo por 365 dias. Ao final do período, basta renovar para continuar com todos os recursos.',
   },
   {
     q: 'Quais formas de pagamento sao aceitas?',
-    a: 'Aceitamos cartao de credito/debito, PIX e boleto. O pagamento e processado de forma segura pelo Mercado Pago.',
+    a: 'Aceitamos cartão de credito/debito, PIX e boleto. O pagamento e processado de forma segura pelo Mercado Pago.',
   },
   {
-    q: 'Posso editar meu cartao depois de publicar?',
-    a: 'Claro! Voce pode alterar foto, bio, redes sociais, cores e slug quantas vezes quiser, a qualquer momento.',
+    q: 'Posso editar meu cartão depois de publicar?',
+    a: 'Claro! Você pode alterar foto, bio, redes sociais, cores e slug quantas vezes quiser, a qualquer momento.',
   },
   {
-    q: 'O cartao funciona em qualquer dispositivo?',
-    a: 'Sim! Seu cartao e totalmente responsivo e funciona perfeitamente em celulares, tablets e computadores.',
+    q: 'O cartão funciona em qualquer dispositivo?',
+    a: 'Sim! Seu cartão e totalmente responsivo e funciona perfeitamente em celulares, tablets e computadores.',
   },
   {
     q: 'Posso excluir minha conta?',
-    a: 'Sim. Voce pode excluir sua conta e todos os seus dados a qualquer momento, em conformidade com a LGPD.',
+    a: 'Sim. Você pode excluir sua conta e todos os seus dados a qualquer momento, em conformidade com a LGPD.',
   },
 ];
 

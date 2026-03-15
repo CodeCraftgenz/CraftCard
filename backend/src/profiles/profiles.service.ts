@@ -86,17 +86,17 @@ export class ProfilesService {
         where: { id: orgId },
         select: { maxMembers: true, extraSeats: true },
       });
-      if (!org) throw AppException.notFound('Organizacao');
+      if (!org) throw AppException.notFound('Organização');
 
       const member = await this.prisma.organizationMember.findUnique({
         where: { orgId_userId: { orgId, userId } },
       });
-      if (!member) throw AppException.forbidden('Voce nao e membro desta organizacao');
+      if (!member) throw AppException.forbidden('Vocenão e membro desta organização');
 
       const totalSeats = org.maxMembers + org.extraSeats;
       const orgProfileCount = await this.prisma.profile.count({ where: { orgId } });
       if (orgProfileCount >= totalSeats) {
-        throw AppException.badRequest(`Limite de ${totalSeats} ${totalSeats === 1 ? 'assento' : 'assentos'} na organizacao atingido`);
+        throw AppException.badRequest(`Limite de ${totalSeats} ${totalSeats === 1 ? 'assento' : 'assentos'} na organização atingido`);
       }
     } else {
       // B2C: validate personal card limit
@@ -104,7 +104,7 @@ export class ProfilesService {
         where: { userId, orgId: null },
       });
       if (personalCount >= limits.maxCards) {
-        throw AppException.badRequest(`Maximo de ${limits.maxCards} ${limits.maxCards === 1 ? 'cartao pessoal' : 'cartoes pessoais'} no plano ${effectivePlan}`);
+        throw AppException.badRequest(`Máximo de ${limits.maxCards} ${limits.maxCards === 1 ? 'cartão pessoal' : 'cartões pessoais'} no plano ${effectivePlan}`);
       }
     }
 
@@ -112,7 +112,7 @@ export class ProfilesService {
     return this.prisma.profile.create({
       data: {
         userId,
-        displayName: 'Novo Cartao',
+        displayName: 'Novo Cartão',
         label,
         slug,
         isPrimary: false,
@@ -128,7 +128,7 @@ export class ProfilesService {
     });
     if (!profile) throw AppException.notFound('Perfil');
     if (profile.isPrimary) {
-      throw AppException.badRequest('Nao e possivel excluir o cartao principal');
+      throw AppException.badRequest('Não é possível excluir o cartão principal');
     }
     await this.prisma.profile.delete({ where: { id: profileId } });
     return { deleted: true };
@@ -258,13 +258,13 @@ export class ProfilesService {
 
     // Validate maxLinks
     if (data.socialLinks && data.socialLinks.length > limits.maxLinks) {
-      throw AppException.badRequest(`Maximo de ${limits.maxLinks} links no plano ${effectivePlan}`);
+      throw AppException.badRequest(`Máximo de ${limits.maxLinks} links no plano ${effectivePlan}`);
     }
 
     // Validate theme for free tier
     if (data.cardTheme && limits.maxThemes !== 'all') {
       if (!FREE_THEMES.includes(data.cardTheme)) {
-        throw AppException.badRequest(`Tema "${data.cardTheme}" nao disponivel no plano gratuito`);
+        throw AppException.badRequest(`Tema "${data.cardTheme}"não disponivel no plano gratuito`);
       }
     }
 
@@ -289,7 +289,7 @@ export class ProfilesService {
     if (data.slug && data.slug !== profile.slug) {
       const available = await this.slugsService.isAvailable(data.slug, userId);
       if (!available) {
-        throw AppException.conflict('Slug ja esta em uso');
+        throw AppException.conflict('Slug já está em uso');
       }
     }
 
@@ -373,7 +373,7 @@ export class ProfilesService {
     const customDomain = await this.prisma.customDomain.findUnique({
       where: { profileId: profile.id },
     });
-    if (!customDomain) throw AppException.notFound('Dominio');
+    if (!customDomain) throw AppException.notFound('Domínio');
 
     // Try DNS TXT record verification
     try {
@@ -465,7 +465,7 @@ export class ProfilesService {
       // 3. Only update profile fields for brand-new profiles (no custom data yet)
       const profileUpdates: Record<string, unknown> = {};
       if (!profile.isPublished) profileUpdates.isPublished = true;
-      if (defaults?.displayName && (!profile.displayName || profile.displayName === 'Novo Cartao')) {
+      if (defaults?.displayName && (!profile.displayName || profile.displayName === 'Novo Cartão')) {
         profileUpdates.displayName = defaults.displayName;
       }
       if (defaults?.bio && !profile.bio) {

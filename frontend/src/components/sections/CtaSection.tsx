@@ -21,10 +21,10 @@ export function CtaSection() {
         <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight">
           Pronto para criar seu
           <br />
-          <span className="gradient-text-animated">cartao digital</span>?
+          <span className="gradient-text-animated">cartão digital</span>?
         </h2>
         <p className="mt-6 text-lg text-slate-400 max-w-2xl mx-auto">
-          Junte-se a profissionais e empresas que ja estao compartilhando seus contatos de
+          Junte-se a profissionais e empresas que já estão compartilhando seus contatos de
           forma moderna e elegante.
         </p>
         <div className="mt-10">

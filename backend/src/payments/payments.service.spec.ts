@@ -356,7 +356,7 @@ describe('PaymentsService', () => {
     it('should throw for invalid plan', async () => {
       await expect(
         service.adminActivatePlan('admin-1', 'user@test.com', 'INVALID'),
-      ).rejects.toThrow('Plano invalido');
+      ).rejects.toThrow('Plano inválido');
     });
 
     it('should throw for nonexistent user email', async () => {
@@ -364,7 +364,7 @@ describe('PaymentsService', () => {
 
       await expect(
         service.adminActivatePlan('admin-1', 'nobody@test.com', 'PRO'),
-      ).rejects.toThrow('nao encontrado');
+      ).rejects.toThrow('não encontrado');
     });
 
     it('should activate PRO plan for existing user', async () => {

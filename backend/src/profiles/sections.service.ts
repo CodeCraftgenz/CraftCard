@@ -27,7 +27,7 @@ export class SectionsService {
   async createService(userId: string, data: { title: string; description?: string; price?: string }, cardId?: string) {
     const profileId = await this.getProfileId(userId, cardId);
     const count = await this.prisma.service.count({ where: { profileId } });
-    if (count >= 20) throw AppException.badRequest('Maximo de 20 servicos atingido');
+    if (count >= 20) throw AppException.badRequest('Máximo de 20 serviços atingido');
     return this.prisma.service.create({
       data: {
         profileId,
@@ -82,7 +82,7 @@ export class SectionsService {
   async createFaqItem(userId: string, data: { question: string; answer: string }, cardId?: string) {
     const profileId = await this.getProfileId(userId, cardId);
     const count = await this.prisma.faqItem.count({ where: { profileId } });
-    if (count >= 15) throw AppException.badRequest('Maximo de 15 perguntas atingido');
+    if (count >= 15) throw AppException.badRequest('Máximo de 15 perguntas atingido');
     return this.prisma.faqItem.create({
       data: {
         profileId,
@@ -135,7 +135,7 @@ export class SectionsService {
   async createFormField(userId: string, data: { label: string; type: string; options?: string; required?: boolean }, cardId?: string) {
     const profileId = await this.getProfileId(userId, cardId);
     const count = await this.prisma.customFormField.count({ where: { profileId } });
-    if (count >= 10) throw AppException.badRequest('Maximo de 10 campos');
+    if (count >= 10) throw AppException.badRequest('Máximo de 10 campos');
 
     return this.prisma.customFormField.create({
       data: {

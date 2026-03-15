@@ -124,7 +124,7 @@ export function useOrgAnalytics(orgId: string | undefined) {
   });
 }
 
-export interface PaginatedLeads {
+export interface PáginatedLeads {
   items: OrgLead[];
   total: number;
   page: number;
@@ -141,7 +141,7 @@ export function useOrgLeads(orgId: string | undefined, opts: {
   if (opts.isRead !== undefined) params.set('isRead', opts.isRead);
   const qs = params.toString();
 
-  return useQuery<PaginatedLeads>({
+  return useQuery<PáginatedLeads>({
     queryKey: ['organization', orgId, 'leads', opts],
     queryFn: () => api.get(`/organizations/${orgId}/leads${qs ? `?${qs}` : ''}`),
     enabled: !!orgId,

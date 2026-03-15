@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
           <h1 className="text-xl font-bold text-white mb-2">Algo deu errado</h1>
           <p className="text-white/50 text-sm mb-6">
-            Ocorreu um erro inesperado. Tente recarregar a pagina.
+            Ocorreu um erro inesperado. Tente recarregar a página.
           </p>
 
           <div className="flex gap-3 justify-center">

@@ -5,9 +5,9 @@ import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
 
 const PASSWORD_RULES = [
-  { test: (v: string) => v.length >= 8, label: 'Minimo 8 caracteres' },
+  { test: (v: string) => v.length >= 8, label: 'Mínimo 8 caracteres' },
   { test: (v: string) => /[A-Z]/.test(v), label: '1 letra maiuscula' },
-  { test: (v: string) => /[0-9]/.test(v), label: '1 numero' },
+  { test: (v: string) => /[0-9]/.test(v), label: '1 número' },
 ];
 
 export function RegisterPage() {
@@ -35,7 +35,7 @@ export function RegisterPage() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Senhas nao conferem');
+      setError('Senhasnão conferem');
       return;
     }
 
@@ -95,7 +95,7 @@ export function RegisterPage() {
           </Link>
           <h1 className="text-2xl font-bold text-white mb-1">Criar conta</h1>
           <p className="text-sm text-white/40">
-            {inviteToken ? 'Crie sua conta para entrar na organizacao' : 'Comece a criar seu cartao digital'}
+            {inviteToken ? 'Crie sua conta para entrar na organização' : 'Comece a criar seu cartão digital'}
           </p>
         </div>
 
@@ -182,13 +182,13 @@ export function RegisterPage() {
             className="w-full py-3 px-6 rounded-xl font-semibold text-sm text-white transition-all duration-300 disabled:opacity-50"
             style={{ background: 'linear-gradient(135deg, #00E4F2, #8B5CF6, #D12BF2)' }}
           >
-            {isSubmitting ? 'Criando conta...' : inviteToken ? 'Criar conta e entrar na organizacao' : 'Criar conta'}
+            {isSubmitting ? 'Criando conta...' : inviteToken ? 'Criar conta e entrar na organização' : 'Criar conta'}
           </button>
         </form>
 
         {/* Login link */}
         <p className="text-sm text-white/40 text-center mt-6">
-          Ja tem conta?{' '}
+          Já tem conta?{' '}
           <Link to={loginUrl} className="text-brand-cyan hover:text-brand-cyan/80 font-medium transition-colors">
             Entrar
           </Link>

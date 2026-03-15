@@ -21,14 +21,14 @@ export function ServicesEditor({ enabled, onToggle }: { enabled?: boolean; onTog
         <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
           <Briefcase size={16} className="text-amber-400" />
         </div>
-        <h3 className="font-semibold flex-1">Servicos</h3>
+        <h3 className="font-semibold flex-1">Serviços</h3>
         <span className="text-xs text-white/30">{services?.length || 0}/20</span>
         {onToggle && (
           <button
             type="button"
             onClick={onToggle}
             className={`relative w-11 h-6 rounded-full transition-colors ${enabled ? 'bg-amber-500' : 'bg-white/10'}`}
-            title="Ativar/desativar servicos"
+            title="Ativar/desativar serviços"
           >
             <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${enabled ? 'left-[22px]' : 'left-0.5'}`} />
           </button>
@@ -47,7 +47,7 @@ export function ServicesEditor({ enabled, onToggle }: { enabled?: boolean; onTog
                     if (e.target.value !== s.title) updateService.mutate({ id: s.id, title: e.target.value });
                   }}
                   className="w-full bg-transparent text-sm text-white font-medium focus:outline-none"
-                  placeholder="Titulo do servico"
+                  placeholder="Título do servico"
                 />
                 <input
                   type="text"

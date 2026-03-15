@@ -129,7 +129,7 @@ export class ContactsService {
       orderBy: { createdAt: 'desc' },
     });
 
-    const header = 'Nome,Email,Mensagem,Cartao,Lido,Data\n';
+    const header = 'Nome,Email,Mensagem,Cartão,Lido,Data\n';
     const rows = messages.map((m) => {
       const name = csvEscape(m.senderName);
       const email = csvEscape(m.senderEmail || '');

@@ -45,7 +45,7 @@ export class OrgRoleGuard implements CanActivate {
     });
 
     if (!member) {
-      throw AppException.forbidden('Voce nao e membro desta organizacao');
+      throw AppException.forbidden('Vocenão e membro desta organização');
     }
 
     if ((ROLE_HIERARCHY[member.role] || 0) < (ROLE_HIERARCHY[minRole] || 0)) {

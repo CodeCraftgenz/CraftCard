@@ -19,7 +19,7 @@ const steps = [
     icon: Rocket,
     step: '03',
     title: 'Publique',
-    desc: 'Personalize seu cartao e compartilhe seu link exclusivo.',
+    desc: 'Personalize seu cartão e compartilhe seu link exclusivo.',
   },
 ];
 
@@ -121,7 +121,7 @@ export function HowItWorksSection() {
             Como <span className="gradient-text-animated">funciona</span>
           </h2>
           <p className="mt-4 text-slate-400 max-w-2xl mx-auto">
-            Tres passos simples para ter seu cartao digital no ar
+            Tres passos simples para ter seu cartão digital no ar
           </p>
         </motion.div>
 

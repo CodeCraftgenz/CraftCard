@@ -9,17 +9,17 @@ const FEATURE_NAMES: Partial<Record<keyof PlanLimits, string>> = {
   bookings: 'Agendamento online',
   testimonials: 'Depoimentos',
   contacts: 'Mensagens de contato',
-  services: 'Tabela de servicos',
+  services: 'Tabela de serviços',
   faq: 'FAQ',
-  resume: 'Upload de curriculo',
+  resume: 'Upload de currículo',
   video: 'Video de apresentacao',
   customFonts: 'Fontes customizadas',
   customBg: 'Fundos personalizados',
   leadsExport: 'Exportar leads (CSV)',
-  orgDashboard: 'Dashboard da organizacao',
+  orgDashboard: 'Dashboard da organização',
   branding: 'Branding centralizado',
-  customDomain: 'Dominio customizado',
-  webhooks: 'Webhooks e integracoes',
+  customDomain: 'Domínio customizado',
+  webhooks: 'Webhooks e integrações',
 };
 
 interface FeatureLockProps {

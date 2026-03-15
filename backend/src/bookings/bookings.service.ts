@@ -92,7 +92,7 @@ export class BookingsService {
       },
     });
     if (existing) {
-      throw AppException.conflict('Horario ja foi reservado');
+      throw AppException.conflict('Horario já foi reservado');
     }
 
     const booking = await this.prisma.booking.create({

@@ -21,7 +21,7 @@ export class OrganizationsService {
   async create(userId: string, data: { name: string; slug: string }) {
     // Check slug uniqueness
     const existing = await this.prisma.organization.findUnique({ where: { slug: data.slug } });
-    if (existing) throw AppException.conflict('Slug da organizacao ja esta em uso');
+    if (existing) throw AppException.conflict('Slug da organização já está em uso');
 
     return this.prisma.$transaction(async (tx) => {
       const org = await tx.organization.create({
@@ -66,7 +66,7 @@ export class OrganizationsService {
       where: { id: orgId },
       include: { _count: { select: { members: true, profiles: true } } },
     });
-    if (!org) throw AppException.notFound('Organizacao');
+    if (!org) throw AppException.notFound('Organização');
 
     return { ...org, memberCount: org._count.members, profileCount: org._count.profiles };
   }
@@ -104,7 +104,7 @@ export class OrganizationsService {
 
   async bulkApplyBranding(orgId: string) {
     const org = await this.prisma.organization.findUnique({ where: { id: orgId } });
-    if (!org) throw AppException.notFound('Organizacao');
+    if (!org) throw AppException.notFound('Organização');
 
     const result = await this.prisma.profile.updateMany({
       where: { orgId },
@@ -166,7 +166,7 @@ export class OrganizationsService {
     if (!member || member.orgId !== orgId) throw AppException.notFound('Membro');
 
     // Cannot change owner role (must transfer ownership explicitly)
-    if (member.role === 'OWNER') throw AppException.badRequest('Nao e possivel alterar o role do proprietario');
+    if (member.role === 'OWNER') throw AppException.badRequest('Não é possível alterar o role do proprietario');
 
     // Only owner can promote to ADMIN or OWNER
     if (newRole === 'ADMIN' || newRole === 'OWNER') {
@@ -182,7 +182,7 @@ export class OrganizationsService {
   async removeMember(orgId: string, memberId: string) {
     const member = await this.prisma.organizationMember.findUnique({ where: { id: memberId } });
     if (!member || member.orgId !== orgId) throw AppException.notFound('Membro');
-    if (member.role === 'OWNER') throw AppException.badRequest('Nao e possivel remover o proprietario');
+    if (member.role === 'OWNER') throw AppException.badRequest('Não é possível remover o proprietario');
 
     // Unlink profiles from org
     await this.prisma.profile.updateMany({
@@ -201,7 +201,7 @@ export class OrganizationsService {
       where: { id: orgId },
       include: { _count: { select: { members: true } } },
     });
-    if (!org) throw AppException.notFound('Organizacao');
+    if (!org) throw AppException.notFound('Organização');
     const totalSeats = org.maxMembers + org.extraSeats;
     if (org._count.members >= totalSeats) {
       throw AppException.badRequest(`Limite de ${totalSeats} membros atingido`, {
@@ -219,14 +219,14 @@ export class OrganizationsService {
       const existingMember = await this.prisma.organizationMember.findUnique({
         where: { orgId_userId: { orgId, userId: existingUser.id } },
       });
-      if (existingMember) throw AppException.conflict('Usuario ja e membro da organizacao');
+      if (existingMember) throw AppException.conflict('Usuário já e membro da organização');
     }
 
     // Check for pending invite
     const existingInvite = await this.prisma.organizationInvite.findFirst({
       where: { orgId, email: data.email, usedAt: null, expiresAt: { gt: new Date() } },
     });
-    if (existingInvite) throw AppException.conflict('Convite pendente ja existe para este email');
+    if (existingInvite) throw AppException.conflict('Convite pendente já existe para este email');
 
     const token = randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
@@ -267,7 +267,7 @@ export class OrganizationsService {
       include: { org: { select: { name: true, logoUrl: true, primaryColor: true } } },
     });
     if (!invite) throw AppException.notFound('Convite');
-    if (invite.usedAt) throw AppException.badRequest('Convite ja foi utilizado');
+    if (invite.usedAt) throw AppException.badRequest('Convite já foi utilizado');
     if (invite.expiresAt < new Date()) throw AppException.badRequest('Convite expirado');
 
     return {
@@ -283,7 +283,7 @@ export class OrganizationsService {
   async acceptInvite(token: string, userId: string) {
     const invite = await this.prisma.organizationInvite.findUnique({ where: { token } });
     if (!invite) throw AppException.notFound('Convite');
-    if (invite.usedAt) throw AppException.badRequest('Convite ja foi utilizado');
+    if (invite.usedAt) throw AppException.badRequest('Convite já foi utilizado');
     if (invite.expiresAt < new Date()) throw AppException.badRequest('Convite expirado');
 
     // Check user email matches invite email
@@ -296,7 +296,7 @@ export class OrganizationsService {
     const existingMember = await this.prisma.organizationMember.findUnique({
       where: { orgId_userId: { orgId: invite.orgId, userId } },
     });
-    if (existingMember) throw AppException.conflict('Voce ja e membro desta organizacao');
+    if (existingMember) throw AppException.conflict('Você já e membro desta organização');
 
     return this.prisma.$transaction(async (tx) => {
       await tx.organizationInvite.update({
@@ -565,7 +565,7 @@ export class OrganizationsService {
       orderBy: { createdAt: 'desc' },
     });
 
-    const header = 'Nome,Email,Mensagem,Cartao,Lido,Data\n';
+    const header = 'Nome,Email,Mensagem,Cartão,Lido,Data\n';
     const rows = messages.map((m) => {
       const name = csvEscape(m.senderName);
       const email = csvEscape(m.senderEmail || '');
@@ -592,7 +592,7 @@ export class OrganizationsService {
     const isMember = await this.prisma.organizationMember.findUnique({
       where: { orgId_userId: { orgId, userId: profile.user.id } },
     });
-    if (!isMember) throw AppException.badRequest('O dono do perfil nao e membro da organizacao');
+    if (!isMember) throw AppException.badRequest('O dono do perfilnão e membro da organização');
 
     await this.prisma.profile.update({
       where: { id: profileId },
@@ -646,7 +646,7 @@ export class OrganizationsService {
       where: { orgId_userId: { orgId, userId } },
     });
 
-    if (!member) throw AppException.forbidden('Voce nao e membro desta organizacao');
+    if (!member) throw AppException.forbidden('Vocenão e membro desta organização');
 
     const hierarchy: Record<string, number> = { OWNER: 3, ADMIN: 2, MEMBER: 1 };
     if ((hierarchy[member.role] || 0) < (hierarchy[minRole] || 0)) {

@@ -12,7 +12,7 @@ export class ConnectionsController {
   @Post('request')
   async request(@CurrentUser() user: JwtPayload, @Body() body: unknown) {
     const parsed = requestConnectionSchema.safeParse(body);
-    if (!parsed.success) throw AppException.badRequest('Dados invalidos', parsed.error.flatten());
+    if (!parsed.success) throw AppException.badRequest('Dados inválidos', parsed.error.flatten());
     const { fromProfileId, toProfileId, ...geo } = parsed.data;
     return this.connectionsService.requestConnection(user.sub, fromProfileId, toProfileId, geo);
   }
@@ -20,7 +20,7 @@ export class ConnectionsController {
   @Post('request-by-slug')
   async requestBySlug(@CurrentUser() user: JwtPayload, @Body() body: unknown) {
     const parsed = requestBySlugSchema.safeParse(body);
-    if (!parsed.success) throw AppException.badRequest('Dados invalidos', parsed.error.flatten());
+    if (!parsed.success) throw AppException.badRequest('Dados inválidos', parsed.error.flatten());
     return this.connectionsService.requestBySlug(user.sub, parsed.data.fromProfileId, parsed.data.slug);
   }
 

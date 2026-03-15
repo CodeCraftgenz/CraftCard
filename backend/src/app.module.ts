@@ -68,7 +68,7 @@ import configuration from './common/config/configuration';
         const redisHost = config.get('REDIS_HOST');
         if (redisHost) {
           try {
-            // Dynamic import para nao inicializar conexão Redis ao carregar o módulo
+            // Dynamic import paranão inicializar conexão Redis ao carregar o módulo
             const { redisStore } = await import('cache-manager-redis-yet');
             const store = await redisStore({
               socket: {

@@ -80,7 +80,7 @@ export class OgController {
     const title = `${profile.displayName} — CraftCard`;
     const description = profile.bio
       ? profile.bio.slice(0, 160)
-      : `Cartao digital de ${profile.displayName}`;
+      : `Cartão digital de ${profile.displayName}`;
     // Use dynamic OG image instead of just the profile photo
     const ogImage = `${this.backendUrl}/api/og/image/${slug}`;
     const url = `${frontendUrl}/${slug}`;

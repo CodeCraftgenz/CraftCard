@@ -156,7 +156,7 @@ export class StorageController {
     return { url: resumeUrl };
   }
 
-  // ── Upload video → R2 (PRO+) ──────────────────────────────────
+  // ── Upload vídeo → R2 (PRO+) ──────────────────────────────────
   @UseGuards(PlanGuard)
   @RequiresFeature('video')
   @Post('me/video-upload')

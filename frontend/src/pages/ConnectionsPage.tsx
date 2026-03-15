@@ -37,7 +37,7 @@ export default function ConnectionsPage() {
     { key: 'events', label: 'Eventos', icon: Calendar },
     { key: 'tags', label: 'Tags', icon: Tag },
     { key: 'wrapped', label: 'Wrapped', icon: Sparkles },
-    { key: 'connections', label: 'Conexoes', icon: Users },
+    { key: 'connections', label: 'Conexões', icon: Users },
     { key: 'pending', label: 'Pendentes', icon: Clock },
     { key: 'discover', label: 'Descobrir', icon: Search },
   ];
@@ -51,7 +51,7 @@ export default function ConnectionsPage() {
             <ArrowLeft size={20} />
           </Link>
           <div className="flex-1">
-            <h1 className="text-xl font-bold">Conexoes e Memorias</h1>
+            <h1 className="text-xl font-bold">Conexões e Memórias</h1>
             <p className="text-xs text-white/40">Sua rede de contatos</p>
           </div>
         </div>
@@ -123,8 +123,8 @@ function MyConnectionsTab() {
     return (
       <div className="text-center py-12">
         <Users size={32} className="mx-auto text-white/20 mb-3" />
-        <p className="text-white/40 text-sm">Voce ainda nao tem conexoes</p>
-        <p className="text-white/20 text-xs mt-1">Visite perfis e clique em "Conectar" para comecar</p>
+        <p className="text-white/40 text-sm">Você aindanão tem conexões</p>
+        <p className="text-white/20 text-xs mt-1">Visite perfis e clique em "Conectar" para começar</p>
       </div>
     );
   }
@@ -156,7 +156,7 @@ function MyConnectionsTab() {
             onClick={() => removeMutation.mutate(conn.id)}
             disabled={removeMutation.isPending}
             className="p-2 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
-            title="Remover conexao"
+            title="Remover conexão"
           >
             <Trash2 size={14} />
           </button>
@@ -254,7 +254,7 @@ function DiscoverTab({ query, onQueryChange, myProfileId }: { query: string; onQ
           type="text"
           value={query}
           onChange={(e) => { onQueryChange(e.target.value); setPage(1); }}
-          placeholder="Buscar por nome, tagline ou localizacao..."
+          placeholder="Buscar por nome, tagline ou localização..."
           className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:border-brand-cyan/50 focus:outline-none transition-colors"
         />
       </div>

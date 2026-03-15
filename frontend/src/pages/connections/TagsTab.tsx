@@ -70,7 +70,7 @@ export default function TagsTab() {
           </div>
           <p className="text-sm font-semibold text-white mb-1">Nenhuma tag</p>
           <p className="text-xs text-white/40 max-w-xs mx-auto">
-            Crie tags para categorizar suas conexoes (ex: "Conferencia", "Amigos", "Trabalho").
+            Crie tags para categorizar suas conexões (ex: "Conferência", "Amigos", "Trabalho").
           </p>
         </div>
       ) : (
@@ -85,7 +85,7 @@ export default function TagsTab() {
               <div className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: tag.color || '#888' }} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">{tag.name}</p>
-                <p className="text-[10px] text-white/30">{tag.connectionCount} conexoes</p>
+                <p className="text-[10px] text-white/30">{tag.connectionCount} conexões</p>
               </div>
               <button
                 type="button"

@@ -14,7 +14,7 @@ export class AppException extends HttpException {
     return new AppException(HttpStatus.BAD_REQUEST, 'BAD_REQUEST', message, details);
   }
 
-  static unauthorized(message = 'Nao autorizado') {
+  static unauthorized(message = 'Não autorizado') {
     return new AppException(HttpStatus.UNAUTHORIZED, 'UNAUTHORIZED', message);
   }
 
@@ -23,7 +23,7 @@ export class AppException extends HttpException {
   }
 
   static notFound(resource = 'Recurso') {
-    return new AppException(HttpStatus.NOT_FOUND, 'NOT_FOUND', `${resource} nao encontrado`);
+    return new AppException(HttpStatus.NOT_FOUND, 'NOT_FOUND', `${resource}não encontrado`);
   }
 
   static conflict(message: string) {

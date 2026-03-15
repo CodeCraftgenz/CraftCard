@@ -60,7 +60,7 @@ export function OrgDashboardPage() {
     { key: 'overview', label: 'Visao Geral', icon: BarChart3 },
     { key: 'members', label: 'Membros', icon: Users },
     { key: 'branding', label: 'Branding', icon: Settings },
-    { key: 'domain', label: 'Dominio', icon: Globe },
+    { key: 'domain', label: 'Domínio', icon: Globe },
     { key: 'analytics', label: 'Analytics', icon: Eye },
     { key: 'leads', label: 'Leads', icon: Mail },
   ];
@@ -101,7 +101,7 @@ export function OrgDashboardPage() {
                 />
               </div>
               <span className="text-white/30 text-xs">·</span>
-              <span className="text-white/50 text-sm">{org.profileCount} cartoes</span>
+              <span className="text-white/50 text-sm">{org.profileCount} cartões</span>
             </div>
           </div>
         </div>
@@ -153,15 +153,15 @@ function OverviewTab({ orgId, myRole }: { orgId: string; myRole: string }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={Eye} label="Visualizacoes" value={analytics?.totalViews ?? 0} />
+        <StatCard icon={Eye} label="Visualizações" value={analytics?.totalViews ?? 0} />
         <StatCard icon={MessageSquare} label="Mensagens" value={analytics?.totalMessages ?? 0} />
         <StatCard icon={Calendar} label="Agendamentos" value={analytics?.totalBookings ?? 0} />
-        <StatCard icon={Users} label="Cartoes" value={analytics?.memberProfiles?.length ?? 0} />
+        <StatCard icon={Users} label="Cartões" value={analytics?.memberProfiles?.length ?? 0} />
       </div>
 
       {analytics?.memberProfiles && analytics.memberProfiles.length > 0 && (
         <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-          <h3 className="text-white font-semibold mb-4">Cartoes da Equipe</h3>
+          <h3 className="text-white font-semibold mb-4">Cartões da Equipe</h3>
           <div className="space-y-3">
             {analytics.memberProfiles.map((p) => (
               <div key={p.id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
@@ -184,14 +184,14 @@ function OverviewTab({ orgId, myRole }: { orgId: string; myRole: string }) {
             Zona de Perigo
           </h3>
           <p className="text-white/40 text-xs mb-4">
-            Excluir a organizacao remove todos os membros, convites e desvincula os cartoes. Esta acao nao pode ser desfeita.
+            Excluir a organização remove todos os membros, convites e desvincula os cartões. Esta acaonão pode ser desfeita.
           </p>
           {!showDeleteConfirm ? (
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-sm font-medium hover:bg-red-500/20 transition-colors"
             >
-              Excluir Organizacao
+              Excluir Organização
             </button>
           ) : (
             <div className="space-y-3">
@@ -327,7 +327,7 @@ function MembersTab({ orgId, myRole, org }: { orgId: string; myRole: string; org
         {inviteResult && !inviteResult.emailSent && (
           <div className="mt-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
             <p className="text-yellow-400 text-sm font-medium mb-2">
-              Convite criado, mas o email nao foi enviado.
+              Convite criado, mas o emailnão foi enviado.
             </p>
             <p className="text-white/50 text-xs mb-3">
               Compartilhe o link abaixo manualmente com o convidado:
@@ -370,7 +370,7 @@ function MembersTab({ orgId, myRole, org }: { orgId: string; myRole: string; org
             <div>
               <p className="text-amber-400 font-medium text-sm">Limite de assentos atingido</p>
               <p className="text-white/50 text-xs mt-1">
-                Sua organizacao utiliza {org.memberCount}/{totalSeats} assentos.
+                Sua organização utiliza {org.memberCount}/{totalSeats} assentos.
                 Entre em contato com o administrador para adquirir assentos extras.
               </p>
             </div>
@@ -549,7 +549,7 @@ function BrandingTab({ orgId, org }: { orgId: string; org: BrandingOrg }) {
           />
           <div>
             <span className="text-white text-sm font-medium">Ativar branding corporativo</span>
-            <p className="text-white/40 text-xs mt-0.5">Quando ativo, membros nao podem alterar o visual dos cartoes</p>
+            <p className="text-white/40 text-xs mt-0.5">Quando ativo, membrosnão podem alterar o visual dos cartões</p>
           </div>
         </label>
       </div>
@@ -585,7 +585,7 @@ function BrandingTab({ orgId, org }: { orgId: string; org: BrandingOrg }) {
           <select
             value={font}
             onChange={(e) => setFont(e.target.value)}
-            aria-label="Fonte da organizacao"
+            aria-label="Fonte da organização"
             className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm w-full focus:outline-none focus:border-brand-cyan/50"
           >
             {AVAILABLE_FONTS.map((f) => (
@@ -596,7 +596,7 @@ function BrandingTab({ orgId, org }: { orgId: string; org: BrandingOrg }) {
 
         {/* Card Theme */}
         <div>
-          <label className="text-white/60 text-xs block mb-2">Tema do Cartao</label>
+          <label className="text-white/60 text-xs block mb-2">Tema do Cartão</label>
           <div className="grid grid-cols-5 gap-2">
             {THEMES.map((t) => (
               <button
@@ -755,14 +755,14 @@ function BrandingTab({ orgId, org }: { orgId: string; org: BrandingOrg }) {
 
         <div className="border-t border-white/5 pt-4">
           <p className="text-white/40 text-xs mb-3">
-            Aplica as configuracoes visuais acima em todos os cartoes linkados a organizacao.
+            Aplica as configuracoes visuais acima em todos os cartões linkados a organização.
           </p>
           {!showBulkConfirm ? (
             <button
               onClick={() => setShowBulkConfirm(true)}
               className="w-full py-2.5 bg-white/10 text-white rounded-xl text-sm font-medium hover:bg-white/15 transition-colors"
             >
-              Aplicar em todos os cartoes
+              Aplicar em todos os cartões
             </button>
           ) : (
             <div className="flex gap-2">
@@ -783,7 +783,7 @@ function BrandingTab({ orgId, org }: { orgId: string; org: BrandingOrg }) {
           )}
           {bulkApply.isSuccess && (
             <p className="text-green-400 text-xs mt-2">
-              Branding aplicado em {(bulkApply.data as { count: number })?.count || 0} cartoes!
+              Branding aplicado em {(bulkApply.data as { count: number })?.count || 0} cartões!
             </p>
           )}
         </div>
@@ -824,16 +824,16 @@ function DomainTab({ orgId, org }: { orgId: string; org: { domain: string | null
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
         <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
           <Globe size={18} className="text-brand-cyan" />
-          Dominio Customizado
+          Domínio Customizado
         </h3>
         <p className="text-white/40 text-xs mb-4">
-          Use o endereco da sua empresa para seus cartoes digitais (ex: cartoes.suaempresa.com.br)
+          Use o endereço da sua empresa para seus cartões digitais (ex: cartões.suaempresa.com.br)
         </p>
         <div className="flex gap-2">
           <input
             value={domain}
             onChange={(e) => setDomain(e.target.value)}
-            placeholder="cartoes.suaempresa.com.br"
+            placeholder="cartões.suaempresa.com.br"
             className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50"
           />
           <button
@@ -849,9 +849,9 @@ function DomainTab({ orgId, org }: { orgId: string; org: { domain: string | null
 
       {/* DNS instructions */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h3 className="text-white font-semibold mb-1">Configuracao DNS</h3>
+        <h3 className="text-white font-semibold mb-1">Configuração DNS</h3>
         <p className="text-white/40 text-xs mb-4">
-          Para apontar o dominio da sua empresa para a nossa plataforma, adicione o registro abaixo no painel DNS do seu provedor:
+          Para apontar o domínio da sua empresa para a nossa plataforma, adicione o registro abaixo no painel DNS do seu provedor:
         </p>
 
         <div className="bg-black/30 rounded-xl p-4 border border-white/5 space-y-3">
@@ -862,7 +862,7 @@ function DomainTab({ orgId, org }: { orgId: string; org: { domain: string | null
             </div>
             <div>
               <p className="text-white/30 mb-1">Nome / Host</p>
-              <p className="text-white font-mono">{domain || 'cartoes'}</p>
+              <p className="text-white font-mono">{domain || 'cartões'}</p>
             </div>
             <div>
               <p className="text-white/30 mb-1">Valor / Aponta para</p>
@@ -886,7 +886,7 @@ function DomainTab({ orgId, org }: { orgId: string; org: { domain: string | null
           </p>
           <p className="text-white/50 text-xs flex items-center gap-2">
             <span className="w-5 h-5 rounded-full bg-brand-cyan/10 text-brand-cyan flex items-center justify-center text-[10px] font-bold shrink-0">4</span>
-            Os cartoes da equipe ficarao acessiveis em {domain ? `https://${domain}/slug` : 'https://seudominio.com/slug'}
+            Os cartões da equipe ficarao acessiveis em {domain ? `https://${domain}/slug` : 'https://seudomínio.com/slug'}
           </p>
         </div>
       </div>
@@ -958,13 +958,13 @@ function AnalyticsTab({ orgId }: { orgId: string }) {
         <StatCard icon={MessageSquare} label="Mensagens" value={analytics.totalMessages} />
         <StatCard icon={Calendar} label="Agendamentos" value={analytics.totalBookings} />
         <StatCard icon={MousePointerClick} label="Cliques em Links" value={analytics.totalLinkClicks} />
-        <StatCard icon={Mail} label="Nao Lidas" value={analytics.unreadMessages} />
+        <StatCard icon={Mail} label="Não Lidas" value={analytics.unreadMessages} />
       </div>
 
       {/* Daily views chart */}
       {analytics.dailyViews.length > 0 && (
         <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-          <h3 className="text-white font-semibold mb-4">Visualizacoes (ultimos 30 dias)</h3>
+          <h3 className="text-white font-semibold mb-4">Visualizações (ultimos 30 dias)</h3>
           <div className="flex items-end gap-1 h-32">
             {analytics.dailyViews.map((v) => (
               <div
@@ -1117,7 +1117,7 @@ function AnalyticsTab({ orgId }: { orgId: string }) {
 
       {/* Per-card breakdown */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h3 className="text-white font-semibold mb-4">Por Cartao</h3>
+        <h3 className="text-white font-semibold mb-4">Por Cartão</h3>
         <div className="space-y-3">
           {analytics.memberProfiles
             .sort((a, b) => b.viewCount - a.viewCount)
@@ -1224,7 +1224,7 @@ function LeadsTab({ orgId }: { orgId: string }) {
                   : 'bg-white/5 text-white/50 border border-white/10 hover:border-white/20'
               }`}
             >
-              {f === 'all' ? 'Todos' : f === 'unread' ? 'Nao lidos' : 'Lidos'}
+              {f === 'all' ? 'Todos' : f === 'unread' ? 'Não lidos' : 'Lidos'}
             </button>
           ))}
         </div>
@@ -1261,7 +1261,7 @@ function LeadsTab({ orgId }: { orgId: string }) {
                         markRead.mutate({ leadId: lead.id, isRead: !lead.isRead });
                       }}
                       className="p-1 rounded hover:bg-white/10 transition-colors"
-                      title={lead.isRead ? 'Marcar como nao lido' : 'Marcar como lido'}
+                      title={lead.isRead ? 'Marcar comonão lido' : 'Marcar como lido'}
                     >
                       <MailOpen size={14} className={lead.isRead ? 'text-white/20' : 'text-brand-cyan'} />
                     </button>
@@ -1289,19 +1289,19 @@ function LeadsTab({ orgId }: { orgId: string }) {
             type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
-            aria-label="Pagina anterior"
+            aria-label="Página anterior"
             className="p-2 rounded-lg bg-white/5 border border-white/10 disabled:opacity-30 hover:bg-white/10 transition-colors"
           >
             <ChevronLeft size={16} className="text-white/60" />
           </button>
           <span className="text-sm text-white/50">
-            Pagina {data.page} de {data.totalPages}
+            Página {data.page} de {data.totalPages}
           </span>
           <button
             type="button"
             onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
             disabled={page >= data.totalPages}
-            aria-label="Proxima pagina"
+            aria-label="Próxima página"
             className="p-2 rounded-lg bg-white/5 border border-white/10 disabled:opacity-30 hover:bg-white/10 transition-colors"
           >
             <ChevronRight size={16} className="text-white/60" />

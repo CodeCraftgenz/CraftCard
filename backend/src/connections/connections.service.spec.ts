@@ -111,7 +111,7 @@ describe('ConnectionsService', () => {
 
       await expect(
         service.requestConnection(USER_A, PROFILE_A, PROFILE_A2),
-      ).rejects.toThrow(/proprio perfil/);
+      ).rejects.toThrow(/próprio perfil/);
     });
   });
 
@@ -128,7 +128,7 @@ describe('ConnectionsService', () => {
 
       await expect(
         service.requestConnection(USER_A, PROFILE_A, PROFILE_B),
-      ).rejects.toThrow(/ja estao conectados/);
+      ).rejects.toThrow(/já estão conectados/);
     });
 
     it('should reject if PENDING', async () => {

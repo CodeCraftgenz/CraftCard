@@ -36,7 +36,7 @@ describe('parseMetadata()', () => {
   });
 
   it('should handle hackathon metadata', () => {
-    const meta = parseMetadata('{"hackathonArea":"ti","hackathonSkills":["comunicacao","equipe"]}');
+    const meta = parseMetadata('{"hackathonArea":"ti","hackathonSkills":["comunicação","equipe"]}');
     expect(meta.hackathonArea).toBe('ti');
   });
 });

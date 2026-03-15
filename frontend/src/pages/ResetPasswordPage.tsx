@@ -5,9 +5,9 @@ import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 
 const PASSWORD_RULES = [
-  { test: (v: string) => v.length >= 8, label: 'Minimo 8 caracteres' },
+  { test: (v: string) => v.length >= 8, label: 'Mínimo 8 caracteres' },
   { test: (v: string) => /[A-Z]/.test(v), label: '1 letra maiuscula' },
-  { test: (v: string) => /[0-9]/.test(v), label: '1 numero' },
+  { test: (v: string) => /[0-9]/.test(v), label: '1 número' },
 ];
 
 export function ResetPasswordPage() {
@@ -27,7 +27,7 @@ export function ResetPasswordPage() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Senhas nao conferem');
+      setError('Senhasnão conferem');
       return;
     }
 
@@ -43,7 +43,7 @@ export function ResetPasswordPage() {
       setSuccess(true);
       setTimeout(() => navigate('/login'), 3000);
     } catch (err: any) {
-      setError(err?.message || 'Token invalido ou expirado. Solicite um novo link.');
+      setError(err?.message || 'Token inválido ou expirado. Solicite um novo link.');
     } finally {
       setIsSubmitting(false);
     }
@@ -53,7 +53,7 @@ export function ResetPasswordPage() {
     return (
       <div className="min-h-screen bg-[#0B0E1A] flex items-center justify-center px-4">
         <div className="text-center">
-          <p className="text-white/60 mb-4">Link invalido. Solicite um novo link de recuperacao.</p>
+          <p className="text-white/60 mb-4">Link inválido. Solicite um novo link de recuperacao.</p>
           <Link to="/forgot-password" className="text-brand-cyan hover:text-brand-cyan/80 text-sm font-medium">
             Esqueci minha senha
           </Link>

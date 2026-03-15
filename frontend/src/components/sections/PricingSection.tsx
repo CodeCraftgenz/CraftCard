@@ -16,29 +16,29 @@ interface PlanFeature {
 }
 
 const features: PlanFeature[] = [
-  { label: 'Cartoes pessoais', free: '1', pro: '3', business: '3', enterprise: '3' },
-  { label: 'Assentos na organizacao', free: false, pro: false, business: 'Ate 10', enterprise: 'Ate 10' },
-  { label: 'Botoes de links no cartao', hint: 'Redes sociais e links personalizados exibidos no seu cartao digital', free: '5', pro: '20', business: '50', enterprise: '50' },
+  { label: 'Cartões pessoais', free: '1', pro: '3', business: '3', enterprise: '3' },
+  { label: 'Assentos na organização', free: false, pro: false, business: 'Ate 10', enterprise: 'Ate 10' },
+  { label: 'Botões de links no cartao', hint: 'Redes sociais e links personalizados exibidos no seu cartão digital', free: '5', pro: '20', business: '50', enterprise: '50' },
   { label: 'Temas visuais', free: '3', pro: 'Todos', business: 'Todos', enterprise: 'Todos' },
-  { label: 'Conexoes entre perfis', hint: 'Conecte-se com outros usuarios e apareca na rede de contatos deles', free: '10', pro: '100', business: '500', enterprise: '1000' },
+  { label: 'Conexões entre perfis', hint: 'Conecte-se com outros usuários e apareça na rede de contatos deles', free: '10', pro: '100', business: '500', enterprise: '1000' },
   { label: 'Analytics de visitas e cliques', free: false, pro: true, business: true, enterprise: true },
   { label: 'Galeria de fotos', free: false, pro: true, business: true, enterprise: true },
   { label: 'Agendamentos online', free: false, pro: true, business: true, enterprise: true },
   { label: 'Depoimentos', free: false, pro: true, business: true, enterprise: true },
-  { label: 'Formulario de contato', hint: 'Receba mensagens diretamente pelo seu cartao digital', free: false, pro: true, business: true, enterprise: true },
-  { label: 'Servicos e FAQ', free: false, pro: true, business: true, enterprise: true },
-  { label: 'Curriculo e video', free: false, pro: true, business: true, enterprise: true },
-  { label: 'Fontes e fundos personalizados', hint: 'Fontes customizadas, imagens de fundo, gradientes e padroes', free: false, pro: true, business: true, enterprise: true },
-  { label: 'Estilos de icones', hint: 'Neomorph, Glass, Gradiente e outros estilos visuais para seus links', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Formulário de contato', hint: 'Receba mensagens diretamente pelo seu cartão digital', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Serviços e FAQ', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Currículo e video', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Fontes e fundos personalizados', hint: 'Fontes customizadas, imagens de fundo, gradientes e padrões', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Estilos de ícones', hint: 'Neomorph, Glass, Gradiente e outros estilos visuais para seus links', free: false, pro: true, business: true, enterprise: true },
   { label: 'Export de leads (CSV)', free: false, pro: true, business: true, enterprise: true },
-  { label: 'Dashboard da organizacao', free: false, pro: false, business: true, enterprise: true },
-  { label: 'Branding centralizado', hint: 'Aplique cores, fontes e logo da sua empresa em todos os cartoes', free: false, pro: false, business: true, enterprise: true },
-  { label: 'Webhooks e integracoes', free: false, pro: false, business: true, enterprise: true },
-  { label: 'Eventos', hint: 'Crie eventos para agrupar conexoes por conferencia ou encontro', free: false, pro: '3', business: '10', enterprise: 'Ilimitados' },
-  { label: 'Mapa de conexoes', hint: 'Visualize onde suas conexoes foram feitas com geolocalizacao', free: false, pro: true, business: true, enterprise: true },
-  { label: 'Tags de conexoes', hint: 'Categorize conexoes com etiquetas coloridas', free: false, pro: true, business: true, enterprise: true },
-  { label: 'Wrapped anual', hint: 'Resumo anual das suas conexoes estilo Spotify Wrapped', free: false, pro: true, business: true, enterprise: true },
-  { label: 'Dominio customizado', hint: 'Use o endereco da sua empresa, ex: cartoes.suaempresa.com.br', free: false, pro: false, business: false, enterprise: true },
+  { label: 'Dashboard da organização', free: false, pro: false, business: true, enterprise: true },
+  { label: 'Branding centralizado', hint: 'Aplique cores, fontes e logo da sua empresa em todos os cartões', free: false, pro: false, business: true, enterprise: true },
+  { label: 'Webhooks e integrações', free: false, pro: false, business: true, enterprise: true },
+  { label: 'Eventos', hint: 'Crie eventos para agrupar conexões por conferência ou encontro', free: false, pro: '3', business: '10', enterprise: 'Ilimitados' },
+  { label: 'Mapa de conexões', hint: 'Visualize onde suas conexões foram feitas com geolocalização', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Tags de conexões', hint: 'Categorize conexões com etiquetas coloridas', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Wrapped anual', hint: 'Resumo anual das suas conexões estilo Spotify Wrapped', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Domínio customizado', hint: 'Use o endereço da sua empresa, ex: cartões.suaempresa.com.br', free: false, pro: false, business: false, enterprise: true },
   { label: 'Marca d\'agua CraftCard', free: 'Sim', pro: 'Nao', business: 'Nao', enterprise: 'Nao' },
 ];
 
@@ -257,7 +257,7 @@ export function PricingSection() {
 
               <div className="mb-6">
                 <p className="text-sm text-violet-400 font-semibold uppercase tracking-wider mb-1">Enterprise</p>
-                <p className="text-xs text-slate-600 mb-3">Tudo + dominio customizado</p>
+                <p className="text-xs text-slate-600 mb-3">Tudo + domínio customizado</p>
                 <div className="flex items-baseline gap-1">
                   <span className="font-heading text-4xl font-extrabold text-white">R$299,90</span>
                   <span className="text-sm text-slate-500">/ano</span>
@@ -305,8 +305,8 @@ export function PricingSection() {
                     {isHackathonActive ? 'INSCRICOES ABERTAS' : 'EVENTO'}
                   </span>
                 </div>
-                <p className="text-white/80 text-sm mb-1">Cracha digital + networking + formacao de equipes</p>
-                <p className="text-white/50 text-xs">2 dias de imersao com cartao digital exclusivo, QR Code para conexoes e match de habilidades entre participantes.</p>
+                <p className="text-white/80 text-sm mb-1">Cracha digital + networking + formação de equipes</p>
+                <p className="text-white/50 text-xs">2 dias de imersão com cartão digital exclusivo, QR Code para conexões e match de habilidades entre participantes.</p>
               </div>
               {isHackathonActive ? (
                 <Link
