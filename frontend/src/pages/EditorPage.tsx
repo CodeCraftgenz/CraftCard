@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus, Lock,
   Camera, FileText, Palette, Link2, Sparkles, Smartphone, Building2, Shield,
-  QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, Star, Video, UserPlus, Users, Paintbrush,
+  QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, Star, Video, UserPlus, Users, Paintbrush, Trash2,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
@@ -36,7 +36,7 @@ import {
 } from '@/hooks/useProfile';
 import { api } from '@/lib/api';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import { useContacts, useMarkAsRead } from '@/hooks/useContacts';
+import { useContacts, useMarkAsRead, useDeleteMessage, useDeleteBulkMessages } from '@/hooks/useContacts';
 import { useTestimonials, useApproveTestimonial, useRejectTestimonial } from '@/hooks/useTestimonials';
 import { useGallery, useUploadGalleryImage, useDeleteGalleryImage } from '@/hooks/useGallery';
 import { useMySlots, useSaveSlots, useMyBookings, useUpdateBookingStatus } from '@/hooks/useBookings';
@@ -111,6 +111,8 @@ export function EditorPage() {
   const { data: analytics } = useAnalytics(hasPaid);
   const { data: contacts } = useContacts(hasPaid);
   const markAsRead = useMarkAsRead();
+  const deleteMessage = useDeleteMessage();
+  const deleteBulk = useDeleteBulkMessages();
   const { data: testimonials } = useTestimonials(hasPaid);
   const approveTestimonial = useApproveTestimonial();
   const rejectTestimonial = useRejectTestimonial();
@@ -125,6 +127,7 @@ export function EditorPage() {
   const { data: achievements } = useAchievements();
   const checkAchievements = useCheckAchievements();
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
+  const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const { canInstall, isInstalled, install: installPwa } = usePwaInstall();
   const pushNotifications = usePushNotifications();
@@ -2319,17 +2322,33 @@ export function EditorPage() {
                       </span>
                     )}
                   </div>
-                  {contacts && contacts.length > 0 && (
-                    <a
-                      href={`${API_URL}/contacts/me/export`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-white/50 rounded-lg text-xs hover:bg-white/10 transition-colors"
-                    >
-                      <Download size={12} />
-                      CSV
-                    </a>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {selectedMessages.size > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Excluir ${selectedMessages.size} mensagen${selectedMessages.size > 1 ? 's' : ''}?`)) {
+                            deleteBulk.mutate([...selectedMessages], { onSuccess: () => setSelectedMessages(new Set()) });
+                          }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 text-red-400 rounded-lg text-xs hover:bg-red-500/20 transition-colors"
+                      >
+                        <Trash2 size={12} />
+                        Excluir ({selectedMessages.size})
+                      </button>
+                    )}
+                    {contacts && contacts.length > 0 && (
+                      <a
+                        href={`${API_URL}/contacts/me/export`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-white/50 rounded-lg text-xs hover:bg-white/10 transition-colors"
+                      >
+                        <Download size={12} />
+                        CSV
+                      </a>
+                    )}
+                  </div>
                 </div>
 
                 {contacts && contacts.length > 0 ? (
@@ -2342,9 +2361,21 @@ export function EditorPage() {
                         }`}
                       >
                         <div className="flex items-start gap-3">
+                          {/* Checkbox */}
+                          <input
+                            type="checkbox"
+                            checked={selectedMessages.has(msg.id)}
+                            onChange={(e) => {
+                              const next = new Set(selectedMessages);
+                              if (e.target.checked) next.add(msg.id); else next.delete(msg.id);
+                              setSelectedMessages(next);
+                            }}
+                            className="mt-2.5 w-4 h-4 rounded border-white/20 bg-white/5 text-brand-cyan focus:ring-brand-cyan/50 cursor-pointer shrink-0"
+                            title="Selecionar mensagem"
+                          />
                           {/* Avatar */}
                           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-cyan/20 to-purple-500/20 flex items-center justify-center text-sm font-bold text-brand-cyan shrink-0">
-                            {msg.senderName.charAt(0).toUpperCase()}
+                            {(msg.senderName || '?').charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2">
@@ -2392,6 +2423,14 @@ export function EditorPage() {
                                   Lida
                                 </button>
                               )}
+                              <button
+                                type="button"
+                                onClick={() => { if (confirm('Excluir esta mensagem?')) deleteMessage.mutate(msg.id); }}
+                                className="text-xs text-red-400/40 hover:text-red-400 transition-colors flex items-center gap-1"
+                              >
+                                <Trash2 size={10} />
+                                Excluir
+                              </button>
                             </div>
                           </div>
                         </div>

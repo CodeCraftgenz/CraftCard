@@ -116,6 +116,42 @@ export class ContactsService {
     return updated;
   }
 
+  async deleteMessage(messageId: string, userId: string) {
+    const profiles = await this.prisma.profile.findMany({
+      where: { userId },
+      select: { id: true },
+    });
+    const profileIds = profiles.map((p) => p.id);
+
+    const message = await this.prisma.contactMessage.findUnique({ where: { id: messageId } });
+    if (!message || !profileIds.includes(message.profileId)) {
+      throw AppException.notFound('Mensagem');
+    }
+
+    await this.prisma.contactMessage.delete({ where: { id: messageId } });
+    return { deleted: true };
+  }
+
+  async deleteBulk(ids: string[], userId: string) {
+    if (!ids || ids.length === 0) return { deleted: 0 };
+
+    const profiles = await this.prisma.profile.findMany({
+      where: { userId },
+      select: { id: true },
+    });
+    const profileIds = profiles.map((p) => p.id);
+
+    // Only delete messages that belong to user's profiles
+    const result = await this.prisma.contactMessage.deleteMany({
+      where: {
+        id: { in: ids },
+        profileId: { in: profileIds },
+      },
+    });
+
+    return { deleted: result.count };
+  }
+
   async exportMessagesCsv(userId: string): Promise<string> {
     const profiles = await this.prisma.profile.findMany({
       where: { userId },

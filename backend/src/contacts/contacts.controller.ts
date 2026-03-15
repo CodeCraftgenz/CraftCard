@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { ContactsService } from './contacts.service';
@@ -48,5 +48,19 @@ export class ContactsController {
   @Patch(':id/read')
   async markAsRead(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.contactsService.markAsRead(id, user.sub);
+  }
+
+  @UseGuards(PlanGuard)
+  @RequiresFeature('contacts')
+  @Delete(':id')
+  async deleteMessage(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.contactsService.deleteMessage(id, user.sub);
+  }
+
+  @UseGuards(PlanGuard)
+  @RequiresFeature('contacts')
+  @Post('me/delete-bulk')
+  async deleteBulk(@Body() body: { ids: string[] }, @CurrentUser() user: JwtPayload) {
+    return this.contactsService.deleteBulk(body.ids, user.sub);
   }
 }

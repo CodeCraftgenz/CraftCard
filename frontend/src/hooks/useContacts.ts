@@ -30,6 +30,26 @@ export function useMarkAsRead() {
   });
 }
 
+export function useDeleteMessage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (messageId: string) => api.delete(`/contacts/${messageId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+    },
+  });
+}
+
+export function useDeleteBulkMessages() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: string[]) => api.post('/contacts/me/delete-bulk', { ids }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+    },
+  });
+}
+
 export function useSendMessage() {
   return useMutation({
     mutationFn: ({ slug, data }: { slug: string; data: { senderName: string; senderEmail?: string; message: string } }) =>
