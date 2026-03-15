@@ -271,6 +271,65 @@ export class MailService {
     this.logger.log(`Booking notification queued for ${ownerEmail}`);
   }
 
+  /**
+   * Enterprise welcome email — luxurious design for B2B clients
+   * Includes: plan details, seats, org name, setup password link
+   */
+  async sendEnterpriseWelcome(
+    email: string,
+    opts: {
+      companyName: string;
+      seats: number;
+      monthlyTotal: string;
+      billingCycle: string;
+      setupPasswordUrl: string;
+    },
+  ): Promise<void> {
+    const body = `
+      <div style="background:linear-gradient(135deg, rgba(139,92,246,0.15), rgba(0,228,242,0.1));border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:20px;margin-bottom:20px;text-align:center;">
+        <p style="color:#8B5CF6;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">ENTERPRISE</p>
+        <p style="color:#fff;font-size:24px;font-weight:800;margin:0 0 4px;">${this.esc(opts.companyName)}</p>
+        <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0;">${opts.seats} licenças · ${opts.billingCycle}</p>
+      </div>
+
+      <p style="color:rgba(255,255,255,0.7);font-size:14px;line-height:1.6;margin:0 0 16px;">
+        Bem-vindo ao <strong style="color:#fff;">CraftCard Enterprise</strong>! Sua conta foi ativada com sucesso.
+      </p>
+
+      <div style="margin:0 0 20px;">
+        <div style="display:flex;margin-bottom:8px;">
+          <span style="color:rgba(255,255,255,0.4);font-size:12px;width:120px;">Empresa:</span>
+          <span style="color:#fff;font-size:12px;font-weight:600;">${this.esc(opts.companyName)}</span>
+        </div>
+        <div style="display:flex;margin-bottom:8px;">
+          <span style="color:rgba(255,255,255,0.4);font-size:12px;width:120px;">Licenças:</span>
+          <span style="color:#fff;font-size:12px;font-weight:600;">${opts.seats} membros</span>
+        </div>
+        <div style="display:flex;margin-bottom:8px;">
+          <span style="color:rgba(255,255,255,0.4);font-size:12px;width:120px;">Valor:</span>
+          <span style="color:#00E4F2;font-size:12px;font-weight:600;">R$${opts.monthlyTotal}/mês</span>
+        </div>
+      </div>
+
+      <p style="color:rgba(255,255,255,0.7);font-size:14px;line-height:1.6;margin:0 0 8px;">
+        Clique no botão abaixo para definir sua senha e começar a configurar os cartões da sua equipe:
+      </p>
+    `;
+
+    return this.enqueue(
+      email,
+      `🏢 Bem-vindo ao CraftCard Enterprise — ${opts.companyName}`,
+      this.buildEmail({
+        preheader: `Sua conta Enterprise com ${opts.seats} licenças está pronta!`,
+        title: 'Sua conta Enterprise está pronta!',
+        icon: '🏢',
+        body,
+        ctaText: 'Definir Senha e Acessar',
+        ctaUrl: opts.setupPasswordUrl,
+      }),
+    );
+  }
+
   // ============================================================
   // Email Template Builder
   // ============================================================

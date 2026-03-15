@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -8,6 +8,7 @@ import {
   UserPlus, DollarSign, Mail, GraduationCap,
 } from 'lucide-react';
 import { HackathonAdminDashboard } from '@/hackathon/components/HackathonAdminDashboard';
+import { api } from '@/lib/api';
 import { SaaSMetricsDashboard } from '@/components/organisms/SaaSMetricsDashboard';
 import { Header } from '@/components/organisms/Header';
 import { Pagination } from '@/components/atoms/Pagination';
@@ -23,7 +24,7 @@ import {
   type AdminUser,
 } from '@/hooks/useAdmin';
 
-type Tab = 'dashboard' | 'users' | 'payments' | 'organizations' | 'hackathon';
+type Tab = 'dashboard' | 'users' | 'payments' | 'organizations' | 'hackathon' | 'enterprise';
 
 const PLAN_COLORS: Record<string, string> = {
   FREE: 'bg-white/10 text-white/60',
@@ -49,6 +50,7 @@ export function AdminPage() {
     { key: 'payments', label: 'Pagamentos', icon: CreditCard },
     { key: 'organizations', label: 'Organizacoes', icon: Building2 },
     { key: 'hackathon', label: 'Hackathon', icon: GraduationCap },
+    { key: 'enterprise', label: 'Enterprise', icon: Crown },
   ];
 
   return (
@@ -91,6 +93,7 @@ export function AdminPage() {
         {tab === 'payments' && <PaymentsTab />}
         {tab === 'organizations' && <OrganizationsTab />}
         {tab === 'hackathon' && <HackathonAdminDashboard />}
+        {tab === 'enterprise' && <EnterpriseTab />}
       </div>
     </div>
   );
@@ -826,5 +829,171 @@ function StatCard({ label, value, icon: Icon }: {
       </div>
       <p className="text-white/50 text-xs mt-1">{label}</p>
     </motion.div>
+  );
+}
+
+// --- Enterprise Management Tab ---
+
+function EnterpriseTab() {
+  const [email, setEmail] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [seats, setSeats] = useState(100);
+  const [cycle, setCycle] = useState<'MONTHLY' | 'YEARLY'>('YEARLY');
+  const [activating, setActivating] = useState(false);
+  const [result, setResult] = useState<{ success: boolean; isNewUser: boolean; pricing: Record<string, unknown> } | null>(null);
+  const [clients, setClients] = useState<Array<Record<string, unknown>>>([]);
+
+  // Tiered pricing calculation (mirrors backend)
+  const getTierPrice = (s: number) => {
+    if (s <= 100) return 9.9;
+    if (s <= 250) return 7.9;
+    if (s <= 500) return 5.9;
+    if (s <= 1000) return 4.9;
+    return 3.9;
+  };
+  const pricePerSeat = getTierPrice(seats) * (cycle === 'YEARLY' ? 0.8 : 1);
+  const monthlyTotal = Math.round(pricePerSeat * seats * 100) / 100;
+  const yearlyTotal = Math.round(monthlyTotal * 12 * 100) / 100;
+  const discount = Math.round((1 - pricePerSeat / 9.9) * 100);
+
+  useEffect(() => {
+    api.get('/admin/enterprise/clients').then((data: unknown) => setClients(data as Array<Record<string, unknown>>)).catch(() => {});
+  }, [result]);
+
+  const handleActivate = async () => {
+    if (!email || !companyName || seats < 50) return;
+    setActivating(true);
+    try {
+      const data: unknown = await api.post('/admin/enterprise/activate', { email, companyName, seats, billingCycle: cycle });
+      setResult(data as { success: boolean; isNewUser: boolean; pricing: Record<string, unknown> });
+      setEmail('');
+      setCompanyName('');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Erro ao ativar');
+    }
+    setActivating(false);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Calculator + Activate */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Form */}
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-4">
+          <h3 className="text-white font-semibold flex items-center gap-2">
+            <Crown size={16} className="text-violet-400" /> Ativar Enterprise
+          </h3>
+
+          <input
+            type="email"
+            placeholder="Email do admin da empresa"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-violet-500/50"
+          />
+          <input
+            type="text"
+            placeholder="Nome da empresa"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-violet-500/50"
+          />
+
+          {/* Cycle toggle */}
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setCycle('MONTHLY')} className={`flex-1 py-2 rounded-xl text-xs font-medium border transition ${cycle === 'MONTHLY' ? 'bg-violet-500/20 border-violet-500/30 text-violet-300' : 'bg-white/5 border-white/10 text-white/40'}`}>Mensal</button>
+            <button type="button" onClick={() => setCycle('YEARLY')} className={`flex-1 py-2 rounded-xl text-xs font-medium border transition ${cycle === 'YEARLY' ? 'bg-violet-500/20 border-violet-500/30 text-violet-300' : 'bg-white/5 border-white/10 text-white/40'}`}>Anual (-20%)</button>
+          </div>
+
+          {/* Seats slider */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-white font-semibold">{seats} licenças</span>
+              <span className="text-xs text-violet-300">R${pricePerSeat.toFixed(2).replace('.', ',')}/seat</span>
+            </div>
+            <input type="range" min={50} max={1000} step={10} value={seats} onChange={(e) => setSeats(Number(e.target.value))} className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-violet-500" title="Licenças" />
+            <div className="grid grid-cols-5 gap-1 mt-2 text-[8px]">
+              {[
+                { range: '50-100', active: seats <= 100 },
+                { range: '101-250', active: seats > 100 && seats <= 250 },
+                { range: '251-500', active: seats > 250 && seats <= 500 },
+                { range: '501-1k', active: seats > 500 && seats <= 1000 },
+                { range: '1k+', active: seats > 1000 },
+              ].map((t) => (
+                <span key={t.range} className={`text-center py-0.5 rounded ${t.active ? 'bg-violet-500/20 text-violet-300 font-bold' : 'text-white/20'}`}>{t.range}</span>
+              ))}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleActivate}
+            disabled={activating || !email || !companyName || seats < 50}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold text-sm transition hover:brightness-110 disabled:opacity-40"
+          >
+            {activating ? 'Ativando...' : 'Ativar Enterprise e Enviar Email'}
+          </button>
+
+          {result?.success && (
+            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs">
+              {result.isNewUser ? 'Conta criada e email enviado com sucesso!' : 'Plano atualizado para Enterprise!'}
+            </div>
+          )}
+        </div>
+
+        {/* Price Summary */}
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-4">
+          <h3 className="text-white font-semibold">Orçamento</h3>
+
+          <div className="p-4 rounded-xl bg-gradient-to-br from-violet-500/10 to-indigo-500/10 border border-violet-500/20 text-center">
+            <p className="text-violet-400 text-[10px] font-bold tracking-widest uppercase mb-2">Enterprise</p>
+            <p className="text-3xl font-extrabold text-white">R${monthlyTotal.toFixed(2).replace('.', ',')}<span className="text-lg text-white/40 font-normal">/mês</span></p>
+            {cycle === 'YEARLY' && <p className="text-xs text-white/30 mt-1">R${yearlyTotal.toFixed(2).replace('.', ',')} cobrado anualmente</p>}
+            {discount > 0 && <p className="text-xs text-emerald-400 font-semibold mt-2">{discount}% de desconto por volume{cycle === 'YEARLY' ? ' + 20% anual' : ''}</p>}
+          </div>
+
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between text-white/40"><span>Licenças</span><span className="text-white font-semibold">{seats}</span></div>
+            <div className="flex justify-between text-white/40"><span>Preço/seat/mês</span><span className="text-white font-semibold">R${pricePerSeat.toFixed(2).replace('.', ',')}</span></div>
+            <div className="flex justify-between text-white/40"><span>Ciclo</span><span className="text-white font-semibold">{cycle === 'YEARLY' ? 'Anual' : 'Mensal'}</span></div>
+            <hr className="border-white/5" />
+            <div className="flex justify-between text-white/60 font-semibold"><span>Total mensal</span><span className="text-violet-300">R${monthlyTotal.toFixed(2).replace('.', ',')}</span></div>
+            {cycle === 'YEARLY' && <div className="flex justify-between text-white/60 font-semibold"><span>Total anual</span><span className="text-violet-300">R${yearlyTotal.toFixed(2).replace('.', ',')}</span></div>}
+          </div>
+
+          <div className="text-[10px] text-white/20 space-y-1">
+            <p>50-100 seats: R$9,90 · 101-250: R$7,90 · 251-500: R$5,90</p>
+            <p>501-1000: R$4,90 · 1000+: R$3,90 (sob consulta)</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Enterprise Clients List */}
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+        <h3 className="text-white font-semibold mb-4">Clientes Enterprise Ativos</h3>
+        {clients.length === 0 ? (
+          <p className="text-white/30 text-sm text-center py-4">Nenhum cliente Enterprise ativo</p>
+        ) : (
+          <div className="space-y-2">
+            {clients.map((c: Record<string, unknown>, i: number) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                <div>
+                  <p className="text-white text-sm font-medium">{String(c.name || c.email)}</p>
+                  <p className="text-white/30 text-xs">{String(c.email)}</p>
+                </div>
+                <div className="text-right">
+                  {(c.org as Record<string, unknown>) && (
+                    <>
+                      <p className="text-violet-300 text-xs font-semibold">{String((c.org as Record<string, unknown>).currentMembers)}/{String((c.org as Record<string, unknown>).maxSeats)} seats</p>
+                      <p className="text-white/20 text-[10px]">{String((c.org as Record<string, unknown>).name)}</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

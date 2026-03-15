@@ -14,6 +14,37 @@ export class AdminController {
     return this.adminService.getDashboardStats();
   }
 
+  // --- Enterprise Management ---
+
+  @Post('enterprise/calculate')
+  async calculateEnterprise(@Body() body: { seats: number; billingCycle?: string }) {
+    const cycle = body.billingCycle?.toUpperCase() === 'MONTHLY' ? 'MONTHLY' : 'YEARLY';
+    return this.adminService.calculateEnterprisePrice(body.seats || 50, cycle as 'MONTHLY' | 'YEARLY');
+  }
+
+  @Post('enterprise/activate')
+  async activateEnterprise(@Body() body: {
+    email: string;
+    companyName: string;
+    seats: number;
+    billingCycle?: string;
+  }) {
+    if (!body.email || !body.companyName || !body.seats) {
+      throw new Error('Email, nome da empresa e quantidade de seats são obrigatórios');
+    }
+    return this.adminService.activateEnterprise({
+      email: body.email,
+      companyName: body.companyName,
+      seats: body.seats,
+      billingCycle: body.billingCycle?.toUpperCase() === 'MONTHLY' ? 'MONTHLY' : 'YEARLY',
+    });
+  }
+
+  @Get('enterprise/clients')
+  async listEnterpriseClients() {
+    return this.adminService.listEnterpriseClients();
+  }
+
   @Get('users')
   async listUsers(
     @Query('search') search?: string,

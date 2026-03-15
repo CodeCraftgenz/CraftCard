@@ -1,12 +1,205 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomBytes, createHash } from 'crypto';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import { AppException } from '../common/exceptions/app.exception';
+
+/** Enterprise tiered pricing */
+const ENTERPRISE_TIERS = [
+  { min: 50, max: 100, price: 9.9 },
+  { min: 101, max: 250, price: 7.9 },
+  { min: 251, max: 500, price: 5.9 },
+  { min: 501, max: 1000, price: 4.9 },
+  { min: 1001, max: 99999, price: 3.9 },
+];
+
+function getEnterprisePricePerSeat(seats: number): number {
+  for (const tier of ENTERPRISE_TIERS) {
+    if (seats >= tier.min && seats <= tier.max) return tier.price;
+  }
+  return ENTERPRISE_TIERS[ENTERPRISE_TIERS.length - 1].price;
+}
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
+
+  // --- Enterprise Management ---
+
+  calculateEnterprisePrice(seats: number, billingCycle: 'MONTHLY' | 'YEARLY') {
+    const pricePerSeat = getEnterprisePricePerSeat(seats);
+    const yearlyDiscount = billingCycle === 'YEARLY' ? 0.8 : 1;
+    const effectivePrice = Math.round(pricePerSeat * yearlyDiscount * 100) / 100;
+    const monthlyTotal = Math.round(effectivePrice * seats * 100) / 100;
+    const yearlyTotal = Math.round(monthlyTotal * 12 * 100) / 100;
+    const discount = Math.round((1 - effectivePrice / 9.9) * 100);
+
+    return {
+      seats,
+      billingCycle,
+      pricePerSeat: effectivePrice,
+      monthlyTotal,
+      yearlyTotal: billingCycle === 'YEARLY' ? yearlyTotal : monthlyTotal * 12,
+      discount: Math.max(discount, 0),
+      tiers: ENTERPRISE_TIERS,
+    };
+  }
+
+  async activateEnterprise(data: {
+    email: string;
+    companyName: string;
+    seats: number;
+    billingCycle: 'MONTHLY' | 'YEARLY';
+  }) {
+    const { email, companyName, seats, billingCycle } = data;
+    const pricing = this.calculateEnterprisePrice(seats, billingCycle);
+    const frontendUrl = process.env.FRONTEND_URL || 'https://craftcardgenz.com';
+
+    // 1. Find or create user
+    let user = await this.prisma.user.findUnique({ where: { email } });
+    let isNewUser = false;
+
+    if (!user) {
+      // Create user without password — they'll set it via the reset link
+      const rawToken = randomBytes(32).toString('hex');
+      const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          name: companyName,
+          plan: 'ENTERPRISE',
+          passwordResetToken: tokenHash,
+          passwordResetExpiresAt: expiresAt,
+        },
+      });
+      isNewUser = true;
+
+      // Create default profile
+      const slug = companyName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').slice(0, 40) || `ent-${Date.now().toString(36)}`;
+      await this.prisma.profile.create({
+        data: {
+          userId: user.id,
+          displayName: companyName,
+          slug,
+          isPrimary: true,
+          isPublished: false,
+          label: 'Principal',
+        },
+      });
+
+      // Send welcome email with password setup link
+      const setupUrl = `${frontendUrl}/reset-password?token=${rawToken}`;
+      await this.mailService.sendEnterpriseWelcome(email, {
+        companyName,
+        seats,
+        monthlyTotal: pricing.monthlyTotal.toFixed(2).replace('.', ','),
+        billingCycle: billingCycle === 'YEARLY' ? 'Anual' : 'Mensal',
+        setupPasswordUrl: setupUrl,
+      });
+
+      this.logger.log(`Enterprise activated: NEW user ${email} for ${companyName} (${seats} seats)`);
+    } else {
+      // Existing user — just upgrade plan
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { plan: 'ENTERPRISE' },
+      });
+      isNewUser = false;
+      this.logger.log(`Enterprise activated: EXISTING user ${email} upgraded to ENTERPRISE (${seats} seats)`);
+    }
+
+    // 2. Create or update organization
+    let org = await this.prisma.organization.findFirst({
+      where: { members: { some: { userId: user.id, role: 'OWNER' } } },
+    });
+
+    if (!org) {
+      const orgSlug = `org-${Date.now().toString(36)}`;
+      org = await this.prisma.organization.create({
+        data: {
+          name: companyName,
+          slug: orgSlug,
+          maxMembers: seats,
+          brandingActive: false,
+        },
+      });
+      await this.prisma.organizationMember.create({
+        data: { orgId: org.id, userId: user.id, role: 'OWNER' },
+      });
+    } else {
+      await this.prisma.organization.update({
+        where: { id: org.id },
+        data: { maxMembers: seats, name: companyName },
+      });
+    }
+
+    // 3. Create payment record for audit
+    const now = new Date();
+    const subDays = billingCycle === 'YEARLY' ? 365 : 30;
+    await this.prisma.payment.create({
+      data: {
+        userId: user.id,
+        amount: pricing.monthlyTotal * (billingCycle === 'YEARLY' ? 12 : 1),
+        currency: 'BRL',
+        status: 'approved',
+        plan: 'ENTERPRISE',
+        billingCycle,
+        seatsCount: seats,
+        paidAt: now,
+        expiresAt: new Date(now.getTime() + subDays * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    return {
+      success: true,
+      isNewUser,
+      userId: user.id,
+      orgId: org.id,
+      pricing,
+      emailSent: isNewUser,
+    };
+  }
+
+  async listEnterpriseClients() {
+    const enterprises = await this.prisma.user.findMany({
+      where: { plan: 'ENTERPRISE' },
+      select: {
+        id: true, email: true, name: true, createdAt: true,
+        orgMemberships: {
+          where: { role: 'OWNER' },
+          include: { org: { select: { name: true, maxMembers: true, _count: { select: { members: true } } } } },
+          take: 1,
+        },
+        payments: {
+          where: { plan: 'ENTERPRISE', status: 'approved' },
+          orderBy: { paidAt: 'desc' },
+          take: 1,
+          select: { amount: true, seatsCount: true, billingCycle: true, expiresAt: true, paidAt: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return enterprises.map((u) => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      createdAt: u.createdAt,
+      org: u.orgMemberships[0]?.org ? {
+        name: u.orgMemberships[0].org.name,
+        maxSeats: u.orgMemberships[0].org.maxMembers,
+        currentMembers: u.orgMemberships[0].org._count.members,
+      } : null,
+      lastPayment: u.payments[0] || null,
+    }));
+  }
 
   // --- Dashboard ---
 
