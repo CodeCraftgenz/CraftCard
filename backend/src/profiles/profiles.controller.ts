@@ -69,9 +69,9 @@ export class ProfilesController {
   }
 
   @Public()
-  @Throttle({ medium: { limit: 60, ttl: 60000 } })
+  @Throttle({ medium: { limit: 120, ttl: 60000 } })
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(300000) // 5 min — HTTP-level cache layer (service also caches internally)
+  @CacheTTL(10000) // 10s — short TTL absorbs QR code scan bursts while keeping data fresh
   @Get('profile/:slug')
   async getPublicProfile(
     @Param('slug') slug: string,
@@ -90,7 +90,7 @@ export class ProfilesController {
     } catch { /* ignore invalid/expired tokens */ }
 
     // Edge caching: allow CDN to cache public profiles for 5 min
-    res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=60');
+    res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=5');
     return this.profilesService.getBySlug(slug, viewerUserId);
   }
 
@@ -242,7 +242,7 @@ export class ProfilesController {
   @Public()
   @Throttle({ medium: { limit: 60, ttl: 60000 } })
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(300000) // 5 min
+  @CacheTTL(30000) // 30s
   @Get('profile/:slug/form-fields')
   async getPublicFormFields(@Param('slug') slug: string) {
     return this.sectionsService.getPublicFormFields(slug);

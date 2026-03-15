@@ -74,7 +74,7 @@ export function ConnectButton({ targetProfileId, accent, isLoggedIn }: ConnectBu
             { onSuccess: () => setJustSent(true) },
           );
         },
-        { timeout: 5000, enableHighAccuracy: false },
+        { timeout: 3000, enableHighAccuracy: false, maximumAge: 60000 },
       );
     } else {
       requestMutation.mutate(

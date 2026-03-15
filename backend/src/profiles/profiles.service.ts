@@ -243,7 +243,7 @@ export class ProfilesService {
       orgBranding,
     };
 
-    await this.cache.set(cacheKey, result, 300000); // 5 min TTL
+    await this.cache.set(cacheKey, result, 10000); // 10s TTL — short for burst absorption, fresh for edits
     return result;
   }
 
