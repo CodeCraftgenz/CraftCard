@@ -254,6 +254,31 @@ export function useHackathonDashboard() {
   });
 }
 
+export interface HackathonAnalytics {
+  kpis: {
+    totalParticipants: number;
+    totalViews: number;
+    totalConnections: number;
+    teamsFormed: number;
+    avgPerTeam: number;
+    avgConnectionsPerParticipant: number;
+    orphanCount: number;
+    teamCoverage: number;
+  };
+  topAreas: Array<{ area: string; count: number }>;
+  topSkills: Array<{ skill: string; count: number }>;
+  topParticipants: Array<{ displayName: string; slug: string; photoUrl: string | null; viewCount: number }>;
+  areaDistribution: Record<string, number>;
+}
+
+export function useHackathonAnalytics() {
+  return useQuery<HackathonAnalytics>({
+    queryKey: ['admin', 'hackathon', 'analytics'],
+    queryFn: () => api.get('/admin/hackathon/analytics'),
+    refetchInterval: 30_000,
+  });
+}
+
 export function useHackathonParticipants(search: string, area: string, page = 1) {
   const params = new URLSearchParams();
   if (search) params.set('search', search);

@@ -1,4 +1,5 @@
-import { Controller, Get, Put, Delete, Param, Query, Body, Post } from '@nestjs/common';
+import { Controller, Get, Put, Delete, Param, Query, Body, Post, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { Roles } from '../common/decorators/roles.decorator';
 import { AdminService } from './admin.service';
 import { updateUserSchema } from './dto/update-user.dto';
@@ -100,6 +101,19 @@ export class AdminController {
       page: page ? parseInt(page) : undefined,
       limit: limit ? parseInt(limit) : undefined,
     });
+  }
+
+  @Get('hackathon/analytics')
+  async getHackathonAnalytics() {
+    return this.adminService.getHackathonAnalytics();
+  }
+
+  @Get('hackathon/export-csv')
+  async exportHackathonCsv(@Res() res: Response) {
+    const csv = await this.adminService.exportHackathonCsv();
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="hackathon-senac-participantes.csv"');
+    res.send(csv);
   }
 
   @Get('hackathon/teams')

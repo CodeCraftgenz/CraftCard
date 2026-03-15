@@ -447,6 +447,165 @@ export class AdminService {
     };
   }
 
+  /**
+   * Advanced analytics for executive BI dashboard (Senac ROI report)
+   */
+  async getHackathonAnalytics() {
+    const hackathonStartDate = new Date('2026-04-05');
+
+    const [
+      totalParticipants,
+      teamsFormed,
+      totalTeamMembers,
+      hackathonViews,
+      totalConnections,
+    ] = await Promise.all([
+      this.prisma.profile.count({
+        where: { socialLinks: { some: { linkType: 'hackathon_meta' } } },
+      }),
+      this.prisma.organization.count({
+        where: { slug: { startsWith: 'hackathon-' } },
+      }),
+      this.prisma.organizationMember.count({
+        where: { org: { slug: { startsWith: 'hackathon-' } } },
+      }),
+      this.prisma.profile.aggregate({
+        where: { socialLinks: { some: { linkType: 'hackathon_meta' } } },
+        _sum: { viewCount: true },
+      }),
+      // Connections between hackathon participants
+      this.prisma.connection.count({
+        where: {
+          status: 'ACCEPTED',
+          requester: { socialLinks: { some: { linkType: 'hackathon_meta' } } },
+          addressee: { socialLinks: { some: { linkType: 'hackathon_meta' } } },
+        },
+      }),
+    ]);
+
+    const avgPerTeam = teamsFormed > 0 ? Math.round((totalTeamMembers / teamsFormed) * 10) / 10 : 0;
+    const avgConnectionsPerParticipant = totalParticipants > 0
+      ? Math.round((totalConnections * 2 / totalParticipants) * 10) / 10 // *2 because each connection involves 2 people
+      : 0;
+    const orphanCount = totalParticipants - totalTeamMembers;
+    const teamCoverage = totalParticipants > 0
+      ? Math.round((totalTeamMembers / totalParticipants) * 100)
+      : 0;
+
+    // Parse all hackathon metadata for area + skills aggregation
+    const hackathonLinks = await this.prisma.socialLink.findMany({
+      where: { linkType: 'hackathon_meta' },
+      select: { metadata: true },
+    });
+
+    const areaCounts: Record<string, number> = {};
+    const skillCounts: Record<string, number> = {};
+
+    for (const link of hackathonLinks) {
+      if (!link.metadata) continue;
+      try {
+        const parsed = JSON.parse(link.metadata);
+        if (parsed.hackathonArea) {
+          areaCounts[parsed.hackathonArea] = (areaCounts[parsed.hackathonArea] || 0) + 1;
+        }
+        if (Array.isArray(parsed.hackathonSkills)) {
+          for (const skill of parsed.hackathonSkills) {
+            skillCounts[skill] = (skillCounts[skill] || 0) + 1;
+          }
+        }
+      } catch { /* ignore bad JSON */ }
+    }
+
+    // Top 5 areas sorted by count
+    const topAreas = Object.entries(areaCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([area, count]) => ({ area, count }));
+
+    // Top skills sorted by count
+    const topSkills = Object.entries(skillCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([skill, count]) => ({ skill, count }));
+
+    // Top 10 most viewed participants
+    const topParticipants = await this.prisma.profile.findMany({
+      where: { socialLinks: { some: { linkType: 'hackathon_meta' } } },
+      select: { displayName: true, slug: true, photoUrl: true, viewCount: true },
+      orderBy: { viewCount: 'desc' },
+      take: 10,
+    });
+
+    return {
+      kpis: {
+        totalParticipants,
+        totalViews: Number(hackathonViews._sum.viewCount || 0),
+        totalConnections,
+        teamsFormed,
+        avgPerTeam,
+        avgConnectionsPerParticipant,
+        orphanCount,
+        teamCoverage,
+      },
+      topAreas,
+      topSkills,
+      topParticipants,
+      areaDistribution: areaCounts,
+    };
+  }
+
+  /**
+   * Export all hackathon participants as CSV for Senac directoria
+   */
+  async exportHackathonCsv(): Promise<string> {
+    const profiles = await this.prisma.profile.findMany({
+      where: { socialLinks: { some: { linkType: 'hackathon_meta' } } },
+      select: {
+        displayName: true,
+        slug: true,
+        viewCount: true,
+        user: { select: { email: true } },
+        socialLinks: {
+          where: { linkType: 'hackathon_meta' },
+          select: { metadata: true },
+          take: 1,
+        },
+      },
+      orderBy: { viewCount: 'desc' },
+    });
+
+    // Check team membership
+    const userEmails = profiles.map((p) => p.user.email);
+    const memberships = await this.prisma.organizationMember.findMany({
+      where: {
+        user: { email: { in: userEmails } },
+        org: { slug: { startsWith: 'hackathon-' } },
+      },
+      include: {
+        user: { select: { email: true } },
+        org: { select: { name: true } },
+      },
+    });
+    const teamMap = new Map(memberships.map((m) => [m.user.email, m.org.name]));
+
+    const header = 'Nome,Email,Slug,Area,Skills,Equipe,Scans QR Code\n';
+    const rows = profiles.map((p) => {
+      let area = '';
+      let skills = '';
+      if (p.socialLinks[0]?.metadata) {
+        try {
+          const meta = JSON.parse(p.socialLinks[0].metadata);
+          area = meta.hackathonArea || '';
+          skills = Array.isArray(meta.hackathonSkills) ? meta.hackathonSkills.join('; ') : '';
+        } catch { /* ignore */ }
+      }
+      const team = teamMap.get(p.user.email) || 'Sem equipe';
+      return `${csvEsc(p.displayName)},${csvEsc(p.user.email)},${csvEsc(p.slug)},${csvEsc(area)},${csvEsc(skills)},${csvEsc(team)},${p.viewCount}`;
+    }).join('\n');
+
+    return header + rows;
+  }
+
   async getHackathonParticipants(opts: { search?: string; area?: string; page?: number; limit?: number } = {}) {
     const page = opts.page ?? 1;
     const limit = Math.min(opts.limit ?? 50, 100);
@@ -643,4 +802,12 @@ export class AdminService {
     this.logger.log(`Setting updated: ${key} = ${value}`);
     return { key: setting.key, value: setting.value };
   }
+}
+
+function csvEsc(value: string): string {
+  if (!value) return '';
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
 }

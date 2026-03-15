@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Users, Trophy, Eye, BarChart3, Search, X,
-  GraduationCap, ChevronRight, Crown, Power,
+  Users, Trophy, Eye, BarChart3, Search, X, Download,
+  GraduationCap, ChevronRight, Crown, Power, Link2, UserCheck, UserX,
 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import {
-  useHackathonDashboard,
+  useHackathonAnalytics,
   useHackathonParticipants,
   useHackathonTeams,
   useHackathonTeamDetail,
   useAdminSetting,
   useUpdateAdminSetting,
 } from '@/hooks/useAdmin';
+import { api } from '@/lib/api';
 import { FORMATION_AREAS, HACKATHON_CONFIG, getAreaById, getSkillById } from '../constants';
 import { Pagination } from '@/components/atoms/Pagination';
 import { resolvePhotoUrl } from '@/lib/constants';
@@ -98,60 +100,166 @@ export function HackathonAdminDashboard() {
         ))}
       </div>
 
-      {subTab === 'overview' && <OverviewPanel />}
+      {subTab === 'overview' && <AnalyticsBIPanel />}
       {subTab === 'participants' && <ParticipantsPanel />}
       {subTab === 'teams' && <TeamsPanel />}
     </div>
   );
 }
 
-// ── Overview Panel ─────────────────────────────────────────
+// ── Recharts colors ────────────────────────────────────────
 
-function OverviewPanel() {
-  const { data: stats, isLoading } = useHackathonDashboard();
+const PIE_COLORS = ['#E91E63', '#4CAF50', '#FF9800', '#9C27B0', '#FF5722', '#2196F3', '#F44336', '#607D8B', '#00BCD4', '#8BC34A', '#E040FB', '#00897B', '#3F51B5', '#FF7043'];
 
-  if (isLoading || !stats) {
-    return <div className="text-white/50 text-center py-12">Carregando dados do hackathon...</div>;
+// ── BI Analytics Panel (Executive Dashboard) ──────────────
+
+function AnalyticsBIPanel() {
+  const { data: analytics, isLoading } = useHackathonAnalytics();
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportCsv = async () => {
+    setExporting(true);
+    try {
+      const response = await api.get('/admin/hackathon/export-csv', { responseType: 'blob' });
+      const blob = new Blob([response as unknown as BlobPart], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'hackathon-senac-participantes.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Erro ao exportar CSV');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  if (isLoading || !analytics) {
+    return <div className="text-white/50 text-center py-12">Carregando analytics...</div>;
   }
 
-  const maxArea = Math.max(...Object.values(stats.areaDistribution), 1);
+  const { kpis, topAreas, topSkills, topParticipants } = analytics;
+
+  // Prepare chart data
+  const areaChartData = topAreas.map((a) => {
+    const area = getAreaById(a.area);
+    return { name: area?.name || a.area, value: a.count, color: area?.color || '#888' };
+  });
+
+  const skillChartData = topSkills.slice(0, 8).map((s) => {
+    const skill = getSkillById(s.skill);
+    return { name: skill?.label || s.skill, count: s.count, emoji: skill?.emoji || '' };
+  });
 
   return (
     <div className="space-y-6">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiCard label="Total Participantes" value={stats.totalParticipants} icon={Users} color={HACKATHON_CONFIG.senacBlue} />
-        <KpiCard label="Equipes Formadas" value={stats.teamsFormed} icon={Trophy} color={HACKATHON_CONFIG.senacOrange} />
-        <KpiCard label="Media por Equipe" value={stats.avgPerTeam} icon={BarChart3} color="#22c55e" />
-        <KpiCard label="Visualizacoes" value={stats.totalViews} icon={Eye} color="#8b5cf6" />
+      {/* Export button */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={handleExportCsv}
+          disabled={exporting}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border border-white/10 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition disabled:opacity-50"
+        >
+          <Download size={14} />
+          {exporting ? 'Exportando...' : 'Exportar Relatorio CSV'}
+        </button>
       </div>
 
-      {/* Distribuicao por Area */}
-      {Object.keys(stats.areaDistribution).length > 0 && (
-        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-          <h3 className="text-white font-semibold mb-4">Distribuicao por Area de Formacao</h3>
-          <div className="space-y-2.5">
-            {Object.entries(stats.areaDistribution)
-              .sort((a, b) => b[1] - a[1])
-              .map(([areaId, count]) => {
-                const area = getAreaById(areaId);
-                return (
-                  <div key={areaId} className="flex items-center gap-3">
-                    <span className="text-white/70 text-xs w-44 truncate">{area?.name || areaId}</span>
-                    <div className="flex-1 bg-white/5 rounded-full h-5 overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(count / maxArea) * 100}%` }}
-                        transition={{ duration: 0.6 }}
-                        className="h-full rounded-full flex items-center justify-end pr-2"
-                        style={{ background: area?.color || HACKATHON_CONFIG.senacOrange }}
-                      >
-                        <span className="text-[10px] text-white font-bold">{count}</span>
-                      </motion.div>
-                    </div>
+      {/* KPI Cards — 2 rows */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiCard label="Total Participantes" value={kpis.totalParticipants} icon={Users} color={HACKATHON_CONFIG.senacBlue} />
+        <KpiCard label="Scans de QR Code" value={kpis.totalViews} icon={Eye} color="#8b5cf6" />
+        <KpiCard label="Conexoes Geradas" value={kpis.totalConnections} icon={Link2} color="#22c55e" />
+        <KpiCard label="Equipes Formadas" value={kpis.teamsFormed} icon={Trophy} color={HACKATHON_CONFIG.senacOrange} />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiCard label="Media por Equipe" value={kpis.avgPerTeam} icon={BarChart3} color="#06b6d4" />
+        <KpiCard label="Conexoes/Participante" value={kpis.avgConnectionsPerParticipant} icon={UserCheck} color="#f97316" />
+        <KpiCard label="Em Equipe" value={`${kpis.teamCoverage}%`} icon={Users} color="#22c55e" />
+        <KpiCard label="Sem Equipe" value={kpis.orphanCount} icon={UserX} color="#ef4444" />
+      </div>
+
+      {/* Charts row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Pie Chart — Area distribution */}
+        {areaChartData.length > 0 && (
+          <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
+            <h3 className="text-white font-semibold text-sm mb-4">Distribuicao por Area de Formacao</h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={areaChartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={90}
+                  paddingAngle={3}
+                  dataKey="value"
+                  label={({ name, value }) => `${(name ?? '').toString().split(' ')[0]} (${value})`}
+                  labelLine={false}
+                >
+                  {areaChartData.map((entry, i) => (
+                    <Cell key={i} fill={entry.color || PIE_COLORS[i % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#fff', fontSize: 12 }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Bar Chart — Top Soft Skills */}
+        {skillChartData.length > 0 && (
+          <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
+            <h3 className="text-white font-semibold text-sm mb-4">Top Soft Skills do Evento</h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={skillChartData} layout="vertical" margin={{ left: 0, right: 20 }}>
+                <XAxis type="number" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 10 }} axisLine={false} />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 10 }}
+                  width={100}
+                  axisLine={false}
+                />
+                <Tooltip
+                  contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#fff', fontSize: 12 }}
+                  formatter={(value: unknown) => [`${value} alunos`, 'Total']}
+                />
+                <Bar dataKey="count" fill={HACKATHON_CONFIG.senacOrange} radius={[0, 6, 6, 0]} barSize={18} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+
+      {/* Top Participants (most scanned) */}
+      {topParticipants.length > 0 && (
+        <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
+          <h3 className="text-white font-semibold text-sm mb-4">Participantes Mais Populares (Scans de QR Code)</h3>
+          <div className="space-y-2">
+            {topParticipants.map((p, i) => (
+              <div key={p.slug} className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/[0.03] transition">
+                <span className="text-white/30 text-xs font-mono w-6 text-right">{i + 1}.</span>
+                {p.photoUrl ? (
+                  <img src={resolvePhotoUrl(p.photoUrl)} alt="" className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/40 text-xs font-bold">
+                    {p.displayName[0]}
                   </div>
-                );
-              })}
+                )}
+                <span className="text-white text-sm font-medium flex-1 truncate">{p.displayName}</span>
+                <div className="flex items-center gap-1.5">
+                  <Eye size={12} className="text-purple-400" />
+                  <span className="text-purple-300 text-sm font-bold tabular-nums">{p.viewCount}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -428,10 +536,14 @@ function TeamDetailModal({ orgId, onClose }: { orgId: string; onClose: () => voi
 
 function KpiCard({ label, value, icon: Icon, color }: {
   label: string;
-  value: number;
+  value: number | string;
   icon: typeof Users;
   color: string;
 }) {
+  const display = typeof value === 'number'
+    ? (Number.isInteger(value) ? value.toLocaleString('pt-BR') : value)
+    : value;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -442,9 +554,7 @@ function KpiCard({ label, value, icon: Icon, color }: {
         <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${color}20` }}>
           <Icon size={18} style={{ color }} />
         </div>
-        <p className="text-2xl font-bold text-white">
-          {typeof value === 'number' && Number.isInteger(value) ? value.toLocaleString('pt-BR') : value}
-        </p>
+        <p className="text-2xl font-bold text-white">{display}</p>
       </div>
       <p className="text-white/50 text-xs mt-1.5">{label}</p>
     </motion.div>
