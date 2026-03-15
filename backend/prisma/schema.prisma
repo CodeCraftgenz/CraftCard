@@ -34,6 +34,8 @@ model User {
   notifications     Notification[]
   tags              Tag[]
 
+  @@index([createdAt])
+  @@index([plan])
   @@map("users")
 }
 
@@ -191,6 +193,7 @@ model Payment {
 
   @@index([userId, status])
   @@index([payerEmail])
+  @@index([paidAt])
   @@map("payments")
 }
 
@@ -534,6 +537,8 @@ model Connection {
   @@index([addresseeId, status])
   @@index([requesterId, status])
   @@index([eventId])
+  @@index([createdAt])
+  @@index([acceptedAt])
   @@map("connections")
 }
 

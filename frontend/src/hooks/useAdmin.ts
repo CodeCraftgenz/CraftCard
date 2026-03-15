@@ -1,6 +1,35 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
+// --- SaaS Analytics Types ---
+
+export interface SaaSAnalytics {
+  kpis: {
+    totalUsers: number;
+    usersInPeriod: number;
+    userGrowth: number;
+    totalProfiles: number;
+    totalViews: number;
+    totalConnections: number;
+    connectionsInPeriod: number;
+    totalLeads: number;
+    leadsInPeriod: number;
+  };
+  planDistribution: Record<string, number>;
+  timeSeries: Array<{ date: string; users: number; connections: number }>;
+  topProfiles: Array<{ displayName: string; slug: string; photoUrl: string | null; viewCount: number }>;
+  recentUpgrades: Array<{ userName: string; plan: string; amount: number; paidAt: string }>;
+  spikeProfiles: Array<{ displayName: string; slug: string; photoUrl: string | null; views24h: number }>;
+}
+
+export function useSaaSAnalytics(days = 30) {
+  return useQuery<SaaSAnalytics>({
+    queryKey: ['admin', 'analytics', days],
+    queryFn: () => api.get(`/admin/analytics/overview?days=${days}`),
+    refetchInterval: 60_000,
+  });
+}
+
 // --- Types ---
 
 export interface DashboardStats {

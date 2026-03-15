@@ -8,6 +8,7 @@ import {
   UserPlus, DollarSign, Mail, GraduationCap,
 } from 'lucide-react';
 import { HackathonAdminDashboard } from '@/hackathon/components/HackathonAdminDashboard';
+import { SaaSMetricsDashboard } from '@/components/organisms/SaaSMetricsDashboard';
 import { Header } from '@/components/organisms/Header';
 import { Pagination } from '@/components/atoms/Pagination';
 import {
@@ -115,6 +116,19 @@ function DashboardTab() {
   if (!stats) return <div className="text-white/50 text-center py-12">Carregando...</div>;
 
   const maxPlanCount = Math.max(...Object.values(stats.usersByPlan), 1);
+
+  // BI Dashboard (Recharts) rendered first, then legacy operational data below
+  return (
+    <div className="space-y-8">
+      <SaaSMetricsDashboard />
+      <hr className="border-white/10" />
+      <h3 className="text-white/40 text-sm font-semibold uppercase tracking-wider">Dados Operacionais</h3>
+      <LegacyDashboardContent stats={stats} maxPlanCount={maxPlanCount} />
+    </div>
+  );
+}
+
+function LegacyDashboardContent({ stats, maxPlanCount }: { stats: NonNullable<ReturnType<typeof useAdminDashboard>['data']>; maxPlanCount: number }) {
 
   return (
     <div className="space-y-6">

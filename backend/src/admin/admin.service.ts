@@ -190,6 +190,145 @@ export class AdminService {
     };
   }
 
+  // --- SaaS Analytics Overview (BI Dashboard) ---
+
+  async getAnalyticsOverview(days = 30) {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    startDate.setHours(0, 0, 0, 0);
+
+    const prevStartDate = new Date();
+    prevStartDate.setDate(prevStartDate.getDate() - days * 2);
+    prevStartDate.setHours(0, 0, 0, 0);
+
+    const [
+      totalUsers,
+      usersInPeriod,
+      usersInPrevPeriod,
+      totalProfiles,
+      totalViewsAgg,
+      totalConnections,
+      connectionsInPeriod,
+      totalLeads,
+      leadsInPeriod,
+      planCounts,
+      recentNewUsers,
+      recentConnections,
+      topProfiles,
+      recentUpgrades,
+      spikeProfiles,
+    ] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.user.count({ where: { createdAt: { gte: startDate } } }),
+      this.prisma.user.count({ where: { createdAt: { gte: prevStartDate, lt: startDate } } }),
+      this.prisma.profile.count({ where: { isPublished: true } }),
+      this.prisma.profile.aggregate({ _sum: { viewCount: true } }),
+      this.prisma.connection.count({ where: { status: 'ACCEPTED' } }),
+      this.prisma.connection.count({ where: { status: 'ACCEPTED', acceptedAt: { gte: startDate } } }),
+      this.prisma.contactMessage.count(),
+      this.prisma.contactMessage.count({ where: { createdAt: { gte: startDate } } }),
+      // Plan distribution
+      this.prisma.user.groupBy({ by: ['plan'], _count: true }),
+      // Daily new users for chart
+      this.prisma.user.findMany({
+        where: { createdAt: { gte: startDate } },
+        select: { createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+      // Daily connections for chart
+      this.prisma.connection.findMany({
+        where: { status: 'ACCEPTED', acceptedAt: { gte: startDate } },
+        select: { acceptedAt: true },
+        orderBy: { acceptedAt: 'asc' },
+      }),
+      // Top 5 most viewed profiles
+      this.prisma.profile.findMany({
+        where: { isPublished: true },
+        select: { displayName: true, slug: true, photoUrl: true, viewCount: true },
+        orderBy: { viewCount: 'desc' },
+        take: 5,
+      }),
+      // Recent upgrades (non-FREE payments)
+      this.prisma.payment.findMany({
+        where: { status: 'approved', paidAt: { gte: startDate } },
+        select: { plan: true, amount: true, paidAt: true, user: { select: { name: true, email: true } } },
+        orderBy: { paidAt: 'desc' },
+        take: 10,
+      }),
+      // Spike profiles (high views in last 24h)
+      this.prisma.profileView.findMany({
+        where: { date: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+        select: { profileId: true, count: true, profile: { select: { displayName: true, slug: true, photoUrl: true } } },
+        orderBy: { count: 'desc' },
+        take: 10,
+      }),
+    ]);
+
+    // KPI trends
+    const userGrowth = usersInPrevPeriod > 0
+      ? Math.round(((usersInPeriod - usersInPrevPeriod) / usersInPrevPeriod) * 100)
+      : usersInPeriod > 0 ? 100 : 0;
+
+    // Plan distribution
+    const planDistribution = { FREE: 0, PRO: 0, BUSINESS: 0, ENTERPRISE: 0 };
+    for (const row of planCounts) {
+      planDistribution[row.plan as keyof typeof planDistribution] = row._count;
+    }
+
+    // Daily series: new users
+    const userDailyMap = new Map<string, number>();
+    for (const u of recentNewUsers) {
+      const key = u.createdAt.toISOString().split('T')[0];
+      userDailyMap.set(key, (userDailyMap.get(key) || 0) + 1);
+    }
+
+    // Daily series: connections
+    const connDailyMap = new Map<string, number>();
+    for (const c of recentConnections) {
+      if (c.acceptedAt) {
+        const key = c.acceptedAt.toISOString().split('T')[0];
+        connDailyMap.set(key, (connDailyMap.get(key) || 0) + 1);
+      }
+    }
+
+    // Merge into unified time series
+    const allDates = new Set([...userDailyMap.keys(), ...connDailyMap.keys()]);
+    const timeSeries = [...allDates].sort().map((date) => ({
+      date,
+      users: userDailyMap.get(date) || 0,
+      connections: connDailyMap.get(date) || 0,
+    }));
+
+    return {
+      kpis: {
+        totalUsers,
+        usersInPeriod,
+        userGrowth,
+        totalProfiles,
+        totalViews: Number(totalViewsAgg._sum.viewCount || 0),
+        totalConnections,
+        connectionsInPeriod,
+        totalLeads,
+        leadsInPeriod,
+      },
+      planDistribution,
+      timeSeries,
+      topProfiles,
+      recentUpgrades: recentUpgrades.map((p) => ({
+        userName: p.user.name || p.user.email,
+        plan: p.plan,
+        amount: Number(p.amount),
+        paidAt: p.paidAt,
+      })),
+      spikeProfiles: spikeProfiles.map((s) => ({
+        displayName: s.profile.displayName,
+        slug: s.profile.slug,
+        photoUrl: s.profile.photoUrl,
+        views24h: s.count,
+      })),
+    };
+  }
+
   // --- Users ---
 
   async listUsers(opts: { search?: string; plan?: string; role?: string; page?: number; limit?: number } = {}) {

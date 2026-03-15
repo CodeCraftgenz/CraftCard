@@ -103,6 +103,11 @@ export class AdminController {
     });
   }
 
+  @Get('analytics/overview')
+  async getAnalyticsOverview(@Query('days') days?: string) {
+    return this.adminService.getAnalyticsOverview(days ? parseInt(days) : 30);
+  }
+
   @Get('hackathon/analytics')
   async getHackathonAnalytics() {
     return this.adminService.getHackathonAnalytics();
