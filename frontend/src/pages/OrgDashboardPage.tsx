@@ -184,7 +184,7 @@ function OverviewTab({ orgId, myRole }: { orgId: string; myRole: string }) {
             Zona de Perigo
           </h3>
           <p className="text-white/40 text-xs mb-4">
-            Excluir a organização remove todos os membros, convites e desvincula os cartões. Esta acaonão pode ser desfeita.
+            Excluir a organização remove todos os membros, convites e desvincula os cartões. Esta ação não pode ser desfeita.
           </p>
           {!showDeleteConfirm ? (
             <button
@@ -327,7 +327,7 @@ function MembersTab({ orgId, myRole, org }: { orgId: string; myRole: string; org
         {inviteResult && !inviteResult.emailSent && (
           <div className="mt-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
             <p className="text-yellow-400 text-sm font-medium mb-2">
-              Convite criado, mas o emailnão foi enviado.
+              Convite criado, mas o email não foi enviado.
             </p>
             <p className="text-white/50 text-xs mb-3">
               Compartilhe o link abaixo manualmente com o convidado:
@@ -549,7 +549,7 @@ function BrandingTab({ orgId, org }: { orgId: string; org: BrandingOrg }) {
           />
           <div>
             <span className="text-white text-sm font-medium">Ativar branding corporativo</span>
-            <p className="text-white/40 text-xs mt-0.5">Quando ativo, membrosnão podem alterar o visual dos cartões</p>
+            <p className="text-white/40 text-xs mt-0.5">Quando ativo, membros não podem alterar o visual dos cartões</p>
           </div>
         </label>
       </div>
@@ -1261,7 +1261,7 @@ function LeadsTab({ orgId }: { orgId: string }) {
                         markRead.mutate({ leadId: lead.id, isRead: !lead.isRead });
                       }}
                       className="p-1 rounded hover:bg-white/10 transition-colors"
-                      title={lead.isRead ? 'Marcar comonão lido' : 'Marcar como lido'}
+                      title={lead.isRead ? 'Marcar como não lido' : 'Marcar como lido'}
                     >
                       <MailOpen size={14} className={lead.isRead ? 'text-white/20' : 'text-brand-cyan'} />
                     </button>

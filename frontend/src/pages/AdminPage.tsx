@@ -314,7 +314,7 @@ function LegacyDashboardContent({ stats, maxPlanCount }: { stats: NonNullable<Re
               ))}
             </div>
           ) : (
-            <p className="text-white/30 text-sm text-center py-4">Nenhum leadnão lido</p>
+            <p className="text-white/30 text-sm text-center py-4">Nenhum lead não lido</p>
           )}
         </div>
 
@@ -400,7 +400,7 @@ function UsersTab() {
   };
 
   const handleDelete = (user: AdminUser) => {
-    if (!confirm(`Deletar usuário ${user.email}? Esta acaonão pode ser desfeita.`)) return;
+    if (!confirm(`Deletar usuário ${user.email}? Esta ação não pode ser desfeita.`)) return;
     deleteUser.mutate(user.id);
   };
 

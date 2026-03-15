@@ -104,7 +104,7 @@ export default function HackathonOnboarding() {
         <div className="text-center max-w-md">
           <GraduationCap size={48} className="mx-auto mb-4 text-white/30" />
           <h1 className="text-2xl font-bold text-white mb-2">Inscrições encerradas</h1>
-          <p className="text-white/50 text-sm mb-6">O evento {HACKATHON_CONFIG.name} aindanão está com inscrições abertas ou já foi encerrado.</p>
+          <p className="text-white/50 text-sm mb-6">O evento {HACKATHON_CONFIG.name} ainda não está com inscrições abertas ou já foi encerrado.</p>
           <button
             type="button"
             onClick={() => navigate('/')}

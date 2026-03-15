@@ -64,7 +64,7 @@ export function OrgJoinPage() {
                 <X className="text-red-400" size={24} />
               </div>
               <h2 className="text-white text-lg font-semibold mb-2">Convite inválido</h2>
-              <p className="text-white/50 text-sm mb-4">{previewErrMsg || 'Convitenão encontrado'}</p>
+              <p className="text-white/50 text-sm mb-4">{previewErrMsg || 'Convite não encontrado'}</p>
               <button
                 type="button"
                 onClick={() => navigate('/editor')}

@@ -35,7 +35,7 @@ export function RegisterPage() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Senhasnão conferem');
+      setError('Senhas não conferem');
       return;
     }
 

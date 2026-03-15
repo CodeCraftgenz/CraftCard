@@ -98,7 +98,7 @@ export function HeroSection() {
             className="mt-6 text-lg text-slate-400 max-w-lg mx-auto lg:mx-0 leading-relaxed"
           >
             <Typewriter
-              text="Crie um cartão digital completo com foto, bio, redes sociais e WhatsApp. Compartilhe com um único link e cause uma otima primeira impressao."
+              text="Crie um cartão digital completo com foto, bio, redes sociais e WhatsApp. Compartilhe com um único link e cause uma ótima primeira impressão."
               speed={25}
               delay={1200}
             />

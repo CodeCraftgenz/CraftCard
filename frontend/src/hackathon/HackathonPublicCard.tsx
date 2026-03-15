@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
-import { GraduationCap, Sparkles, Share2, Check, QrCode } from 'lucide-react';
+import { GraduationCap, Sparkles, Share2, Check, QrCode, Users } from 'lucide-react';
 import { useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { api } from '@/lib/api';
@@ -16,6 +16,7 @@ import {
 
 interface HackathonProfile {
   id: string;
+  slug: string;
   displayName: string;
   bio: string | null;
   photoUrl: string | null;
@@ -60,8 +61,8 @@ export default function HackathonPublicCard() {
       >
         <div className="text-center">
           <GraduationCap size={48} className="mx-auto mb-4 text-white/30" />
-          <h1 className="text-xl font-bold text-white mb-2">Perfilnão encontrado</h1>
-          <p className="text-white/50 text-sm">Esse cartão do hackathonnão existe ou foi removido.</p>
+          <h1 className="text-xl font-bold text-white mb-2">Perfil não encontrado</h1>
+          <p className="text-white/50 text-sm">Esse cartão do hackathon não existe ou foi removido.</p>
         </div>
       </div>
     );
@@ -254,12 +255,29 @@ export default function HackathonPublicCard() {
             )}
 
             {/* Actions */}
-            <div className="px-6 pb-4 flex gap-3">
+            <div className="px-6 pb-2 space-y-2">
+              {/* Invite to team button */}
+              <button
+                type="button"
+                onClick={() => {
+                  const teamUrl = `${window.location.origin}/hackathon?team=${slug}`;
+                  if (navigator.share) {
+                    navigator.share({ title: `Junte-se à equipe de ${profile.displayName}`, url: teamUrl }).catch(() => {});
+                  } else {
+                    navigator.clipboard.writeText(teamUrl);
+                  }
+                }}
+                className="w-full py-3 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all hover:brightness-110"
+                style={{ background: `linear-gradient(135deg, ${HACKATHON_CONFIG.senacBlue}, ${accentColor})` }}
+              >
+                <Users size={16} /> Convidar para Equipe
+              </button>
+
+              {/* Share */}
               <button
                 type="button"
                 onClick={handleShare}
-                className="flex-1 py-3 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all hover:brightness-110"
-                style={{ background: `linear-gradient(135deg, ${HACKATHON_CONFIG.senacBlue}, ${accentColor})` }}
+                className="w-full py-3 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all border border-white/10 bg-white/5 hover:bg-white/10"
               >
                 {copied ? <><Check size={16} /> Copiado!</> : <><Share2 size={16} /> Compartilhar</>}
               </button>

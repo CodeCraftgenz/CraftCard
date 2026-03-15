@@ -123,7 +123,7 @@ function MyConnectionsTab() {
     return (
       <div className="text-center py-12">
         <Users size={32} className="mx-auto text-white/20 mb-3" />
-        <p className="text-white/40 text-sm">Você aindanão tem conexões</p>
+        <p className="text-white/40 text-sm">Você ainda não tem conexões</p>
         <p className="text-white/20 text-xs mt-1">Visite perfis e clique em "Conectar" para começar</p>
       </div>
     );
