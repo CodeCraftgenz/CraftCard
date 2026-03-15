@@ -2790,13 +2790,8 @@ export function EditorPage() {
             </motion.div>
           </motion.div>
 
-          {/* Live Preview */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="lg:sticky lg:top-8 self-start hidden lg:block"
-          >
+          {/* Live Preview — no motion.div (transform breaks sticky) */}
+          <div className="sticky top-6 self-start hidden lg:block">
             <div className="flex items-center gap-2 mb-4">
               <Smartphone size={16} className="text-white/40" />
               <h3 className="font-semibold text-white/60">Preview Mobile</h3>
@@ -2827,7 +2822,7 @@ export function EditorPage() {
                 socialLinks={form.socialLinks}
               />
             </MobilePreview>
-          </motion.div>
+          </div>
         </div>
       </div>
 

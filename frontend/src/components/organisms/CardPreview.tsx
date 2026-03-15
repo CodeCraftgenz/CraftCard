@@ -349,23 +349,49 @@ export const CardPreview = memo(function CardPreview({
               if (linkLayout === 'grid') {
                 const gic = getPreviewIconStyle(iconStyle, platColor, accent);
                 const gs = getGridSize(link.metadata);
-                const gridRadius = getPreviewShapeRadius(blockShape);
+                const gridRadius = getPreviewShapeRadius(effectiveStyle !== 'default' ? effectiveStyle : 'rounded');
+
+                // Grid background + border based on effective style
+                const gridBg = (() => {
+                  switch (effectiveStyle) {
+                    case 'ghost': return 'transparent';
+                    case 'outline': return 'transparent';
+                    case 'glassmorphism': return 'rgba(255,255,255,0.07)';
+                    case 'neon-border': return 'rgba(255,255,255,0.03)';
+                    case 'elevated': return 'rgba(255,255,255,0.08)';
+                    default: return `${platColor}12`;
+                  }
+                })();
+                const gridBorder = (() => {
+                  switch (effectiveStyle) {
+                    case 'outline': return `1px solid ${accent}60`;
+                    case 'neon-border': return `1px solid ${accent}60`;
+                    case 'ghost': return 'none';
+                    case 'brutalist': return `2px solid ${accent}`;
+                    default: return `1px solid ${platColor}20`;
+                  }
+                })();
+
                 return (
                   <motion.div
                     key={i}
                     whileHover={getHoverAnim(linkAnimation)}
                     whileTap={{ scale: 0.98 }}
-                    className="flex flex-col items-center justify-center gap-1 py-3 px-1 text-white transition-all cursor-pointer relative overflow-hidden"
+                    className={`flex flex-col items-center justify-center gap-1 py-3 px-1 text-white transition-all cursor-pointer relative overflow-hidden group ${
+                      effectiveStyle === 'glassmorphism' ? 'backdrop-blur-md' : ''
+                    } ${effectiveStyle === 'elevated' ? 'shadow-lg shadow-black/30' : ''}`}
                     style={{
-                      backgroundColor: `${platColor}12`,
-                      border: blockShape === 'brutalist' ? `2px solid ${accent}` : `1px solid ${platColor}20`,
+                      backgroundColor: gridBg,
+                      border: gridBorder,
                       borderRadius: gridRadius,
                       gridColumn: `span ${gs.cols}`,
                       gridRow: `span ${gs.rows}`,
-                      ...(blockShape === 'brutalist' ? { boxShadow: `2px 2px 0 ${accent}40` } : {}),
+                      ...(effectiveStyle === 'brutalist' ? { boxShadow: `2px 2px 0 ${accent}40` } : {}),
+                      ...(effectiveStyle === 'neon-border' ? { boxShadow: `0 0 6px ${accent}30, inset 0 0 6px ${accent}08` } : {}),
                     }}
                   >
-                    {blockTexture !== 'none' && <div className="absolute inset-0 pointer-events-none" style={getPreviewTextureStyle(blockTexture, accent)} />}
+                    {hasSkin && <div className="absolute inset-0 pointer-events-none transition-transform duration-300 group-hover:scale-105" style={{ background: getPreviewSkinBg(buttonSkinUrl, accent) }} />}
+                    {!hasSkin && blockTexture !== 'none' && <div className="absolute inset-0 pointer-events-none" style={getPreviewTextureStyle(blockTexture, accent)} />}
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center relative z-[1]" style={gic.style}>
                       <Icon size={16} className="shrink-0" style={{ color: gic.iconColor }} />
                     </div>
