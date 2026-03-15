@@ -82,8 +82,9 @@ export function PricingSection() {
   const { isAuthenticated } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'YEARLY'>('YEARLY');
-  const [businessSeats, setBusinessSeats] = useState(5);
+  const [businessSeats, setBusinessSeats] = useState(10);
   const [showAllFeatures, setShowAllFeatures] = useState(false);
+  const [showSeatsModal, setShowSeatsModal] = useState(false);
   const { data: hackathonSetting } = usePublicSetting('hackathon_active');
   const isHackathonActive = hackathonSetting?.value === 'true';
   const visibleFeatures = showAllFeatures ? features : features.slice(0, 8);
@@ -162,7 +163,7 @@ export function PricingSection() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
           {/* FREE */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -270,46 +271,14 @@ export function PricingSection() {
               <p className="text-sm text-indigo-400 font-semibold uppercase tracking-wider mb-1">Business</p>
               <p className="text-xs text-slate-600 mb-3">Gestão de equipe centralizada</p>
               <div className="flex items-baseline gap-1 flex-wrap">
-                {businessSavingsPercent > 0 && <span className="text-sm text-white/40 line-through">R$49,90</span>}
-                <span className="font-heading text-3xl sm:text-4xl font-extrabold text-white">R${businessPricePerSeat.toFixed(2).replace('.', ',')}</span>
-                <span className="text-xs text-slate-500">/mês por seat</span>
+                <span className="text-sm text-white/40 line-through">R$49,90</span>
+                <span className="font-heading text-3xl sm:text-4xl font-extrabold text-white">R${(isYearly ? Math.round(24.9 * 0.8 * 100) / 100 : 24.9).toFixed(2).replace('.', ',')}</span>
               </div>
+              <p className="text-xs text-slate-500 mt-1">a partir de /mês por seat · 5 a 50 membros</p>
               <p className="text-xs mt-1">
-                {businessSavingsPercent > 0 ? (
-                  <><span className="text-emerald-400 font-semibold">{businessSavingsPercent}% OFF por volume</span><span className="text-white/30"> · {businessSeats}× R${businessPricePerSeat.toFixed(2).replace('.', ',')}</span></>
-                ) : (
-                  <span className="text-white/30">{businessSeats} membros × R${businessPricePerSeat.toFixed(2).replace('.', ',')}</span>
-                )}
+                <span className="text-emerald-400 font-semibold">Até 38% OFF por volume</span>
+                {isYearly && <span className="text-white/30"> + 20% desconto anual</span>}
               </p>
-
-              {/* Seats selector — clear UI */}
-              <div className="mt-4 p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Users size={14} className="text-indigo-400" />
-                    <span className="text-sm font-semibold text-white">{businessSeats} colaboradores</span>
-                  </div>
-                  <span className="text-lg font-bold text-white">
-                    R${businessTotal.toFixed(2).replace('.', ',')}
-                    <span className="text-slate-500 font-normal text-[10px]">/mês</span>
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={5}
-                  max={50}
-                  value={businessSeats}
-                  onChange={(e) => setBusinessSeats(Number(e.target.value))}
-                  className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-indigo-500"
-                  title="Número de colaboradores"
-                />
-                <div className="grid grid-cols-4 gap-1 text-[8px]">
-                  <span className={`text-center py-0.5 rounded ${businessSeats <= 10 ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-slate-600'}`}>5-10</span>
-                  <span className={`text-center py-0.5 rounded ${businessSeats > 10 && businessSeats <= 20 ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-slate-600'}`}>11-20 -12%</span>
-                  <span className={`text-center py-0.5 rounded ${businessSeats > 20 && businessSeats <= 35 ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-slate-600'}`}>21-35 -25%</span>
-                  <span className={`text-center py-0.5 rounded ${businessSeats > 35 ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-slate-600'}`}>36-50 -38%</span>
-                </div>
-              </div>
             </div>
 
             <div className="space-y-2.5 mb-8 flex-1">
@@ -320,12 +289,11 @@ export function PricingSection() {
 
             <button
               type="button"
-              onClick={() => handleCheckout('BUSINESS')}
-              disabled={loadingPlan !== null}
-              className="btn-glossy btn-glow-hover group w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl gradient-bg text-white font-semibold transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/50"
+              onClick={() => setShowSeatsModal(true)}
+              className="btn-glossy btn-glow-hover group w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl gradient-bg text-white font-semibold transition-all shadow-lg shadow-indigo-500/20 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/50"
             >
-              {loadingPlan === 'BUSINESS' ? 'Redirecionando...' : 'Assinar Business'}
-              {loadingPlan !== 'BUSINESS' && <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-200" />}
+              Assinar Business
+              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-200" />
             </button>
           </motion.div>
 
@@ -436,6 +404,94 @@ export function PricingSection() {
           </div>
         </motion.div>
       </div>
+
+      {/* Business Seats Modal */}
+      {showSeatsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowSeatsModal(false)}>
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-[#0f0f23] border border-white/10 rounded-3xl p-6 shadow-2xl"
+          >
+            <h3 className="text-lg font-bold text-white mb-1">Plano Business</h3>
+            <p className="text-sm text-white/40 mb-5">Escolha o número de colaboradores da sua equipe</p>
+
+            {/* Seats selector */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users size={16} className="text-indigo-400" />
+                  <span className="text-xl font-bold text-white">{businessSeats}</span>
+                  <span className="text-sm text-white/40">membros</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-xl font-bold text-white">R${businessTotal.toFixed(2).replace('.', ',')}</span>
+                  <span className="text-xs text-white/40">/mês</span>
+                </div>
+              </div>
+
+              <input
+                type="range"
+                min={5}
+                max={50}
+                value={businessSeats}
+                onChange={(e) => setBusinessSeats(Number(e.target.value))}
+                className="w-full h-2.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-indigo-500"
+                title="Número de colaboradores"
+              />
+
+              {/* Tier breakdown */}
+              <div className="grid grid-cols-4 gap-1.5">
+                {[
+                  { range: '5-10', price: 39.9, active: businessSeats <= 10 },
+                  { range: '11-20', price: 34.9, active: businessSeats > 10 && businessSeats <= 20 },
+                  { range: '21-35', price: 29.9, active: businessSeats > 20 && businessSeats <= 35 },
+                  { range: '36-50', price: 24.9, active: businessSeats > 35 },
+                ].map((tier) => (
+                  <div
+                    key={tier.range}
+                    className={`text-center py-2 rounded-lg border transition-all ${
+                      tier.active
+                        ? 'border-indigo-500/50 bg-indigo-500/10 text-indigo-300'
+                        : 'border-white/5 text-white/30'
+                    }`}
+                  >
+                    <p className="text-[10px] font-semibold">{tier.range}</p>
+                    <p className="text-xs font-bold">R${tier.price.toFixed(2).replace('.', ',')}</p>
+                    <p className="text-[8px] opacity-60">/seat</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="text-center">
+                <p className="text-xs text-white/30">
+                  R${businessPricePerSeat.toFixed(2).replace('.', ',')} × {businessSeats} membros
+                  {isYearly && ' × 12 meses × 0.8 (desconto anual)'}
+                </p>
+                {businessSavingsPercent > 0 && (
+                  <p className="text-xs text-emerald-400 font-semibold mt-1">
+                    {businessSavingsPercent}% de desconto por volume{isYearly ? ' + 20% anual' : ''}
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => { setShowSeatsModal(false); handleCheckout('BUSINESS'); }}
+                disabled={loadingPlan === 'BUSINESS'}
+                className="w-full py-3 rounded-xl gradient-bg text-white font-semibold text-sm transition-all hover:brightness-110 disabled:opacity-50"
+              >
+                {loadingPlan === 'BUSINESS' ? 'Redirecionando...' : `Assinar Business — R$${businessTotal.toFixed(2).replace('.', ',')}/mês`}
+              </button>
+
+              <p className="text-center text-[10px] text-white/20">
+                Precisa de mais de 50 membros? <a href="https://wa.me/5518997249438?text=Interesse no Enterprise" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Fale com vendas</a>
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </section>
   );
 }
