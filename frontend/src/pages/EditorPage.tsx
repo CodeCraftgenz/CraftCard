@@ -2760,12 +2760,20 @@ export function EditorPage() {
                       <Calendar size={14} className="text-blue-400" />
                       <span className="text-xs text-white/60">Google Calendar</span>
                     </div>
-                    <a
-                      href={`${API_URL}/bookings/google/connect`}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const data: { url: string } = await api.get('/bookings/google/connect-url');
+                          window.location.href = data.url;
+                        } catch {
+                          window.location.href = `${API_URL}/bookings/google/connect`;
+                        }
+                      }}
                       className="text-[10px] px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 hover:bg-blue-500/20 transition"
                     >
                       Conectar
-                    </a>
+                    </button>
                   </div>
                   <p className="text-[10px] text-white/30 mt-1">Agendamentos serão sincronizados automaticamente com seu Google Calendar</p>
                 </div>

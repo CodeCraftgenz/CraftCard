@@ -71,6 +71,14 @@ export class BookingsController {
     res.redirect(url);
   }
 
+  @UseGuards(PlanGuard)
+  @RequiresFeature('bookings')
+  @Get('google/connect-url')
+  async getGoogleConnectUrl(@CurrentUser() user: JwtPayload) {
+    const url = this.googleCalendar.getAuthUrl(user.sub);
+    return { url };
+  }
+
   @Public()
   @Get('google/callback')
   async googleCallback(@Query('code') code: string, @Query('state') userId: string, @Res() res: Response) {
