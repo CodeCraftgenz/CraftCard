@@ -149,7 +149,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const handleLogout = () => {
       clearAccessToken();
-      queryClient.clear();
+      // Remove only authenticated/private queries — preserve public profile caches
+      // so that public card pages (hackathon, regular) don't flash a reload spinner
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const firstKey = query.queryKey[0];
+          return firstKey !== 'public-profile' && firstKey !== 'hackathon-profile';
+        },
+      });
       setState(EMPTY_STATE);
     };
     window.addEventListener('auth:logout', handleLogout);

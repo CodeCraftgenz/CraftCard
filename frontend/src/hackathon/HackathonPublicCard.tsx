@@ -40,6 +40,8 @@ export default function HackathonPublicCard() {
     queryKey: ['hackathon-profile', slug],
     queryFn: () => api.get(`/profile/${slug}`),
     enabled: !!slug,
+    retry: 1,
+    staleTime: 60_000, // 1 min — avoid re-fetch on re-mount after queryClient.clear
   });
 
   if (isLoading) {

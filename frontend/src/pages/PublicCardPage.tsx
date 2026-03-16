@@ -25,7 +25,6 @@ import {
   Briefcase,
   HelpCircle,
   UserPlus,
-  Maximize2,
   Scan,
 } from 'lucide-react';
 import { CustomQrCode } from '@/components/organisms/CustomQrCode';
