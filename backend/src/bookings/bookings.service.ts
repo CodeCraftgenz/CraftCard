@@ -149,15 +149,7 @@ export class BookingsService {
       notes: data.notes || null,
     }).catch(() => {});
 
-    // Google Calendar sync (fire-and-forget)
-    this.googleCalendar.createBookingEvent(profile.userId, {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      date: dateStr,
-      time: data.time,
-      notes: data.notes,
-    }).catch(() => {});
+    // Google Calendar: NOT here — syncs when owner confirms (updateBookingStatus)
 
     return booking;
   }
@@ -225,9 +217,43 @@ export class BookingsService {
       throw AppException.notFound('Agendamento');
     }
 
-    return this.prisma.booking.update({
+    const updated = await this.prisma.booking.update({
       where: { id: bookingId },
       data: { status },
     });
+
+    // Sync to Google Calendar when CONFIRMED
+    if (status === 'confirmed') {
+      const dateStr = booking.date instanceof Date
+        ? booking.date.toISOString().split('T')[0]
+        : String(booking.date).split('T')[0];
+
+      this.googleCalendar.createBookingEvent(userId, {
+        name: booking.name,
+        email: booking.email,
+        phone: booking.phone || undefined,
+        date: dateStr,
+        time: booking.time,
+        notes: booking.notes || undefined,
+      }).catch(() => {});
+    }
+
+    return updated;
+  }
+
+  async deleteBooking(userId: string, bookingId: string) {
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId, isPrimary: true },
+      select: { id: true },
+    });
+    if (!profile) throw AppException.notFound('Perfil');
+
+    const booking = await this.prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!booking || booking.profileId !== profile.id) {
+      throw AppException.notFound('Agendamento');
+    }
+
+    await this.prisma.booking.delete({ where: { id: bookingId } });
+    return { deleted: true };
   }
 }

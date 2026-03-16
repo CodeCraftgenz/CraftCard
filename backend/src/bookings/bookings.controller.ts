@@ -61,6 +61,13 @@ export class BookingsController {
     return this.bookingsService.updateBookingStatus(user.sub, id, status);
   }
 
+  @UseGuards(PlanGuard)
+  @RequiresFeature('bookings')
+  @Delete('me/:id')
+  async deleteBooking(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.bookingsService.deleteBooking(user.sub, id);
+  }
+
   // --- Google Calendar Integration ---
 
   @UseGuards(PlanGuard)

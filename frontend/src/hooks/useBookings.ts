@@ -75,3 +75,11 @@ export function useUpdateBookingStatus() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-bookings'] }),
   });
 }
+
+export function useDeleteBooking() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/bookings/me/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-bookings'] }),
+  });
+}

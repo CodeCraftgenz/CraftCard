@@ -39,7 +39,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { useContacts, useMarkAsRead, useDeleteMessage, useDeleteBulkMessages } from '@/hooks/useContacts';
 import { useTestimonials, useApproveTestimonial, useRejectTestimonial } from '@/hooks/useTestimonials';
 import { useGallery, useUploadGalleryImage, useDeleteGalleryImage } from '@/hooks/useGallery';
-import { useMySlots, useSaveSlots, useMyBookings, useUpdateBookingStatus } from '@/hooks/useBookings';
+import { useMySlots, useSaveSlots, useMyBookings, useUpdateBookingStatus, useDeleteBooking } from '@/hooks/useBookings';
 import { PRESET_BUTTON_COLORS, SOCIAL_PLATFORMS, GRID_SIZES, BLOCK_SHAPES, BLOCK_TEXTURES, BUTTON_SKINS, setMetadataField, getGridSize, parseMetadata, resolvePhotoUrl, API_URL } from '@/lib/constants';
 import { StyleEditor } from '@/components/organisms/StyleEditor';
 import { ServicesEditor } from '@/components/organisms/ServicesEditor';
@@ -124,6 +124,7 @@ export function EditorPage() {
   const saveSlots = useSaveSlots();
   const { data: myBookings } = useMyBookings();
   const updateBookingStatus = useUpdateBookingStatus();
+  const deleteBooking = useDeleteBooking();
   const { data: achievements } = useAchievements();
   const checkAchievements = useCheckAchievements();
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
@@ -2851,24 +2852,29 @@ export function EditorPage() {
                   <div className="border-t border-white/10 pt-4">
                     <p className="text-xs text-white/40 mb-3">Agendamentos recentes</p>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {myBookings.slice(0, 10).map((b) => (
-                        <div key={b.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5 text-xs">
+                      {myBookings.slice(0, 15).map((b) => {
+                        const isPast = new Date(b.date) < new Date(new Date().toDateString());
+                        return (
+                        <div key={b.id} className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs ${isPast ? 'bg-white/[0.02] opacity-50' : 'bg-white/5'}`}>
                           <div className="flex-1 min-w-0">
                             <p className="text-white font-medium truncate">{b.name}</p>
-                            <p className="text-white/40">{new Date(b.date).toLocaleDateString('pt-BR')} as {b.time}</p>
+                            <p className="text-white/40">
+                              {new Date(b.date).toLocaleDateString('pt-BR')} às {b.time}
+                              {isPast && <span className="ml-1 text-white/20">(passado)</span>}
+                            </p>
                           </div>
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0 ${
                             b.status === 'confirmed' ? 'bg-green-500/20 text-green-400' :
                             b.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
                             'bg-yellow-500/20 text-yellow-400'
                           }`}>
                             {b.status === 'confirmed' ? 'Confirmado' : b.status === 'cancelled' ? 'Cancelado' : 'Pendente'}
                           </span>
-                          {b.status === 'pending' && (
-                            <div className="flex gap-1">
+                          {b.status === 'pending' && !isPast && (
+                            <div className="flex gap-1 shrink-0">
                               <button
                                 type="button"
-                                title="Confirmar"
+                                title="Confirmar (sincroniza com Google Calendar)"
                                 onClick={() => updateBookingStatus.mutate({ id: b.id, status: 'confirmed' })}
                                 className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 hover:bg-green-500/30"
                               >
@@ -2884,8 +2890,17 @@ export function EditorPage() {
                               </button>
                             </div>
                           )}
+                          <button
+                            type="button"
+                            title="Excluir agendamento"
+                            onClick={() => { if (confirm('Excluir este agendamento?')) deleteBooking.mutate(b.id); }}
+                            className="w-6 h-6 rounded-full hover:bg-red-500/10 flex items-center justify-center text-white/20 hover:text-red-400 transition shrink-0"
+                          >
+                            <Trash2 size={10} />
+                          </button>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
