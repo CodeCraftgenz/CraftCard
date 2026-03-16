@@ -2776,32 +2776,48 @@ export function EditorPage() {
                     const slot = mySlots?.find((s) => s.dayOfWeek === dayOfWeek);
                     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
                     const hasSlot = !!slot;
+                    const enabledId = `day-enabled-${dayOfWeek}`;
                     return (
-                      <div key={dayOfWeek} className={`flex items-center gap-2 text-sm ${!hasSlot && isWeekend ? 'opacity-40' : ''}`}>
-                        <span className={`w-8 ${isWeekend ? 'text-white/30' : 'text-white/50'}`}>{label}</span>
-                        {hasSlot || !isWeekend ? (
-                          <>
+                      <div key={dayOfWeek} className="flex items-center gap-2 text-sm">
+                        {isWeekend ? (
+                          <label htmlFor={enabledId} className="flex items-center gap-1.5 w-8 cursor-pointer" title={`Ativar ${label}`}>
                             <input
-                              type="time"
-                              title={`Início ${label}`}
-                              defaultValue={slot?.startTime || '09:00'}
-                              className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs [color-scheme:dark]"
-                              data-day={dayOfWeek}
-                              data-field="start"
+                              type="checkbox"
+                              id={enabledId}
+                              defaultChecked={hasSlot}
+                              data-day-toggle={dayOfWeek}
+                              onChange={(e) => {
+                                const row = e.target.closest('div')?.querySelectorAll<HTMLInputElement>('[data-field]');
+                                row?.forEach(el => { el.disabled = !e.target.checked; el.style.opacity = e.target.checked ? '1' : '0.3'; });
+                              }}
+                              className="w-3.5 h-3.5 rounded border-white/20 bg-white/5 text-blue-500 cursor-pointer"
                             />
-                            <span className="text-white/30">-</span>
-                            <input
-                              type="time"
-                              title={`Fim ${label}`}
-                              defaultValue={slot?.endTime || '17:00'}
-                              className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs [color-scheme:dark]"
-                              data-day={dayOfWeek}
-                              data-field="end"
-                            />
-                          </>
+                            <span className="text-white/40">{label}</span>
+                          </label>
                         ) : (
-                          <span className="text-white/20 text-xs italic">Indisponível</span>
+                          <span className="w-8 text-white/50">{label}</span>
                         )}
+                        <input
+                          type="time"
+                          title={`Início ${label}`}
+                          defaultValue={slot?.startTime || '09:00'}
+                          disabled={isWeekend && !hasSlot}
+                          style={{ opacity: isWeekend && !hasSlot ? 0.3 : 1 }}
+                          className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs [color-scheme:dark]"
+                          data-day={dayOfWeek}
+                          data-field="start"
+                        />
+                        <span className="text-white/30">-</span>
+                        <input
+                          type="time"
+                          title={`Fim ${label}`}
+                          defaultValue={slot?.endTime || '17:00'}
+                          disabled={isWeekend && !hasSlot}
+                          style={{ opacity: isWeekend && !hasSlot ? 0.3 : 1 }}
+                          className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs [color-scheme:dark]"
+                          data-day={dayOfWeek}
+                          data-field="end"
+                        />
                       </div>
                     );
                   })}
@@ -2809,8 +2825,11 @@ export function EditorPage() {
                     type="button"
                     onClick={() => {
                       const slots: Array<{ dayOfWeek: number; startTime: string; endTime: string; duration: number }> = [];
-                      // Days: 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sáb
                       for (const d of [1, 2, 3, 4, 5, 6, 0]) {
+                        const isWeekend = d === 0 || d === 6;
+                        const toggle = document.querySelector<HTMLInputElement>(`[data-day-toggle="${d}"]`);
+                        // Weekend: only save if checkbox is checked
+                        if (isWeekend && toggle && !toggle.checked) continue;
                         const startEl = document.querySelector<HTMLInputElement>(`[data-day="${d}"][data-field="start"]`);
                         const endEl = document.querySelector<HTMLInputElement>(`[data-day="${d}"][data-field="end"]`);
                         if (startEl?.value && endEl?.value && startEl.value < endEl.value) {
