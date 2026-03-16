@@ -723,20 +723,6 @@ export function PublicCardPage() {
             />
           )}
 
-          {/* Video Intro */}
-          {profile.videoUrl && (
-            <div className="w-full rounded-xl overflow-hidden mb-4">
-              <video
-                src={profile.videoUrl}
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="w-full max-h-48 object-cover rounded-xl"
-              />
-            </div>
-          )}
-
           {/* Avatar */}
           <div className={`flex flex-col items-center mb-8 ${profile.coverPhotoUrl ? '-mt-14' : ''}`}>
             <div
@@ -830,6 +816,20 @@ export function PublicCardPage() {
             <UserPlus size={18} />
             Salvar Contato
           </motion.button>
+
+          {/* Video Intro */}
+          {profile.videoUrl && (
+            <div className="w-full rounded-xl overflow-hidden mb-4">
+              <video
+                src={profile.videoUrl}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full max-h-48 object-cover rounded-xl"
+              />
+            </div>
+          )}
 
           {/* Links (list or grid layout) */}
           <div className={linkLayout === 'grid' ? 'grid grid-cols-3 gap-2.5' : 'space-y-3'} style={linkLayout === 'grid' ? { gridAutoFlow: 'dense', gridAutoRows: 'minmax(90px, auto)' } : undefined}>
