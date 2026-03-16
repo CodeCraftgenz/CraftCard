@@ -2780,7 +2780,7 @@ export function EditorPage() {
                     return (
                       <div key={dayOfWeek} className="flex items-center gap-2 text-sm">
                         {isWeekend ? (
-                          <label htmlFor={enabledId} className="flex items-center gap-1.5 w-8 cursor-pointer" title={`Ativar ${label}`}>
+                          <label htmlFor={enabledId} className="flex items-center gap-1.5 w-12 shrink-0 cursor-pointer" title={`Ativar ${label}`}>
                             <input
                               type="checkbox"
                               id={enabledId}
@@ -2790,12 +2790,12 @@ export function EditorPage() {
                                 const row = e.target.closest('div')?.querySelectorAll<HTMLInputElement>('[data-field]');
                                 row?.forEach(el => { el.disabled = !e.target.checked; el.style.opacity = e.target.checked ? '1' : '0.3'; });
                               }}
-                              className="w-3.5 h-3.5 rounded border-white/20 bg-white/5 text-blue-500 cursor-pointer"
+                              className="w-3.5 h-3.5 rounded border-white/20 bg-white/5 text-blue-500 cursor-pointer shrink-0"
                             />
-                            <span className="text-white/40">{label}</span>
+                            <span className="text-white/40 text-xs">{label}</span>
                           </label>
                         ) : (
-                          <span className="w-8 text-white/50">{label}</span>
+                          <span className="w-12 shrink-0 text-white/50">{label}</span>
                         )}
                         <input
                           type="time"
