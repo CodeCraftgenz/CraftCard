@@ -235,6 +235,13 @@ export class BookingsService {
         date: dateStr,
         time: booking.time,
         notes: booking.notes || undefined,
+      }).then(async (googleEventId) => {
+        if (googleEventId) {
+          await this.prisma.booking.update({
+            where: { id: bookingId },
+            data: { googleEventId },
+          });
+        }
       }).catch(() => {});
     }
 
@@ -251,6 +258,11 @@ export class BookingsService {
     const booking = await this.prisma.booking.findUnique({ where: { id: bookingId } });
     if (!booking || booking.profileId !== profile.id) {
       throw AppException.notFound('Agendamento');
+    }
+
+    // Delete Google Calendar event if synced
+    if (booking.googleEventId) {
+      this.googleCalendar.deleteBookingEvent(userId, booking.googleEventId).catch(() => {});
     }
 
     await this.prisma.booking.delete({ where: { id: bookingId } });

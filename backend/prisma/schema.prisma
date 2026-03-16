@@ -284,9 +284,10 @@ model Booking {
   phone     String?
   date      DateTime @db.Date
   time      String   @db.VarChar(5)
-  status    String   @default("pending")
-  notes     String?  @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
+  status         String   @default("pending")
+  notes          String?  @db.Text
+  googleEventId  String?  @map("google_event_id") @db.VarChar(200)
+  createdAt      DateTime @default(now()) @map("created_at")
 
   profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 

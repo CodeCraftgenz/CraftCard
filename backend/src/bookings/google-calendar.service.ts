@@ -113,9 +113,14 @@ export class GoogleCalendarService {
       const calendar = google.calendar({ version: 'v3', auth: oauth2 });
       const durationMinutes = booking.duration || 30;
 
-      // Build start/end datetime
-      const startDateTime = new Date(`${booking.date}T${booking.time}:00`);
-      const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60 * 1000);
+      // Build start/end as local time strings (NOT Date objects to avoid UTC conversion)
+      const startLocal = `${booking.date}T${booking.time}:00`;
+      // Calculate end time by adding duration to the time string
+      const [startH, startM] = booking.time.split(':').map(Number);
+      const totalMinutes = startH * 60 + startM + durationMinutes;
+      const endH = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
+      const endM = String(totalMinutes % 60).padStart(2, '0');
+      const endLocal = `${booking.date}T${endH}:${endM}:00`;
 
       const description = [
         `📧 ${booking.email}`,
@@ -124,17 +129,17 @@ export class GoogleCalendarService {
         '\n—\nAgendado via CraftCard',
       ].filter(Boolean).join('\n');
 
-      await calendar.events.insert({
+      const event = await calendar.events.insert({
         calendarId: 'primary',
         requestBody: {
           summary: `Agendamento CraftCard — ${booking.name}`,
           description,
           start: {
-            dateTime: startDateTime.toISOString(),
+            dateTime: startLocal,
             timeZone: 'America/Sao_Paulo',
           },
           end: {
-            dateTime: endDateTime.toISOString(),
+            dateTime: endLocal,
             timeZone: 'America/Sao_Paulo',
           },
           reminders: {
@@ -148,10 +153,35 @@ export class GoogleCalendarService {
         },
       });
 
-      this.logger.log(`Google Calendar event created for booking: ${booking.name} on ${booking.date} ${booking.time}`);
+      this.logger.log(`Google Calendar event created: ${event.data.id}`);
+      return event.data.id || null;
     } catch (err) {
       this.logger.warn(`Failed to create Google Calendar event: ${err}`);
-      // Non-critical — don't fail the booking
+      return null;
+    }
+  }
+
+  /**
+   * Delete a calendar event (when booking is deleted from CraftCard)
+   */
+  async deleteBookingEvent(userId: string, googleEventId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { googleCalendarToken: true },
+      });
+      if (!user?.googleCalendarToken) return;
+
+      const tokens = JSON.parse(user.googleCalendarToken);
+      const oauth2 = this.getOAuth2Client();
+      oauth2.setCredentials(tokens);
+
+      const calendar = google.calendar({ version: 'v3', auth: oauth2 });
+      await calendar.events.delete({ calendarId: 'primary', eventId: googleEventId });
+
+      this.logger.log(`Google Calendar event deleted: ${googleEventId}`);
+    } catch (err) {
+      this.logger.warn(`Failed to delete Google Calendar event: ${err}`);
     }
   }
 }

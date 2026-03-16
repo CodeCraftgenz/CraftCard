@@ -48,6 +48,7 @@ export function useMyBookings() {
   return useQuery<Booking[]>({
     queryKey: ['my-bookings'],
     queryFn: () => api.get('/bookings/me/list'),
+    refetchInterval: 60_000,
   });
 }
 
