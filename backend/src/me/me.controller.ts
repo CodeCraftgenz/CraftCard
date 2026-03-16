@@ -1,4 +1,4 @@
-import { Controller, Get, Delete } from '@nestjs/common';
+import { Controller, Get, Delete, Body } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { PaymentsService } from '../payments/payments.service';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
@@ -60,7 +60,14 @@ export class MeController {
   }
 
   @Delete()
-  async deleteAccount(@CurrentUser() user: JwtPayload) {
+  async deleteAccount(
+    @CurrentUser() user: JwtPayload,
+    @Body('confirm') confirm: string,
+  ) {
+    // Require explicit confirmation string to prevent accidental or CSRF-triggered deletion
+    if (confirm !== 'DELETAR MINHA CONTA') {
+      throw AppException.badRequest('Confirmacao invalida. Envie confirm: "DELETAR MINHA CONTA"');
+    }
     await this.prisma.user.delete({ where: { id: user.sub } });
     return { message: 'Conta excluida com sucesso' };
   }

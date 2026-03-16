@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, Res, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { OrganizationsService } from './organizations.service';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
@@ -172,6 +173,7 @@ export class OrganizationsController {
     return this.orgService.markLeadRead(orgId, leadId, body.isRead);
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @UseGuards(OrgRoleGuard)
   @RequiresOrgRole('ADMIN')
   @Get(':orgId/leads/export')

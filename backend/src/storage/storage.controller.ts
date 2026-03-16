@@ -10,6 +10,7 @@ import {
   MaxFileSizeValidator,
   FileTypeValidator,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as sharp from 'sharp';
 import { StorageService } from './storage.service';
@@ -23,6 +24,8 @@ const MAX_BG_SIZE = 8 * 1024 * 1024; // 8MB — sharp compresses to WebP 1920x10
 const MAX_RESUME_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
 
+// Max 10 uploads per minute per user (prevents storage exhaustion)
+@Throttle({ default: { ttl: 60000, limit: 10 } })
 @Controller()
 export class StorageController {
   constructor(

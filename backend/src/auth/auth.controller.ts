@@ -134,21 +134,6 @@ export class AuthController {
   }
 
   @Public()
-  @Post('dev')
-  async devLogin(@Body() body: { email?: string; name?: string }, @Res({ passthrough: true }) res: Response) {
-    const email = body.email || 'dev@craftcard.local';
-    const name = body.name || 'Dev User';
-    const result = await this.authService.devLogin(email, name);
-
-    res.cookie(REFRESH_COOKIE, result.refreshToken, COOKIE_OPTIONS);
-
-    return {
-      user: result.user,
-      accessToken: result.accessToken,
-    };
-  }
-
-  @Public()
   @Throttle({ strict: { limit: 15, ttl: 300000 } })
   @Post('refresh')
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {

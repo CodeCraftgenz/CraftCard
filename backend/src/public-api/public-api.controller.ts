@@ -1,4 +1,5 @@
 import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { PublicApiService } from './public-api.service';
 import { ApiKeyGuard } from '../common/guards/api-key.guard';
 import { Public } from '../common/decorators/public.decorator';
@@ -7,7 +8,9 @@ import { Public } from '../common/decorators/public.decorator';
  * Public API endpoints for Enterprise customers.
  * Authentication via Bearer token (API Key), not JWT.
  * All routes prefixed with /api/v1/
+ * Rate limited: 60 requests/minute per API key
  */
+@Throttle({ default: { ttl: 60000, limit: 60 } })
 @Public() // Skip JWT guard — we use ApiKeyGuard instead
 @UseGuards(ApiKeyGuard)
 @Controller('api/v1')
