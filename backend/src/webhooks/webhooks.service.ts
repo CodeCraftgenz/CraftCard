@@ -3,7 +3,43 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { AppException } from '../common/exceptions/app.exception';
 import { randomBytes, createHmac } from 'crypto';
 import * as https from 'https';
-import * as http from 'http';
+
+/**
+ * SSRF guard: webhook URLs must be HTTPS and must not point to
+ * localhost, loopback, link-local, or private network ranges.
+ */
+function assertSafeWebhookUrl(rawUrl: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    throw AppException.badRequest('URL de webhook inválida');
+  }
+
+  if (parsed.protocol !== 'https:') {
+    throw AppException.badRequest('Webhook URL deve usar HTTPS');
+  }
+
+  const host = parsed.hostname.toLowerCase();
+
+  // Block loopback / well-known internal hostnames
+  const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]'];
+  if (blockedHosts.includes(host)) {
+    throw AppException.badRequest('Webhook URL aponta para endereço interno');
+  }
+
+  // Block private IPv4 ranges: 10.x, 172.16–31.x, 192.168.x, 169.254.x (link-local)
+  const privateIPv4 =
+    /^(10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+|169\.254\.\d+\.\d+)$/;
+  if (privateIPv4.test(host)) {
+    throw AppException.badRequest('Webhook URL aponta para endereço interno');
+  }
+
+  // Block metadata services (AWS, GCP, Azure)
+  if (host === '169.254.169.254' || host === 'metadata.google.internal') {
+    throw AppException.badRequest('Webhook URL aponta para endereço interno');
+  }
+}
 
 export type WebhookEvent = 'new_message' | 'new_booking' | 'new_testimonial' | 'new_view' | 'lead_status_changed';
 
@@ -14,6 +50,8 @@ export class WebhooksService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: string, data: { url: string; events: WebhookEvent[] }) {
+    assertSafeWebhookUrl(data.url);
+
     const count = await this.prisma.webhook.count({ where: { userId } });
     if (count >= 5) {
       throw AppException.badRequest('Máximo de 5 webhooks');
@@ -45,6 +83,8 @@ export class WebhooksService {
   }
 
   async update(userId: string, id: string, data: { url?: string; events?: WebhookEvent[]; isActive?: boolean }) {
+    if (data.url !== undefined) assertSafeWebhookUrl(data.url);
+
     const webhook = await this.prisma.webhook.findFirst({ where: { id, userId } });
     if (!webhook) throw AppException.notFound('Webhook');
 
@@ -136,7 +176,6 @@ export class WebhooksService {
     const signature = createHmac('sha256', secret).update(body).digest('hex');
 
     const parsed = new URL(url);
-    const client = parsed.protocol === 'https:' ? https : http;
 
     let lastError: string | null = null;
     let lastStatusCode: number | null = null;
@@ -144,7 +183,7 @@ export class WebhooksService {
     for (let attempt = 0; attempt < retries; attempt++) {
       try {
         const result = await new Promise<{ statusCode: number }>((resolve, reject) => {
-          const req = client.request(
+          const req = https.request(
             {
               hostname: parsed.hostname,
               port: parsed.port,

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, lazy, Suspense } from 'react';
-import html2canvas from 'html2canvas';
+import { QRCodeCanvas } from 'qrcode.react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,6 +25,8 @@ import {
   Briefcase,
   HelpCircle,
   UserPlus,
+  Maximize2,
+  Scan,
 } from 'lucide-react';
 import { CustomQrCode } from '@/components/organisms/CustomQrCode';
 import { AnimatedBackground } from '@/components/atoms/AnimatedBackground';
@@ -392,6 +394,37 @@ function generateVCard(profile: PublicProfile): string {
   return lines.join('\r\n');
 }
 
+// ── Canvas export helpers ────────────────────────────────────────────────────
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function drawRoundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number, r: number,
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function handleDownloadVCard(profile: PublicProfile) {
   const vcf = generateVCard(profile);
   const blob = new Blob([vcf], { type: 'text/vcard;charset=utf-8' });
@@ -434,6 +467,8 @@ export function PublicCardPage() {
   const [leadSubmitting, setLeadSubmitting] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const qrExportRef = useRef<HTMLDivElement>(null);
+  const [showPresentationMode, setShowPresentationMode] = useState(false);
   const sendMessage = useSendMessage();
   const submitTestimonial = useSubmitTestimonial();
   const { data: publicSlots } = usePublicSlots(slug);
@@ -542,17 +577,122 @@ export function PublicCardPage() {
   };
 
   const handleExportImage = async () => {
-    if (!cardRef.current || !slug) return;
+    if (!profile || !slug) return;
     setExporting(true);
     try {
-      const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: '#1A1A2E',
-        scale: 2,
-        useCORS: true,
-      });
+      // QR canvas (black on white, rendered off-screen)
+      const qrCanvas = qrExportRef.current?.querySelector('canvas');
+
+      // Card dimensions (1050×600 — business card proportions, great for sharing)
+      const W = 1050, H = 600;
+      const canvas = document.createElement('canvas');
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d')!;
+
+      // Background
+      const grad = ctx.createLinearGradient(0, 0, W, H);
+      grad.addColorStop(0, '#0A0E1A');
+      grad.addColorStop(0.6, '#1A1A2E');
+      grad.addColorStop(1, '#0D1117');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Top accent bar
+      ctx.fillStyle = accent;
+      ctx.fillRect(0, 0, W, 5);
+
+      // Subtle vertical divider before QR section
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.fillRect(720, 30, 1, H - 60);
+
+      // ── Profile photo ──
+      const photoSrc = resolvePhotoUrl(profile.photoUrl);
+      if (photoSrc) {
+        try {
+          const img = await loadImage(photoSrc);
+          const cx = 110, cy = 120, r = 80;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(img, cx - r, cy - r, r * 2, r * 2);
+          ctx.restore();
+          // Border ring
+          ctx.beginPath();
+          ctx.arc(cx, cy, r + 4, 0, Math.PI * 2);
+          ctx.strokeStyle = accent;
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        } catch { /* skip photo if CORS fails */ }
+      }
+
+      // ── Text info ──
+      // Name
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 44px Inter, Arial, sans-serif';
+      ctx.fillText(profile.displayName, 60, 270);
+
+      // Tagline
+      if (profile.tagline) {
+        ctx.fillStyle = accent;
+        ctx.font = '22px Inter, Arial, sans-serif';
+        ctx.fillText(profile.tagline, 60, 310);
+      }
+
+      // Bio
+      if (profile.bio) {
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.font = '18px Inter, Arial, sans-serif';
+        const bio = profile.bio.length > 80 ? profile.bio.slice(0, 77) + '...' : profile.bio;
+        ctx.fillText(bio, 60, profile.tagline ? 350 : 310);
+      }
+
+      // Location
+      if (profile.location) {
+        const locY = profile.bio ? 400 : (profile.tagline ? 355 : 315);
+        ctx.fillStyle = 'rgba(255,255,255,0.40)';
+        ctx.font = '17px Inter, Arial, sans-serif';
+        ctx.fillText(`📍  ${profile.location}`, 60, locY);
+      }
+
+      // URL at bottom-left
+      ctx.fillStyle = 'rgba(255,255,255,0.30)';
+      ctx.font = '15px Inter, Arial, sans-serif';
+      ctx.fillText(pageUrl, 60, H - 28);
+
+      // ── QR Code (right panel) ──
+      const qrSize = 210;
+      const qrX = 760;
+      const qrY = Math.round((H - qrSize) / 2) - 20;
+
+      // White rounded background for QR
+      ctx.fillStyle = '#FFFFFF';
+      drawRoundRect(ctx, qrX - 18, qrY - 18, qrSize + 36, qrSize + 36, 18);
+      ctx.fill();
+
+      if (qrCanvas) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+      }
+
+      // "Escaneie" label below QR
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.font = '15px Inter, Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Escaneie para ver', qrX + qrSize / 2, qrY + qrSize + 36 + 18);
+
+      // ── CraftCard branding ──
+      ctx.fillStyle = accent;
+      ctx.font = 'bold 14px Inter, Arial, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('CraftCard', W - 36, H - 22);
+      ctx.textAlign = 'left';
+
+      // Download
       const link = document.createElement('a');
       link.download = `cartão-${slug}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = canvas.toDataURL('image/png', 1.0);
       link.click();
     } catch {
       // silently fail
@@ -1099,6 +1239,14 @@ export function PublicCardPage() {
                 {linkCopied ? <Check size={12} /> : <Copy size={12} />}
                 {linkCopied ? 'Copiado!' : 'Copiar Link'}
               </button>
+              <button
+                type="button"
+                onClick={() => setShowPresentationMode(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium border border-white/10 bg-white/5 text-white/50 hover:text-white/80 hover:bg-white/10 transition"
+              >
+                <Scan size={12} />
+                Apresentar
+              </button>
             </div>
           </div>
 
@@ -1276,15 +1424,17 @@ export function PublicCardPage() {
                 </button>
               </div>
 
-              {/* QR Code */}
+              {/* QR Code — high-contrast for reliable scanning */}
               <div className="mt-4 flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-white/10">
-                <CustomQrCode
-                  url={pageUrl}
-                  fgColor={accent}
-                  bgColor="#1A1A2E"
-                  logoUrl={resolvePhotoUrl(profile.photoUrl)}
-                  size={160}
-                />
+                <div className="p-3 rounded-2xl bg-white">
+                  <QRCodeCanvas
+                    value={pageUrl}
+                    size={200}
+                    fgColor="#0A0E1A"
+                    bgColor="#FFFFFF"
+                    level="M"
+                  />
+                </div>
                 <span className="text-[10px] text-white/30">Escaneie para acessar</span>
               </div>
 
@@ -1414,6 +1564,73 @@ export function PublicCardPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Presentation Mode — hackathon fullscreen QR ── */}
+      <AnimatePresence>
+        {showPresentationMode && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black"
+            onClick={() => setShowPresentationMode(false)}
+          >
+            <button
+              type="button"
+              aria-label="Fechar"
+              className="absolute top-6 right-6 text-white/30 hover:text-white transition-colors"
+              onClick={() => setShowPresentationMode(false)}
+            >
+              <X size={28} />
+            </button>
+
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 220, damping: 20 }}
+              className="flex flex-col items-center gap-8"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Pulsing glow ring around QR */}
+              <motion.div
+                animate={{ boxShadow: [`0 0 0 0px ${accent}60`, `0 0 0 24px ${accent}00`] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeOut' }}
+                style={{ borderRadius: 24 }}
+              >
+                <div className="p-6 rounded-3xl bg-white shadow-2xl">
+                  <QRCodeCanvas
+                    value={pageUrl}
+                    size={300}
+                    fgColor="#0A0E1A"
+                    bgColor="#FFFFFF"
+                    level="M"
+                  />
+                </div>
+              </motion.div>
+
+              <div className="text-center">
+                <p className="text-5xl font-bold text-white mb-3 tracking-tight">{displayName}</p>
+                {profile.tagline && (
+                  <p className="text-lg mb-2 text-brand-cyan">{profile.tagline}</p>
+                )}
+                <p className="text-white/30 text-sm font-mono">{pageUrl}</p>
+              </div>
+
+              <p className="text-white/20 text-xs mt-2">Toque para fechar</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Hidden high-contrast QR canvas — used only for image export */}
+      <div
+        ref={qrExportRef}
+        className="fixed -left-[9999px] -top-[9999px] pointer-events-none opacity-0"
+        aria-hidden="true"
+      >
+        <QRCodeCanvas value={pageUrl} size={420} fgColor="#000000" bgColor="#FFFFFF" level="M" />
+      </div>
     </>
   );
 }
