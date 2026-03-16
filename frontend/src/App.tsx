@@ -28,6 +28,7 @@ const ConnectionsPage = lazy(() => import('./pages/ConnectionsPage'));
 const HackathonOnboarding = lazy(() => import('./hackathon/HackathonOnboarding'));
 const HackathonPublicCard = lazy(() => import('./hackathon/HackathonPublicCard'));
 const HackathonDashboard = lazy(() => import('./hackathon/HackathonDashboard'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
 
 function PageLoader() {
   return (
@@ -135,6 +136,7 @@ export function App() {
                     }
                   />
                   <Route path="/hackathon/card/:slug" element={<HackathonPublicCard />} />
+                  <Route path="/privacy" element={<PrivacyPage />} />
                   <Route path="/widget/:slug" element={<WidgetPage />} />
                   {/* Public card page - catch-all must be last */}
                   <Route path="/:slug" element={<PublicCardPage />} />

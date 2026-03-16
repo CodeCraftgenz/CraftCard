@@ -20,8 +20,9 @@ export function Footer() {
             </a>
           </div>
         </div>
-        <div className="mt-8 pt-6 border-t border-white/5 text-center text-xs text-white/30">
-          {new Date().getFullYear()} CraftCard. Produto Codecraft.
+        <div className="mt-8 pt-6 border-t border-white/5 text-center text-xs text-white/30 space-y-1">
+          <p>{new Date().getFullYear()} CraftCard. Produto CodeCraftGenZ.</p>
+          <a href="/privacy" className="text-white/20 hover:text-white/40 transition">Política de Privacidade</a>
         </div>
       </div>
     </footer>
