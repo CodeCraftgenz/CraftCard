@@ -2356,8 +2356,13 @@ export function EditorPage() {
                     {contacts.map((msg) => (
                       <div
                         key={msg.id}
-                        className={`p-4 rounded-xl border transition-all ${
-                          msg.isRead ? 'bg-white/[0.02] border-white/5' : 'bg-brand-cyan/5 border-brand-cyan/20'
+                        onClick={() => setExpandedMessage(expandedMessage === msg.id ? null : msg.id)}
+                        className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                          expandedMessage === msg.id
+                            ? 'bg-brand-cyan/8 border-brand-cyan/30 shadow-lg shadow-brand-cyan/5'
+                            : !msg.isRead
+                              ? 'bg-brand-cyan/5 border-brand-cyan/20'
+                              : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.04]'
                         }`}
                       >
                         <div className="flex items-start gap-3">
