@@ -272,6 +272,60 @@ export class MailService {
   }
 
   /**
+   * Booking reminder — sent 30 min before meeting, to both owner and guest
+   */
+  async sendBookingReminder(opts: {
+    ownerEmail: string;
+    guestEmail: string;
+    guestName: string;
+    date: string;
+    time: string;
+  }) {
+    const reminderBody = (recipientLabel: string) => this.buildEmail({
+      preheader: `Lembrete: reuniao com ${opts.guestName} em 30 minutos`,
+      title: 'Lembrete de Agendamento',
+      icon: '⏰',
+      body: `
+        <p style="color:#e0e0e0;font-size:15px;line-height:1.6;margin:0 0 16px;">
+          ${recipientLabel} voce tem uma reuniao em <strong style="color:#00E4F2;">30 minutos</strong>.
+        </p>
+        <div style="background:#0D0D1A;border-radius:12px;padding:16px;margin:0 0 20px;">
+          <table style="width:100%;border-collapse:collapse;">
+            <tr>
+              <td style="padding:6px 0;color:#999;font-size:13px;width:80px;">Com</td>
+              <td style="padding:6px 0;color:#fff;font-size:14px;font-weight:600;">${this.esc(opts.guestName)}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;color:#999;font-size:13px;">Data</td>
+              <td style="padding:6px 0;color:#fff;font-size:14px;font-weight:600;">${this.esc(opts.date)}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;color:#999;font-size:13px;">Horario</td>
+              <td style="padding:6px 0;color:#fff;font-size:14px;font-weight:600;">${this.esc(opts.time)}</td>
+            </tr>
+          </table>
+        </div>
+      `,
+      ctaText: 'Ver agendamentos',
+      ctaUrl: `${this.frontendUrl}/editor`,
+    });
+
+    // To owner
+    await this.enqueue(
+      opts.ownerEmail,
+      `Lembrete: ${opts.guestName} em 30 minutos`,
+      reminderBody(''),
+    );
+    // To guest
+    await this.enqueue(
+      opts.guestEmail,
+      `Lembrete: sua reuniao e em 30 minutos`,
+      reminderBody(''),
+    );
+    this.logger.log(`Booking reminder sent for ${opts.guestName} at ${opts.date} ${opts.time}`);
+  }
+
+  /**
    * Enterprise welcome email — luxurious design for B2B clients
    * Includes: plan details, seats, org name, setup password link
    */
