@@ -2759,29 +2759,7 @@ export function EditorPage() {
                 </div>
 
                 {/* Google Calendar Integration */}
-                <div className="mb-4 p-3 rounded-xl bg-white/[0.03] border border-white/5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} className="text-blue-400" />
-                      <span className="text-xs text-white/60">Google Calendar</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          const data: { url: string } = await api.get('/bookings/google/connect-url');
-                          window.location.href = data.url;
-                        } catch {
-                          window.location.href = `${API_URL}/bookings/google/connect`;
-                        }
-                      }}
-                      className="text-[10px] px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 hover:bg-blue-500/20 transition"
-                    >
-                      Conectar
-                    </button>
-                  </div>
-                  <p className="text-[10px] text-white/30 mt-1">Agendamentos serão sincronizados automaticamente com seu Google Calendar</p>
-                </div>
+                <GoogleCalendarCard />
 
                 {/* Quick Slot Config */}
                 <div className="space-y-3 mb-4">
@@ -3038,6 +3016,89 @@ export function EditorPage() {
         onClose={() => setShowTemplatePicker(false)}
         onApply={applyTemplate}
       />
+    </div>
+  );
+}
+
+// --- Google Calendar Connection Card ---
+function GoogleCalendarCard() {
+  const [status, setStatus] = useState<'loading' | 'connected' | 'disconnected'>('loading');
+
+  useEffect(() => {
+    api.get('/bookings/google/status')
+      .then((data: unknown) => {
+        setStatus((data as { connected: boolean }).connected ? 'connected' : 'disconnected');
+      })
+      .catch(() => setStatus('disconnected'));
+  }, []);
+
+  // Check if just returned from Google OAuth
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('gcal') === 'connected') {
+      setStatus('connected');
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  const handleConnect = async () => {
+    try {
+      const data: { url: string } = await api.get('/bookings/google/connect-url');
+      window.location.href = data.url;
+    } catch {
+      // fallback
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!confirm('Desconectar o Google Calendar?')) return;
+    await api.delete('/bookings/google/disconnect');
+    setStatus('disconnected');
+  };
+
+  return (
+    <div className={`mb-4 p-3 rounded-xl border transition-all ${
+      status === 'connected'
+        ? 'bg-emerald-500/5 border-emerald-500/20'
+        : 'bg-white/[0.03] border-white/5'
+    }`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Calendar size={14} className={status === 'connected' ? 'text-emerald-400' : 'text-blue-400'} />
+          <span className="text-xs text-white/60">Google Calendar</span>
+          {status === 'connected' && (
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold">
+              ✓ Conectado
+            </span>
+          )}
+        </div>
+        {status === 'loading' ? (
+          <span className="text-[10px] text-white/20">...</span>
+        ) : status === 'connected' ? (
+          <button
+            type="button"
+            onClick={handleDisconnect}
+            className="text-[10px] px-3 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition"
+          >
+            Desconectar
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleConnect}
+            className="text-[10px] px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 hover:bg-blue-500/20 transition"
+          >
+            Conectar
+          </button>
+        )}
+      </div>
+      <p className="text-[10px] text-white/30 mt-1">
+        {status === 'connected'
+          ? 'Novos agendamentos serão adicionados automaticamente ao seu Google Calendar com lembrete de 30 min.'
+          : 'Conecte para sincronizar agendamentos automaticamente com seu Google Calendar.'
+        }
+      </p>
     </div>
   );
 }
