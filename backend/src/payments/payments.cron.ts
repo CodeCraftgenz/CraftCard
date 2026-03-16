@@ -1,13 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../common/prisma/prisma.service';
-
-const FREE_ACCESS_EMAILS = [
-  'ricardocoradini97@gmail.com',
-  'paulommc@gmail.com',
-  'mfacine@gmail.com',
-  'gabriel.gondrone@gmail.com',
-];
+import { FREE_ACCESS_EMAILS_ARRAY } from '../common/constants/admin-whitelist';
 
 @Injectable()
 export class PaymentsCron {
@@ -22,7 +16,7 @@ export class PaymentsCron {
     const paidUsers = await this.prisma.user.findMany({
       where: {
         plan: { not: 'FREE' },
-        email: { notIn: FREE_ACCESS_EMAILS },
+        email: { notIn: FREE_ACCESS_EMAILS_ARRAY },
       },
       select: { id: true, email: true, plan: true },
     });

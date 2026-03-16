@@ -6,6 +6,7 @@ import { AppException } from '../common/exceptions/app.exception';
 import type { EnvConfig } from '../common/config/env.config';
 import { getPlanLimits, type PlanType, type PlanLimits } from './plan-limits';
 import { PAYMENT_GATEWAY, type PaymentGateway } from './gateway/payment-gateway.interface';
+import { FREE_ACCESS_EMAILS } from '../common/constants/admin-whitelist';
 
 // PRO fixed pricing
 const PRO_MONTHLY = 19.9;
@@ -43,14 +44,6 @@ const SUBSCRIPTION_DAYS_YEARLY = 365;
 
 const PLAN_HIERARCHY: Record<string, number> = { FREE: 0, PRO: 1, BUSINESS: 2, ENTERPRISE: 3 };
 
-/** Emails with permanent free access (founders / team) */
-const FREE_ACCESS_EMAILS = new Set([
-  'ricardocoradini97@gmail.com',
-  'paulommc@gmail.com',
-  'mfacine@gmail.com',
-  'gabriel.gondrone@gmail.com',
-  'codecraftgenz@gmail.com',
-]);
 
 @Injectable()
 export class PaymentsService {
@@ -253,19 +246,20 @@ export class PaymentsService {
   ): Promise<void> {
     const webhookSecret = this.configService.get('MP_WEBHOOK_SECRET', { infer: true });
 
-    // Validate signature if secret is configured (non-blocking: log warning instead of rejecting)
+    // Validate HMAC signature — BLOCKING when secret is configured
     if (webhookSecret && webhookSecret !== 'placeholder') {
-      const headerMap: Record<string, string> = {
-        xSignature: headers.xSignature || '',
-        xRequestId: headers.xRequestId || '',
-      };
-      if (headerMap.xSignature && headerMap.xRequestId) {
-        const valid = this.gateway.verifyWebhookSignature(body, headerMap, webhookSecret);
-        if (!valid) {
-          this.logger.warn(`Webhook signature mismatch - proceeding anyway (verified via MP API)`);
-        }
-      } else {
-        this.logger.warn('Webhook received without signature headers - proceeding (verified via MP API)');
+      const xSig = headers.xSignature || '';
+      const xReq = headers.xRequestId || '';
+
+      if (!xSig || !xReq) {
+        this.logger.warn('Webhook rejected: missing x-signature or x-request-id headers');
+        throw AppException.forbidden('Webhook sem assinatura');
+      }
+
+      const valid = this.gateway.verifyWebhookSignature(body, { xSignature: xSig, xRequestId: xReq }, webhookSecret);
+      if (!valid) {
+        this.logger.error(`Webhook rejected: HMAC signature mismatch (possible forgery attempt)`);
+        throw AppException.forbidden('Assinatura do webhook invalida');
       }
     }
 

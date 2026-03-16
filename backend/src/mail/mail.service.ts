@@ -239,6 +239,48 @@ export class MailService {
     this.logger.log(`Payment confirmation queued for ${toEmail}`);
   }
 
+  async sendBookingConfirmationToGuest(opts: {
+    guestEmail: string;
+    guestName: string;
+    ownerName: string;
+    date: string;
+    time: string;
+    notes?: string;
+  }) {
+    await this.enqueue(
+      opts.guestEmail,
+      `Agendamento confirmado com ${opts.ownerName}`,
+      this.buildEmail({
+        preheader: `Seu agendamento para ${opts.date} as ${opts.time} foi confirmado`,
+        title: 'Agendamento Confirmado!',
+        icon: '✅',
+        body: `
+          <p style="color:#e0e0e0;font-size:15px;line-height:1.6;margin:0 0 16px;">
+            Ola <strong style="color:#fff;">${this.esc(opts.guestName)}</strong>! Seu agendamento com
+            <strong style="color:#00E4F2;">${this.esc(opts.ownerName)}</strong> foi registrado com sucesso.
+          </p>
+          <div style="background:#0D0D1A;border-radius:12px;padding:16px;margin:0 0 20px;">
+            <table style="width:100%;border-collapse:collapse;">
+              <tr>
+                <td style="padding:6px 0;color:#999;font-size:13px;width:80px;">Data</td>
+                <td style="padding:6px 0;color:#fff;font-size:14px;font-weight:600;">${this.esc(opts.date)}</td>
+              </tr>
+              <tr>
+                <td style="padding:6px 0;color:#999;font-size:13px;">Horario</td>
+                <td style="padding:6px 0;color:#fff;font-size:14px;font-weight:600;">${this.esc(opts.time)}</td>
+              </tr>
+              ${opts.notes ? `<tr><td style="padding:6px 0;color:#999;font-size:13px;">Obs.</td><td style="padding:6px 0;color:#ccc;font-size:13px;">${this.esc(opts.notes)}</td></tr>` : ''}
+            </table>
+          </div>
+          <p style="color:#999;font-size:13px;line-height:1.5;margin:0;">
+            Voce recebera um lembrete 30 minutos antes do horario marcado.
+          </p>
+        `,
+      }),
+    );
+    this.logger.log(`Guest booking confirmation queued for ${opts.guestEmail}`);
+  }
+
   async sendBookingNotification(ownerEmail: string, guestName: string, date: string, time: string) {
     await this.enqueue(
       ownerEmail,
@@ -278,22 +320,23 @@ export class MailService {
     ownerEmail: string;
     guestEmail: string;
     guestName: string;
+    ownerName?: string;
     date: string;
     time: string;
   }) {
-    const reminderBody = (recipientLabel: string) => this.buildEmail({
-      preheader: `Lembrete: reuniao com ${opts.guestName} em 30 minutos`,
+    const buildReminderHtml = (withPerson: string) => this.buildEmail({
+      preheader: `Lembrete: reuniao em 30 minutos — ${opts.date} as ${opts.time}`,
       title: 'Lembrete de Agendamento',
       icon: '⏰',
       body: `
         <p style="color:#e0e0e0;font-size:15px;line-height:1.6;margin:0 0 16px;">
-          ${recipientLabel} voce tem uma reuniao em <strong style="color:#00E4F2;">30 minutos</strong>.
+          Voce tem uma reuniao em aproximadamente <strong style="color:#00E4F2;">30 minutos</strong>.
         </p>
         <div style="background:#0D0D1A;border-radius:12px;padding:16px;margin:0 0 20px;">
           <table style="width:100%;border-collapse:collapse;">
             <tr>
               <td style="padding:6px 0;color:#999;font-size:13px;width:80px;">Com</td>
-              <td style="padding:6px 0;color:#fff;font-size:14px;font-weight:600;">${this.esc(opts.guestName)}</td>
+              <td style="padding:6px 0;color:#fff;font-size:14px;font-weight:600;">${this.esc(withPerson)}</td>
             </tr>
             <tr>
               <td style="padding:6px 0;color:#999;font-size:13px;">Data</td>
@@ -310,19 +353,19 @@ export class MailService {
       ctaUrl: `${this.frontendUrl}/editor`,
     });
 
-    // To owner
+    // To owner: "with guest"
     await this.enqueue(
       opts.ownerEmail,
       `Lembrete: ${opts.guestName} em 30 minutos`,
-      reminderBody(''),
+      buildReminderHtml(opts.guestName),
     );
-    // To guest
+    // To guest: "with owner"
     await this.enqueue(
       opts.guestEmail,
       `Lembrete: sua reuniao e em 30 minutos`,
-      reminderBody(''),
+      buildReminderHtml(opts.ownerName ?? 'Proprietario do cartao'),
     );
-    this.logger.log(`Booking reminder sent for ${opts.guestName} at ${opts.date} ${opts.time}`);
+    this.logger.log(`Booking reminder queued for ${opts.guestName} at ${opts.date} ${opts.time}`);
   }
 
   /**

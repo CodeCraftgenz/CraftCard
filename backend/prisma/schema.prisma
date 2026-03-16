@@ -292,7 +292,9 @@ model Booking {
 
   profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
+  @@unique([profileId, date, time])
   @@index([profileId, date])
+  @@index([status, reminderSentAt, date])
   @@map("bookings")
 }
 

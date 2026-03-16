@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -9,6 +9,8 @@ import { AppException } from '../common/exceptions/app.exception';
 
 @Injectable()
 export class BookingsService {
+  private readonly logger = new Logger(BookingsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
@@ -77,7 +79,7 @@ export class BookingsService {
   async createBooking(slug: string, data: { name: string; email: string; phone?: string; date: string; time: string; notes?: string }) {
     const profile = await this.prisma.profile.findFirst({
       where: { slug },
-      select: { id: true, userId: true, isPublished: true, user: { select: { email: true } } },
+      select: { id: true, userId: true, isPublished: true, displayName: true, user: { select: { email: true } } },
     });
     if (!profile || !profile.isPublished) {
       throw AppException.notFound('Perfil');
@@ -113,32 +115,42 @@ export class BookingsService {
     // Format date for notifications
     const dateStr = date.toLocaleDateString('pt-BR');
 
-    // Email notification (fire-and-forget)
+    // Email to owner
     if (profile.user?.email) {
       this.mailService.sendBookingNotification(
         profile.user.email,
         data.name,
         dateStr,
         data.time,
-      ).catch(() => {});
+      ).catch((err) => this.logger.error(`Owner booking email failed: ${err?.message}`));
     }
 
-    // Push notification (fire-and-forget)
+    // Confirmation email to guest
+    this.mailService.sendBookingConfirmationToGuest({
+      guestEmail: data.email,
+      guestName: data.name,
+      ownerName: profile.displayName,
+      date: dateStr,
+      time: data.time,
+      notes: data.notes,
+    }).catch((err) => this.logger.error(`Guest confirmation email failed: ${err?.message}`));
+
+    // Push notification
     this.notificationsService.sendToUser(profile.userId, {
       title: 'Novo agendamento!',
       body: `${data.name} agendou para ${dateStr} as ${data.time}`,
       url: '/editor',
-    }).catch(() => {});
+    }).catch((err) => this.logger.error(`Push notification failed: ${err?.message}`));
 
-    // In-app notification (fire-and-forget)
+    // In-app notification
     this.inAppService.create(profile.userId, {
       type: 'new_booking',
       title: 'Novo agendamento!',
       message: `${data.name} agendou para ${dateStr} as ${data.time}`,
       metadata: { bookingId: booking.id, name: data.name, date: dateStr, time: data.time },
-    }).catch(() => {});
+    }).catch((err) => this.logger.error(`In-app notification failed: ${err?.message}`));
 
-    // Webhook dispatch for CRM integration (fire-and-forget)
+    // Webhook dispatch for CRM integration
     this.webhooksService.dispatch(profile.userId, 'new_booking', {
       bookingId: booking.id,
       name: data.name,
@@ -147,7 +159,7 @@ export class BookingsService {
       date: dateStr,
       time: data.time,
       notes: data.notes || null,
-    }).catch(() => {});
+    }).catch((err) => this.logger.error(`Webhook dispatch failed: ${err?.message}`));
 
     // Google Calendar: NOT here — syncs when owner confirms (updateBookingStatus)
 
@@ -242,7 +254,7 @@ export class BookingsService {
             data: { googleEventId },
           });
         }
-      }).catch(() => {});
+      }).catch((err) => this.logger.error(`Google Calendar sync failed for booking ${bookingId}: ${err?.message}`));
     }
 
     return updated;
@@ -262,7 +274,8 @@ export class BookingsService {
 
     // Delete Google Calendar event if synced
     if (booking.googleEventId) {
-      this.googleCalendar.deleteBookingEvent(userId, booking.googleEventId).catch(() => {});
+      this.googleCalendar.deleteBookingEvent(userId, booking.googleEventId)
+        .catch((err) => this.logger.error(`Google Calendar delete failed for booking ${bookingId}: ${err?.message}`));
     }
 
     await this.prisma.booking.delete({ where: { id: bookingId } });
