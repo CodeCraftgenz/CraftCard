@@ -26,7 +26,7 @@ describe('PaymentsService', () => {
       get: jest.fn((key: string) => {
         const values: Record<string, string> = {
           MP_ACCESS_TOKEN: 'APP_USR-fake-token',
-          MP_WEBHOOK_SECRET: 'placeholder',
+          MP_WEBHOOK_SECRET: 'test-webhook-secret-123',
           MP_PUBLIC_KEY: 'APP_USR-fake-public-key',
           BACKEND_URL: 'http://localhost:3000',
           FRONTEND_URL: 'http://localhost:5173',
@@ -169,10 +169,29 @@ describe('PaymentsService', () => {
   });
 
   describe('handleWebhook', () => {
+    it('should reject webhook when HMAC signature is missing', async () => {
+      await expect(
+        service.handleWebhook(
+          { type: 'payment', data: { id: '123' } },
+          { xSignature: undefined, xRequestId: undefined },
+        ),
+      ).rejects.toThrow('Webhook sem assinatura');
+    });
+
+    it('should reject webhook when HMAC signature is invalid', async () => {
+      gatewayMock.verifyWebhookSignature.mockReturnValueOnce(false);
+      await expect(
+        service.handleWebhook(
+          { type: 'payment', data: { id: '123' } },
+          { xSignature: 'ts=123,v1=bad', xRequestId: 'req-1' },
+        ),
+      ).rejects.toThrow('Assinatura do webhook invalida');
+    });
+
     it('should ignore non-payment notifications', async () => {
       await service.handleWebhook(
         { type: 'merchant_order', data: { id: '123' } },
-        { xSignature: undefined, xRequestId: undefined },
+        { xSignature: 'ts=123,v1=abc', xRequestId: 'req-1' },
       );
       expect(prisma.payment.findUnique).not.toHaveBeenCalled();
     });
@@ -180,7 +199,7 @@ describe('PaymentsService', () => {
     it('should ignore webhook without data id', async () => {
       await service.handleWebhook(
         { type: 'payment', data: {} },
-        { xSignature: undefined, xRequestId: undefined },
+        { xSignature: 'ts=123,v1=abc', xRequestId: 'req-1' },
       );
       expect(prisma.payment.findUnique).not.toHaveBeenCalled();
     });
@@ -208,7 +227,7 @@ describe('PaymentsService', () => {
 
       await service.handleWebhook(
         { type: 'payment', data: { id: mpPaymentId } },
-        { xSignature: undefined, xRequestId: undefined },
+        { xSignature: 'ts=123,v1=abc', xRequestId: 'req-1' },
       );
 
       expect(prisma.payment.updateMany).not.toHaveBeenCalled();
@@ -229,7 +248,7 @@ describe('PaymentsService', () => {
 
       await service.handleWebhook(
         { type: 'payment', data: { id: mpPaymentId } },
-        { xSignature: undefined, xRequestId: undefined },
+        { xSignature: 'ts=123,v1=abc', xRequestId: 'req-1' },
       );
 
       expect(prisma.payment.updateMany).not.toHaveBeenCalled();
@@ -245,7 +264,7 @@ describe('PaymentsService', () => {
 
       await service.handleWebhook(
         { type: 'payment', data: { id: mpPaymentId } },
-        { xSignature: undefined, xRequestId: undefined },
+        { xSignature: 'ts=123,v1=abc', xRequestId: 'req-1' },
       );
 
       // Verify atomic update was called with status guard
@@ -275,7 +294,7 @@ describe('PaymentsService', () => {
 
       await service.handleWebhook(
         { type: 'payment', data: { id: mpPaymentId } },
-        { xSignature: undefined, xRequestId: undefined },
+        { xSignature: 'ts=123,v1=abc', xRequestId: 'req-1' },
       );
 
       // User plan should NOT be updated (concurrent request handled it)
@@ -298,7 +317,7 @@ describe('PaymentsService', () => {
 
       await service.handleWebhook(
         { type: 'payment', data: { id: mpPaymentId } },
-        { xSignature: undefined, xRequestId: undefined },
+        { xSignature: 'ts=123,v1=abc', xRequestId: 'req-1' },
       );
 
       // Status update should happen, but no plan activation
@@ -316,7 +335,7 @@ describe('PaymentsService', () => {
 
       await service.handleWebhook(
         { type: 'payment', data: { id: mpPaymentId } },
-        { xSignature: undefined, xRequestId: undefined },
+        { xSignature: 'ts=123,v1=abc', xRequestId: 'req-1' },
       );
 
       expect(prisma.payment.findUnique).not.toHaveBeenCalled();
@@ -334,7 +353,7 @@ describe('PaymentsService', () => {
 
       await service.handleWebhook(
         { type: 'payment', data: { id: mpPaymentId } },
-        { xSignature: undefined, xRequestId: undefined },
+        { xSignature: 'ts=123,v1=abc', xRequestId: 'req-1' },
       );
 
       expect(prisma.payment.findUnique).not.toHaveBeenCalled();
@@ -345,7 +364,7 @@ describe('PaymentsService', () => {
 
       await service.handleWebhook(
         { type: 'payment', data: { id: mpPaymentId } },
-        { xSignature: undefined, xRequestId: undefined },
+        { xSignature: 'ts=123,v1=abc', xRequestId: 'req-1' },
       );
 
       expect(prisma.payment.updateMany).not.toHaveBeenCalled();

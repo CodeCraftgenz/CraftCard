@@ -246,21 +246,24 @@ export class PaymentsService {
   ): Promise<void> {
     const webhookSecret = this.configService.get('MP_WEBHOOK_SECRET', { infer: true });
 
-    // Validate HMAC signature — BLOCKING when secret is configured
-    if (webhookSecret && webhookSecret !== 'placeholder') {
-      const xSig = headers.xSignature || '';
-      const xReq = headers.xRequestId || '';
+    // HMAC signature verification is MANDATORY — reject if secret is missing/placeholder
+    if (!webhookSecret || webhookSecret === 'placeholder') {
+      this.logger.error('MP_WEBHOOK_SECRET not configured — rejecting webhook to prevent forgery');
+      throw AppException.forbidden('Webhook secret não configurado');
+    }
 
-      if (!xSig || !xReq) {
-        this.logger.warn('Webhook rejected: missing x-signature or x-request-id headers');
-        throw AppException.forbidden('Webhook sem assinatura');
-      }
+    const xSig = headers.xSignature || '';
+    const xReq = headers.xRequestId || '';
 
-      const valid = this.gateway.verifyWebhookSignature(body, { xSignature: xSig, xRequestId: xReq }, webhookSecret);
-      if (!valid) {
-        this.logger.error(`Webhook rejected: HMAC signature mismatch (possible forgery attempt)`);
-        throw AppException.forbidden('Assinatura do webhook invalida');
-      }
+    if (!xSig || !xReq) {
+      this.logger.warn('Webhook rejected: missing x-signature or x-request-id headers');
+      throw AppException.forbidden('Webhook sem assinatura');
+    }
+
+    const valid = this.gateway.verifyWebhookSignature(body, { xSignature: xSig, xRequestId: xReq }, webhookSecret);
+    if (!valid) {
+      this.logger.error(`Webhook rejected: HMAC signature mismatch (possible forgery attempt)`);
+      throw AppException.forbidden('Assinatura do webhook invalida');
     }
 
     // Handle payment.created, payment.updated actions or type: payment
