@@ -100,6 +100,13 @@ export function EditorPage() {
     if (!profile?.orgId) return false;
     return organizations.some((o) => o.id === profile.orgId && o.brandingActive);
   }, [profile?.orgId, organizations]);
+  // Check if org has cover/background set — members can't override those specific images
+  const orgForProfile = useMemo(() => {
+    if (!profile?.orgId) return null;
+    return organizations.find((o) => o.id === profile.orgId) || null;
+  }, [profile?.orgId, organizations]);
+  const isOrgCoverLocked = !!orgForProfile?.coverUrl;
+  const isOrgBackgroundLocked = !!orgForProfile?.backgroundImageUrl;
   const updateProfile = useUpdateProfile(activeCardId);
   const uploadPhoto = useUploadPhoto();
   const uploadCover = useUploadCover();
@@ -1124,7 +1131,13 @@ export function EditorPage() {
             </div>
 
             {/* Cover Photo Section */}
-            <div className="glass-card p-6 group hover:border-white/20 transition-colors">
+            <div className="glass-card p-6 group hover:border-white/20 transition-colors relative">
+              {isOrgCoverLocked && (
+                <div className="absolute inset-0 z-10 bg-dark-card/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-2 p-6">
+                  <Lock size={20} className="text-purple-400" />
+                  <p className="text-white/60 text-xs text-center">A capa é definida pela organização <strong>{orgForProfile?.name}</strong></p>
+                </div>
+              )}
               <div className="flex items-center gap-2 mb-5">
                 <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
                   <Camera size={16} className="text-purple-400" />
@@ -2077,6 +2090,7 @@ export function EditorPage() {
                 onUploadBackground={handleUploadBackground}
                 onDeleteBackground={handleDeleteBackground}
                 isUploadingBackground={uploadBackground.isPending}
+                backgroundLockedByOrg={isOrgBackgroundLocked ? orgForProfile?.name || null : null}
               />
             ) : (
               <UpgradeBanner feature="customFonts" compact />

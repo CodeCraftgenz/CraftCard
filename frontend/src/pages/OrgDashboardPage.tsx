@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, Link, useNavigate, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Users, BarChart3, Mail, Settings, Plus, Trash2, Copy, Check,
   UserPlus, Shield, Crown, Download, Eye, MessageSquare, Calendar, ArrowLeft, Loader2, AlertTriangle,
   ExternalLink, Globe, Search, ChevronLeft, ChevronRight, CheckCheck, MailOpen,
-  MousePointerClick, Smartphone, Monitor, Tablet, Link2,
+  MousePointerClick, Smartphone, Monitor, Tablet, Link2, Upload, X, Image as ImageIcon,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -26,6 +26,10 @@ import {
   useUpdateOrganization,
   useDeleteOrganization,
   useBulkApplyBranding,
+  useUploadOrgCover,
+  useDeleteOrgCover,
+  useUploadOrgBackground,
+  useDeleteOrgBackground,
   useInviteMember,
   useRevokeInvite,
   useRemoveMember,
@@ -133,7 +137,7 @@ export function OrgDashboardPage() {
         {/* Tab content */}
         {tab === 'overview' && <OverviewTab orgId={orgId!} myRole={myRole} />}
         {tab === 'members' && <MembersTab orgId={orgId!} myRole={myRole} org={org} />}
-        {tab === 'branding' && <BrandingTab orgId={orgId!} org={org} />}
+        {tab === 'branding' && <BrandingTab orgId={orgId!} org={org} myRole={myRole} />}
         {tab === 'domain' && <DomainTab orgId={orgId!} org={org} />}
         {tab === 'analytics' && <AnalyticsTab orgId={orgId!} />}
         {tab === 'leads' && <LeadsTab orgId={orgId!} />}
@@ -518,9 +522,15 @@ interface BrandingOrg {
   coverUrl: string | null; backgroundImageUrl: string | null;
 }
 
-function BrandingTab({ orgId, org }: { orgId: string; org: BrandingOrg }) {
+function BrandingTab({ orgId, org, myRole }: { orgId: string; org: BrandingOrg; myRole: string }) {
   const updateOrg = useUpdateOrganization(orgId);
   const bulkApply = useBulkApplyBranding(orgId);
+  const uploadCover = useUploadOrgCover(orgId);
+  const deleteCover = useDeleteOrgCover(orgId);
+  const uploadBg = useUploadOrgBackground(orgId);
+  const deleteBg = useDeleteOrgBackground(orgId);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const bgInputRef = useRef<HTMLInputElement>(null);
 
   const [primary, setPrimary] = useState(org.primaryColor);
   const [secondary, setSecondary] = useState(org.secondaryColor);
@@ -722,6 +732,131 @@ function BrandingTab({ orgId, org }: { orgId: string; org: BrandingOrg }) {
           )}
         </div>
       </div>
+
+      {/* Cover & Background images (OWNER only) */}
+      {myRole === 'OWNER' && <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-5">
+        <h3 className="text-white font-semibold text-sm flex items-center gap-2">
+          <ImageIcon size={16} className="text-brand-cyan" />
+          Imagens Corporativas
+        </h3>
+        <p className="text-white/40 text-xs -mt-2">
+          Defina a capa e o fundo padrão para todos os cartões da organização. Colaboradores não podem alterar essas imagens.
+        </p>
+
+        {/* Cover image */}
+        <div>
+          <label className="text-white/60 text-xs block mb-2">Imagem de Capa (1200×400)</label>
+          <input
+            ref={coverInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            aria-label="Escolher imagem de capa"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) uploadCover.mutate(file);
+              e.target.value = '';
+            }}
+          />
+          {org.coverUrl ? (
+            <div className="relative group rounded-xl overflow-hidden border border-white/10">
+              <img src={org.coverUrl} alt="Capa" className="w-full h-28 object-cover" />
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  title="Trocar capa"
+                  onClick={() => coverInputRef.current?.click()}
+                  className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors"
+                >
+                  <Upload size={16} />
+                </button>
+                <button
+                  type="button"
+                  title="Remover capa"
+                  onClick={() => deleteCover.mutate()}
+                  disabled={deleteCover.isPending}
+                  className="p-2 bg-red-500/30 rounded-lg text-red-300 hover:bg-red-500/50 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => coverInputRef.current?.click()}
+              disabled={uploadCover.isPending}
+              className="w-full h-28 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-1.5 text-white/30 hover:text-white/50 hover:border-white/20 transition-colors"
+            >
+              {uploadCover.isPending ? (
+                <Loader2 size={20} className="animate-spin" />
+              ) : (
+                <>
+                  <Upload size={20} />
+                  <span className="text-xs">Enviar imagem de capa</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* Background image */}
+        <div>
+          <label className="text-white/60 text-xs block mb-2">Imagem de Fundo (1920×1080)</label>
+          <input
+            ref={bgInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            aria-label="Escolher imagem de fundo"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) uploadBg.mutate(file);
+              e.target.value = '';
+            }}
+          />
+          {org.backgroundImageUrl ? (
+            <div className="relative group rounded-xl overflow-hidden border border-white/10">
+              <img src={org.backgroundImageUrl} alt="Fundo" className="w-full h-32 object-cover" />
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  title="Trocar fundo"
+                  onClick={() => bgInputRef.current?.click()}
+                  className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors"
+                >
+                  <Upload size={16} />
+                </button>
+                <button
+                  type="button"
+                  title="Remover fundo"
+                  onClick={() => deleteBg.mutate()}
+                  disabled={deleteBg.isPending}
+                  className="p-2 bg-red-500/30 rounded-lg text-red-300 hover:bg-red-500/50 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => bgInputRef.current?.click()}
+              disabled={uploadBg.isPending}
+              className="w-full h-32 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-1.5 text-white/30 hover:text-white/50 hover:border-white/20 transition-colors"
+            >
+              {uploadBg.isPending ? (
+                <Loader2 size={20} className="animate-spin" />
+              ) : (
+                <>
+                  <Upload size={20} />
+                  <span className="text-xs">Enviar imagem de fundo</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </div>}
 
       {/* Preview */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">

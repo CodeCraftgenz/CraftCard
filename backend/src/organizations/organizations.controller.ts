@@ -1,7 +1,14 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller, Get, Post, Put, Delete, Body, Param, Query, Res, UseGuards,
+  UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
+import * as sharp from 'sharp';
 import type { Response } from 'express';
 import { OrganizationsService } from './organizations.service';
+import { StorageService } from '../storage/storage.service';
+import { PrismaService } from '../common/prisma/prisma.service';
 import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.decorator';
 import { RequiresOrgRole } from '../common/decorators/org-role.decorator';
 import { Public } from '../common/decorators/public.decorator';
@@ -13,7 +20,11 @@ import { updateMemberRoleSchema } from './dto/update-member-role.dto';
 
 @Controller('organizations')
 export class OrganizationsController {
-  constructor(private readonly orgService: OrganizationsService) {}
+  constructor(
+    private readonly orgService: OrganizationsService,
+    private readonly storageService: StorageService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Post()
   async create(@CurrentUser() user: JwtPayload, @Body() body: unknown) {
@@ -182,6 +193,126 @@ export class OrganizationsController {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="leads.csv"');
     res.send(csv);
+  }
+
+  // --- Org image uploads (OWNER only) ---
+
+  @UseGuards(OrgRoleGuard)
+  @RequiresOrgRole('OWNER')
+  @Post(':orgId/cover-upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadCover(
+    @Param('orgId') orgId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(jpeg|jpg|png|webp)$/i }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { id: true, coverUrl: true },
+    });
+    if (!org) return { url: null };
+
+    const processed = await sharp(file.buffer)
+      .resize(1200, 400, { fit: 'cover' })
+      .webp({ quality: 80 })
+      .toBuffer();
+
+    if (org.coverUrl?.startsWith('http')) {
+      this.storageService.deleteFile(org.coverUrl).catch(() => {});
+    }
+
+    const coverUrl = await this.storageService.uploadFile(processed, 'org-covers', orgId, 'webp');
+
+    await this.prisma.organization.update({
+      where: { id: orgId },
+      data: { coverUrl },
+    });
+
+    return { url: coverUrl };
+  }
+
+  @UseGuards(OrgRoleGuard)
+  @RequiresOrgRole('OWNER')
+  @Delete(':orgId/cover')
+  async deleteCover(@Param('orgId') orgId: string) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { id: true, coverUrl: true },
+    });
+    if (org?.coverUrl?.startsWith('http')) {
+      this.storageService.deleteFile(org.coverUrl).catch(() => {});
+    }
+    await this.prisma.organization.update({
+      where: { id: orgId },
+      data: { coverUrl: null },
+    });
+    return { deleted: true };
+  }
+
+  @UseGuards(OrgRoleGuard)
+  @RequiresOrgRole('OWNER')
+  @Post(':orgId/background-upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadBackground(
+    @Param('orgId') orgId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 8 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(jpeg|jpg|png|webp)$/i }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { id: true, backgroundImageUrl: true },
+    });
+    if (!org) return { url: null };
+
+    const processed = await sharp(file.buffer)
+      .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toBuffer();
+
+    if (org.backgroundImageUrl?.startsWith('http')) {
+      this.storageService.deleteFile(org.backgroundImageUrl).catch(() => {});
+    }
+
+    const backgroundImageUrl = await this.storageService.uploadFile(processed, 'org-backgrounds', orgId, 'webp');
+
+    await this.prisma.organization.update({
+      where: { id: orgId },
+      data: { backgroundImageUrl, backgroundType: 'image' },
+    });
+
+    return { url: backgroundImageUrl };
+  }
+
+  @UseGuards(OrgRoleGuard)
+  @RequiresOrgRole('OWNER')
+  @Delete(':orgId/background')
+  async deleteBackground(@Param('orgId') orgId: string) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { id: true, backgroundImageUrl: true },
+    });
+    if (org?.backgroundImageUrl?.startsWith('http')) {
+      this.storageService.deleteFile(org.backgroundImageUrl).catch(() => {});
+    }
+    await this.prisma.organization.update({
+      where: { id: orgId },
+      data: { backgroundImageUrl: null, backgroundType: 'theme' },
+    });
+    return { deleted: true };
   }
 
   // --- Profile linking ---

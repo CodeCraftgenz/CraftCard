@@ -32,9 +32,10 @@ interface StyleEditorProps {
   onUploadBackground?: (file: File) => void;
   onDeleteBackground?: () => void;
   isUploadingBackground?: boolean;
+  backgroundLockedByOrg?: string | null;
 }
 
-export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, onUploadBackground, onDeleteBackground, isUploadingBackground }: StyleEditorProps) {
+export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, onUploadBackground, onDeleteBackground, isUploadingBackground, backgroundLockedByOrg }: StyleEditorProps) {
   const bgFileRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -101,7 +102,13 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, 
         </div>
 
         {/* Background Type */}
-        <div>
+        <div className="relative">
+          {backgroundLockedByOrg && (
+            <div className="absolute inset-0 z-10 bg-dark-card/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-2 p-4">
+              <Layers size={18} className="text-purple-400" />
+              <p className="text-white/60 text-xs text-center">O fundo é definido pela organização <strong>{backgroundLockedByOrg}</strong></p>
+            </div>
+          )}
           <label className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider flex items-center gap-1.5">
             <Layers size={12} /> Fundo
           </label>

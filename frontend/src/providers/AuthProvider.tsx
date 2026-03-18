@@ -23,6 +23,8 @@ export interface OrgMembership {
   name: string;
   slug: string;
   brandingActive: boolean;
+  coverUrl: string | null;
+  backgroundImageUrl: string | null;
   role: string;
 }
 

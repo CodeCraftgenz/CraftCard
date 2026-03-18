@@ -254,6 +254,50 @@ export function useUnlinkProfile(orgId: string) {
   });
 }
 
+export function useUploadOrgCover(orgId: string) {
+  const qc = useQueryClient();
+  return useMutation<{ url: string }, Error, File>({
+    mutationFn: (file: File) => {
+      const fd = new FormData();
+      fd.append('file', file);
+      return api.post(`/organizations/${orgId}/cover-upload`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['organization', orgId] }); },
+  });
+}
+
+export function useDeleteOrgCover(orgId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.delete(`/organizations/${orgId}/cover`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['organization', orgId] }); },
+  });
+}
+
+export function useUploadOrgBackground(orgId: string) {
+  const qc = useQueryClient();
+  return useMutation<{ url: string }, Error, File>({
+    mutationFn: (file: File) => {
+      const fd = new FormData();
+      fd.append('file', file);
+      return api.post(`/organizations/${orgId}/background-upload`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['organization', orgId] }); },
+  });
+}
+
+export function useDeleteOrgBackground(orgId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.delete(`/organizations/${orgId}/background`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['organization', orgId] }); },
+  });
+}
+
 export function useBulkApplyBranding(orgId: string) {
   const qc = useQueryClient();
   return useMutation<{ applied: boolean; count: number }>({

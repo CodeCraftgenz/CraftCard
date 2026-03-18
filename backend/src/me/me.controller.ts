@@ -36,7 +36,7 @@ export class MeController {
     // Get user's org memberships
     const orgMemberships = await this.prisma.organizationMember.findMany({
       where: { userId: user.sub },
-      include: { org: { select: { id: true, name: true, slug: true, brandingActive: true } } },
+      include: { org: { select: { id: true, name: true, slug: true, brandingActive: true, coverUrl: true, backgroundImageUrl: true } } },
     });
 
     return {
