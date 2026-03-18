@@ -93,7 +93,7 @@ export const updateProfileSchema = z.object({
   // Visual Customization
   fontFamily: z.preprocess(emptyToUndefined, z.string().max(50).optional().nullable()),
   fontSizeScale: z.number().min(0.8).max(1.3).optional().nullable(),
-  backgroundType: z.enum(['theme', 'gradient', 'image', 'pattern', 'animated']).optional().nullable(),
+  backgroundType: z.enum(['theme', 'gradient', 'mesh', 'image', 'pattern', 'animated']).optional().nullable(),
   backgroundGradient: z.preprocess(emptyToUndefined, z.string().max(200).optional().nullable()),
   backgroundImageUrl: z.preprocess(emptyToUndefined, safeUrlSchema.optional().nullable()),
   backgroundOverlay: z.number().min(0).max(1).optional().nullable(),

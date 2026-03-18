@@ -64,6 +64,50 @@ export const PRESET_PATTERNS = [
   { value: 'zigzag', label: 'Zigue-Zague' },
 ] as const;
 
+// ── Mesh Gradient presets — fundos com radial-gradient sobrepostos estilo premium ──
+export const MESH_GRADIENTS = [
+  {
+    value: 'mesh-rose',
+    label: 'Rose',
+    css: 'radial-gradient(circle at 15% 30%, rgba(255,182,193,0.55) 0%, transparent 45%), radial-gradient(circle at 85% 50%, rgba(196,181,253,0.55) 0%, transparent 50%), linear-gradient(135deg, #1a1025 0%, #2d1b3d 50%, #1a1025 100%)',
+  },
+  {
+    value: 'mesh-ocean',
+    label: 'Ocean',
+    css: 'radial-gradient(circle at 20% 70%, rgba(0,228,242,0.45) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(99,102,241,0.5) 0%, transparent 45%), linear-gradient(160deg, #0a0e1a 0%, #0f172a 50%, #0a0e1a 100%)',
+  },
+  {
+    value: 'mesh-sunset',
+    label: 'Sunset',
+    css: 'radial-gradient(circle at 25% 25%, rgba(255,107,107,0.5) 0%, transparent 45%), radial-gradient(circle at 75% 65%, rgba(255,217,61,0.4) 0%, transparent 50%), linear-gradient(145deg, #1a0a0a 0%, #2d1a0a 50%, #1a0a0a 100%)',
+  },
+  {
+    value: 'mesh-aurora',
+    label: 'Aurora',
+    css: 'radial-gradient(circle at 30% 80%, rgba(0,184,148,0.5) 0%, transparent 50%), radial-gradient(circle at 70% 20%, rgba(162,155,254,0.5) 0%, transparent 45%), linear-gradient(150deg, #050d14 0%, #0a1628 50%, #050d14 100%)',
+  },
+  {
+    value: 'mesh-berry',
+    label: 'Berry',
+    css: 'radial-gradient(circle at 10% 50%, rgba(232,67,147,0.5) 0%, transparent 45%), radial-gradient(circle at 90% 40%, rgba(108,92,231,0.5) 0%, transparent 50%), linear-gradient(135deg, #120a1e 0%, #1e0e2e 50%, #120a1e 100%)',
+  },
+  {
+    value: 'mesh-ember',
+    label: 'Ember',
+    css: 'radial-gradient(circle at 20% 40%, rgba(255,107,107,0.45) 0%, transparent 50%), radial-gradient(circle at 80% 60%, rgba(232,67,147,0.4) 0%, transparent 45%), linear-gradient(140deg, #1a0a0e 0%, #2d0a14 50%, #1a0a0e 100%)',
+  },
+  {
+    value: 'mesh-arctic',
+    label: 'Arctic',
+    css: 'radial-gradient(circle at 15% 60%, rgba(99,102,241,0.45) 0%, transparent 50%), radial-gradient(circle at 85% 30%, rgba(0,228,242,0.4) 0%, transparent 45%), radial-gradient(circle at 50% 90%, rgba(196,181,253,0.3) 0%, transparent 40%), linear-gradient(155deg, #080c18 0%, #0e1425 50%, #080c18 100%)',
+  },
+  {
+    value: 'mesh-gold',
+    label: 'Gold',
+    css: 'radial-gradient(circle at 25% 35%, rgba(255,217,61,0.45) 0%, transparent 45%), radial-gradient(circle at 75% 65%, rgba(255,159,67,0.4) 0%, transparent 50%), linear-gradient(140deg, #1a1400 0%, #2d2200 50%, #1a1400 100%)',
+  },
+] as const;
+
 // ── Animated background presets ──
 export const ANIMATED_BACKGROUNDS = [
   { value: 'aurora', label: 'Aurora' },

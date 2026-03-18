@@ -66,7 +66,7 @@ import { usePublicSlots } from '@/hooks/useBookings';
 import { useSendMessage } from '@/hooks/useContacts';
 import { useSubmitTestimonial } from '@/hooks/useTestimonials';
 import { useAuth } from '@/providers/AuthProvider';
-import { API_BASE, APP_NAME, resolvePhotoUrl } from '@/lib/constants';
+import { API_BASE, APP_NAME, MESH_GRADIENTS, resolvePhotoUrl } from '@/lib/constants';
 import { loadGoogleFont } from '@/lib/google-fonts';
 
 const HackathonPublicCard = lazy(() => import('@/hackathon/HackathonPublicCard'));
@@ -777,11 +777,16 @@ export function PublicCardPage() {
     );
   }
 
-  // Calcula o background CSS baseado no tipo configurado (tema, gradiente, imagem)
+  // Calcula o background CSS baseado no tipo configurado (tema, gradiente, mesh, imagem)
   const computedBackground = (() => {
     if (bgType === 'gradient' && profile.backgroundGradient) {
       const parts = profile.backgroundGradient.split(',');
       if (parts.length >= 3) return `linear-gradient(${parts[0]},${parts[1]},${parts[2]})`;
+    }
+    // Mesh Gradient — busca o preset pelo ID e aplica o CSS de radial-gradient sobrepostos
+    if (bgType === 'mesh' && profile.backgroundGradient) {
+      const mesh = MESH_GRADIENTS.find((m) => m.value === profile.backgroundGradient);
+      if (mesh) return mesh.css;
     }
     if (bgType === 'image' && profile.backgroundImageUrl) {
       return getThemeBackground(theme, accent);

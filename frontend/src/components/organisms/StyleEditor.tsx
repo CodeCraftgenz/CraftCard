@@ -18,6 +18,7 @@ import { Type, Paintbrush, MousePointerClick, Layers, ImageIcon, Upload, Trash2,
 import { AVAILABLE_FONTS, loadGoogleFont } from '@/lib/google-fonts';
 import {
   PRESET_GRADIENTS,
+  MESH_GRADIENTS,
   PRESET_PATTERNS,
   ANIMATED_BACKGROUNDS,
   LINK_LAYOUTS,
@@ -137,7 +138,7 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, 
             <Layers size={12} /> Fundo
           </label>
           <div className="flex flex-wrap gap-2 mb-3">
-            {(['theme', 'gradient', 'image', 'pattern', 'animated'] as const).map((type) => (
+            {(['theme', 'gradient', 'mesh', 'image', 'pattern', 'animated'] as const).map((type) => (
               <button
                 key={type}
                 type="button"
@@ -148,7 +149,7 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, 
                     : 'bg-white/5 text-white/50 border border-white/10 hover:border-white/20'
                 }`}
               >
-                {type === 'theme' ? 'Tema' : type === 'gradient' ? 'Gradiente' : type === 'image' ? 'Imagem' : type === 'pattern' ? 'Padrão' : 'Animado'}
+                {type === 'theme' ? 'Tema' : type === 'gradient' ? 'Gradiente' : type === 'mesh' ? 'Mesh' : type === 'image' ? 'Imagem' : type === 'pattern' ? 'Padrão' : 'Animado'}
               </button>
             ))}
           </div>
@@ -173,6 +174,26 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, 
                   />
                 );
               })}
+            </div>
+          )}
+
+          {/* Mesh Gradient Presets — fundos profissionais com radial-gradient sobrepostos */}
+          {value.backgroundType === 'mesh' && (
+            <div className="grid grid-cols-4 gap-2">
+              {MESH_GRADIENTS.map((m) => (
+                <button
+                  key={m.value}
+                  type="button"
+                  onClick={() => onChange('backgroundGradient', m.value)}
+                  className={`h-12 rounded-xl border-2 transition-all ${
+                    value.backgroundGradient === m.value
+                      ? 'border-white shadow-md'
+                      : 'border-white/10 hover:border-white/20'
+                  }`}
+                  style={{ background: m.css }}
+                  title={m.label}
+                />
+              ))}
             </div>
           )}
 
