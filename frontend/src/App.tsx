@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryProvider } from './providers/QueryProvider';
 import { AuthProvider } from './providers/AuthProvider';
@@ -10,6 +10,8 @@ import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { PublicCardPage } from './pages/PublicCardPage';
 import { NotFound } from './pages/NotFound';
+import { SupportChat } from './components/organisms/SupportChat';
+import { useAuth } from './providers/AuthProvider';
 
 // Lazy-loaded pages (authenticated / heavy)
 const EditorPage = lazy(() => import('./pages/EditorPage').then(m => ({ default: m.EditorPage })));
@@ -38,6 +40,20 @@ function PageLoader() {
   );
 }
 
+const APP_PATHS = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/billing', '/editor', '/tutorial', '/admin', '/org', '/hackathon', '/webhooks', '/connections', '/privacy', '/widget'];
+
+function SupportChatGlobal() {
+  const { isAuthenticated, plan } = useAuth();
+  const { pathname } = useLocation();
+  const isPaid = plan !== 'FREE';
+  // Only show on known app paths (not on public card /:slug pages)
+  const isAppPath = pathname === '/' || APP_PATHS.some((p) => p !== '/' && pathname.startsWith(p));
+  if (!isAppPath) return null;
+  if (!isAuthenticated) return <SupportChat />;
+  if (isPaid) return <SupportChat premium />;
+  return null;
+}
+
 export function App() {
   return (
     <ErrorBoundary>
@@ -46,6 +62,7 @@ export function App() {
           <AuthProvider>
             <BrowserRouter>
               <Suspense fallback={<PageLoader />}>
+                <SupportChatGlobal />
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/login" element={<LoginPage />} />
