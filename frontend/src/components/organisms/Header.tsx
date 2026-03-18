@@ -62,6 +62,9 @@ export function Header() {
               </a>
             </>
           )}
+          <Link to="/about" className="text-sm text-white/70 hover:text-white transition-colors">
+            Sobre
+          </Link>
 
           {isAuthenticated && user ? (
             <div className="flex items-center gap-3">
@@ -193,6 +196,9 @@ export function Header() {
                 </a>
               </>
             )}
+            <Link to="/about" className="text-sm text-white/70 py-2" onClick={() => setIsOpen(false)}>
+              Sobre
+            </Link>
 
             {isAuthenticated && user ? (
               <>
