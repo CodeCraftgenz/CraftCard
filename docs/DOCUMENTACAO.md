@@ -48,6 +48,9 @@ O **CraftCard** e uma plataforma SaaS que permite a criacao de cartoes digitais 
 | **Webhooks** | Integracao com sistemas externos |
 | **API Publica** | API REST para clientes Enterprise |
 | **PWA** | App instalavel com push notifications |
+| **Compartilhamento Social** | WhatsApp, Telegram, Email, Instagram Stories, Copiar Link |
+| **Estatisticas Publicas** | Contadores reais na landing page (cartoes, views, usuarios) |
+| **Chat de Suporte** | WhatsApp flutuante (visitantes) + multicanal para planos pagos |
 
 ---
 
@@ -256,6 +259,13 @@ CardCraft/
 | POST | `/webhooks` | Criar webhook |
 | POST | `/webhooks/:id/test` | Enviar teste |
 | GET | `/webhooks/:id/logs` | Historico de disparos |
+
+### Estatisticas Publicas (`/stats`)
+| Metodo | Rota | Descricao |
+|--------|------|-----------|
+| GET | `/stats/public` | Numeros agregados para landing page (cache 5min, sem auth) |
+
+Retorna: `{ totalCards, totalViews, totalUsers }` — usado na secao "TrustedBySection" da landing page com contadores animados.
 
 ### API Publica (`/api/v1`) — Enterprise
 | Metodo | Rota | Descricao |

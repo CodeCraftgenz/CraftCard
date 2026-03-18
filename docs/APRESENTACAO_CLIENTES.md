@@ -72,6 +72,7 @@ Um **cartao digital inteligente** que combina tudo em uma unica pagina:
 | Analytics detalhado (dispositivos, paises, referrers) | Basico |
 | Organizacoes B2B com branding | Apenas enterprise |
 | Webhooks + API publica | Raro |
+| Compartilhamento direto (WhatsApp, Instagram, Telegram) | Limitado a link |
 | Suporte 24h via WhatsApp | Email apenas |
 | Preco acessivel em Real (BRL) | Dolares/Euros |
 

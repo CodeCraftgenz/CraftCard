@@ -29,6 +29,7 @@ import { HackathonModule } from './hackathon/hackathon.module';
 import { TagsModule } from './tags/tags.module';
 import { EventsModule } from './events/events.module';
 import { PublicApiModule } from './public-api/public-api.module';
+import { StatsModule } from './stats/stats.module';
 import { AppController } from './app.controller';
 import configuration from './common/config/configuration';
 
@@ -112,6 +113,7 @@ import configuration from './common/config/configuration';
     TagsModule,
     EventsModule,
     PublicApiModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [

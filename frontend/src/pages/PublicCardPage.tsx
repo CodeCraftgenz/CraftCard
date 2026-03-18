@@ -49,6 +49,7 @@ import {
   HelpCircle,
   UserPlus,
   Scan,
+  Instagram,
 } from 'lucide-react';
 import { CustomQrCode } from '@/components/organisms/CustomQrCode';
 import { AnimatedBackground } from '@/components/atoms/AnimatedBackground';
@@ -493,6 +494,8 @@ export function PublicCardPage() {
   const [contactForm, setContactForm] = useState({ senderName: '', senderEmail: '', message: '' });
   const [contactSuccess, setContactSuccess] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  // Estado para exibir dica do Instagram apos salvar imagem
+  const [instagramHint, setInstagramHint] = useState(false);
   const [showTestimonialForm, setShowTestimonialForm] = useState(false);
   const [testimonialForm, setTestimonialForm] = useState({ authorName: '', authorRole: '', text: '' });
   const [testimonialSuccess, setTestimonialSuccess] = useState(false);
@@ -1468,6 +1471,20 @@ export function PublicCardPage() {
                   <Mail size={24} className="text-red-400" />
                   <span className="text-xs text-white/70">Email</span>
                 </a>
+                {/* Botao Instagram — salva imagem do cartao e exibe dica para compartilhar nos Stories */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await handleExportImage();
+                    setInstagramHint(true);
+                    setTimeout(() => setInstagramHint(false), 3000);
+                  }}
+                  disabled={exporting}
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-pink-500/10 hover:border-pink-500/30 transition-all"
+                >
+                  <Instagram size={24} className="text-pink-400" />
+                  <span className="text-xs text-white/70">Instagram</span>
+                </button>
                 <button
                   type="button"
                   onClick={handleCopyLink}
@@ -1477,6 +1494,19 @@ export function PublicCardPage() {
                   <span className="text-xs text-white/70">{linkCopied ? 'Copiado!' : 'Copiar Link'}</span>
                 </button>
               </div>
+              {/* Dica exibida apos salvar imagem para compartilhar no Instagram */}
+              <AnimatePresence>
+                {instagramHint && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="mt-2 text-center text-xs text-pink-300/80"
+                  >
+                    Imagem salva! Abra o Instagram e compartilhe nos Stories
+                  </motion.p>
+                )}
+              </AnimatePresence>
 
               {/* QR Code — high-contrast for reliable scanning */}
               <div className="mt-4 flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-white/10">

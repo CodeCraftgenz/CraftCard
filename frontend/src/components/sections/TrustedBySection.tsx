@@ -1,7 +1,16 @@
+/**
+ * TrustedBySection — Secao de prova social com contadores animados.
+ *
+ * Busca dados reais da API (/api/stats/public) para exibir numeros autenticos
+ * de cartoes criados, visualizacoes e usuarios. Se a API falhar (ex: backend
+ * frio no Render), usa valores de fallback para nao deixar a secao vazia.
+ */
 import { useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Users, Eye, Star, Clock } from 'lucide-react';
+import { Users, Eye, Clock, CreditCard } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { api } from '@/lib/api';
 
 interface StatItem {
   icon: LucideIcon;
@@ -11,12 +20,19 @@ interface StatItem {
   decimals?: number;
 }
 
-const stats: StatItem[] = [
-  { icon: Users, end: 500, suffix: '+', label: 'Cartões criados' },
+/** Valores de fallback caso a API nao responda (ex: cold start do Render) */
+const FALLBACK_STATS: StatItem[] = [
+  { icon: CreditCard, end: 500, suffix: '+', label: 'Cartões criados' },
   { icon: Eye, end: 10, suffix: 'k+', label: 'Visualizações' },
-  { icon: Star, end: 4.9, suffix: '', label: 'Avaliação média', decimals: 1 },
+  { icon: Users, end: 100, suffix: '+', label: 'Usuários ativos' },
   { icon: Clock, end: 30, suffix: 's', label: 'Para criar seu cartão' },
 ];
+
+/** Formata numero grande: 1500 → {end: 1.5, suffix: 'k+'} */
+function formatLargeNumber(n: number): { end: number; suffix: string; decimals?: number } {
+  if (n >= 1000) return { end: parseFloat((n / 1000).toFixed(1)), suffix: 'k+', decimals: 1 };
+  return { end: n, suffix: '+' };
+}
 
 function AnimatedCounter({ end, suffix, decimals = 0, started }: { end: number; suffix: string; decimals?: number; started: boolean }) {
   const [count, setCount] = useState(0);
@@ -61,6 +77,24 @@ const item = {
 export function TrustedBySection() {
   const sectionRef = useRef<HTMLElement>(null);
   const [started, setStarted] = useState(false);
+
+  // Busca stats reais da API (cache de 5min, nao bloqueia renderizacao)
+  const { data: apiStats } = useQuery<{ totalCards: number; totalViews: number; totalUsers: number }>({
+    queryKey: ['public-stats'],
+    queryFn: () => api.get('/stats/public'),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+  // Monta os stats dinamicamente: se API respondeu, usa dados reais; senao, fallback
+  const stats: StatItem[] = apiStats
+    ? [
+        { icon: CreditCard, ...formatLargeNumber(apiStats.totalCards), label: 'Cartões criados' },
+        { icon: Eye, ...formatLargeNumber(apiStats.totalViews), label: 'Visualizações' },
+        { icon: Users, ...formatLargeNumber(apiStats.totalUsers), label: 'Usuários ativos' },
+        { icon: Clock, end: 30, suffix: 's', label: 'Para criar seu cartão' },
+      ]
+    : FALLBACK_STATS;
 
   useEffect(() => {
     if (!sectionRef.current) return;
