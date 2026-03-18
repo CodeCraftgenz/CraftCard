@@ -34,7 +34,7 @@ O **CraftCard** e uma plataforma SaaS que permite a criacao de cartoes digitais 
 
 | Recurso | Descricao |
 |---------|-----------|
-| **Cartoes Digitais** | Perfis personalizaveis com temas, cores, fontes e animacoes |
+| **Cartoes Digitais** | Perfis personalizaveis com 18 temas, 8 animacoes de link, 16 estilos de icone e fundos mesh gradient |
 | **QR Code** | Geracao automatica para compartilhamento rapido |
 | **Analytics** | Dashboard com views, cliques, dispositivos, paises e referrers |
 | **Formulario de Contato** | Captura de leads diretamente no cartao |
@@ -51,6 +51,28 @@ O **CraftCard** e uma plataforma SaaS que permite a criacao de cartoes digitais 
 | **Compartilhamento Social** | WhatsApp, Telegram, Email, Instagram Stories, Copiar Link |
 | **Estatisticas Publicas** | Contadores reais na landing page (cartoes, views, usuarios) |
 | **Chat de Suporte** | WhatsApp flutuante (visitantes) + multicanal para planos pagos |
+| **Pagina Sobre** | Pagina institucional `/about` com historia, missao e equipe |
+| **Export Instagram Stories** | Exportar cartao como imagem 1080x1920 para compartilhar nos Stories |
+
+### Opcoes de Personalizacao Visual
+
+O editor oferece uma ampla variedade de opcoes visuais:
+
+#### 18 Temas de Cartao
+
+`default`, `gradient`, `minimal`, `bold`, `ocean`, `sunset`, `forest`, `neon`, `elegant`, `cosmic`, `glass`, `brutalist`, `neumorphism`, `terminal`, `polaroid`, `pastel`, `noir`, `retro`
+
+#### 8 Animacoes de Link
+
+`none`, `scale`, `slide`, `glow`, `bounce`, `tilt3d`, `flip`, `pulse`
+
+#### 16 Estilos de Icone
+
+`default`, `filled`, `outline`, `neomorph`, `glass`, `gradient`, `neon`, `shadow`, `minimal`, `circle`, `soft`, `duotone`, `isometric`, `badge`, `floating`, `diamond`
+
+#### 8 Fundos Mesh Gradient
+
+`mesh-rose`, `mesh-ocean`, `mesh-sunset`, `mesh-aurora`, `mesh-berry`, `mesh-ember`, `mesh-arctic`, `mesh-gold`
 
 ---
 
@@ -146,7 +168,7 @@ CardCraft/
 ├── frontend/
 │   └── src/
 │       ├── App.tsx                # Router + providers
-│       ├── pages/                 # 18 paginas (Editor, Landing, Billing...)
+│       ├── pages/                 # 19 paginas (Editor, Landing, About, Billing...)
 │       ├── components/
 │       │   ├── atoms/             # Componentes basicos (Logo, Spinner...)
 │       │   ├── organisms/         # Componentes complexos (Header, Footer...)
@@ -279,10 +301,11 @@ Retorna: `{ totalCards, totalViews, totalUsers }` — usado na secao "TrustedByS
 
 ## 6. Frontend — Paginas e Componentes
 
-### Paginas (18)
+### Paginas (19)
 | Pagina | Rota | Descricao |
 |--------|------|-----------|
 | LandingPage | `/` | Pagina de marketing |
+| AboutPage | `/about` | Pagina institucional (historia, missao, equipe) |
 | LoginPage | `/login` | Login (Google + email) |
 | RegisterPage | `/register` | Cadastro |
 | EditorPage | `/editor` | Editor principal do cartao |

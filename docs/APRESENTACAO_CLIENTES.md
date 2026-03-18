@@ -43,6 +43,11 @@ Um **cartao digital inteligente** que combina tudo em uma unica pagina:
 | **Servicos** | Liste seus servicos com precos |
 | **Curriculo** | Compartilhe seu CV em PDF diretamente |
 | **Video** | Apresente-se com um video pessoal |
+| **Instagram Stories** | Exporte seu cartao como imagem 1080x1920 para compartilhar nos Stories |
+| **18 temas visuais** | De minimalista a neon, brutalist, terminal, glass e mais |
+| **8 animacoes de link** | Efeitos como bounce, glow, flip, tilt3d e pulse |
+| **16 estilos de icone** | De outline a neomorph, glass, gradient, isometric e mais |
+| **Fundos mesh gradient** | 8 fundos animados profissionais (rose, ocean, aurora, etc.) |
 
 ### Para Empresas (B2B)
 | Funcionalidade | Beneficio |
@@ -72,7 +77,8 @@ Um **cartao digital inteligente** que combina tudo em uma unica pagina:
 | Analytics detalhado (dispositivos, paises, referrers) | Basico |
 | Organizacoes B2B com branding | Apenas enterprise |
 | Webhooks + API publica | Raro |
-| Compartilhamento direto (WhatsApp, Instagram, Telegram) | Limitado a link |
+| Compartilhamento direto (WhatsApp, Instagram Stories, Telegram) | Limitado a link |
+| 18 temas + 8 animacoes + 16 estilos de icone | Poucas opcoes |
 | Suporte 24h via WhatsApp | Email apenas |
 | Preco acessivel em Real (BRL) | Dolares/Euros |
 
@@ -94,7 +100,8 @@ Um **cartao digital inteligente** que combina tudo em uma unica pagina:
 | **Galeria** | - | Sim |
 | **Video** | - | Sim |
 | **Curriculo** | - | Sim |
-| **Personalzacao visual** | Basica | Total |
+| **Personalizacao visual** | Basica | Total (18 temas, 8 animacoes, 16 icones, 8 mesh gradients) |
+| **Instagram Stories** | - | Exportar cartao como imagem |
 
 *Plano anual: R$ 15,90/mes (desconto de ~20%)*
 
@@ -121,7 +128,7 @@ Um **cartao digital inteligente** que combina tudo em uma unica pagina:
 Acesse [craftcardgenz.com](https://craftcardgenz.com) e cadastre-se com Google ou email.
 
 ### 2. Personalize seu cartao
-Use o editor visual para adicionar suas informacoes, escolher tema, cores e fontes.
+Use o editor visual para adicionar suas informacoes e escolher entre **18 temas**, **8 animacoes de link**, **16 estilos de icone** e **8 fundos mesh gradient**.
 
 ### 3. Compartilhe
 Copie seu link unico (craftcardgenz.com/seu-nome) ou gere um QR Code.
@@ -171,12 +178,18 @@ API e webhooks permitem integrar o CraftCard ao stack existente. Dominio customi
 
 ---
 
+## Conheca Mais
+
+Visite nossa **pagina Sobre** em [craftcardgenz.com/about](https://craftcardgenz.com/about) para conhecer a historia, missao e equipe por tras do CraftCard.
+
+---
+
 ## Proximos Passos
 
 1. **Acesse** [craftcardgenz.com](https://craftcardgenz.com)
 2. **Crie** sua conta gratuita
-3. **Personalize** seu primeiro cartao
-4. **Compartilhe** e veja os resultados
+3. **Personalize** seu primeiro cartao (escolha entre 18 temas e dezenas de opcoes visuais)
+4. **Compartilhe** via link, QR Code ou Instagram Stories e veja os resultados
 
 Para planos empresariais ou duvidas:
 - **WhatsApp**: [(35) 99935-8856](https://wa.me/5535999358856)
