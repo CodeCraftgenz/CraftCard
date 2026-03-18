@@ -411,7 +411,7 @@ function LinkButton({
         className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 relative z-[1] ${iconContainer.className}`}
         style={iconContainer.style}
       >
-        <Icon size={20} style={{ color: iconContainer.iconColor }} />
+        <Icon size={20} style={{ color: iconContainer.iconColor, ...(iconStyle === 'diamond' ? { transform: 'rotate(-45deg)' } : {}) }} />
       </div>
       <span
         className={`truncate min-w-0 relative z-[1] ${meta.textBold === '1' ? 'font-bold' : 'font-medium'} ${meta.textUppercase === '1' ? 'uppercase tracking-wider' : ''}`}
@@ -464,6 +464,21 @@ function getIconContainerStyle(iconStyle: string, bgColor: string, accent: strin
       return { style: { backgroundColor: `${bgColor}18`, borderRadius: '50%' }, className: '!rounded-full', iconColor: isLightColor(bgColor) ? accent : bgColor };
     case 'soft':
       return { style: { backgroundColor: `${bgColor}12`, border: `1px solid ${bgColor}10` }, className: '', iconColor: isLightColor(bgColor) ? accent : bgColor };
+    // Estilo duotone — efeito de duas tonalidades (cor principal + fundo mais claro)
+    case 'duotone':
+      return { style: { backgroundColor: `${bgColor}25`, border: `1px solid ${bgColor}40` }, className: '', iconColor: bgColor };
+    // Estilo isometrico — profundidade 3D com sombras em camadas
+    case 'isometric':
+      return { style: { backgroundColor: bgColor, boxShadow: `3px 3px 0px ${bgColor}60, 6px 6px 0px ${bgColor}30`, transform: 'translateX(-2px) translateY(-2px)' }, className: '', iconColor: solidIconColor };
+    // Estilo badge — icone dentro de um badge colorido com bordas arredondadas
+    case 'badge':
+      return { style: { backgroundColor: `${bgColor}30`, border: `2px solid ${bgColor}50`, borderRadius: '8px' }, className: '!rounded-lg', iconColor: bgColor };
+    // Estilo flutuante — icone com sombra e animacao de flutuacao sutil
+    case 'floating':
+      return { style: { backgroundColor: `${bgColor}20`, boxShadow: `0 4px 12px ${bgColor}30`, animation: 'float 3s ease-in-out infinite' }, className: 'animate-float', iconColor: bgColor };
+    // Estilo diamante — container rotacionado 45 graus (formato losango)
+    case 'diamond':
+      return { style: { backgroundColor: `${bgColor}20`, transform: 'rotate(45deg)' }, className: '!rounded-lg', iconColor: bgColor };
     case 'default':
     default:
       return { style: { backgroundColor: `${accent}20` }, className: '', iconColor: isLightColor(bgColor) ? accent : bgColor };
@@ -556,11 +571,21 @@ function getSkinBackground(skin: string, accent: string): { type: 'gradient' | '
   }
 }
 
-function getHoverAnim(anim: string): Record<string, number> {
+// Retorna objeto de animação whileHover do Framer Motion para cada tipo de animação
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getHoverAnim(anim: string): any {
   switch (anim) {
     case 'scale': return { scale: 1.04 };
     case 'slide': return { x: 6 };
     case 'glow': return { scale: 1.02 };
+    // Saltar — efeito mola para cima
+    case 'bounce': return { y: -4, transition: { type: 'spring', stiffness: 400, damping: 15 } };
+    // 3D — inclinação com perspectiva
+    case 'tilt3d': return { rotateX: 5, rotateY: -3, scale: 1.02, transition: { duration: 0.2 } };
+    // Virar — rotação horizontal sutil
+    case 'flip': return { rotateY: 8, scale: 1.02, transition: { duration: 0.3 } };
+    // Pulsar — oscilação de escala
+    case 'pulse': return { scale: [1, 1.05, 1.02], transition: { duration: 0.4 } };
     default: return { scale: 1.02 };
   }
 }
@@ -683,7 +708,7 @@ function GridLinkCard({
       )}
       {!hasSkin && blockTexture !== 'none' && <div className="absolute inset-0 pointer-events-none" style={textureStyle} />}
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center relative z-[1] ${iconContainer.className}`} style={iconContainer.style}>
-        <Icon size={gs.cols >= 2 || gs.rows >= 2 ? 32 : 24} style={{ color: iconContainer.iconColor }} />
+        <Icon size={gs.cols >= 2 || gs.rows >= 2 ? 32 : 24} style={{ color: iconContainer.iconColor, ...(iconStyle === 'diamond' ? { transform: 'rotate(-45deg)' } : {}) }} />
       </div>
       <span
         className={`truncate max-w-full text-center leading-tight relative z-[1] ${gs.cols >= 2 ? 'text-sm' : 'text-[11px]'} ${meta.textBold === '1' ? 'font-bold' : 'font-medium'} ${meta.textUppercase === '1' ? 'uppercase tracking-wider' : ''}`}

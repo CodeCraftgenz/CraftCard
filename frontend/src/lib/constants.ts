@@ -146,6 +146,12 @@ export const ICON_STYLES = [
   { value: 'minimal', label: 'Minimal' },
   { value: 'circle', label: 'Circulo' },
   { value: 'soft', label: 'Soft' },
+  // Novos estilos de icone
+  { value: 'duotone', label: 'Duotone' },
+  { value: 'isometric', label: '3D' },
+  { value: 'badge', label: 'Badge' },
+  { value: 'floating', label: 'Flutuante' },
+  { value: 'diamond', label: 'Diamante' },
 ] as const;
 
 export const LINK_ANIMATIONS = [
@@ -153,6 +159,11 @@ export const LINK_ANIMATIONS = [
   { value: 'scale', label: 'Escala' },
   { value: 'slide', label: 'Deslizar' },
   { value: 'glow', label: 'Brilho' },
+  // Novas animações de hover para links
+  { value: 'bounce', label: 'Saltar' },
+  { value: 'tilt3d', label: '3D' },
+  { value: 'flip', label: 'Virar' },
+  { value: 'pulse', label: 'Pulsar' },
 ] as const;
 
 // ── Per-link button shape (border-radius / clip-path) ──

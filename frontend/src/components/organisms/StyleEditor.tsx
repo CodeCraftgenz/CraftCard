@@ -612,6 +612,41 @@ function IconStylePreview({ style, accent }: { style: string; accent: string }) 
           <svg width={18} height={18} viewBox="0 0 24 24" fill="#fff"><path d={iconPath} /></svg>
         </div>
       );
+    /* Duotone — efeito de duas tonalidades */
+    case 'duotone':
+      return (
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto" style={{ backgroundColor: `${accent}25`, border: `1px solid ${accent}40` }}>
+          <svg width={18} height={18} viewBox="0 0 24 24" fill={accent}><path d={iconPath} /></svg>
+        </div>
+      );
+    /* Isometric — profundidade 3D com sombras em camadas */
+    case 'isometric':
+      return (
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto" style={{ backgroundColor: accent, boxShadow: `3px 3px 0px ${accent}60, 6px 6px 0px ${accent}30`, transform: 'translateX(-2px) translateY(-2px)' }}>
+          <svg width={18} height={18} viewBox="0 0 24 24" fill="#fff"><path d={iconPath} /></svg>
+        </div>
+      );
+    /* Badge — icone dentro de badge com bordas arredondadas */
+    case 'badge':
+      return (
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center mx-auto" style={{ backgroundColor: `${accent}30`, border: `2px solid ${accent}50` }}>
+          <svg width={18} height={18} viewBox="0 0 24 24" fill={accent}><path d={iconPath} /></svg>
+        </div>
+      );
+    /* Floating — flutuante com sombra e animacao */
+    case 'floating':
+      return (
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto animate-float" style={{ backgroundColor: `${accent}20`, boxShadow: `0 4px 12px ${accent}30` }}>
+          <svg width={18} height={18} viewBox="0 0 24 24" fill={accent}><path d={iconPath} /></svg>
+        </div>
+      );
+    /* Diamond — container em losango (45deg), icone rotacionado de volta */
+    case 'diamond':
+      return (
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center mx-auto" style={{ backgroundColor: `${accent}20`, transform: 'rotate(45deg)' }}>
+          <svg width={18} height={18} viewBox="0 0 24 24" fill={accent} style={{ transform: 'rotate(-45deg)' }}><path d={iconPath} /></svg>
+        </div>
+      );
     default:
       return (
         <div className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto" style={{ backgroundColor: `${accent}20` }}>

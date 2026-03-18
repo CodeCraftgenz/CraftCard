@@ -66,6 +66,15 @@ const CARD_THEMES = [
   { value: 'neon', label: 'Neon', preview: 'bg-black border border-pink-500/40' },
   { value: 'elegant', label: 'Elegante', preview: 'bg-gradient-to-br from-yellow-600/15 to-amber-800/15' },
   { value: 'cosmic', label: 'Cosmico', preview: 'bg-gradient-to-br from-purple-600/20 to-blue-800/20' },
+  // Novos temas adicionados
+  { value: 'glass', label: 'Glass', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))' },
+  { value: 'brutalist', label: 'Brutalist', gradient: 'linear-gradient(90deg, #ffffff, #333333)' },
+  { value: 'neumorphism', label: 'Neumorfismo', gradient: 'linear-gradient(145deg, #2a2d42, #1a1c2e)' },
+  { value: 'terminal', label: 'Terminal', gradient: 'linear-gradient(90deg, #00ff41, #003300)' },
+  { value: 'polaroid', label: 'Polaroid', gradient: 'linear-gradient(180deg, #ffffff, #f0e6d3)' },
+  { value: 'pastel', label: 'Pastel', gradient: 'linear-gradient(135deg, #FFB6C1, #C4B5FD)' },
+  { value: 'noir', label: 'Noir', gradient: 'linear-gradient(135deg, #000000, #B8860B)' },
+  { value: 'retro', label: 'Retro', gradient: 'linear-gradient(135deg, #EC4899, #00E4F2)' },
 ];
 
 export function EditorPage() {
@@ -2011,7 +2020,7 @@ export function EditorPage() {
                             : 'border-white/10 hover:border-white/20'
                         }`}
                       >
-                        <div className={`w-full h-8 rounded-lg mb-2 ${theme.preview}`} />
+                        <div className={`w-full h-8 rounded-lg mb-2 ${theme.preview || ''}`} style={theme.gradient ? { background: theme.gradient } : undefined} />
                         <span className="text-xs text-white/70">{theme.label}</span>
                       </button>
                     ))}
