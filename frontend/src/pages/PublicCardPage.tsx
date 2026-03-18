@@ -757,6 +757,151 @@ export function PublicCardPage() {
     }
   };
 
+  /**
+   * Gera imagem vertical otimizada para Instagram Stories (1080x1920).
+   * Layout: fundo mesh gradient escuro, foto grande circular, nome, tagline,
+   * mini QR Code no centro inferior, URL e branding CraftCard.
+   * Parece um "print profissional" do cartao — ideal para compartilhar nos Stories.
+   */
+  const handleExportStories = async () => {
+    if (!profile || !slug) return;
+    setExporting(true);
+    try {
+      const qrCanvas = qrExportRef.current?.querySelector('canvas');
+      const W = 1080, H = 1920;
+      const canvas = document.createElement('canvas');
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d')!;
+
+      // Fundo mesh gradient escuro profissional
+      const bg = ctx.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0, '#0A0E1A');
+      bg.addColorStop(0.4, '#1A1A2E');
+      bg.addColorStop(0.7, '#12082a');
+      bg.addColorStop(1, '#0A0E1A');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      // Mesh blobs decorativos
+      const blob1 = ctx.createRadialGradient(200, 500, 0, 200, 500, 400);
+      blob1.addColorStop(0, accent + '30');
+      blob1.addColorStop(1, 'transparent');
+      ctx.fillStyle = blob1;
+      ctx.fillRect(0, 100, 600, 800);
+
+      const blob2 = ctx.createRadialGradient(880, 1400, 0, 880, 1400, 350);
+      blob2.addColorStop(0, '#D12BF230');
+      blob2.addColorStop(1, 'transparent');
+      ctx.fillStyle = blob2;
+      ctx.fillRect(530, 1050, 550, 700);
+
+      // Barra de destaque no topo
+      ctx.fillStyle = accent;
+      ctx.fillRect(0, 0, W, 6);
+
+      // Foto de perfil grande circular (raio 130px)
+      const photoSrc = resolvePhotoUrl(profile.photoUrl);
+      const cx = W / 2, cy = 520, r = 130;
+      if (photoSrc) {
+        try {
+          const img = await loadImage(photoSrc);
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(img, cx - r, cy - r, r * 2, r * 2);
+          ctx.restore();
+          // Anel ao redor da foto
+          ctx.beginPath();
+          ctx.arc(cx, cy, r + 5, 0, Math.PI * 2);
+          ctx.strokeStyle = accent;
+          ctx.lineWidth = 4;
+          ctx.stroke();
+        } catch { /* CORS fail */ }
+      } else {
+        // Placeholder com inicial
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = accent + '30';
+        ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 80px Inter, Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(displayName.charAt(0), cx, cy + 28);
+      }
+
+      // Nome
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 56px Inter, Arial, sans-serif';
+      ctx.textAlign = 'center';
+      const nameText = displayName.length > 25 ? displayName.slice(0, 22) + '...' : displayName;
+      ctx.fillText(nameText, cx, cy + r + 80);
+
+      // Tagline
+      let nextY = cy + r + 80;
+      if (profile.tagline) {
+        nextY += 50;
+        ctx.fillStyle = accent;
+        ctx.font = '30px Inter, Arial, sans-serif';
+        const tag = profile.tagline.length > 40 ? profile.tagline.slice(0, 37) + '...' : profile.tagline;
+        ctx.fillText(tag, cx, nextY);
+      }
+
+      // Bio
+      if (profile.bio) {
+        nextY += 50;
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.font = '24px Inter, Arial, sans-serif';
+        const bio = profile.bio.length > 70 ? profile.bio.slice(0, 67) + '...' : profile.bio;
+        ctx.fillText(bio, cx, nextY);
+      }
+
+      // Linha separadora sutil
+      nextY += 60;
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.fillRect(W / 2 - 100, nextY, 200, 1);
+
+      // QR Code centralizado
+      const qrSize = 280;
+      const qrY = 1280;
+      const qrX = (W - qrSize) / 2;
+
+      // Fundo branco arredondado para QR
+      ctx.fillStyle = '#FFFFFF';
+      drawRoundRect(ctx, qrX - 24, qrY - 24, qrSize + 48, qrSize + 48, 24);
+      ctx.fill();
+
+      if (qrCanvas) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+      }
+
+      // Texto abaixo do QR
+      ctx.fillStyle = 'rgba(255,255,255,0.50)';
+      ctx.font = '22px Inter, Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Escaneie para ver meu cartão', cx, qrY + qrSize + 60);
+
+      // URL
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.font = '20px Inter, Arial, sans-serif';
+      ctx.fillText(pageUrl, cx, H - 80);
+
+      // Branding
+      ctx.fillStyle = accent;
+      ctx.font = 'bold 18px Inter, Arial, sans-serif';
+      ctx.fillText('CraftCard', cx, H - 40);
+      ctx.textAlign = 'left';
+
+      // Download
+      const link = document.createElement('a');
+      link.download = `stories-${slug}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+    } catch { /* silently fail */ }
+    finally { setExporting(false); }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-brand-bg-dark flex items-center justify-center">
@@ -1240,7 +1385,8 @@ export function PublicCardPage() {
           )}
 
           {/* Share */}
-          <div className="mt-6 flex justify-center">
+          {/* Botoes de compartilhamento separados com gap adequado */}
+          <div className="mt-6 flex justify-center gap-6">
             <button
               type="button"
               onClick={async () => {
@@ -1264,14 +1410,14 @@ export function PublicCardPage() {
               <Share2 size={14} />
               Compartilhar
             </button>
-            {/* Botao extra para abrir modal customizado (Instagram, QR Code, Export) */}
+            {/* Abre modal com opcoes avancadas (Instagram Stories, QR, Export) */}
             <button
               type="button"
               onClick={() => setShowShareModal(true)}
               className="flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors"
             >
-              <Download size={14} />
-              QR & Instagram
+              <Instagram size={14} />
+              Stories & Mais
             </button>
           </div>
 
@@ -1485,19 +1631,19 @@ export function PublicCardPage() {
                   <Mail size={24} className="text-red-400" />
                   <span className="text-xs text-white/70">Email</span>
                 </a>
-                {/* Botao Instagram — salva imagem do cartao e exibe dica para compartilhar nos Stories */}
+                {/* Botao Instagram Stories — gera imagem vertical 1080x1920 com foto, nome, QR */}
                 <button
                   type="button"
                   onClick={async () => {
-                    await handleExportImage();
+                    await handleExportStories();
                     setInstagramHint(true);
-                    setTimeout(() => setInstagramHint(false), 3000);
+                    setTimeout(() => setInstagramHint(false), 4000);
                   }}
                   disabled={exporting}
                   className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-pink-500/10 hover:border-pink-500/30 transition-all"
                 >
                   <Instagram size={24} className="text-pink-400" />
-                  <span className="text-xs text-white/70">Instagram</span>
+                  <span className="text-xs text-white/70">Stories</span>
                 </button>
                 <button
                   type="button"
@@ -1517,7 +1663,7 @@ export function PublicCardPage() {
                     exit={{ opacity: 0, y: -4 }}
                     className="mt-2 text-center text-xs text-pink-300/80"
                   >
-                    Imagem salva! Abra o Instagram e compartilhe nos Stories
+                    Imagem para Stories salva! Abra o Instagram → Stories → Galeria
                   </motion.p>
                 )}
               </AnimatePresence>
