@@ -48,7 +48,7 @@ export function SupportChat({ premium = false }: SupportChatProps) {
   // Para visitantes nao autenticados e na landing page
   if (!premium) {
     return (
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-24 right-6 z-50">
         {/* Greeting bubble */}
         {showGreeting && !greetingDismissed && (
           <div className="absolute bottom-16 right-0 flex items-end gap-2 animate-in slide-in-from-bottom-3 fade-in duration-300">
@@ -93,7 +93,7 @@ export function SupportChat({ premium = false }: SupportChatProps) {
   // --- Modo premium: painel expansivel com todos os canais de suporte ---
   // Inclui saudacao estilo chat, canais (WhatsApp, Instagram, GitHub) e indicador de online
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-24 right-6 z-50">
       {/* Greeting bubble (when panel closed) */}
       {!open && showGreeting && !greetingDismissed && (
         <div className="absolute bottom-16 right-0 flex items-end gap-2 animate-in slide-in-from-bottom-3 fade-in duration-300">
