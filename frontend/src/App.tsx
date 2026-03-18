@@ -71,7 +71,8 @@ function SupportChatGlobal() {
   const isPaid = plan !== 'FREE';
   // Verifica se estamos em uma rota conhecida da app (exclui /:slug de cartoes publicos)
   const isAppPath = pathname === '/' || APP_PATHS.some((p) => p !== '/' && pathname.startsWith(p));
-  if (!isAppPath) return null;
+  // Nunca exibe o chat dentro do widget embed (iframe de terceiros)
+  if (!isAppPath || pathname.startsWith('/widget')) return null;
   if (!isAuthenticated) return <SupportChat />;
   if (isPaid) return <SupportChat premium />;
   return null;
