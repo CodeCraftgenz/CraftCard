@@ -1,11 +1,26 @@
+/**
+ * SupportChat.tsx — Widget flutuante de suporte ao usuario.
+ *
+ * Possui dois modos de operacao:
+ * 1. **Padrao (premium=false)**: Exibe apenas botao do WhatsApp com balao de saudacao.
+ *    Usado para visitantes nao autenticados na landing page.
+ * 2. **Premium (premium=true)**: Painel completo com multiplos canais (WhatsApp, Instagram, GitHub).
+ *    Disponivel apenas para assinantes pagos (PRO+).
+ *
+ * O balao de saudacao aparece apos 3s na primeira visita e pode ser dispensado.
+ * A preferencia de dispensa e salva no sessionStorage (reseta ao fechar aba).
+ */
+
 import { useState, useEffect } from 'react';
 import { MessageCircle, X, Instagram, Github } from 'lucide-react';
 
+// URLs dos canais de suporte da equipe CodeCraftGenZ
 const WHATSAPP_URL = 'https://wa.me/5535999358856?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20com%20o%20CraftCard';
 const INSTAGRAM_URL = 'https://www.instagram.com/codecraftgenz/';
 const GITHUB_URL = 'https://github.com/CodeCraftgenz';
+
 interface SupportChatProps {
-  /** Show full support panel (PRO+ users). False = greeting + WhatsApp button */
+  /** Quando true, exibe painel completo com multiplos canais (usuarios PRO+) */
   premium?: boolean;
 }
 
@@ -14,7 +29,8 @@ export function SupportChat({ premium = false }: SupportChatProps) {
   const [showGreeting, setShowGreeting] = useState(false);
   const [greetingDismissed, setGreetingDismissed] = useState(false);
 
-  // Show greeting bubble after 3 seconds on first visit
+  // Exibe balao de saudacao apos 3s na primeira visita da sessao.
+  // Se o usuario ja dispensou o balao nesta sessao, nao exibe novamente.
   useEffect(() => {
     const dismissed = sessionStorage.getItem('support-greeting-dismissed');
     if (dismissed) { setGreetingDismissed(true); return; }
@@ -28,7 +44,8 @@ export function SupportChat({ premium = false }: SupportChatProps) {
     sessionStorage.setItem('support-greeting-dismissed', '1');
   };
 
-  // --- Non-premium: WhatsApp button + greeting bubble ---
+  // --- Modo basico: apenas botao WhatsApp + balao de saudacao ---
+  // Para visitantes nao autenticados e na landing page
   if (!premium) {
     return (
       <div className="fixed bottom-6 right-6 z-50">
@@ -73,7 +90,8 @@ export function SupportChat({ premium = false }: SupportChatProps) {
     );
   }
 
-  // --- Premium: full panel with greeting ---
+  // --- Modo premium: painel expansivel com todos os canais de suporte ---
+  // Inclui saudacao estilo chat, canais (WhatsApp, Instagram, GitHub) e indicador de online
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {/* Greeting bubble (when panel closed) */}

@@ -1,3 +1,18 @@
+/**
+ * Serviço de gerenciamento de organizações (funcionalidade B2B).
+ *
+ * Organizações permitem que empresas gerenciem cartões de seus funcionários
+ * com branding unificado. Funcionalidades incluem:
+ * - CRUD de organização com slug único
+ * - Gerenciamento de membros com hierarquia de roles (OWNER > ADMIN > MEMBER)
+ * - Convites por email com token único e expiração de 7 dias
+ * - Aplicação em massa de branding (cores, tema, fontes) em todos os perfis
+ * - Analytics consolidados de todos os perfis da organização
+ * - Gestão de leads/mensagens recebidas com exportação CSV
+ * - Vinculação/desvinculação de perfis à organização
+ *
+ * A herança de plano B2B é tratada no PaymentsService.
+ */
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
@@ -5,6 +20,7 @@ import { AppException } from '../common/exceptions/app.exception';
 import { randomBytes } from 'crypto';
 import type { PrismaClient } from '@prisma/client';
 
+/** Roles hierárquicos: OWNER (3) > ADMIN (2) > MEMBER (1) */
 type OrgRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 
 @Injectable()
@@ -16,8 +32,9 @@ export class OrganizationsService {
     private readonly mailService: MailService,
   ) {}
 
-  // --- Organization CRUD ---
+  // --- CRUD de Organização ---
 
+  /** Cria uma organização. O criador se torna OWNER automaticamente (via transaction) */
   async create(userId: string, data: { name: string; slug: string }) {
     // Check slug uniqueness
     const existing = await this.prisma.organization.findUnique({ where: { slug: data.slug } });
@@ -40,6 +57,7 @@ export class OrganizationsService {
     });
   }
 
+  /** Lista organizações do usuário com contagem de membros e role do usuário */
   async getMyOrganizations(userId: string) {
     const memberships = await this.prisma.organizationMember.findMany({
       where: { userId },
@@ -71,6 +89,7 @@ export class OrganizationsService {
     return { ...org, memberCount: org._count.members, profileCount: org._count.profiles };
   }
 
+  /** Atualiza dados da organização — somente campos enviados são alterados (spread condicional) */
   async update(orgId: string, data: {
     name?: string;
     logoUrl?: string | null;
@@ -110,6 +129,11 @@ export class OrganizationsService {
     });
   }
 
+  /**
+   * Aplica o branding da organização em TODOS os perfis vinculados.
+   * Atualiza cores, tema, fontes, estilo de links, background, etc.
+   * Usado quando o admin quer padronizar visualmente todos os cartões.
+   */
   async bulkApplyBranding(orgId: string) {
     const org = await this.prisma.organization.findUnique({ where: { id: orgId } });
     if (!org) throw AppException.notFound('Organização');
@@ -136,8 +160,9 @@ export class OrganizationsService {
     return { applied: true, count: result.count };
   }
 
+  /** Exclui organização — desvincula perfis antes para não perder os cartões dos membros */
   async delete(orgId: string) {
-    // Unlink profiles from org before deletion
+    // Desvincula perfis da org antes de deletar (perfis continuam existindo)
     await this.prisma.profile.updateMany({
       where: { orgId },
       data: { orgId: null },
@@ -147,8 +172,9 @@ export class OrganizationsService {
     return { deleted: true };
   }
 
-  // --- Members ---
+  // --- Membros ---
 
+  /** Lista membros da organização com dados do usuário e slug do perfil vinculado */
   async getMembers(orgId: string) {
     const members = await this.prisma.organizationMember.findMany({
       where: { orgId },
@@ -173,6 +199,11 @@ export class OrganizationsService {
     }));
   }
 
+  /**
+   * Altera o role de um membro. Regras:
+   * - Não é possível alterar o role do OWNER (deve transferir ownership)
+   * - Apenas OWNER pode promover para ADMIN ou OWNER
+   */
   async updateMemberRole(orgId: string, memberId: string, callerUserId: string, newRole: string) {
     const member = await this.prisma.organizationMember.findUnique({ where: { id: memberId } });
     if (!member || member.orgId !== orgId) throw AppException.notFound('Membro');
@@ -191,6 +222,7 @@ export class OrganizationsService {
     });
   }
 
+  /** Remove membro da organização — desvincula seus perfis e impede remoção do OWNER */
   async removeMember(orgId: string, memberId: string) {
     const member = await this.prisma.organizationMember.findUnique({ where: { id: memberId } });
     if (!member || member.orgId !== orgId) throw AppException.notFound('Membro');
@@ -206,8 +238,14 @@ export class OrganizationsService {
     return { removed: true };
   }
 
-  // --- Invites ---
+  // --- Convites ---
 
+  /**
+   * Cria convite para a organização.
+   * Valida: limite de assentos, membro duplicado, convite pendente duplicado.
+   * Gera token aleatório (32 bytes hex) com expiração de 7 dias.
+   * Envia email de convite — informa o frontend se o email foi entregue ou não.
+   */
   async createInvite(orgId: string, userId: string, data: { email: string; role?: string }) {
     const org = await this.prisma.organization.findUnique({
       where: { id: orgId },
@@ -266,6 +304,7 @@ export class OrganizationsService {
     return { id: invite.id, token: invite.token, expiresAt: invite.expiresAt, emailSent };
   }
 
+  /** Lista convites pendentes (não usados e não expirados) */
   async getPendingInvites(orgId: string) {
     return this.prisma.organizationInvite.findMany({
       where: { orgId, usedAt: null, expiresAt: { gt: new Date() } },
@@ -273,6 +312,7 @@ export class OrganizationsService {
     });
   }
 
+  /** Preview do convite — endpoint público para exibir info da org antes de aceitar */
   async previewInvite(token: string) {
     const invite = await this.prisma.organizationInvite.findUnique({
       where: { token },
@@ -292,6 +332,12 @@ export class OrganizationsService {
     };
   }
 
+  /**
+   * Aceita convite de organização.
+   * Valida: token válido, não usado, não expirado, email correto, não já membro.
+   * Em transaction: marca convite como usado, cria membro, vincula perfis existentes.
+   * Se o usuário não tem perfil, cria um padrão vinculado à org.
+   */
   async acceptInvite(token: string, userId: string) {
     const invite = await this.prisma.organizationInvite.findUnique({ where: { token } });
     if (!invite) throw AppException.notFound('Convite');
@@ -361,8 +407,14 @@ export class OrganizationsService {
     return { revoked: true };
   }
 
-  // --- Consolidated Analytics ---
+  // --- Analytics Consolidados ---
 
+  /**
+   * Retorna analytics consolidados de todos os perfis da organização.
+   * Executa 12 queries em paralelo (Promise.all) para performance.
+   * Inclui: views, mensagens, bookings, conexões, distribuição de dispositivos,
+   * top referrers, top países, top links clicados, tendências diárias.
+   */
   async getConsolidatedAnalytics(orgId: string) {
     const profiles = await this.prisma.profile.findMany({
       where: { orgId },
@@ -530,8 +582,9 @@ export class OrganizationsService {
     };
   }
 
-  // --- Consolidated Leads ---
+  // --- Leads Consolidados ---
 
+  /** Lista leads/mensagens de contato de todos os perfis da org, com paginação e filtros */
   async getConsolidatedLeads(orgId: string, opts: {
     page?: number; limit?: number; search?: string; isRead?: boolean;
   } = {}) {
@@ -580,6 +633,7 @@ export class OrganizationsService {
     });
   }
 
+  /** Exporta todos os leads da organização em formato CSV (com escape de caracteres especiais) */
   async exportLeadsCsv(orgId: string): Promise<string> {
     const messages = await this.prisma.contactMessage.findMany({
       where: { profile: { orgId } },
@@ -603,8 +657,9 @@ export class OrganizationsService {
     return header + rows;
   }
 
-  // --- Link profiles to org ---
+  // --- Vinculação de perfis à organização ---
 
+  /** Vincula um perfil à organização — verifica se o dono do perfil é membro */
   async linkProfile(orgId: string, profileId: string) {
     const profile = await this.prisma.profile.findFirst({
       where: { id: profileId },
@@ -635,8 +690,9 @@ export class OrganizationsService {
     return { unlinked: true };
   }
 
-  // --- Helpers ---
+  // --- Utilitários ---
 
+  /** Gera slug a partir do nome: remove acentos, caracteres especiais, normaliza espaços */
   private slugifyName(name: string): string {
     return name
       .toLowerCase()
@@ -649,6 +705,7 @@ export class OrganizationsService {
       .slice(0, 40);
   }
 
+  /** Garante slug único dentro de uma transaction Prisma */
   private async generateUniqueSlug(name: string, tx: Pick<PrismaClient, 'profile'>): Promise<string> {
     let slug = this.slugifyName(name) || 'user';
     if (slug.length < 3) slug = slug + '-card';
@@ -665,6 +722,7 @@ export class OrganizationsService {
     return `${slug}-${randomBytes(3).toString('hex')}`;
   }
 
+  /** Verifica se o usuário tem o role mínimo necessário na organização */
   private async requireRole(orgId: string, userId: string, minRole: OrgRole) {
     const member = await this.prisma.organizationMember.findUnique({
       where: { orgId_userId: { orgId, userId } },
@@ -679,6 +737,7 @@ export class OrganizationsService {
   }
 }
 
+/** Escapa valores para CSV: envolve em aspas se contém vírgula, aspas ou quebra de linha */
 function csvEscape(value: string): string {
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
     return `"${value.replace(/"/g, '""')}"`;

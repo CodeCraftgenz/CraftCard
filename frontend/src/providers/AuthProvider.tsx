@@ -1,3 +1,16 @@
+/**
+ * AuthProvider.tsx — Gerenciamento centralizado de autenticacao e sessao.
+ *
+ * Responsabilidades:
+ * - Manter estado do usuario autenticado (dados, plano, permissoes, cartoes)
+ * - Prover metodos de login (Google OAuth, email/senha, dev mode), registro e logout
+ * - Verificar limites de features baseado no plano (FREE, PRO, BUSINESS, ENTERPRISE)
+ * - Integrar com o sistema de organizacoes (memberships)
+ *
+ * O estado e restaurado automaticamente ao carregar a pagina via GET /me,
+ * que valida o token JWT armazenado em cookie httpOnly.
+ */
+
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { api, setAccessToken, clearAccessToken } from '@/lib/api';
 import { queryClient } from '@/providers/QueryProvider';
@@ -28,8 +41,10 @@ export interface OrgMembership {
   role: string;
 }
 
+/** Tipos de plano disponiveis — definem os limites de recursos do usuario */
 export type PlanType = 'FREE' | 'PRO' | 'BUSINESS' | 'ENTERPRISE';
 
+/** Mapa de limites por feature. Cada plano tem valores diferentes retornados pelo backend */
 export interface PlanLimits {
   maxCards: number;
   maxLinks: number;
@@ -54,6 +69,8 @@ export interface PlanLimits {
   webhooks: boolean;
 }
 
+// Limites padrao do plano FREE — usados como fallback caso o backend nao retorne planLimits.
+// watermark: true significa que o selo "Feito com CraftCard" sera exibido no cartao.
 const DEFAULT_LIMITS: PlanLimits = {
   maxCards: 1, maxLinks: 5, maxThemes: 3, canPublish: true,
   analytics: false, gallery: false, bookings: false, testimonials: false,
@@ -107,12 +124,22 @@ const EMPTY_STATE: AuthState = {
   isHackathonParticipant: false,
 };
 
+/**
+ * Provider principal de autenticacao. Envolve toda a arvore de componentes
+ * e disponibiliza o estado de auth via useAuth().
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
+  // Inicia com isLoading: true pois precisamos verificar sessao existente via /me
   const [state, setState] = useState<AuthState>({
     ...EMPTY_STATE,
     isLoading: true,
   });
 
+  /**
+   * Busca dados do usuario autenticado no backend (GET /me).
+   * Chamado no mount inicial e apos cada login/registro para sincronizar estado.
+   * Se falhar (401), reseta para estado vazio (usuario deslogado).
+   */
   const fetchMe = useCallback(async () => {
     try {
       const data: {
@@ -126,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isHackathonParticipant?: boolean;
       } = await api.get('/me');
       const role = data.user.role || 'USER';
+      // Fallback: se backend antigo nao retorna plan, infere a partir de hasPaid
       setState({
         user: data.user,
         isAuthenticated: true,
@@ -148,11 +176,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchMe();
   }, [fetchMe]);
 
+  // Listener global para evento de logout forcado (disparado pelo interceptor de API
+  // quando o refresh token falha). Limpa estado local sem chamar o backend.
   useEffect(() => {
     const handleLogout = () => {
       clearAccessToken();
-      // Remove only authenticated/private queries — preserve public profile caches
-      // so that public card pages (hackathon, regular) don't flash a reload spinner
+      // Remove apenas queries privadas — preserva caches de perfis publicos
+      // para evitar flash de loading em paginas de cartao abertas
       queryClient.removeQueries({
         predicate: (query) => {
           const firstKey = query.queryKey[0];
@@ -165,6 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('auth:logout', handleLogout);
   }, []);
 
+  /** Login via Google OAuth — envia o credential JWT do Google para o backend */
   const login = useCallback(async (googleCredential: string) => {
     const data: { user: User; accessToken: string } = await api.post('/auth/google', {
       credential: googleCredential,
@@ -174,6 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await fetchMe();
   }, [fetchMe]);
 
+  /** Login tradicional via email + senha */
   const loginWithPassword = useCallback(async (email: string, password: string) => {
     const data: { user: User; accessToken: string } = await api.post('/auth/login', { email, password });
     setAccessToken(data.accessToken);
@@ -181,6 +213,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await fetchMe();
   }, [fetchMe]);
 
+  /** Registro de novo usuario. Pode incluir inviteToken para entrar automaticamente em uma org */
   const register = useCallback(async (registerData: RegisterData): Promise<RegisterResult> => {
     const data: { user: User; accessToken: string; joinedOrg?: { id: string; name: string; slug: string } } =
       await api.post('/auth/register', registerData);
@@ -190,6 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { joinedOrg: data.joinedOrg };
   }, [fetchMe]);
 
+  /** Login de desenvolvimento — disponivel apenas em ambiente nao-producao */
   const devLogin = useCallback(async (email?: string, name?: string) => {
     const data: { user: User; accessToken: string } = await api.post('/auth/dev', { email, name });
     setAccessToken(data.accessToken);
@@ -211,6 +245,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await fetchMe();
   }, [fetchMe]);
 
+  /**
+   * Verifica se o plano atual permite acesso a uma feature especifica.
+   * Para limites booleanos retorna o valor direto; para numericos (maxCards etc.) retorna true.
+   * Usado por componentes como FeatureLock para mostrar paywall.
+   */
   const hasFeature = useCallback((feature: keyof PlanLimits): boolean => {
     const value = state.planLimits[feature];
     if (typeof value === 'boolean') return value;
@@ -224,6 +263,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** Hook para acessar o contexto de autenticacao. Deve ser usado dentro de <AuthProvider> */
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

@@ -1,3 +1,18 @@
+/**
+ * StyleEditor.tsx — Editor visual completo para personalizacao do cartao.
+ *
+ * Feature PRO+ que permite ao usuario customizar:
+ * - Fonte (Google Fonts) e tamanho do texto
+ * - Tipo de fundo (tema, gradiente, imagem, padrao SVG, animado)
+ * - Layout dos links (lista vertical ou grid bento)
+ * - Estilo visual dos links (arredondado, pill, quadrado, outline, ghost)
+ * - Animacao de hover dos links (scale, slide, glow)
+ * - Estilo dos icones (default, filled, outline, neomorph, glass, gradient)
+ *
+ * Componente memoizado para evitar re-renders desnecessarios durante edicao.
+ * Quando a organizacao define um fundo, o controle de background e bloqueado (backgroundLockedByOrg).
+ */
+
 import { memo, useRef } from 'react';
 import { Type, Paintbrush, MousePointerClick, Layers, ImageIcon, Upload, Trash2, Loader2, LayoutGrid, List, Palette } from 'lucide-react';
 import { AVAILABLE_FONTS, loadGoogleFont } from '@/lib/google-fonts';
@@ -11,6 +26,7 @@ import {
   ICON_STYLES,
 } from '@/lib/constants';
 
+/** Estado completo de personalizacao visual de um cartao */
 export interface VisualCustomization {
   fontFamily: string | null;
   fontSizeScale: number;
@@ -26,15 +42,23 @@ export interface VisualCustomization {
 }
 
 interface StyleEditorProps {
+  /** Valores atuais de customizacao */
   value: VisualCustomization;
+  /** Callback para atualizar um campo individual (propagado para debounce no pai) */
   onChange: <K extends keyof VisualCustomization>(key: K, val: VisualCustomization[K]) => void;
+  /** Cor de destaque do cartao (usada nos previews de padrao e icone) */
   accent: string;
   onUploadBackground?: (file: File) => void;
   onDeleteBackground?: () => void;
   isUploadingBackground?: boolean;
+  /** Se preenchido, mostra overlay informando que o fundo e controlado pela organizacao */
   backgroundLockedByOrg?: string | null;
 }
 
+/**
+ * Editor principal de personalizacao visual.
+ * Memoizado com React.memo para evitar re-renders quando props nao mudam.
+ */
 export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, onUploadBackground, onDeleteBackground, isUploadingBackground, backgroundLockedByOrg }: StyleEditorProps) {
   const bgFileRef = useRef<HTMLInputElement>(null);
 
@@ -376,6 +400,7 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, 
   );
 });
 
+/** Retorna classes CSS para preview dos estilos de link no editor */
 function getLinkStylePreviewClass(style: string): string {
   switch (style) {
     case 'rounded': return 'rounded-2xl';
@@ -387,6 +412,7 @@ function getLinkStylePreviewClass(style: string): string {
   }
 }
 
+/** Renderiza preview SVG miniatura de cada padrao de fundo disponivel */
 function PatternPreview({ pattern, accent }: { pattern: string; accent: string }) {
   const size = 40;
   const color = `${accent}40`;
@@ -503,6 +529,7 @@ function PatternPreview({ pattern, accent }: { pattern: string; accent: string }
   }
 }
 
+/** Renderiza preview estatico dos fundos animados (aurora, mesh, particulas, etc) */
 function AnimatedBgPreview({ type, accent }: { type: string; accent: string }) {
   const baseClass = 'w-10 h-10 rounded-lg mx-auto overflow-hidden';
   switch (type) {
@@ -523,6 +550,7 @@ function AnimatedBgPreview({ type, accent }: { type: string; accent: string }) {
   }
 }
 
+/** Renderiza preview dos estilos de icone (default, filled, outline, neomorph, glass, gradient) */
 function IconStylePreview({ style, accent }: { style: string; accent: string }) {
   const iconPath = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z";
 

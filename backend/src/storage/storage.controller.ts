@@ -1,3 +1,19 @@
+/**
+ * Controller de upload de arquivos do usuário.
+ *
+ * Todos os uploads vão para o Cloudflare R2 (compatível com S3).
+ * Imagens são processadas com sharp (resize + WebP) antes do upload
+ * para economizar storage e melhorar performance no frontend.
+ *
+ * Features por plano:
+ * - FREE: foto de perfil e cover
+ * - PRO+: currículo (PDF), vídeo (MP4), background customizado
+ *
+ * Segurança:
+ * - Rate limit: 10 uploads/min por usuário (previne esgotamento de storage)
+ * - Validação de tipo e tamanho via ParseFilePipe do NestJS
+ * - Arquivo antigo é deletado do R2 antes de salvar o novo (fire-and-forget)
+ */
 import {
   Controller,
   Delete,
@@ -19,12 +35,13 @@ import { CurrentUser, type JwtPayload } from '../common/decorators/current-user.
 import { AppException } from '../common/exceptions/app.exception';
 import { PlanGuard, RequiresFeature } from '../payments/guards/plan.guard';
 
-const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB — sharp compresses to WebP 400x400 after upload
-const MAX_BG_SIZE = 8 * 1024 * 1024; // 8MB — sharp compresses to WebP 1920x1080 after upload
-const MAX_RESUME_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
+// Limites de tamanho por tipo de arquivo (validados antes do processamento)
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB — sharp comprime para WebP 400x400
+const MAX_BG_SIZE = 8 * 1024 * 1024; // 8MB — sharp comprime para WebP 1920x1080
+const MAX_RESUME_SIZE = 10 * 1024 * 1024; // 10MB — PDF enviado sem processamento
+const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB — MP4 enviado sem processamento
 
-// Max 10 uploads per minute per user (prevents storage exhaustion)
+// Máximo de 10 uploads por minuto por usuário (previne abuso de storage)
 @Throttle({ default: { ttl: 60000, limit: 10 } })
 @Controller()
 export class StorageController {
@@ -33,7 +50,7 @@ export class StorageController {
     private readonly prisma: PrismaService,
   ) {}
 
-  // ── Upload photo → R2 ────────────────────────────────────────────
+  // ── Upload de foto de perfil → R2 (disponível para todos os planos) ──
   @Post('me/photo-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadPhoto(
@@ -79,7 +96,7 @@ export class StorageController {
     return { url: photoUrl };
   }
 
-  // ── Upload cover → R2 ────────────────────────────────────────────
+  // ── Upload de cover/capa → R2 (disponível para todos os planos) ──
   @Post('me/cover-upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadCover(
@@ -124,7 +141,7 @@ export class StorageController {
     return { url: coverPhotoUrl };
   }
 
-  // ── Upload resume → R2 (PRO+) ──────────────────────────────────
+  // ── Upload de currículo PDF → R2 (requer plano PRO+) ──────────────
   @UseGuards(PlanGuard)
   @RequiresFeature('resume')
   @Post('me/resume-upload')
@@ -166,7 +183,7 @@ export class StorageController {
     return { url: resumeUrl };
   }
 
-  // ── Upload vídeo → R2 (PRO+) ──────────────────────────────────
+  // ── Upload de vídeo MP4 → R2 (requer plano PRO+) ──────────────────
   @UseGuards(PlanGuard)
   @RequiresFeature('video')
   @Post('me/video-upload')
@@ -203,7 +220,7 @@ export class StorageController {
     return { url: videoUrl };
   }
 
-  // ── Upload background image → R2 (PRO+) ──────────────────────────
+  // ── Upload de imagem de background → R2 (requer plano PRO+ com feature customBg) ──
   @UseGuards(PlanGuard)
   @RequiresFeature('customBg')
   @Post('me/background-upload')
@@ -250,7 +267,8 @@ export class StorageController {
     return { url: backgroundImageUrl };
   }
 
-  // ── Delete background image (PRO+) ───────────────────────────────
+  // ── Exclusão de imagem de background (requer PRO+ com feature customBg) ──
+  // Reseta para o tema padrão com overlay de 0.7
   @UseGuards(PlanGuard)
   @RequiresFeature('customBg')
   @Delete('me/background')

@@ -1,3 +1,17 @@
+/**
+ * Serviço de webhooks do CraftCard.
+ *
+ * Permite que usuários PRO+ configurem webhooks para receber notificações
+ * em tempo real sobre eventos do seu cartão (novas mensagens, bookings, etc.).
+ *
+ * Segurança:
+ * - Proteção contra SSRF: URLs devem ser HTTPS e não podem apontar para
+ *   endereços internos (localhost, IPs privados, metadata services)
+ * - Assinatura HMAC-SHA256 em cada request para o receptor validar autenticidade
+ * - Limite de 5 webhooks por usuário
+ * - Retry com backoff exponencial (3 tentativas)
+ * - Logs de entrega salvos no banco para debugging
+ */
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { AppException } from '../common/exceptions/app.exception';
@@ -5,8 +19,10 @@ import { randomBytes, createHmac } from 'crypto';
 import * as https from 'https';
 
 /**
- * SSRF guard: webhook URLs must be HTTPS and must not point to
- * localhost, loopback, link-local, or private network ranges.
+ * Proteção contra SSRF (Server-Side Request Forgery).
+ * Valida que a URL de webhook é segura antes de registrar ou disparar.
+ * Bloqueia: localhost, loopback, IPs privados (RFC 1918), link-local,
+ * e endpoints de metadata de cloud (AWS 169.254.169.254, GCP metadata).
  */
 function assertSafeWebhookUrl(rawUrl: string): void {
   let parsed: URL;
@@ -41,6 +57,7 @@ function assertSafeWebhookUrl(rawUrl: string): void {
   }
 }
 
+/** Tipos de eventos que podem ser enviados via webhook */
 export type WebhookEvent = 'new_message' | 'new_booking' | 'new_testimonial' | 'new_view' | 'lead_status_changed';
 
 @Injectable()
@@ -49,7 +66,13 @@ export class WebhooksService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Cria um novo webhook para o usuário.
+   * Gera um secret aleatório (32 bytes hex) para assinatura HMAC.
+   * Limite: 5 webhooks por usuário.
+   */
   async create(userId: string, data: { url: string; events: WebhookEvent[] }) {
+    // Valida URL contra SSRF antes de salvar
     assertSafeWebhookUrl(data.url);
 
     const count = await this.prisma.webhook.count({ where: { userId } });
@@ -69,6 +92,7 @@ export class WebhooksService {
     });
   }
 
+  /** Lista webhooks do usuário — secret é mascarado (apenas 8 primeiros chars) por segurança */
   async list(userId: string) {
     const webhooks = await this.prisma.webhook.findMany({
       where: { userId },
@@ -77,7 +101,7 @@ export class WebhooksService {
     return webhooks.map((w) => ({
       ...w,
       events: JSON.parse(w.events) as WebhookEvent[],
-      // Don't expose full secret, only first 8 chars
+      // Não expõe o secret completo — apenas prefixo para identificação
       secret: w.secret.slice(0, 8) + '...',
     }));
   }
@@ -106,7 +130,11 @@ export class WebhooksService {
     return { deleted: true };
   }
 
-  /** Fire-and-forget: dispatch event to all matching webhooks for a user */
+  /**
+   * Dispara evento para todos os webhooks ativos do usuário que escutam o evento.
+   * Execução fire-and-forget — erros de entrega não afetam o fluxo principal.
+   * Cada webhook é disparado independentemente com logging.
+   */
   async dispatch(userId: string, event: WebhookEvent, payload: Record<string, unknown>) {
     const webhooks = await this.prisma.webhook.findMany({
       where: { userId, isActive: true },
@@ -122,7 +150,7 @@ export class WebhooksService {
     }
   }
 
-  /** List delivery logs for a specific webhook */
+  /** Lista logs de entrega de um webhook específico (para debugging pelo usuário) */
   async getLogs(userId: string, webhookId: string, take = 50) {
     const webhook = await this.prisma.webhook.findFirst({ where: { id: webhookId, userId } });
     if (!webhook) throw AppException.notFound('Webhook');
@@ -134,7 +162,7 @@ export class WebhooksService {
     });
   }
 
-  /** Send a test event to a specific webhook */
+  /** Envia evento de teste para um webhook (para o usuário validar a integração) */
   async test(userId: string, id: string) {
     const webhook = await this.prisma.webhook.findFirst({ where: { id, userId } });
     if (!webhook) throw AppException.notFound('Webhook');
@@ -148,7 +176,7 @@ export class WebhooksService {
     return { sent: true };
   }
 
-  /** Send webhook and log the result to WebhookLog */
+  /** Envia webhook e salva o resultado no WebhookLog (status code, sucesso, erro) */
   private async sendWebhookWithLog(
     webhookId: string,
     url: string,
@@ -165,6 +193,16 @@ export class WebhooksService {
     });
   }
 
+  /**
+   * Envia POST HTTPS para a URL do webhook com retry e backoff.
+   *
+   * Headers enviados:
+   * - X-CraftCard-Signature: HMAC-SHA256 do body (para o receptor validar autenticidade)
+   * - X-CraftCard-Event: tipo do evento (para roteamento no receptor)
+   *
+   * Retry: 3 tentativas com backoff linear (1s, 2s, 3s).
+   * Timeout: 10 segundos por tentativa.
+   */
   private async sendWebhook(
     url: string,
     secret: string,
@@ -173,6 +211,7 @@ export class WebhooksService {
     retries = 3,
   ): Promise<{ statusCode: number | null; success: boolean; error: string | null }> {
     const body = JSON.stringify({ event, data: payload, timestamp: new Date().toISOString() });
+    // Assinatura HMAC-SHA256 — o receptor deve recriar este hash para validar
     const signature = createHmac('sha256', secret).update(body).digest('hex');
 
     const parsed = new URL(url);

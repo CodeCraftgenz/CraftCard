@@ -1,8 +1,11 @@
 /**
- * Emails that receive full ENTERPRISE access for free (founders / internal accounts).
- * Single source of truth — imported by payments.service.ts and payments.cron.ts.
+ * Lista de emails com acesso ENTERPRISE gratuito (fundadores / contas internas).
  *
- * To add/remove accounts, edit this file only.
+ * Fonte única de verdade — importado por payments.service.ts e payments.cron.ts.
+ * Esses emails recebem plano ENTERPRISE sem precisar pagar, com limites ilimitados.
+ *
+ * Para adicionar ou remover contas, edite SOMENTE este arquivo.
+ * A verificação é feita em getActiveSubscription() e getUserPlanInfo().
  */
 export const FREE_ACCESS_EMAILS = new Set([
   'ricardocoradini97@gmail.com',
@@ -12,5 +15,5 @@ export const FREE_ACCESS_EMAILS = new Set([
   'codecraftgenz@gmail.com',
 ]);
 
-/** Array form for Prisma `notIn` queries */
+/** Forma em array para queries Prisma que usam `notIn` (ex: cron de expiração) */
 export const FREE_ACCESS_EMAILS_ARRAY = [...FREE_ACCESS_EMAILS];

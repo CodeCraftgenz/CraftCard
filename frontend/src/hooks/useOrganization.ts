@@ -1,6 +1,23 @@
+/**
+ * useOrganization.ts — Hooks React Query para o modulo de Organizacoes.
+ *
+ * Uma organizacao permite agrupar membros sob uma marca corporativa unica.
+ * O OWNER pode definir branding (cores, fontes, tema) que e aplicado automaticamente
+ * nos cartoes de todos os membros quando brandingActive=true.
+ *
+ * Hierarquia de papeis: OWNER > ADMIN > MEMBER
+ * - OWNER: controle total (deletar org, gerenciar branding, dominio customizado)
+ * - ADMIN: convidar/remover membros, ver analytics e leads
+ * - MEMBER: apenas tem seu cartao vinculado a org (sem acesso ao dashboard)
+ *
+ * Queries: leitura de dados com cache automatico via React Query
+ * Mutations: operacoes de escrita com invalidacao automatica do cache relacionado
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
+/** Resumo de organizacao retornado na listagem (GET /organizations/me) */
 export interface OrgSummary {
   id: string;
   name: string;
@@ -12,6 +29,7 @@ export interface OrgSummary {
   role: string;
 }
 
+/** Dados completos de uma organizacao, incluindo configuracoes de branding */
 export interface Organization {
   id: string;
   name: string;
@@ -61,6 +79,7 @@ export interface OrgInvite {
   expiresAt: string;
 }
 
+/** Analytics agregados de todos os cartoes da organizacao (ultimos 30 dias) */
 export interface OrgAnalytics {
   totalViews: number;
   totalMessages: number;
@@ -78,6 +97,7 @@ export interface OrgAnalytics {
   topLinks: Array<{ label: string; platform: string; clicks: number }>;
 }
 
+/** Lead (mensagem de contato) recebido por qualquer cartao da organizacao */
 export interface OrgLead {
   id: string;
   senderName: string;
@@ -88,8 +108,9 @@ export interface OrgLead {
   profile: { displayName: string; slug: string };
 }
 
-// --- Queries ---
+// ─── QUERIES ─── Leitura de dados com cache React Query ─────────────────────
 
+/** Lista as organizacoes das quais o usuario autenticado e membro */
 export function useMyOrganizations() {
   return useQuery<OrgSummary[]>({
     queryKey: ['organizations', 'me'],
@@ -97,6 +118,7 @@ export function useMyOrganizations() {
   });
 }
 
+/** Busca dados completos de uma organizacao especifica */
 export function useOrganization(orgId: string | undefined) {
   return useQuery<Organization>({
     queryKey: ['organization', orgId],
@@ -137,6 +159,7 @@ export interface PáginatedLeads {
   totalPages: number;
 }
 
+/** Busca leads da organizacao com paginacao, busca e filtro de leitura */
 export function useOrgLeads(orgId: string | undefined, opts: {
   page?: number; search?: string; isRead?: string;
 } = {}) {
@@ -153,8 +176,9 @@ export function useOrgLeads(orgId: string | undefined, opts: {
   });
 }
 
-// --- Mutations ---
+// ─── MUTATIONS ─── Operacoes de escrita com invalidacao de cache ─────────────
 
+/** Cria uma nova organizacao. Invalida a lista de organizacoes do usuario */
 export function useCreateOrganization() {
   const qc = useQueryClient();
   return useMutation({
@@ -163,6 +187,7 @@ export function useCreateOrganization() {
   });
 }
 
+/** Atualiza configuracoes da organizacao (nome, branding, cores, etc) */
 export function useUpdateOrganization(orgId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -182,6 +207,7 @@ export function useDeleteOrganization() {
   });
 }
 
+/** Convida um membro via email. Gera token de convite com expiracao */
 export function useInviteMember(orgId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -198,6 +224,7 @@ export function useRevokeInvite(orgId: string) {
   });
 }
 
+/** Pre-visualiza dados do convite antes de aceitar (sem autenticacao necessaria) */
 export function usePreviewInvite(token: string | undefined) {
   return useQuery({
     queryKey: ['invite-preview', token],
@@ -207,6 +234,7 @@ export function usePreviewInvite(token: string | undefined) {
   });
 }
 
+/** Aceita um convite de organizacao usando o token. Adiciona usuario como membro */
 export function useAcceptInvite() {
   const qc = useQueryClient();
   return useMutation({
@@ -254,6 +282,7 @@ export function useUnlinkProfile(orgId: string) {
   });
 }
 
+/** Upload de imagem de capa corporativa (aplicada em todos os cartoes da org) */
 export function useUploadOrgCover(orgId: string) {
   const qc = useQueryClient();
   return useMutation<{ url: string }, Error, File>({
@@ -298,6 +327,10 @@ export function useDeleteOrgBackground(orgId: string) {
   });
 }
 
+/**
+ * Aplica as configuracoes de branding da org em TODOS os cartoes vinculados.
+ * Operacao destrutiva: sobrescreve personalizacoes individuais dos membros.
+ */
 export function useBulkApplyBranding(orgId: string) {
   const qc = useQueryClient();
   return useMutation<{ applied: boolean; count: number }>({

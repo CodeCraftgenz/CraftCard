@@ -1,3 +1,20 @@
+/**
+ * Serviço de autenticação do CraftCard.
+ *
+ * Suporta dois métodos de login:
+ * - Google OAuth (principal) — verifica o ID token do Google e cria/vincula conta
+ * - Email/senha (nativo) — com bcrypt para hash de senha
+ *
+ * Funcionalidades de segurança:
+ * - JWT access token (curta duração, ~15min) + refresh token (longa duração, ~7d)
+ * - Refresh tokens armazenados como hash SHA-256 no banco
+ * - Detecção de replay: reutilização de refresh token revoga TODAS as sessões
+ * - 2FA/TOTP com códigos de backup descartáveis
+ * - Reset de senha via token com expiração de 1 hora
+ *
+ * Vinculação de contas: se o email já existe (Google ou nativo),
+ * o outro método de login é vinculado à conta existente.
+ */
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -13,6 +30,7 @@ import { OrganizationsService } from '../organizations/organizations.service';
 import { AppException } from '../common/exceptions/app.exception';
 import type { EnvConfig } from '../common/config/env.config';
 
+// 12 rounds de bcrypt — bom equilíbrio entre segurança e performance
 const BCRYPT_ROUNDS = 12;
 
 @Injectable()
@@ -28,16 +46,28 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<EnvConfig>,
   ) {
+    // Client OAuth2 do Google — usado para verificar ID tokens
     this.googleClient = new OAuth2Client(this.configService.get('GOOGLE_CLIENT_ID', { infer: true }));
   }
 
+  /**
+   * Login via Google OAuth.
+   *
+   * Fluxo:
+   * 1. Verifica o ID token do Google (assinatura + audience)
+   * 2. Procura usuário pelo Google ID
+   * 3. Se não encontrar: verifica se email já existe (conta nativa) → vincula Google
+   * 4. Se email não existe: cria novo usuário com perfil padrão e slug único
+   * 5. Envia email de boas-vindas para novos usuários
+   * 6. Gera par access token + refresh token
+   */
   async loginWithGoogle(credential: string) {
     const googlePayload = await this.verifyGoogleToken(credential);
 
     let user = await this.usersService.findByGoogleId(googlePayload.sub);
 
     if (!user) {
-      // Check if a native account exists with this email → link Google
+      // Se já existe conta nativa com este email, vincula o Google ID
       const existingByEmail = await this.usersService.findByEmail(googlePayload.email!);
       if (existingByEmail) {
         await this.usersService.addGoogleIdToUser(existingByEmail.id, googlePayload.sub, googlePayload.picture);
@@ -88,6 +118,11 @@ export class AuthService {
     };
   }
 
+  /**
+   * Registro de novo usuário via email/senha.
+   * Se o email já existe com conta Google (sem senha), vincula a senha à conta existente.
+   * Se inviteToken for fornecido, aceita automaticamente o convite de organização.
+   */
   async register(email: string, name: string, password: string, inviteToken?: string) {
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
@@ -147,6 +182,11 @@ export class AuthService {
     };
   }
 
+  /**
+   * Login via email/senha.
+   * Se o usuário tem 2FA ativo, retorna requires2FA=true sem emitir tokens —
+   * o frontend deve chamar loginWith2FA com o código TOTP.
+   */
   async loginWithPassword(email: string, password: string) {
     const user = await this.usersService.findByEmail(email);
 
@@ -184,9 +224,16 @@ export class AuthService {
     };
   }
 
+  /**
+   * Inicia o fluxo de recuperação de senha.
+   * Gera um token aleatório (64 chars hex), armazena o hash SHA-256 no banco
+   * e envia o link de reset por email. Token expira em 1 hora.
+   *
+   * Se o email não existe, retorna silenciosamente (não revela se email é cadastrado).
+   */
   async forgotPassword(email: string) {
     const user = await this.usersService.findByEmail(email);
-    if (!user) return; // Do not leak whether email exists
+    if (!user) return; // Não revela se o email existe no sistema
 
     const rawToken = randomBytes(32).toString('hex');
     const tokenHash = this.hashToken(rawToken);
@@ -200,6 +247,7 @@ export class AuthService {
     this.logger.log(`Password reset email sent to ${email}`);
   }
 
+  /** Conclui o reset de senha: valida o token, atualiza a senha e revoga todas as sessões por segurança */
   async resetPassword(token: string, newPassword: string) {
     const tokenHash = this.hashToken(token);
     const user = await this.usersService.findByPasswordResetToken(tokenHash);
@@ -218,6 +266,13 @@ export class AuthService {
     this.logger.log(`Password reset completed for ${user.email}`);
   }
 
+  /**
+   * Rotação de tokens (refresh token rotation).
+   *
+   * Segurança: implementa detecção de replay — se um token já revogado
+   * for reutilizado (ex: roubo), TODAS as sessões do usuário são encerradas.
+   * Isso força o atacante e o usuário legítimo a fazer login novamente.
+   */
   async refreshTokens(currentRefreshToken: string) {
     const tokenHash = this.hashToken(currentRefreshToken);
 
@@ -230,7 +285,7 @@ export class AuthService {
       throw AppException.unauthorized('Token inválido');
     }
 
-    // Replay detection: if token was already revoked, revoke all user tokens
+    // Detecção de replay: token já revogado sendo reutilizado → possível roubo
     if (storedToken.revokedAt) {
       this.logger.warn(`Refresh token replay detected for user ${storedToken.userId}`);
       await this.revokeAllUserTokens(storedToken.userId);
@@ -257,6 +312,7 @@ export class AuthService {
     };
   }
 
+  /** Logout: revoga o refresh token atual (o access token expira naturalmente) */
   async logout(refreshToken: string) {
     if (!refreshToken) return;
     const tokenHash = this.hashToken(refreshToken);
@@ -266,6 +322,7 @@ export class AuthService {
     });
   }
 
+  /** Verifica o ID token do Google (assinatura RSA + audience match) */
   private async verifyGoogleToken(credential: string) {
     try {
       const ticket = await this.googleClient.verifyIdToken({
@@ -284,6 +341,7 @@ export class AuthService {
     }
   }
 
+  /** Gera JWT access token de curta duração (padrão 15min) com sub, email e role */
   private generateAccessToken(userId: string, email: string, role: string = 'USER'): string {
     return this.jwtService.sign(
       { sub: userId, email, role },
@@ -294,6 +352,11 @@ export class AuthService {
     );
   }
 
+  /**
+   * Gera refresh token de longa duração (padrão 7d).
+   * O token bruto é retornado ao cliente; apenas o hash SHA-256 é armazenado no banco.
+   * Isso garante que, mesmo com vazamento do banco, os tokens não podem ser usados.
+   */
   private async generateRefreshToken(userId: string): Promise<string> {
     const token = randomBytes(64).toString('hex');
     const tokenHash = this.hashToken(token);
@@ -314,10 +377,12 @@ export class AuthService {
     return token;
   }
 
+  /** Hash SHA-256 de tokens — usado para refresh tokens e tokens de reset de senha */
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
   }
 
+  /** Revoga todos os refresh tokens do usuário (usado em reset de senha e detecção de replay) */
   private async revokeAllUserTokens(userId: string) {
     await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
@@ -326,9 +391,15 @@ export class AuthService {
   }
 
   // ──────────────────────────────────────────────
-  // 2FA / TOTP
+  // 2FA / TOTP (Autenticação em Dois Fatores)
   // ──────────────────────────────────────────────
 
+  /**
+   * Configura o 2FA para o usuário.
+   * Gera um secret TOTP, salva no banco (ainda NÃO ativado) e retorna
+   * o QR code para o usuário escanear no app autenticador (Google Authenticator, etc).
+   * A ativação acontece após o usuário confirmar com um código válido via verifyAndEnableTotp.
+   */
   async setupTotp(userId: string) {
     const user = await this.usersService.findById(userId);
     if (!user) throw AppException.notFound('Usuário');
@@ -360,6 +431,11 @@ export class AuthService {
     };
   }
 
+  /**
+   * Verifica o código TOTP e ativa o 2FA.
+   * Gera 8 códigos de backup descartáveis para caso o usuário perca o celular.
+   * Window=1 permite 1 período de tolerância (30s antes/depois).
+   */
   async verifyAndEnableTotp(userId: string, code: string) {
     const user = await this.usersService.findById(userId);
     if (!user) throw AppException.notFound('Usuário');
@@ -392,6 +468,7 @@ export class AuthService {
     return { enabled: true, backupCodes };
   }
 
+  /** Desativa o 2FA — exige um código TOTP válido para confirmar a identidade */
   async disableTotp(userId: string, code: string) {
     const user = await this.usersService.findById(userId);
     if (!user) throw AppException.notFound('Usuário');
@@ -418,6 +495,11 @@ export class AuthService {
     return { disabled: true };
   }
 
+  /**
+   * Login com segundo fator (2FA).
+   * Aceita código TOTP (6 dígitos) OU código de backup (hex 8 chars).
+   * Códigos de backup são descartáveis — consumidos após o uso.
+   */
   async loginWith2FA(email: string, code: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user || !user.totpEnabled) {
@@ -464,6 +546,10 @@ export class AuthService {
     };
   }
 
+  /**
+   * Login de desenvolvimento — cria ou reutiliza um usuário fake.
+   * BLOQUEADO em produção. Usado apenas para testes locais sem OAuth real.
+   */
   async devLogin(email: string, name: string) {
     if (process.env.NODE_ENV === 'production') {
       throw AppException.forbidden('Dev loginnão disponivel em producao');
@@ -512,6 +598,7 @@ export class AuthService {
     };
   }
 
+  /** Gera slug a partir do nome: remove acentos, caracteres especiais, normaliza espaços */
   private generateSlugFromName(name: string): string {
     return name
       .toLowerCase()
@@ -524,6 +611,7 @@ export class AuthService {
       .slice(0, 40);
   }
 
+  /** Garante slug único: tenta base, depois base-2, base-3... até base-100, depois fallback com hex aleatório */
   private async ensureUniqueSlug(baseSlug: string): Promise<string> {
     let slug = baseSlug || 'user';
     if (slug.length < 3) slug = slug + '-card';

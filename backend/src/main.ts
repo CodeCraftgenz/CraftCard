@@ -1,3 +1,12 @@
+/**
+ * Ponto de entrada da aplicação CraftCard API.
+ *
+ * Configura toda a camada de segurança (Helmet, CORS, limites de payload),
+ * compressão de resposta, cookie parser e filtros/interceptors globais.
+ *
+ * O deploy é feito via Render (free tier). O comando de start em produção
+ * executa `prisma migrate deploy && node dist/main`.
+ */
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -16,16 +25,18 @@ async function bootstrap() {
   const configService = app.get(ConfigService<EnvConfig>);
   const logger = new Logger('Bootstrap');
 
+  // Prefixo global — todas as rotas ficam sob /api/*
   app.setGlobalPrefix('api');
 
-  // Body size limit — prevent large payload DoS attacks
+  // Limite de tamanho do body para prevenir ataques de DoS com payloads grandes
   app.use(express.json({ limit: '2mb' }));
   app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
-  // Gzip/Brotli compression
+  // Compressão Gzip/Brotli para reduzir o tamanho das respostas
   app.use(compression());
 
-  // Helmet security headers
+  // Headers de segurança via Helmet (CSP, X-Frame-Options, etc.)
+  // crossOriginResourcePolicy: 'cross-origin' necessário para servir imagens do R2/CDN
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -38,7 +49,8 @@ async function bootstrap() {
     }),
   );
 
-  // CORS
+  // CORS — aceita múltiplas origens separadas por vírgula na env CORS_ORIGIN
+  // credentials: true é necessário para enviar/receber cookies httpOnly (JWT refresh token)
   const corsOrigin = configService.get('CORS_ORIGIN', { infer: true })!;
   app.enableCors({
     origin: corsOrigin.split(',').map((o) => o.trim()),
@@ -46,10 +58,11 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  // Cookie parser
+  // Parser de cookies — necessário para ler refresh tokens dos cookies httpOnly
   app.use(cookieParser());
 
-  // Global filters and interceptors
+  // Filtro global de exceções (padroniza todas as respostas de erro)
+  // Interceptors: LoggingInterceptor registra tempo de resposta, ResponseInterceptor padroniza formato
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new LoggingInterceptor(), new ResponseInterceptor());
 

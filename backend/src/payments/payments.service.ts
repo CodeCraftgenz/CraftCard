@@ -1,3 +1,18 @@
+/**
+ * Serviço de pagamentos e gerenciamento de planos.
+ *
+ * Responsável por:
+ * - Criar preferências de checkout no gateway (Mercado Pago)
+ * - Processar webhooks de pagamento (com verificação HMAC obrigatória)
+ * - Determinar o plano ativo do usuário (considerando whitelist, expiração e herança B2B)
+ * - Ativação manual de planos por admin (SUPER_ADMIN)
+ * - Consulta de informações de billing
+ *
+ * Regras de negócio importantes:
+ * - Emails na whitelist (FREE_ACCESS_EMAILS) recebem ENTERPRISE grátis
+ * - Membros de organização herdam o plano do OWNER se for BUSINESS+
+ * - Pagamentos usam updateMany com filtro "status not approved" para evitar race conditions
+ */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/prisma/prisma.service';
@@ -8,11 +23,12 @@ import { getPlanLimits, type PlanType, type PlanLimits } from './plan-limits';
 import { PAYMENT_GATEWAY, type PaymentGateway } from './gateway/payment-gateway.interface';
 import { FREE_ACCESS_EMAILS } from '../common/constants/admin-whitelist';
 
-// PRO fixed pricing
+// Preços fixos do plano PRO (em BRL)
 const PRO_MONTHLY = 19.9;
-const PRO_YEARLY_MONTH = 15.9; // ~20% discount
+const PRO_YEARLY_MONTH = 15.9; // ~20% de desconto no anual
 
-// BUSINESS tiered pricing (per seat/month) — 5 to 100 seats
+// Preços escalonados do plano BUSINESS por assento/mês — de 5 a 100 assentos
+// Quanto mais assentos, menor o preço unitário (volume discount)
 const BUSINESS_TIERS = [
   { min: 1, max: 10, price: 39.9 },
   { min: 11, max: 25, price: 34.9 },
@@ -20,20 +36,23 @@ const BUSINESS_TIERS = [
   { min: 51, max: 100, price: 22.9 },
 ];
 
-/** Calculate per-seat price based on volume tier */
+/** Calcula o preço por assento com base na faixa de volume */
 function getBusinessPricePerSeat(seats: number): number {
   for (const tier of BUSINESS_TIERS) {
     if (seats >= tier.min && seats <= tier.max) return tier.price;
   }
+  // Acima de 100 assentos, usa o preço da última faixa
   return BUSINESS_TIERS[BUSINESS_TIERS.length - 1].price;
 }
 
-// Legacy flat prices (backward compat)
+// Preços legados (compatibilidade com registros antigos de pagamento)
 const PLAN_PRICES: Record<string, number> = {
   PRO: 19.9,
   BUSINESS: 19.9,
   ENTERPRISE: 0,
 };
+
+// Títulos exibidos na tela de checkout do Mercado Pago
 const PLAN_TITLES: Record<string, string> = {
   PRO: 'CraftCard Pro - Cartão Digital Profissional',
   BUSINESS: 'CraftCard Business - Plano Empresarial',
@@ -42,6 +61,7 @@ const PLAN_TITLES: Record<string, string> = {
 const SUBSCRIPTION_DAYS_MONTHLY = 30;
 const SUBSCRIPTION_DAYS_YEARLY = 365;
 
+// Hierarquia de planos — usado para comparar se upgrade/downgrade e para herança B2B
 const PLAN_HIERARCHY: Record<string, number> = { FREE: 0, PRO: 1, BUSINESS: 2, ENTERPRISE: 3 };
 
 
@@ -56,6 +76,7 @@ export class PaymentsService {
     @Inject(PAYMENT_GATEWAY) private readonly gateway: PaymentGateway,
   ) {}
 
+  /** Verifica se o usuário tem assinatura ativa (qualquer plano diferente de FREE) */
   async getActiveSubscription(userId: string): Promise<{ active: boolean; expiresAt: Date | null }> {
     const planInfo = await this.getUserPlanInfo(userId);
     return { active: planInfo.plan !== 'FREE', expiresAt: planInfo.expiresAt };
@@ -162,6 +183,18 @@ export class PaymentsService {
     return bestPlan !== 'FREE' ? bestPlan : null;
   }
 
+  /**
+   * Cria uma preferência de checkout no gateway de pagamento (Mercado Pago).
+   *
+   * Fluxo:
+   * 1. Valida que o usuário pode fazer upgrade (não permite downgrade)
+   * 2. Calcula preço com desconto por volume (BUSINESS) e ciclo anual
+   * 3. Cria registro de pagamento pendente no banco
+   * 4. Gera a preferência no gateway e retorna a URL de checkout
+   *
+   * O ENTERPRISE não é vendido online — requer contato comercial.
+   * BUSINESS tem mínimo de 5 assentos.
+   */
   async createCheckoutPreference(
     userId: string,
     email: string,
@@ -174,22 +207,25 @@ export class PaymentsService {
     const currentLevel = planHierarchy[planInfo.plan] ?? 0;
     const targetLevel = planHierarchy[plan] ?? 0;
 
+    // Impede downgrade ou recompra do mesmo plano
     if (currentLevel >= targetLevel && planInfo.plan !== 'FREE') {
       throw AppException.conflict('Você já possui este plano ou superior ativo');
     }
 
+    // ENTERPRISE só via contato comercial (WhatsApp/email)
     if (plan === 'ENTERPRISE') {
       throw AppException.badRequest('Enterprise requer contato comercial via WhatsApp.');
     }
 
-    // Calculate price with tiered volume discounts
+    // Cálculo de preço com desconto por volume e ciclo
+    // BUSINESS tem mínimo de 5 assentos; PRO sempre 1 assento
     const seats = plan === 'BUSINESS' ? Math.max(seatsCount, 5) : 1;
     let monthlyPerSeat: number;
     if (plan === 'PRO') {
       monthlyPerSeat = billingCycle === 'YEARLY' ? PRO_YEARLY_MONTH : PRO_MONTHLY;
     } else {
       monthlyPerSeat = getBusinessPricePerSeat(seats);
-      if (billingCycle === 'YEARLY') monthlyPerSeat = Math.round(monthlyPerSeat * 0.8 * 100) / 100; // 20% annual discount
+      if (billingCycle === 'YEARLY') monthlyPerSeat = Math.round(monthlyPerSeat * 0.8 * 100) / 100; // 20% desconto anual
     }
     const months = billingCycle === 'YEARLY' ? 12 : 1;
     const totalPrice = Math.round(monthlyPerSeat * seats * months * 100) / 100;
@@ -240,13 +276,21 @@ export class PaymentsService {
     return { url: result.checkoutUrl };
   }
 
+  /**
+   * Processa webhook do Mercado Pago.
+   *
+   * Segurança: verificação HMAC é OBRIGATÓRIA — se o secret não estiver configurado,
+   * o webhook é rejeitado para prevenir falsificação de pagamentos.
+   *
+   * Apenas eventos de pagamento são processados; outros tipos são ignorados.
+   */
   async handleWebhook(
     body: { type?: string; action?: string; data?: { id?: string } },
     headers: { xSignature?: string; xRequestId?: string },
   ): Promise<void> {
     const webhookSecret = this.configService.get('MP_WEBHOOK_SECRET', { infer: true });
 
-    // HMAC signature verification is MANDATORY — reject if secret is missing/placeholder
+    // Verificação HMAC OBRIGATÓRIA — rejeita se secret ausente ou placeholder
     if (!webhookSecret || webhookSecret === 'placeholder') {
       this.logger.error('MP_WEBHOOK_SECRET not configured — rejecting webhook to prevent forgery');
       throw AppException.forbidden('Webhook secret não configurado');
@@ -280,15 +324,19 @@ export class PaymentsService {
   }
 
   /**
-   * Process payment notification by MP payment ID (used by IPN query param format)
+   * Processa notificação de pagamento por ID do Mercado Pago (formato IPN via query param).
+   * Wrapper público para o método privado processPaymentNotification.
    */
   async processPaymentNotificationById(mpPaymentId: string): Promise<void> {
     await this.processPaymentNotification(mpPaymentId);
   }
 
   /**
-   * Verify pending payments for a user by querying MP API directly.
-   * Used as fallback when webhook doesn't arrive.
+   * Verifica pagamentos pendentes consultando a API do Mercado Pago diretamente.
+   * Usado como fallback quando o webhook não chega (comum no free tier do Render
+   * que pode estar dormindo quando o webhook é enviado).
+   *
+   * O frontend chama esse endpoint na tela de "sucesso" para sincronizar.
    */
   async verifyPendingPayments(userId: string): Promise<{ synced: boolean; status: string }> {
     const pendingPayments = await this.prisma.payment.findMany({
@@ -349,7 +397,11 @@ export class PaymentsService {
     return { synced: false, status: 'still_pending' };
   }
 
-  /** Admin-only: activate a plan for any user by email (protected by @Roles('SUPER_ADMIN') in controller) */
+  /**
+   * Ativação manual de plano por admin (SUPER_ADMIN).
+   * Cria um registro de pagamento com amount=0 para auditoria.
+   * Usado para contas parceiras, testes e situações especiais.
+   */
   async adminActivatePlan(adminUserId: string, targetEmail: string, plan: string, days?: number): Promise<{ activated: boolean; email: string; plan: string; expiresAt: string | null }> {
     const validPlans = ['FREE', 'PRO', 'BUSINESS', 'ENTERPRISE'];
     const normalizedPlan = plan.toUpperCase();
@@ -401,6 +453,7 @@ export class PaymentsService {
     };
   }
 
+  /** Retorna informações de billing do usuário: plano atual, limites, histórico e flags de upgrade/renovação */
   async getBillingInfo(userId: string) {
     const planInfo = await this.getUserPlanInfo(userId);
 
@@ -436,7 +489,7 @@ export class PaymentsService {
     };
   }
 
-  /** Admin-only: list all users with their plans (protected by @Roles('SUPER_ADMIN') in controller) */
+  /** Admin: lista todos os usuários com seus planos (protegido por @Roles('SUPER_ADMIN') no controller) */
   async adminListUsers(): Promise<{ id: string; name: string | null; email: string; plan: string; role: string; createdAt: Date }[]> {
     return this.prisma.user.findMany({
       select: { id: true, name: true, email: true, plan: true, role: true, createdAt: true },
@@ -445,7 +498,18 @@ export class PaymentsService {
     });
   }
 
+  /**
+   * Processa notificação de pagamento internamente.
+   *
+   * Fluxo:
+   * 1. Busca detalhes do pagamento na API do Mercado Pago
+   * 2. Localiza o registro pendente no banco via external_reference
+   * 3. Verifica deduplicação (mesmo MP ID ou já aprovado)
+   * 4. Atualiza status atomicamente (previne race condition de webhooks duplicados)
+   * 5. Se aprovado: atualiza plano do usuário e envia email de confirmação
+   */
   private async processPaymentNotification(mpPaymentId: string): Promise<void> {
+    // Busca o pagamento na API do gateway para obter status real
     let fetched;
     try {
       fetched = await this.gateway.fetchPayment(mpPaymentId);
@@ -454,6 +518,7 @@ export class PaymentsService {
       return;
     }
 
+    // external_reference é o ID do nosso registro Payment (definido na criação da preferência)
     const externalRef = fetched.externalReference;
 
     if (!externalRef) {
@@ -463,7 +528,7 @@ export class PaymentsService {
 
     const newStatus = fetched.status;
 
-    // Deduplication: skip if we already processed this exact MP payment ID
+    // Deduplicação: ignora se já processamos este pagamento
     const existing = await this.prisma.payment.findUnique({
       where: { id: externalRef },
     });
@@ -473,11 +538,13 @@ export class PaymentsService {
       return;
     }
 
+    // Já aprovado — não reprocessar
     if (existing.status === 'approved') {
       this.logger.log(`Payment already approved, skipping: ${externalRef} (MP: ${mpPaymentId})`);
       return;
     }
 
+    // Mesmo MP ID e mesmo status — webhook duplicado
     if (existing.mpPaymentId === String(mpPaymentId) && existing.status === newStatus) {
       this.logger.log(`Duplicate webhook for same MP payment and status, skipping: ${externalRef}`);
       return;
@@ -486,8 +553,8 @@ export class PaymentsService {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + SUBSCRIPTION_DAYS_YEARLY * 24 * 60 * 60 * 1000);
 
-    // Atomic update: only update if status has NOT been set to 'approved' by a concurrent request.
-    // This prevents race conditions when duplicate webhooks arrive simultaneously.
+    // Atualização atômica: só atualiza se status ainda NÃO é 'approved'.
+    // Previne race condition quando webhooks duplicados chegam simultaneamente.
     const { count } = await this.prisma.payment.updateMany({
       where: {
         id: externalRef,

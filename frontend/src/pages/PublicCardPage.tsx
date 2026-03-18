@@ -1,3 +1,26 @@
+/**
+ * PublicCardPage.tsx — Pagina publica do cartao digital.
+ *
+ * Esta e a pagina mais importante do produto: e o que visitantes veem ao escanear
+ * um QR Code ou acessar craftcardgenz.com/:slug.
+ *
+ * Funcionalidades:
+ * - Renderizacao do perfil completo (foto, bio, links, galeria, servicos, FAQ, depoimentos)
+ * - Temas visuais dinamicos (10 temas) com fundos customizaveis (gradiente, imagem, padrao, animado)
+ * - Branding corporativo da organizacao sobrepoe configuracoes individuais
+ * - Lead gate: formulario obrigatorio de nome/email antes de ver o cartao (quando ativado)
+ * - Formulario de contato e depoimentos
+ * - Agendamento de reunioes (BookingCalendar)
+ * - Compartilhamento (Web Share API + modal fallback com WhatsApp, Telegram, Email, QR Code)
+ * - Download do cartao como imagem PNG (gerada via Canvas API)
+ * - Download de vCard (.vcf) para salvar contato no celular
+ * - Modo apresentacao (QR Code em tela cheia para eventos)
+ * - SEO completo (Helmet: OG tags, Twitter Cards, JSON-LD Schema.org)
+ * - Tracking de visualizacao (exclui o proprio dono do cartao)
+ * - Conexoes entre usuarios (rede social interna)
+ * - Suporte a modo hackathon (?mode=hackathon)
+ */
+
 import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
@@ -47,6 +70,7 @@ import { loadGoogleFont } from '@/lib/google-fonts';
 
 const HackathonPublicCard = lazy(() => import('@/hackathon/HackathonPublicCard'));
 
+/** Dados do perfil retornados pela API publica (GET /profile/:slug) */
 interface PublicProfile {
   id: string;
   displayName: string;
@@ -135,6 +159,7 @@ interface PublicProfile {
   } | null;
 }
 
+/** Retorna o CSS background baseado no tema selecionado e na cor de destaque do usuario */
 function getThemeBackground(theme: string, accent: string): string {
   switch (theme) {
     case 'gradient':
@@ -160,6 +185,7 @@ function getThemeBackground(theme: string, accent: string): string {
   }
 }
 
+/** Retorna classes Tailwind do container do cartao baseado no tema (glassmorphism, bordas, etc) */
 function getThemeCardStyle(theme: string): string {
   switch (theme) {
     case 'gradient':
@@ -185,6 +211,7 @@ function getThemeCardStyle(theme: string): string {
   }
 }
 
+/** Renderiza padrao SVG como overlay de fundo (dots, grid, waves, hexagons, etc) */
 function PatternOverlay({ pattern, color }: { pattern: string; color: string }) {
   const c = `${color}30`;
   switch (pattern) {
@@ -311,6 +338,7 @@ function PatternOverlay({ pattern, color }: { pattern: string; color: string }) 
   }
 }
 
+/** Componente accordion para exibicao de FAQ no cartao publico */
 function FaqAccordion({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -330,10 +358,16 @@ function FaqAccordion({ question, answer }: { question: string; answer: string }
   );
 }
 
+/** Escapa caracteres especiais para formato vCard (RFC 6350) */
 function escapeVCard(str: string): string {
   return str.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
 }
 
+/**
+ * Gera arquivo vCard (.vcf) a partir dos dados do perfil.
+ * Inclui: nome, cargo, bio, foto, email, telefone, WhatsApp, redes sociais.
+ * Permite que visitantes salvem o contato diretamente na agenda do celular.
+ */
 function generateVCard(profile: PublicProfile): string {
   const lines = [
     'BEGIN:VCARD',
@@ -393,8 +427,11 @@ function generateVCard(profile: PublicProfile): string {
   return lines.join('\r\n');
 }
 
-// ── Canvas export helpers ────────────────────────────────────────────────────
+// ── Helpers para exportacao de imagem via Canvas API ─────────────────────────
+// Geram um PNG 1050x600 com foto, nome, tagline, bio, QR code e branding.
+// Usado no botao "Baixar Cartao" e "Exportar como Imagem".
 
+/** Carrega uma imagem de forma assincrona com suporte a CORS */
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -405,6 +442,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+/** Desenha retangulo com cantos arredondados no Canvas (usado para fundo do QR Code) */
 function drawRoundRect(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number, r: number,
@@ -424,6 +462,7 @@ function drawRoundRect(
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Gera e faz download do arquivo vCard (.vcf) do perfil */
 function handleDownloadVCard(profile: PublicProfile) {
   const vcf = generateVCard(profile);
   const blob = new Blob([vcf], { type: 'text/vcard;charset=utf-8' });
@@ -435,12 +474,13 @@ function handleDownloadVCard(profile: PublicProfile) {
   URL.revokeObjectURL(url);
 }
 
+/** Pagina publica do cartao digital — rota /:slug */
 export function PublicCardPage() {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const { cards, isAuthenticated, isLoading: authLoading } = useAuth();
 
-  // If ?mode=hackathon → render the hackathon-specific card instead
+  // Modo hackathon: renderiza versao especial do cartao para eventos
   if (searchParams.get('mode') === 'hackathon') {
     return (
       <Suspense fallback={<div className="min-h-screen bg-[#001a33] flex items-center justify-center"><div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" /></div>}>
@@ -458,6 +498,8 @@ export function PublicCardPage() {
   const [testimonialSuccess, setTestimonialSuccess] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [showAllLinks, setShowAllLinks] = useState(false);
+  // Lead gate: verifica no localStorage se o visitante ja preencheu o formulario
+  // para este cartao. Persistido por slug para nao pedir novamente.
   const [leadGatePassed, setLeadGatePassed] = useState(() => {
     if (!slug) return false;
     return localStorage.getItem(`lead-${slug}`) === 'true';
@@ -472,7 +514,8 @@ export function PublicCardPage() {
   const submitTestimonial = useSubmitTestimonial();
   const { data: publicSlots } = usePublicSlots(slug);
 
-  // Check if the viewer is the card owner (to skip view tracking)
+  // Verifica se o visitante e o dono do cartao para pular tracking de view
+  // (evita inflar metricas quando o dono acessa o proprio cartao)
   const isOwner = cards?.some((c) => c.slug === slug) ?? false;
 
   const { data: profile, isLoading, error } = useQuery<PublicProfile>({
@@ -482,7 +525,8 @@ export function PublicCardPage() {
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
   });
 
-  // Derive visual settings (safe even when profile is null)
+  // Deriva configuracoes visuais com fallbacks seguros (funciona mesmo com profile=null).
+  // Branding da organizacao tem prioridade sobre configuracoes individuais.
   const orgB = profile?.orgBranding;
   const accent = orgB?.orgPrimaryColor || profile?.buttonColor || '#00E4F2';
   const theme = profile?.cardTheme || 'default';
@@ -494,10 +538,10 @@ export function PublicCardPage() {
   const linkAnim = profile?.linkAnimation || 'none';
   const iconStyle = profile?.iconStyle || 'default';
 
-  // Load custom Google Font (must be before conditional returns — Rules of Hooks)
+  // Carrega fonte Google customizada (deve estar antes de returns condicionais — regras de hooks)
   useEffect(() => { if (profile) loadGoogleFont(fontFamily); }, [fontFamily, profile]);
 
-  // Track view event — wait for auth to settle, then skip if viewer is the card owner
+  // Tracking de visualizacao: aguarda auth resolver para saber se e o dono, e entao registra
   useEffect(() => { if (profile?.id && !authLoading && !isOwner) trackViewEvent(profile.id); }, [profile?.id, authLoading, isOwner]);
 
   const handleSendMessage = async () => {
@@ -544,6 +588,8 @@ export function PublicCardPage() {
     }
   };
 
+  // Submissao do lead gate: envia dados como mensagem e salva no localStorage
+  // para nao pedir novamente. Continua mesmo se a API falhar (melhor UX).
   const handleLeadSubmit = async () => {
     if (!slug || leadForm.name.length < 2 || !leadForm.email.includes('@')) return;
     setLeadSubmitting(true);
@@ -575,14 +621,22 @@ export function PublicCardPage() {
     setTimeout(() => setLinkCopied(false), 2000);
   };
 
+  /**
+   * Exporta o cartao como imagem PNG via Canvas API.
+   * Gera um canvas 1050x600 (proporcoes de cartao de visita) com:
+   * - Fundo gradiente escuro + barra de destaque colorida
+   * - Foto de perfil circular + nome, tagline, bio, localizacao
+   * - QR Code com fundo branco para leitura confiavel
+   * - Branding "CraftCard" no canto inferior direito
+   */
   const handleExportImage = async () => {
     if (!profile || !slug) return;
     setExporting(true);
     try {
-      // QR canvas (black on white, rendered off-screen)
+      // Captura o canvas do QR Code renderizado off-screen
       const qrCanvas = qrExportRef.current?.querySelector('canvas');
 
-      // Card dimensions (1050×600 — business card proportions, great for sharing)
+      // Dimensoes do cartao: 1050x600 (proporcoes de cartao de visita, ideal para compartilhar)
       const W = 1050, H = 600;
       const canvas = document.createElement('canvas');
       canvas.width = W;
@@ -720,7 +774,7 @@ export function PublicCardPage() {
     );
   }
 
-  // Compute background based on backgroundType
+  // Calcula o background CSS baseado no tipo configurado (tema, gradiente, imagem)
   const computedBackground = (() => {
     if (bgType === 'gradient' && profile.backgroundGradient) {
       const parts = profile.backgroundGradient.split(',');
@@ -732,7 +786,8 @@ export function PublicCardPage() {
     return getThemeBackground(theme, accent);
   })();
 
-  // Lead capture gate
+  // Gate de captura de lead: se ativado, exibe formulario obrigatorio antes do cartao.
+  // O visitante precisa informar nome e email para desbloquear o acesso.
   if (profile.leadCaptureEnabled && !leadGatePassed) {
     return (
       <div

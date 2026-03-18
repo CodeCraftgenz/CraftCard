@@ -1,3 +1,13 @@
+/**
+ * App.tsx — Componente raiz da aplicacao CraftCard.
+ *
+ * Responsabilidades:
+ * - Configuracao dos providers globais (React Query, Auth, Helmet)
+ * - Definicao de todas as rotas (publicas, protegidas, admin)
+ * - Controle de exibicao do chat de suporte baseado no plano do usuario
+ * - Code-splitting via lazy loading para reducao do bundle inicial
+ */
+
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
@@ -13,7 +23,8 @@ import { NotFound } from './pages/NotFound';
 import { SupportChat } from './components/organisms/SupportChat';
 import { useAuth } from './providers/AuthProvider';
 
-// Lazy-loaded pages (authenticated / heavy)
+// Paginas carregadas sob demanda (lazy loading) para reduzir o bundle inicial.
+// Somente carregam quando o usuario navega ate a rota correspondente.
 const EditorPage = lazy(() => import('./pages/EditorPage').then(m => ({ default: m.EditorPage })));
 const BillingPage = lazy(() => import('./pages/BillingPage').then(m => ({ default: m.BillingPage })));
 const BillingSuccessPage = lazy(() => import('./pages/BillingSuccessPage').then(m => ({ default: m.BillingSuccessPage })));
@@ -32,6 +43,7 @@ const HackathonPublicCard = lazy(() => import('./hackathon/HackathonPublicCard')
 const HackathonDashboard = lazy(() => import('./hackathon/HackathonDashboard'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
 
+/** Spinner exibido enquanto paginas lazy ainda estao carregando */
 function PageLoader() {
   return (
     <div className="min-h-screen bg-brand-bg-dark flex items-center justify-center">
@@ -40,13 +52,24 @@ function PageLoader() {
   );
 }
 
+// Lista de caminhos conhecidos da aplicacao. Usada para distinguir rotas internas
+// de paginas publicas de cartao (/:slug), evitando exibir o chat de suporte em cartoes publicos.
 const APP_PATHS = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/billing', '/editor', '/tutorial', '/admin', '/org', '/hackathon', '/webhooks', '/connections', '/privacy', '/widget'];
 
+/**
+ * Controla a exibicao global do widget de suporte.
+ *
+ * Regras de negocio:
+ * - NAO exibe em paginas publicas de cartao (/:slug) para nao poluir a experiencia do visitante
+ * - Visitantes nao autenticados veem o botao simples do WhatsApp
+ * - Usuarios pagos (PRO+) veem o painel completo com multiplos canais de suporte
+ * - Usuarios FREE autenticados NAO veem o chat (incentivo a fazer upgrade)
+ */
 function SupportChatGlobal() {
   const { isAuthenticated, plan } = useAuth();
   const { pathname } = useLocation();
   const isPaid = plan !== 'FREE';
-  // Only show on known app paths (not on public card /:slug pages)
+  // Verifica se estamos em uma rota conhecida da app (exclui /:slug de cartoes publicos)
   const isAppPath = pathname === '/' || APP_PATHS.some((p) => p !== '/' && pathname.startsWith(p));
   if (!isAppPath) return null;
   if (!isAuthenticated) return <SupportChat />;
@@ -54,6 +77,20 @@ function SupportChatGlobal() {
   return null;
 }
 
+/**
+ * Componente raiz da aplicacao.
+ *
+ * Hierarquia de providers (de fora para dentro):
+ * 1. ErrorBoundary — captura erros React nao tratados
+ * 2. HelmetProvider — gerencia tags <head> (SEO, OG tags)
+ * 3. QueryProvider — React Query para cache de dados do servidor
+ * 4. AuthProvider — estado de autenticacao global (usuario, plano, permissoes)
+ * 5. BrowserRouter — roteamento SPA
+ *
+ * Rotas protegidas usam <ProtectedRoute> (redireciona para /login se nao autenticado)
+ * Rotas admin usam <AdminRoute> (verifica role SUPER_ADMIN)
+ * A rota /:slug e catch-all e DEVE ser a ultima antes do 404
+ */
 export function App() {
   return (
     <ErrorBoundary>

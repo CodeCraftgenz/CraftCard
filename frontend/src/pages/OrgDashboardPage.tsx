@@ -1,3 +1,19 @@
+/**
+ * OrgDashboardPage.tsx — Dashboard administrativo de organizacoes.
+ *
+ * Acessivel apenas por ADMIN e OWNER da organizacao.
+ * Membros comuns sao redirecionados para o editor.
+ *
+ * Abas disponiveis:
+ * - Overview: metricas resumidas + zona de perigo (exclusao da org)
+ * - Members: convidar, remover, alterar cargo de membros
+ * - Branding: personalizar visual corporativo (cores, fonte, tema, imagens)
+ * - Domain: configurar dominio customizado (CNAME)
+ * - Analytics: graficos de acessos, leads, dispositivos, leaderboard da equipe
+ * - Leads: mensagens recebidas com filtros, busca e exportacao
+ * - API: documentacao de integracao via webhooks
+ */
+
 import { useState, useRef } from 'react';
 import { useParams, Link, useNavigate, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -41,15 +57,17 @@ import { API_URL } from '@/lib/constants';
 
 type Tab = 'overview' | 'members' | 'branding' | 'domain' | 'analytics' | 'leads' | 'api';
 
+/** Pagina principal do dashboard da organizacao */
 export function OrgDashboardPage() {
   const { orgId } = useParams<{ orgId: string }>();
   const [tab, setTab] = useState<Tab>('overview');
   const { organizations } = useAuth();
 
   const { data: org } = useOrganization(orgId);
+  // Determina o papel do usuario na org a partir do cache de auth (sem request extra)
   const myRole = organizations.find((o) => o.id === orgId)?.role || 'MEMBER';
 
-  // Only ADMIN/OWNER can access the org dashboard
+  // Guarda de acesso: apenas ADMIN e OWNER podem ver o dashboard
   if (myRole === 'MEMBER') {
     return <Navigate to="/editor" replace />;
   }
@@ -147,7 +165,8 @@ export function OrgDashboardPage() {
   );
 }
 
-// --- Overview Tab ---
+// ─── ABA: VISAO GERAL ──────────────────────────────────────────────────────
+// Exibe metricas resumidas, lista de cartoes da equipe e zona de perigo (exclusao)
 function OverviewTab({ orgId, myRole }: { orgId: string; myRole: string }) {
   const navigate = useNavigate();
   const { data: analytics } = useOrgAnalytics(orgId);
@@ -238,6 +257,7 @@ function OverviewTab({ orgId, myRole }: { orgId: string; myRole: string }) {
   );
 }
 
+/** Card de metrica individual com icone, valor e label (usado em Overview e Analytics) */
 function StatCard({ icon: Icon, label, value }: { icon: typeof Eye; label: string; value: number }) {
   return (
     <motion.div
@@ -252,7 +272,10 @@ function StatCard({ icon: Icon, label, value }: { icon: typeof Eye; label: strin
   );
 }
 
-// --- Members Tab ---
+// ─── ABA: MEMBROS ──────────────────────────────────────────────────────────
+// Gerenciamento de membros: convite por email, alteracao de cargo, remocao.
+// Exibe feedback quando email nao e enviado (convite manual via link).
+// Mostra alerta de limite de assentos quando a org esta cheia.
 function MembersTab({ orgId, myRole, org }: { orgId: string; myRole: string; org: Organization }) {
   const { data: members } = useOrgMembers(orgId);
   const { data: invites } = useOrgInvites(orgId);
@@ -266,6 +289,7 @@ function MembersTab({ orgId, myRole, org }: { orgId: string; myRole: string; org
   const [inviteResult, setInviteResult] = useState<{ emailSent: boolean; token: string } | null>(null);
   const [seatLimitReached, setSeatLimitReached] = useState(false);
 
+  // Total de assentos = base do plano + extras comprados
   const totalSeats = org.maxMembers + (org.extraSeats || 0);
 
   const handleInvite = async () => {
@@ -503,7 +527,13 @@ function MembersTab({ orgId, myRole, org }: { orgId: string; myRole: string; org
   );
 }
 
-// --- Branding Tab ---
+// ─── ABA: BRANDING ─────────────────────────────────────────────────────────
+// Permite ao OWNER/ADMIN configurar a identidade visual corporativa:
+// - Cores primaria e secundaria
+// - Fonte, tema do cartao, estilo de links, animacoes, icones
+// - Imagens de capa e fundo corporativas (OWNER only)
+// - Toggle para ativar/desativar branding (quando ativo, membros nao podem editar visual)
+// - Botao "Aplicar em todos" que sobrescreve visual de todos os cartoes vinculados
 
 const THEMES = ['default', 'gradient', 'minimal', 'bold', 'ocean', 'sunset', 'forest', 'neon', 'elegant', 'cosmic'] as const;
 const THEME_COLORS: Record<string, string> = {
@@ -522,6 +552,7 @@ interface BrandingOrg {
   coverUrl: string | null; backgroundImageUrl: string | null;
 }
 
+/** Aba de configuracao de branding corporativo */
 function BrandingTab({ orgId, org, myRole }: { orgId: string; org: BrandingOrg; myRole: string }) {
   const updateOrg = useUpdateOrganization(orgId);
   const bulkApply = useBulkApplyBranding(orgId);
@@ -960,7 +991,9 @@ function BrandingTab({ orgId, org, myRole }: { orgId: string; org: BrandingOrg; 
   );
 }
 
-// --- Domain Tab ---
+// ─── ABA: DOMINIO CUSTOMIZADO ──────────────────────────────────────────────
+// Permite configurar um CNAME para que os cartoes fiquem em seudominio.com/slug.
+// Requer feature customDomain no plano. Exibe instrucoes DNS passo a passo.
 function DomainTab({ orgId, org }: { orgId: string; org: { domain: string | null } }) {
   const { hasFeature } = useAuth();
   const updateOrg = useUpdateOrganization(orgId);
@@ -1076,7 +1109,13 @@ function DomainTab({ orgId, org }: { orgId: string; org: { domain: string | null
   );
 }
 
-// --- Analytics Tab ---
+// ─── ABA: ANALYTICS ────────────────────────────────────────────────────────
+// Dashboard analitico com dados agregados de todos os cartoes da org:
+// - KPIs: acessos, leads, conexoes, cliques, agendamentos, nao lidas
+// - Grafico de area: acessos e leads diarios (ultimos 30 dias, via Recharts)
+// - Leaderboard: ranking de membros por views (gamificacao)
+// - Top links mais clicados (grafico de barras horizontal)
+// - Distribuicao de dispositivos e principais origens de trafego
 
 const DEVICE_ICONS: Record<string, typeof Monitor> = {
   desktop: Monitor,
@@ -1085,6 +1124,7 @@ const DEVICE_ICONS: Record<string, typeof Monitor> = {
 };
 
 
+/** Aba de analytics com graficos Recharts e metricas agregadas */
 function AnalyticsTab({ orgId }: { orgId: string }) {
   const { data: analytics } = useOrgAnalytics(orgId);
 
@@ -1249,7 +1289,9 @@ function AnalyticsTab({ orgId }: { orgId: string }) {
   );
 }
 
-// --- Leads Tab ---
+// ─── ABA: LEADS ────────────────────────────────────────────────────────────
+// Lista de mensagens recebidas por todos os cartoes da org.
+// Suporta busca, filtro (todos/lidos/nao lidos), paginacao e exportacao CSV.
 function LeadsTab({ orgId }: { orgId: string }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');

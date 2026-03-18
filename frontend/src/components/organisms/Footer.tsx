@@ -1,3 +1,15 @@
+/**
+ * Footer.tsx — Rodape global da aplicacao CraftCard.
+ *
+ * Estrutura:
+ * - Logo + descricao do produto + icones de redes sociais
+ * - Colunas de links: Produto (ancoras para landing page), Recursos, Suporte
+ * - Barra inferior com copyright e links legais (privacidade, termos)
+ *
+ * Exibido na landing page e em outras paginas publicas.
+ * Nao aparece dentro do editor ou em paginas de cartao publico.
+ */
+
 import { Logo } from '@/components/atoms/Logo';
 import { MessageCircle, Instagram, Github, Mail, Phone } from 'lucide-react';
 
@@ -5,6 +17,7 @@ const WHATSAPP_URL = 'https://wa.me/5535999358856?text=Ol%C3%A1%2C%20preciso%20d
 const INSTAGRAM_URL = 'https://www.instagram.com/codecraftgenz/';
 const GITHUB_URL = 'https://github.com/CodeCraftgenz';
 
+/** Rodape com links institucionais, canais de contato e redes sociais */
 export function Footer() {
   return (
     <footer className="border-t border-white/10 bg-brand-bg-dark">

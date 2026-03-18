@@ -1,3 +1,15 @@
+/**
+ * Controller de organizações (funcionalidade B2B).
+ *
+ * Gerencia CRUD de orgs, membros, convites, branding em massa,
+ * analytics consolidados, leads e upload de imagens (cover/background).
+ *
+ * Controle de acesso:
+ * - OrgRoleGuard verifica se o usuário é membro da org com o role mínimo
+ * - @RequiresOrgRole define o role mínimo para cada endpoint
+ * - Validação de body via schemas Zod (createOrgSchema, updateOrgSchema, etc.)
+ * - Upload de imagens processado via sharp (resize + WebP) antes de enviar ao R2
+ */
 import {
   Controller, Get, Post, Put, Delete, Body, Param, Query, Res, UseGuards,
   UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator,
@@ -62,7 +74,7 @@ export class OrganizationsController {
     return this.orgService.delete(orgId);
   }
 
-  // --- Members ---
+  // --- Membros (MEMBER pode listar, ADMIN pode alterar/remover) ---
 
   @UseGuards(OrgRoleGuard)
   @RequiresOrgRole('MEMBER')
@@ -91,7 +103,7 @@ export class OrganizationsController {
     return this.orgService.removeMember(orgId, memberId);
   }
 
-  // --- Invites ---
+  // --- Convites (ADMIN pode criar/listar/revogar, qualquer autenticado pode aceitar) ---
 
   @UseGuards(OrgRoleGuard)
   @RequiresOrgRole('ADMIN')
@@ -112,6 +124,7 @@ export class OrganizationsController {
     return this.orgService.getPendingInvites(orgId);
   }
 
+  // Endpoint público — permite visualizar info do convite antes de logar/registrar
   @Public()
   @Get('invite/:token')
   async previewInvite(@Param('token') token: string) {
@@ -130,7 +143,7 @@ export class OrganizationsController {
     return this.orgService.revokeInvite(orgId, inviteId);
   }
 
-  // --- Bulk apply branding ---
+  // --- Aplicação em massa de branding (aplica tema/cores da org em todos os perfis) ---
 
   @UseGuards(OrgRoleGuard)
   @RequiresOrgRole('ADMIN')
@@ -139,7 +152,7 @@ export class OrganizationsController {
     return this.orgService.bulkApplyBranding(orgId);
   }
 
-  // --- Analytics & Leads ---
+  // --- Analytics e Leads consolidados (requer ADMIN) ---
 
   @UseGuards(OrgRoleGuard)
   @RequiresOrgRole('ADMIN')
@@ -184,6 +197,7 @@ export class OrganizationsController {
     return this.orgService.markLeadRead(orgId, leadId, body.isRead);
   }
 
+  // Rate limit de 5 exports/min por usuário para evitar abuso
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @UseGuards(OrgRoleGuard)
   @RequiresOrgRole('ADMIN')
@@ -195,7 +209,9 @@ export class OrganizationsController {
     res.send(csv);
   }
 
-  // --- Org image uploads (OWNER only) ---
+  // --- Upload de imagens da organização (somente OWNER) ---
+  // Cover: redimensionada para 1200x400, Background: max 1920x1080
+  // Imagens são convertidas para WebP com qualidade 80% via sharp
 
   @UseGuards(OrgRoleGuard)
   @RequiresOrgRole('OWNER')
@@ -315,7 +331,7 @@ export class OrganizationsController {
     return { deleted: true };
   }
 
-  // --- Profile linking ---
+  // --- Vinculação de perfis à organização (ADMIN pode vincular/desvincular) ---
 
   @UseGuards(OrgRoleGuard)
   @RequiresOrgRole('ADMIN')

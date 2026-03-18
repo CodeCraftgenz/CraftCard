@@ -1,6 +1,19 @@
+/**
+ * useProfile.ts — Hooks React Query para gerenciamento do perfil/cartao do usuario.
+ *
+ * Cada usuario pode ter multiplos cartoes (limitado pelo plano).
+ * Um cartao = um perfil publico acessivel via /:slug.
+ *
+ * Hooks de query: leitura de perfil, listagem de cartoes, verificacao de slug
+ * Hooks de mutation: atualizacao de perfil, upload de midia, CRUD de cartoes
+ *
+ * Todas as mutations invalidam queries relacionadas para manter o cache sincronizado.
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
+/** Link social do perfil (Instagram, LinkedIn, WhatsApp, etc) com ordenacao e agendamento */
 interface SocialLink {
   id?: string;
   platform: string;
@@ -13,6 +26,7 @@ interface SocialLink {
   metadata?: string | null;
 }
 
+/** Dados completos do perfil/cartao. Inclui personalizacao visual e features toggles */
 export interface Profile {
   id: string;
   displayName: string;
@@ -55,6 +69,11 @@ export interface Profile {
   socialLinks: SocialLink[];
 }
 
+/**
+ * Busca o perfil do usuario autenticado.
+ * Se cardId for fornecido, busca o perfil daquele cartao especifico.
+ * Sem cardId, retorna o cartao primario.
+ */
 export function useProfile(cardId?: string, enabled = true) {
   const params = cardId ? `?cardId=${cardId}` : '';
   return useQuery<Profile>({
@@ -64,6 +83,10 @@ export function useProfile(cardId?: string, enabled = true) {
   });
 }
 
+/**
+ * Atualiza o perfil do cartao. Aceita dados parciais + links sociais.
+ * Invalida profile, me e cards para manter tudo sincronizado.
+ */
 export function useUpdateProfile(cardId?: string) {
   const queryClient = useQueryClient();
   const params = cardId ? `?cardId=${cardId}` : '';
@@ -79,6 +102,7 @@ export function useUpdateProfile(cardId?: string) {
   });
 }
 
+/** Lista todos os cartoes do usuario (id, label, slug, isPrimary) */
 export function useCards() {
   return useQuery<Array<{ id: string; label: string; slug: string; isPrimary: boolean; displayName: string }>>({
     queryKey: ['cards'],
@@ -86,6 +110,7 @@ export function useCards() {
   });
 }
 
+/** Cria um novo cartao. Limitado pelo maxCards do plano do usuario */
 export function useCreateCard() {
   const queryClient = useQueryClient();
 
@@ -110,6 +135,7 @@ export function useDeleteCard() {
   });
 }
 
+/** Define qual cartao e o primario (exibido no /:slug padrao do usuario) */
 export function useSetPrimaryCard() {
   const queryClient = useQueryClient();
 
@@ -123,6 +149,7 @@ export function useSetPrimaryCard() {
   });
 }
 
+/** Upload da foto de perfil (avatar) — exibida no cartao publico */
 export function useUploadPhoto() {
   const queryClient = useQueryClient();
 
@@ -138,6 +165,7 @@ export function useUploadPhoto() {
   });
 }
 
+/** Upload da foto de capa (banner no topo do cartao) */
 export function useUploadCover() {
   const queryClient = useQueryClient();
 
@@ -153,6 +181,7 @@ export function useUploadCover() {
   });
 }
 
+/** Upload de curriculo (PDF) — feature PRO+ */
 export function useUploadResume() {
   const queryClient = useQueryClient();
 
@@ -168,6 +197,7 @@ export function useUploadResume() {
   });
 }
 
+/** Upload de video de apresentacao — exibido inline no cartao publico */
 export function useUploadVideo() {
   const queryClient = useQueryClient();
 
@@ -183,6 +213,7 @@ export function useUploadVideo() {
   });
 }
 
+/** Upload de imagem de fundo customizada — feature PRO+ */
 export function useUploadBackground() {
   const queryClient = useQueryClient();
 
@@ -209,6 +240,10 @@ export function useDeleteBackground() {
   });
 }
 
+/**
+ * Verifica disponibilidade de um slug em tempo real.
+ * Ativado apenas quando slug >= 3 caracteres para evitar consultas desnecessarias.
+ */
 export function useCheckSlug(slug: string, enabled: boolean) {
   return useQuery<{ slug: string; available: boolean }>({
     queryKey: ['slug-check', slug],
