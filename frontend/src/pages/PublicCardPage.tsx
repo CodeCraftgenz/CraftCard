@@ -1239,7 +1239,7 @@ export function PublicCardPage() {
             <button
               type="button"
               onClick={async () => {
-                // Try Web Share API first (mobile)
+                // Share nativo do sistema (WhatsApp, Discord, Teams, etc.)
                 if (navigator.share) {
                   try {
                     await navigator.share({
@@ -1249,7 +1249,7 @@ export function PublicCardPage() {
                     });
                     return;
                   } catch {
-                    // User cancelled or share failed — fallback to modal
+                    // Cancelado — abre nosso modal como fallback
                   }
                 }
                 setShowShareModal(true);
@@ -1258,6 +1258,15 @@ export function PublicCardPage() {
             >
               <Share2 size={14} />
               Compartilhar
+            </button>
+            {/* Botao extra para abrir modal customizado (Instagram, QR Code, Export) */}
+            <button
+              type="button"
+              onClick={() => setShowShareModal(true)}
+              className="flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors"
+            >
+              <Download size={14} />
+              QR & Instagram
             </button>
           </div>
 
