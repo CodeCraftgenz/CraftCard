@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-const DANGEROUS_PROTOCOLS = /^(javascript|data|vbscript):/i;
+// Bloqueia protocolos perigosos: javascript, data, vbscript e file (acesso a sistema de arquivos local)
+const DANGEROUS_PROTOCOLS = /^(javascript|data|vbscript|file):/i;
 
 /** Preprocess: convert empty/whitespace-only strings to undefined so .optional() treats them as absent */
 const emptyToUndefined = (val: unknown) =>
