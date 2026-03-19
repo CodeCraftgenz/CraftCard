@@ -411,6 +411,7 @@ function LinkButton({
         className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 relative z-[1] ${iconContainer.className}`}
         style={iconContainer.style}
       >
+        {/* No estilo diamond, o icone recebe contra-rotacao (-45deg) para ficar reto dentro do container losango (45deg) */}
         <Icon size={20} style={{ color: iconContainer.iconColor, ...(iconStyle === 'diamond' ? { transform: 'rotate(-45deg)' } : {}) }} />
       </div>
       <span
@@ -708,6 +709,7 @@ function GridLinkCard({
       )}
       {!hasSkin && blockTexture !== 'none' && <div className="absolute inset-0 pointer-events-none" style={textureStyle} />}
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center relative z-[1] ${iconContainer.className}`} style={iconContainer.style}>
+        {/* Contra-rotacao do icone no estilo diamond para manter o icone na orientacao correta */}
         <Icon size={gs.cols >= 2 || gs.rows >= 2 ? 32 : 24} style={{ color: iconContainer.iconColor, ...(iconStyle === 'diamond' ? { transform: 'rotate(-45deg)' } : {}) }} />
       </div>
       <span

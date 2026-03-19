@@ -181,22 +181,22 @@ function getThemeBackground(theme: string, accent: string): string {
       return 'linear-gradient(180deg, #B8860B15 0%, #8B451310 30%, #1A1A2E 60%)';
     case 'cosmic':
       return 'linear-gradient(135deg, #6A0DAD20 0%, #1E3A8A20 50%, #0F0F2E 100%)';
-    // Novos temas — backgrounds de pagina
-    case 'glass':
+    // Novos temas — backgrounds de pagina inteira
+    case 'glass':       // Vidro: transparencia sutil sobre fundo escuro
       return 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, #0f172a 50%, rgba(255,255,255,0.03) 100%)';
-    case 'brutalist':
+    case 'brutalist':   // Brutalista: fundo solido escuro sem gradiente
       return '#111111';
-    case 'neumorphism':
+    case 'neumorphism': // Neumorfismo: gradiente sutil entre tons de azul-escuro
       return 'linear-gradient(145deg, #1e2030 0%, #171926 100%)';
-    case 'terminal':
+    case 'terminal':    // Terminal: fundo quase preto para contrastar com texto verde
       return '#0a0a0a';
-    case 'polaroid':
+    case 'polaroid':    // Polaroid: toque suave de roxo no topo, transicao para escuro
       return 'linear-gradient(180deg, #2d1f3d20 0%, #1A1A2E 30%, #1A1A2E 100%)';
-    case 'pastel':
+    case 'pastel':      // Pastel: rosa e lilas delicados com fundo escuro
       return 'linear-gradient(135deg, #FFB6C120 0%, #C4B5FD15 50%, #1A1A2E 100%)';
-    case 'noir':
+    case 'noir':        // Noir: preto puro para drama cinematografico
       return '#000000';
-    case 'retro':
+    case 'retro':       // Retro: pink e ciano neon sobre fundo muito escuro
       return 'linear-gradient(135deg, #EC489920 0%, #00E4F215 50%, #0A0A1A 100%)';
     default:
       return `linear-gradient(180deg, ${accent}15 0%, #1A1A2E 30%, #1A1A2E 100%)`;
@@ -224,22 +224,22 @@ function getThemeCardStyle(theme: string): string {
       return 'backdrop-blur-xl bg-white/[0.06] border border-yellow-600/20 rounded-3xl shadow-2xl';
     case 'cosmic':
       return 'backdrop-blur-xl bg-white/5 border border-purple-500/20 rounded-3xl shadow-2xl';
-    // Novos temas — estilos do container do cartao
-    case 'glass':
+    // Novos temas — estilos do container (card) interno
+    case 'glass':       // Glassmorphism: blur forte + borda branca translucida
       return 'bg-white/[0.12] backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl';
-    case 'brutalist':
+    case 'brutalist':   // Brutalista: sem arredondamento, borda grossa, sombra solida deslocada
       return 'bg-[#111] border-4 border-white rounded-none shadow-[8px_8px_0px_rgba(255,255,255,0.3)]';
-    case 'neumorphism':
+    case 'neumorphism': // Neumorfismo: sombras internas e externas simulando relevo 3D
       return 'bg-[#1e2030] rounded-3xl shadow-[8px_8px_16px_#0d0f18,-8px_-8px_16px_#2f3348] border border-white/5';
-    case 'terminal':
+    case 'terminal':    // Terminal: borda verde sutil com glow, cantos menos arredondados
       return 'bg-[#0d1117] border border-green-500/30 rounded-lg shadow-[0_0_20px_rgba(34,197,94,0.1)]';
-    case 'polaroid':
+    case 'polaroid':    // Polaroid: borda larga branca imitando foto instantanea
       return 'bg-white/[0.08] border-4 border-white/30 rounded-xl shadow-2xl';
-    case 'pastel':
+    case 'pastel':      // Pastel: borda rosa suave, cantos bem arredondados
       return 'bg-white/[0.08] border border-pink-300/20 rounded-[2rem] shadow-xl';
-    case 'noir':
+    case 'noir':        // Noir: fundo preto com borda dourada elegante
       return 'bg-black/80 border border-yellow-600/30 rounded-2xl shadow-2xl';
-    case 'retro':
+    case 'retro':       // Retro: borda pink neon com glow sutil
       return 'bg-white/5 border-2 border-pink-500/30 rounded-2xl shadow-[0_0_30px_rgba(236,72,153,0.1)]';
     default:
       return 'backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl';
