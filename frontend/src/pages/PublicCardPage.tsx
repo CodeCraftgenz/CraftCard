@@ -948,7 +948,7 @@ export function PublicCardPage() {
     return (
       <div className="min-h-screen bg-brand-bg-dark flex flex-col items-center justify-center text-white gap-4 px-4">
         <h1 className="text-4xl font-bold">404</h1>
-        <p className="text-white/50">Este cartãonão existe ounão está publicado</p>
+        <p className="text-white/50">Este cartão não existe ou não está publicado</p>
         <Link to="/" className="text-brand-cyan hover:underline text-sm">
           Crie o seu no {APP_NAME}
         </Link>

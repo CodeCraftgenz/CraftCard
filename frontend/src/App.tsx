@@ -56,7 +56,7 @@ function PageLoader() {
 
 // Lista de caminhos conhecidos da aplicacao. Usada para distinguir rotas internas
 // de paginas publicas de cartao (/:slug), evitando exibir o chat de suporte em cartoes publicos.
-const APP_PATHS = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/billing', '/editor', '/tutorial', '/admin', '/org', '/hackathon', '/webhooks', '/connections', '/privacy', '/widget', '/about', '/events'];
+const APP_PATHS = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/billing', '/editor', '/tutorial', '/admin', '/org', '/hackathon', '/webhooks', '/connections', '/privacy', '/termos', '/privacidade', '/widget', '/about', '/events'];
 
 /**
  * Controla a exibicao global do widget de suporte.
@@ -195,6 +195,9 @@ export function App() {
                   <Route path="/hackathon/card/:slug" element={<HackathonPublicCard />} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
+                  {/* Aliases PT-BR para SEO — /termos e /privacidade redirecionam para a mesma pagina */}
+                  <Route path="/termos" element={<PrivacyPage />} />
+                  <Route path="/privacidade" element={<PrivacyPage />} />
                   <Route path="/widget/:slug" element={<WidgetPage />} />
                   {/* Pagina publica de evento — antes do catch-all /:slug */}
                   <Route path="/events/:slug" element={<EventPage />} />
