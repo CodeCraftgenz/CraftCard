@@ -32,6 +32,13 @@ export class EventsController {
     return this.eventsService.getMyEvents(user.sub);
   }
 
+  // Rota publica DEVE vir antes de :id para nao ser capturada como parametro
+  @Public()
+  @Get('public/:slug')
+  async getPublicEvent(@Param('slug') slug: string) {
+    return this.eventsService.getPublicEvent(slug);
+  }
+
   @Get(':id')
   async getById(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.eventsService.getById(user.sub, id);
@@ -59,9 +66,4 @@ export class EventsController {
     return this.eventsService.delete(user.sub, id);
   }
 
-  @Public()
-  @Get('public/:slug')
-  async getPublicEvent(@Param('slug') slug: string) {
-    return this.eventsService.getPublicEvent(slug);
-  }
 }
