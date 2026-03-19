@@ -15,6 +15,17 @@ export interface EventSummary {
   createdAt: string;
 }
 
+/** Hook para buscar dados publicos de um evento pelo slug (sem autenticacao) */
+export function usePublicEvent(slug: string | undefined) {
+  return useQuery<EventSummary>({
+    queryKey: ['event-public', slug],
+    queryFn: () => api.get(`/events/public/${slug}`),
+    enabled: !!slug,
+    retry: 1,
+    staleTime: 60_000,
+  });
+}
+
 export function useMyEvents() {
   return useQuery<EventSummary[]>({
     queryKey: ['events'],

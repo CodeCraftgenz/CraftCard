@@ -43,6 +43,7 @@ const HackathonPublicCard = lazy(() => import('./hackathon/HackathonPublicCard')
 const HackathonDashboard = lazy(() => import('./hackathon/HackathonDashboard'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
 const AboutPage = lazy(() => import('./pages/AboutPage').then(m => ({ default: m.AboutPage })));
+const EventPage = lazy(() => import('./pages/EventPage').then(m => ({ default: m.EventPage })));
 
 /** Spinner exibido enquanto paginas lazy ainda estao carregando */
 function PageLoader() {
@@ -55,7 +56,7 @@ function PageLoader() {
 
 // Lista de caminhos conhecidos da aplicacao. Usada para distinguir rotas internas
 // de paginas publicas de cartao (/:slug), evitando exibir o chat de suporte em cartoes publicos.
-const APP_PATHS = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/billing', '/editor', '/tutorial', '/admin', '/org', '/hackathon', '/webhooks', '/connections', '/privacy', '/widget', '/about'];
+const APP_PATHS = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/billing', '/editor', '/tutorial', '/admin', '/org', '/hackathon', '/webhooks', '/connections', '/privacy', '/widget', '/about', '/events'];
 
 /**
  * Controla a exibicao global do widget de suporte.
@@ -195,6 +196,8 @@ export function App() {
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                   <Route path="/widget/:slug" element={<WidgetPage />} />
+                  {/* Pagina publica de evento — antes do catch-all /:slug */}
+                  <Route path="/events/:slug" element={<EventPage />} />
                   {/* Public card page - catch-all must be last */}
                   <Route path="/:slug" element={<PublicCardPage />} />
                   <Route path="*" element={<NotFound />} />
