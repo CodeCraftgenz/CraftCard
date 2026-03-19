@@ -1,9 +1,17 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 
 export function PrivacyPage() {
   return (
     <div className="min-h-screen bg-[#0B0E1A] text-white">
+      <Helmet>
+        <title>Termos de Uso e Política de Privacidade — CraftCard</title>
+        <meta name="description" content="Termos de uso, política de privacidade e proteção de dados da plataforma CraftCard. Saiba como protegemos suas informações e garantimos a segurança dos seus dados." />
+        <meta property="og:title" content="Termos e Privacidade — CraftCard" />
+        <meta property="og:description" content="Termos de uso e política de privacidade da plataforma CraftCard." />
+        <link rel="canonical" href="https://craftcardgenz.com/termos" />
+      </Helmet>
       <div className="max-w-3xl mx-auto px-4 py-16">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-white/70 transition mb-8">
           <ArrowLeft size={16} /> Voltar
