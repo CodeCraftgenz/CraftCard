@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
-import { getGridSize, parseMetadata } from '@/lib/constants';
+import { getGridSize, parseMetadata, MESH_GRADIENTS } from '@/lib/constants';
 import { AnimatedBackgroundOverlay } from './AnimatedBackgroundOverlay';
 import {
   Instagram,
@@ -117,6 +117,23 @@ function getThemeBackground(theme: string, accent: string): string {
       return 'linear-gradient(180deg, #B8860B15 0%, #8B451310 30%, #1A1A2E 60%)';
     case 'cosmic':
       return 'linear-gradient(135deg, #6A0DAD20 0%, #1E3A8A20 50%, #0F0F2E 100%)';
+    // Novos temas premium
+    case 'glass':
+      return 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, #0f172a 50%, rgba(255,255,255,0.03) 100%)';
+    case 'brutalist':
+      return '#111111';
+    case 'neumorphism':
+      return 'linear-gradient(145deg, #1e2030 0%, #171926 100%)';
+    case 'terminal':
+      return '#0a0a0a';
+    case 'polaroid':
+      return 'linear-gradient(180deg, #2d1f3d20 0%, #1A1A2E 30%, #1A1A2E 100%)';
+    case 'pastel':
+      return 'linear-gradient(135deg, #FFB6C120 0%, #C4B5FD15 50%, #1A1A2E 100%)';
+    case 'noir':
+      return '#000000';
+    case 'retro':
+      return 'linear-gradient(135deg, #EC489920 0%, #00E4F215 50%, #0A0A1A 100%)';
     default:
       return `linear-gradient(180deg, ${accent}15 0%, #1A1A2E 30%, #1A1A2E 100%)`;
   }
@@ -140,6 +157,23 @@ function getThemeCardClass(theme: string): string {
       return 'border-2 border-white/20';
     case 'minimal':
       return '';
+    // Novos temas premium
+    case 'glass':
+      return 'border border-white/20';
+    case 'brutalist':
+      return 'border-4 border-white rounded-none shadow-[8px_8px_0px_rgba(255,255,255,0.3)]';
+    case 'neumorphism':
+      return 'border border-white/5 shadow-[8px_8px_16px_#0d0f18,-8px_-8px_16px_#2f3348]';
+    case 'terminal':
+      return 'border border-green-500/30 rounded-lg shadow-[0_0_20px_rgba(34,197,94,0.1)]';
+    case 'polaroid':
+      return 'border-4 border-white/30';
+    case 'pastel':
+      return 'border border-pink-300/20 rounded-[2rem]';
+    case 'noir':
+      return 'border border-yellow-600/30';
+    case 'retro':
+      return 'border-2 border-pink-500/30 shadow-[0_0_30px_rgba(236,72,153,0.1)]';
     default:
       return 'border border-white/10';
   }
@@ -166,11 +200,16 @@ function getLinkClasses(style: string): string {
   }
 }
 
-function getHoverAnim(anim: string): Record<string, number> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getHoverAnim(anim: string): any {
   switch (anim) {
     case 'scale': return { scale: 1.06 };
     case 'slide': return { x: 6 };
     case 'glow': return { scale: 1.03 };
+    case 'bounce': return { y: -4, transition: { type: 'spring', stiffness: 400, damping: 15 } };
+    case 'tilt3d': return { rotateX: 5, rotateY: -3, scale: 1.02, transition: { duration: 0.2 } };
+    case 'flip': return { rotateY: 8, scale: 1.02, transition: { duration: 0.3 } };
+    case 'pulse': return { scale: [1, 1.05, 1.02], transition: { duration: 0.4 } };
     default: return { scale: 1.02 };
   }
 }
@@ -215,6 +254,11 @@ export const CardPreview = memo(function CardPreview({
     if (bgType === 'gradient' && backgroundGradient) {
       const parts = backgroundGradient.split(',');
       if (parts.length >= 3) return `linear-gradient(${parts[0]},${parts[1]},${parts[2]})`;
+    }
+    // Mesh Gradient — busca preset pelo ID
+    if (bgType === 'mesh' && backgroundGradient) {
+      const mesh = MESH_GRADIENTS.find((m) => m.value === backgroundGradient);
+      if (mesh) return mesh.css;
     }
     if (bgType === 'image' && backgroundImageUrl) {
       return getThemeBackground(theme, accent);
@@ -320,7 +364,7 @@ export const CardPreview = memo(function CardPreview({
           )}
 
           {/* Social Links */}
-          <div className={linkLayout === 'grid' ? 'w-full grid grid-cols-3 gap-2' : 'w-full flex flex-col gap-2.5'} style={linkLayout === 'grid' ? { gridAutoFlow: 'dense', gridAutoRows: 'minmax(56px, auto)' } : undefined}>
+          <div className={linkLayout === 'grid' ? 'w-full grid grid-cols-3 gap-2' : 'w-full flex flex-col gap-2.5'} style={{ perspective: '800px', ...(linkLayout === 'grid' ? { gridAutoFlow: 'dense', gridAutoRows: 'minmax(56px, auto)' } : {}) }}>
             {(card.socialLinks || []).map((link, i) => {
               // Header separator — full width in grid
               if (link.platform === 'header' || link.linkType === 'header') {
@@ -529,6 +573,17 @@ function getPreviewIconStyle(iconStyle: string, bgColor: string, accent: string)
       return { style: { backgroundColor: `${bgColor}18`, borderRadius: '50%' }, iconColor: outlineIcon };
     case 'soft':
       return { style: { backgroundColor: `${bgColor}12`, border: `1px solid ${bgColor}10` }, iconColor: outlineIcon };
+    // Novos estilos de icone
+    case 'duotone':
+      return { style: { backgroundColor: `${bgColor}25`, border: `1px solid ${bgColor}40` }, iconColor: outlineIcon };
+    case 'isometric':
+      return { style: { backgroundColor: bgColor, boxShadow: `3px 3px 0px ${bgColor}60, 6px 6px 0px ${bgColor}30`, transform: 'translateX(-2px) translateY(-2px)' }, iconColor: solidIcon };
+    case 'badge':
+      return { style: { backgroundColor: `${bgColor}30`, border: `2px solid ${bgColor}50`, borderRadius: '8px' }, iconColor: outlineIcon };
+    case 'floating':
+      return { style: { backgroundColor: `${bgColor}20`, boxShadow: `0 4px 12px ${bgColor}30` }, iconColor: outlineIcon };
+    case 'diamond':
+      return { style: { backgroundColor: `${bgColor}20`, transform: 'rotate(45deg)' }, iconColor: outlineIcon };
     case 'default':
     default:
       return { style: { backgroundColor: `${accent}20` }, iconColor: outlineIcon };
