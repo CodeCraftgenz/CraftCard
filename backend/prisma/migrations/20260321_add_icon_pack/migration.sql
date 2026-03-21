@@ -1,3 +1,3 @@
--- AlterTable: adiciona coluna iconPack ao Profile e Organization
-ALTER TABLE `Profile` ADD COLUMN `iconPack` VARCHAR(10) NOT NULL DEFAULT 'lucide';
-ALTER TABLE `Organization` ADD COLUMN `iconPack` VARCHAR(10) NOT NULL DEFAULT 'lucide';
+-- AlterTable: adiciona coluna iconPack ao profiles e organizations
+ALTER TABLE `profiles` ADD COLUMN `iconPack` VARCHAR(10) NOT NULL DEFAULT 'lucide';
+ALTER TABLE `organizations` ADD COLUMN `iconPack` VARCHAR(10) NOT NULL DEFAULT 'lucide';
