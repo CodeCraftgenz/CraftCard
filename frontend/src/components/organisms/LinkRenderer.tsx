@@ -1,14 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Instagram, Linkedin, Github, Globe, Mail, MessageCircle,
-  Youtube, Twitter, Music2, Link as LinkIcon, ExternalLink,
-  Phone, FileDown, MapPin, Play, Minus, Copy, Check,
-} from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { trackLinkClick } from '@/hooks/useAnalytics';
 import { generatePixPayload } from '@/lib/pix-generator';
 import { getGridSize, parseMetadata } from '@/lib/constants';
+import { getIconForPlatform } from '@/lib/icon-packs';
 
 interface SocialLink {
   id: string;
@@ -20,26 +17,7 @@ interface SocialLink {
   metadata?: string | null;
 }
 
-const platformIcons: Record<string, typeof Instagram> = {
-  instagram: Instagram,
-  linkedin: Linkedin,
-  github: Github,
-  twitter: Twitter,
-  youtube: Youtube,
-  tiktok: Music2,
-  website: Globe,
-  email: Mail,
-  whatsapp: MessageCircle,
-  other: LinkIcon,
-  custom: ExternalLink,
-  header: Minus,
-  pix: () => <span className="text-xs font-bold">PIX</span>,
-  video_embed: Play,
-  music_embed: Music2,
-  file: FileDown,
-  map: MapPin,
-  phone: Phone,
-} as unknown as Record<string, typeof Instagram>;
+// Mapeamento de icones movido para icon-packs.tsx — usar getIconForPlatform()
 
 const platformColors: Record<string, string> = {
   instagram: '#E4405F',
@@ -111,9 +89,10 @@ interface LinkRendererProps {
   linkStyle: string;
   linkAnim: string;
   iconStyle?: string;
+  iconPack?: string;
 }
 
-export function LinkRenderer({ link, index, accent, linkStyle, linkAnim, iconStyle = 'default' }: LinkRendererProps) {
+export function LinkRenderer({ link, index, accent, linkStyle, linkAnim, iconStyle = 'default', iconPack = 'lucide' }: LinkRendererProps) {
   const [embedOpen, setEmbedOpen] = useState(false);
 
   // Header separator
@@ -143,6 +122,7 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim, iconSty
         linkStyle={linkStyle}
         linkAnim={linkAnim}
         iconStyle={iconStyle}
+        iconPack={iconPack}
       />
     );
   }
@@ -160,6 +140,7 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim, iconSty
           linkStyle={linkStyle}
           linkAnim={linkAnim}
           iconStyle={iconStyle}
+          iconPack={iconPack}
           onClick={(e) => {
             if (videoId) {
               e.preventDefault();
@@ -199,6 +180,7 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim, iconSty
           linkStyle={linkStyle}
           linkAnim={linkAnim}
           iconStyle={iconStyle}
+          iconPack={iconPack}
           onClick={(e) => {
             if (spotifyUri) {
               e.preventDefault();
@@ -251,6 +233,7 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim, iconSty
           linkStyle={linkStyle}
           linkAnim={linkAnim}
           iconStyle={iconStyle}
+          iconPack={iconPack}
           onClick={(e) => {
             e.preventDefault();
             setEmbedOpen(!embedOpen);
@@ -317,6 +300,7 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim, iconSty
         linkStyle={linkStyle}
         linkAnim={linkAnim}
         iconStyle={iconStyle}
+        iconPack={iconPack}
         download
       />
     );
@@ -332,13 +316,14 @@ export function LinkRenderer({ link, index, accent, linkStyle, linkAnim, iconSty
       linkStyle={linkStyle}
       linkAnim={linkAnim}
       iconStyle={iconStyle}
+      iconPack={iconPack}
     />
   );
 }
 
 // Shared link button component
 function LinkButton({
-  link, href, index, accent, linkStyle, linkAnim, iconStyle = 'default', onClick, download,
+  link, href, index, accent, linkStyle, linkAnim, iconStyle = 'default', iconPack = 'lucide', onClick, download,
 }: {
   link: SocialLink;
   href: string;
@@ -347,10 +332,11 @@ function LinkButton({
   linkStyle: string;
   linkAnim: string;
   iconStyle?: string;
+  iconPack?: string;
   onClick?: (e: React.MouseEvent) => void;
   download?: boolean;
 }) {
-  const Icon = platformIcons[link.platform] || Globe;
+  const Icon = getIconForPlatform(link.platform, iconPack);
   const bgColor = platformColors[link.platform] || accent;
   const isMailto = href.startsWith('mailto:');
   const isInternal = href === '#';
@@ -610,7 +596,7 @@ function tryParseJson(str: string): Record<string, string> | null {
 // ──────────────────────────────────────────────
 
 function GridLinkCard({
-  link, href, index, accent, linkStyle = 'rounded', linkAnim, iconStyle = 'default', onClick,
+  link, href, index, accent, linkStyle = 'rounded', linkAnim, iconStyle = 'default', iconPack = 'lucide', onClick,
 }: {
   link: SocialLink;
   href: string;
@@ -619,9 +605,10 @@ function GridLinkCard({
   linkStyle?: string;
   linkAnim: string;
   iconStyle?: string;
+  iconPack?: string;
   onClick?: (e: React.MouseEvent) => void;
 }) {
-  const Icon = platformIcons[link.platform] || Globe;
+  const Icon = getIconForPlatform(link.platform, iconPack);
   const bgColor = platformColors[link.platform] || accent;
   const isMailto = href.startsWith('mailto:');
   const isInternal = href === '#';
@@ -725,7 +712,7 @@ function GridLinkCard({
   );
 }
 
-export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, iconStyle = 'default' }: LinkRendererProps) {
+export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, iconStyle = 'default', iconPack = 'lucide' }: LinkRendererProps) {
   const [embedOpen, setEmbedOpen] = useState(false);
 
   // Header separator — full width
@@ -767,6 +754,7 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, ico
           linkStyle={linkStyle}
           linkAnim={linkAnim}
           iconStyle={iconStyle}
+          iconPack={iconPack}
           onClick={(e) => { e.preventDefault(); setEmbedOpen(!embedOpen); }}
         />
         {embedOpen && pixKey && <PixExpandedSection pixKey={pixKey} pixPayload={pixPayload} accent={accent} />}
@@ -781,7 +769,7 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, ico
     return (
       <div style={{ gridColumn: embedOpen && videoId ? 'span 3' : `span ${vidGs.cols}`, gridRow: `span ${vidGs.rows}` }}>
         <GridLinkCard
-          link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle}
+          link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} iconPack={iconPack}
           onClick={(e) => { if (videoId) { e.preventDefault(); setEmbedOpen(!embedOpen); } }}
         />
         {embedOpen && videoId && (
@@ -800,7 +788,7 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, ico
     return (
       <div style={{ gridColumn: embedOpen && spotifyUri ? 'span 3' : `span ${musGs.cols}`, gridRow: `span ${musGs.rows}` }}>
         <GridLinkCard
-          link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle}
+          link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} iconPack={iconPack}
           onClick={(e) => { if (spotifyUri) { e.preventDefault(); setEmbedOpen(!embedOpen); } }}
         />
         {embedOpen && spotifyUri && (
@@ -814,7 +802,7 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, ico
 
   // Phone
   if (link.platform === 'phone') {
-    return <GridLinkCard link={link} href={link.url.startsWith('tel:') ? link.url : `tel:${link.url}`} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} />;
+    return <GridLinkCard link={link} href={link.url.startsWith('tel:') ? link.url : `tel:${link.url}`} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} iconPack={iconPack} />;
   }
 
   // Map — inline embedded map visual
@@ -859,9 +847,9 @@ export function GridLinkRenderer({ link, index, accent, linkStyle, linkAnim, ico
 
   // File
   if (link.platform === 'file') {
-    return <GridLinkCard link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} />;
+    return <GridLinkCard link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} iconPack={iconPack} />;
   }
 
   // Default
-  return <GridLinkCard link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} />;
+  return <GridLinkCard link={link} href={link.url} index={index} accent={accent} linkStyle={linkStyle} linkAnim={linkAnim} iconStyle={iconStyle} iconPack={iconPack} />;
 }

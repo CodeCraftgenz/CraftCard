@@ -134,6 +134,13 @@ export const LINK_STYLES = [
   { value: 'neon-border', label: 'Neon Border' },
 ] as const;
 
+/** Pacotes de icones disponiveis — define o formato visual dos icones das redes sociais */
+export const ICON_PACKS = [
+  { value: 'lucide', label: 'Linha' },
+  { value: 'brand', label: 'Marca' },
+  { value: 'filled', label: 'Sólido' },
+] as const;
+
 export const ICON_STYLES = [
   { value: 'default', label: 'Original' },
   { value: 'filled', label: 'Preenchido' },

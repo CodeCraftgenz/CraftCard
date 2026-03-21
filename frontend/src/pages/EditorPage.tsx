@@ -212,6 +212,7 @@ export function EditorPage() {
     linkStyle: 'rounded' as string,
     linkAnimation: 'none' as string,
     iconStyle: 'default' as string,
+    iconPack: 'lucide' as string,
     socialLinks: [] as Array<{ platform: string; label: string; url: string; order: number; startsAt: string | null; endsAt: string | null; linkType?: string | null; metadata?: string | null }>,
   });
 
@@ -266,6 +267,7 @@ export function EditorPage() {
         linkStyle: profile.linkStyle ?? 'rounded',
         linkAnimation: profile.linkAnimation ?? 'none',
         iconStyle: profile.iconStyle ?? 'default',
+        iconPack: (profile as any).iconPack ?? 'lucide',
         socialLinks: profile.socialLinks.map((l) => ({
           platform: l.platform,
           label: l.label,
@@ -355,6 +357,7 @@ export function EditorPage() {
     data.linkStyle = form.linkStyle;
     data.linkAnimation = form.linkAnimation;
     data.iconStyle = form.iconStyle;
+    data.iconPack = form.iconPack;
 
     // Only send slug if >= 3 chars
     if (slugInput.length >= 3) {
@@ -527,7 +530,8 @@ export function EditorPage() {
     linkStyle: form.linkStyle,
     linkAnimation: form.linkAnimation,
     iconStyle: form.iconStyle,
-  }), [form.fontFamily, form.fontSizeScale, form.backgroundType, form.backgroundGradient, form.backgroundImageUrl, form.backgroundOverlay, form.backgroundPattern, form.linkLayout, form.linkStyle, form.linkAnimation, form.iconStyle]);
+    iconPack: form.iconPack,
+  }), [form.fontFamily, form.fontSizeScale, form.backgroundType, form.backgroundGradient, form.backgroundImageUrl, form.backgroundOverlay, form.backgroundPattern, form.linkLayout, form.linkStyle, form.linkAnimation, form.iconStyle, form.iconPack]);
 
   const handleStyleChange = useCallback((key: string, val: string | number | null) => {
     updateField(key as keyof typeof form, val as never);
@@ -3113,6 +3117,7 @@ export function EditorPage() {
                 linkStyle={form.linkStyle}
                 linkAnimation={form.linkAnimation}
                 iconStyle={form.iconStyle}
+                iconPack={form.iconPack}
                 socialLinks={form.socialLinks}
               />
             </MobilePreview>

@@ -12,6 +12,7 @@ export const updateOrgSchema = z.object({
   linkAnimation: z.enum(['none', 'scale', 'slide', 'glow']).optional(),
   linkLayout: z.enum(['list', 'grid']).optional(),
   iconStyle: z.enum(['default', 'filled', 'outline', 'neomorph', 'glass', 'gradient', 'neon', 'shadow', 'minimal', 'circle', 'soft', 'duotone', 'isometric', 'badge', 'floating', 'diamond']).optional(),
+  iconPack: z.enum(['lucide', 'brand', 'filled']).optional(),
   backgroundType: z.enum(['theme', 'gradient', 'image']).optional(),
   backgroundGradient: z.string().max(200).optional().nullable(),
   coverUrl: z.string().max(500).optional().nullable(),

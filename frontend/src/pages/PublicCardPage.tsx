@@ -117,6 +117,7 @@ interface PublicProfile {
   linkStyle?: string | null;
   linkAnimation?: string | null;
   iconStyle?: string | null;
+  iconPack?: string | null;
   connectionsEnabled?: boolean;
   connections?: Array<{ id: string; displayName: string; photoUrl: string | null; slug: string; tagline: string | null }>;
   leadCaptureEnabled?: boolean;
@@ -215,8 +216,8 @@ function getThemeBackground(theme: string, accent: string): string {
       return '#000000';
     case 'retro':       // Retro: pink e ciano neon sobre fundo muito escuro
       return 'linear-gradient(135deg, #EC489920 0%, #00E4F215 50%, #0A0A1A 100%)';
-    case 'glass3d':     // Vidro 3D: fundo escuro translucido para efeito de profundidade
-      return 'linear-gradient(135deg, rgba(15,23,42,0.6) 0%, rgba(30,41,59,0.4) 50%, rgba(15,23,42,0.6) 100%)';
+    case 'glass3d':     // Vidro 3D: fundo cosmico com gradientes radiais para profundidade real
+      return 'radial-gradient(ellipse at 30% 20%, rgba(0,228,242,0.08) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(209,43,242,0.06) 0%, transparent 50%), linear-gradient(180deg, #0a0e1a 0%, #111827 50%, #0a0e1a 100%)';
     default:
       return `linear-gradient(180deg, ${accent}15 0%, #1A1A2E 30%, #1A1A2E 100%)`;
   }
@@ -261,7 +262,7 @@ function getThemeCardStyle(theme: string): string {
     case 'retro':       // Retro: borda pink neon com glow sutil
       return 'bg-white/5 border-2 border-pink-500/30 rounded-2xl shadow-[0_0_30px_rgba(236,72,153,0.1)]';
     case 'glass3d':     // Vidro 3D: glassmorphism com profundidade e reflexos luminosos
-      return 'backdrop-blur-xl bg-white/[0.08] border border-white/20 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] overflow-hidden';
+      return 'backdrop-blur-xl bg-white/[0.06] border border-white/[0.15] rounded-3xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5),0_8px_20px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(255,255,255,0.05)]';
     default:
       return 'backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl';
   }
@@ -595,6 +596,7 @@ export function PublicCardPage() {
   const linkStyle = profile?.linkStyle || 'rounded';
   const linkAnim = profile?.linkAnimation || 'none';
   const iconStyle = profile?.iconStyle || 'default';
+  const iconPack = profile?.iconPack || 'lucide';
 
   // Carrega fonte Google customizada (deve estar antes de returns condicionais — regras de hooks)
   useEffect(() => { if (profile) loadGoogleFont(fontFamily); }, [fontFamily, profile]);
@@ -1054,6 +1056,19 @@ export function PublicCardPage() {
     );
   }
 
+  /* Handlers para efeito 3D interativo do tema glass3d */
+  const handleCard3DMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (theme !== 'glass3d') return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    e.currentTarget.style.transform = `perspective(1200px) rotateX(${-y * 8}deg) rotateY(${x * 8}deg)`;
+  };
+  const handleCard3DLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (theme !== 'glass3d') return;
+    e.currentTarget.style.transform = 'perspective(1200px) rotateX(2deg) rotateY(-3deg)';
+  };
+
   return (
     <>
       <Helmet>
@@ -1112,12 +1127,25 @@ export function PublicCardPage() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className={`relative z-[1] w-full max-w-md sm:max-w-lg lg:max-w-2xl ${theme !== 'minimal' ? 'p-6' : ''} ${getThemeCardStyle(theme)}`}
+          className={`relative z-[1] w-full max-w-md sm:max-w-lg lg:max-w-2xl ${theme !== 'minimal' ? 'p-6' : ''} ${getThemeCardStyle(theme)} ${theme === 'glass3d' ? 'glass3d-card' : ''}`}
+          style={theme === 'glass3d' ? {
+            transform: 'perspective(1200px) rotateX(2deg) rotateY(-3deg)',
+            transformStyle: 'preserve-3d',
+          } : undefined}
+          onMouseMove={handleCard3DMove}
+          onMouseLeave={handleCard3DLeave}
         >
           {/* Overlay de reflexo de vidro para o tema Vidro 3D */}
           {theme === 'glass3d' && (
             <div className="absolute inset-0 pointer-events-none z-[2] rounded-3xl overflow-hidden">
-              <div className="absolute -top-1/2 -left-1/4 w-3/4 h-full bg-gradient-to-br from-white/[0.07] via-transparent to-transparent rotate-12" />
+              {/* Reflexo diagonal principal */}
+              <div className="absolute -top-1/2 -left-1/4 w-3/4 h-full bg-gradient-to-br from-white/[0.08] via-transparent to-transparent rotate-12" />
+              {/* Reflexo de borda inferior */}
+              <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-white/[0.03] to-transparent" />
+              {/* Brilho lateral esquerdo */}
+              <div className="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-white/20 via-white/5 to-transparent" />
+              {/* Brilho lateral superior */}
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-white/20 via-white/10 to-transparent" />
             </div>
           )}
           {/* Cover Photo */}
@@ -1266,6 +1294,7 @@ export function PublicCardPage() {
                       linkStyle={linkStyle}
                       linkAnim={linkAnim}
                       iconStyle={iconStyle}
+                      iconPack={iconPack}
                     />
                   ))}
                   {hiddenCount > 0 && (

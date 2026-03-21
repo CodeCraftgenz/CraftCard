@@ -2,24 +2,8 @@ import { memo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getGridSize, parseMetadata, MESH_GRADIENTS } from '@/lib/constants';
 import { AnimatedBackgroundOverlay } from './AnimatedBackgroundOverlay';
-import {
-  Instagram,
-  Linkedin,
-  Github,
-  Globe,
-  Mail,
-  MessageCircle,
-  ExternalLink,
-  User,
-  BadgeCheck,
-  Phone,
-  Music,
-  PlayCircle,
-  MapPin,
-  FileDown,
-  CreditCard,
-  Minus,
-} from 'lucide-react';
+import { getIconForPlatform } from '@/lib/icon-packs';
+import { User, BadgeCheck } from 'lucide-react';
 
 interface CardPreviewProps {
   displayName?: string;
@@ -43,6 +27,7 @@ interface CardPreviewProps {
   linkStyle?: string;
   linkAnimation?: string;
   iconStyle?: string;
+  iconPack?: string;
   socialLinks?: Array<{
     platform: string;
     label: string;
@@ -65,22 +50,7 @@ const DEMO_CARD: CardPreviewProps = {
   ],
 };
 
-const platformIcons: Record<string, typeof Instagram> = {
-  instagram: Instagram,
-  linkedin: Linkedin,
-  github: Github,
-  website: Globe,
-  email: Mail,
-  whatsapp: MessageCircle,
-  custom: ExternalLink,
-  phone: Phone,
-  music_embed: Music,
-  video_embed: PlayCircle,
-  map: MapPin,
-  file: FileDown,
-  pix: CreditCard,
-  header: Minus,
-};
+// Mapeamento de icones movido para icon-packs.tsx — usar getIconForPlatform()
 
 const platformColors: Record<string, string> = {
   instagram: '#E4405F',
@@ -134,8 +104,8 @@ function getThemeBackground(theme: string, accent: string): string {
       return '#000000';
     case 'retro':
       return 'linear-gradient(135deg, #EC489920 0%, #00E4F215 50%, #0A0A1A 100%)';
-    case 'glass3d':     // Vidro 3D: fundo escuro translucido para efeito de profundidade
-      return 'linear-gradient(135deg, rgba(15,23,42,0.6) 0%, rgba(30,41,59,0.4) 50%, rgba(15,23,42,0.6) 100%)';
+    case 'glass3d':     // Vidro 3D: fundo cosmico com gradientes radiais para profundidade real
+      return 'radial-gradient(ellipse at 30% 20%, rgba(0,228,242,0.08) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(209,43,242,0.06) 0%, transparent 50%), linear-gradient(180deg, #0a0e1a 0%, #111827 50%, #0a0e1a 100%)';
     default:
       return `linear-gradient(180deg, ${accent}15 0%, #1A1A2E 30%, #1A1A2E 100%)`;
   }
@@ -177,7 +147,7 @@ function getThemeCardClass(theme: string): string {
     case 'retro':
       return 'border-2 border-pink-500/30 shadow-[0_0_30px_rgba(236,72,153,0.1)]';
     case 'glass3d':     // Vidro 3D: glassmorphism com profundidade e reflexos luminosos
-      return 'backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]';
+      return 'backdrop-blur-xl border border-white/[0.15] shadow-[0_20px_60px_rgba(0,0,0,0.5),0_8px_20px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(255,255,255,0.05)]';
     default:
       return 'border border-white/10';
   }
@@ -240,6 +210,7 @@ export const CardPreview = memo(function CardPreview({
   linkStyle = 'rounded',
   linkAnimation = 'none',
   iconStyle = 'default',
+  iconPack = 'lucide',
   socialLinks,
   demo,
 }: CardPreviewProps) {
@@ -395,7 +366,7 @@ export const CardPreview = memo(function CardPreview({
                 );
               }
 
-              const Icon = platformIcons[link.platform] || Globe;
+              const Icon = getIconForPlatform(link.platform, iconPack);
               const platColor = platformColors[link.platform] || accent;
               const meta = parseMetadata(link.metadata);
               const blockShape = meta.buttonShape || 'default';

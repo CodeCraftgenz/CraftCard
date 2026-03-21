@@ -118,12 +118,13 @@ export function HeroSection() {
           className="flex justify-center relative"
         >
           <div className="relative flex items-center justify-center">
-            {/* Brilho difuso atras do cartao */}
-            <div className="absolute w-64 h-64 rounded-full bg-brand-indigo/10 blur-3xl" />
+            {/* Brilhos difusos atras do cartao */}
+            <div className="absolute w-80 h-80 rounded-full bg-brand-cyan/10 blur-3xl" />
+            <div className="absolute w-48 h-48 rounded-full bg-brand-indigo/15 blur-2xl -top-10 -right-10" />
             <img
-              src="/hero-3d-card.png"
-              alt="Cartao digital 3D com efeito de vidro"
-              className="w-80 md:w-96 drop-shadow-2xl hero-card-3d-rotate"
+              src="/hero-3d-card.svg"
+              alt="Cartão digital 3D com efeito de vidro"
+              className="w-[22rem] md:w-[28rem] lg:w-[32rem] drop-shadow-[0_20px_60px_rgba(0,228,242,0.15)] hero-card-3d-rotate"
             />
           </div>
         </motion.div>

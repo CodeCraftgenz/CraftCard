@@ -25,6 +25,7 @@ import {
   LINK_STYLES,
   LINK_ANIMATIONS,
   ICON_STYLES,
+  ICON_PACKS,
 } from '@/lib/constants';
 
 /** Estado completo de personalizacao visual de um cartao */
@@ -40,6 +41,7 @@ export interface VisualCustomization {
   linkStyle: string;
   linkAnimation: string;
   iconStyle: string;
+  iconPack: string;
 }
 
 interface StyleEditorProps {
@@ -388,6 +390,27 @@ export const StyleEditor = memo(function StyleEditor({ value, onChange, accent, 
                 }`}
               >
                 <span className="text-[10px] text-white/70">{a.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Pacote de Icones */}
+        <div>
+          <label className="text-xs font-medium text-white/50 mb-3 block uppercase tracking-wider">Pacote de Ícones</label>
+          <div className="grid grid-cols-3 gap-2">
+            {ICON_PACKS.map((pack) => (
+              <button
+                key={pack.value}
+                type="button"
+                onClick={() => onChange('iconPack', pack.value)}
+                className={`px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                  (value.iconPack || 'lucide') === pack.value
+                    ? 'bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/30'
+                    : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10'
+                }`}
+              >
+                {pack.label}
               </button>
             ))}
           </div>

@@ -521,6 +521,12 @@
   will-change: transform;
 }
 
+/* Transicao suave para efeito 3D interativo do tema glass3d */
+.glass3d-card {
+  transition: transform 0.15s ease-out;
+  transform-style: preserve-3d;
+}
+
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   .animate-glow-drift,
@@ -544,7 +550,8 @@
   .feature-frame::before {
     animation: none !important;
   }
-  .glass-card-hover:hover {
+  .glass-card-hover:hover,
+  .glass3d-card {
     transform: none;
   }
 }

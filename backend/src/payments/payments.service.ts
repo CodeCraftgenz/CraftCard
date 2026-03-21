@@ -518,6 +518,12 @@ export class PaymentsService {
       return;
     }
 
+    // Proteção contra retorno nulo do gateway (pagamento inexistente no MP)
+    if (!fetched) {
+      this.logger.warn(`Gateway returned null for payment ${mpPaymentId}`);
+      return;
+    }
+
     // external_reference é o ID do nosso registro Payment (definido na criação da preferência)
     const externalRef = fetched.externalReference;
 
