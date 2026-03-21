@@ -215,6 +215,8 @@ function getThemeBackground(theme: string, accent: string): string {
       return '#000000';
     case 'retro':       // Retro: pink e ciano neon sobre fundo muito escuro
       return 'linear-gradient(135deg, #EC489920 0%, #00E4F215 50%, #0A0A1A 100%)';
+    case 'glass3d':     // Vidro 3D: fundo escuro translucido para efeito de profundidade
+      return 'linear-gradient(135deg, rgba(15,23,42,0.6) 0%, rgba(30,41,59,0.4) 50%, rgba(15,23,42,0.6) 100%)';
     default:
       return `linear-gradient(180deg, ${accent}15 0%, #1A1A2E 30%, #1A1A2E 100%)`;
   }
@@ -258,6 +260,8 @@ function getThemeCardStyle(theme: string): string {
       return 'bg-black/80 border border-yellow-600/30 rounded-2xl shadow-2xl';
     case 'retro':       // Retro: borda pink neon com glow sutil
       return 'bg-white/5 border-2 border-pink-500/30 rounded-2xl shadow-[0_0_30px_rgba(236,72,153,0.1)]';
+    case 'glass3d':     // Vidro 3D: glassmorphism com profundidade e reflexos luminosos
+      return 'backdrop-blur-xl bg-white/[0.08] border border-white/20 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] overflow-hidden';
     default:
       return 'backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl';
   }
@@ -1110,6 +1114,12 @@ export function PublicCardPage() {
           animate="visible"
           className={`relative z-[1] w-full max-w-md sm:max-w-lg lg:max-w-2xl ${theme !== 'minimal' ? 'p-6' : ''} ${getThemeCardStyle(theme)}`}
         >
+          {/* Overlay de reflexo de vidro para o tema Vidro 3D */}
+          {theme === 'glass3d' && (
+            <div className="absolute inset-0 pointer-events-none z-[2] rounded-3xl overflow-hidden">
+              <div className="absolute -top-1/2 -left-1/4 w-3/4 h-full bg-gradient-to-br from-white/[0.07] via-transparent to-transparent rotate-12" />
+            </div>
+          )}
           {/* Cover Photo */}
           {profile.coverPhotoUrl && (
             <motion.div variants={itemVariants}>

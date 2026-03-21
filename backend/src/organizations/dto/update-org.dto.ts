@@ -7,7 +7,7 @@ export const updateOrgSchema = z.object({
   secondaryColor: z.string().max(30).optional(),
   fontFamily: z.string().max(100).optional(),
   brandingActive: z.boolean().optional(),
-  cardTheme: z.enum(['default', 'gradient', 'minimal', 'bold', 'ocean', 'sunset', 'forest', 'neon', 'elegant', 'cosmic']).optional(),
+  cardTheme: z.enum(['default', 'gradient', 'minimal', 'bold', 'ocean', 'sunset', 'forest', 'neon', 'elegant', 'cosmic', 'glass', 'brutalist', 'neumorphism', 'terminal', 'polaroid', 'pastel', 'noir', 'retro', 'glass3d']).optional(),
   linkStyle: z.enum(['rounded', 'pill', 'square', 'outline', 'ghost', 'elevated', 'glassmorphism', 'neon-border']).optional(),
   linkAnimation: z.enum(['none', 'scale', 'slide', 'glow']).optional(),
   linkLayout: z.enum(['list', 'grid']).optional(),

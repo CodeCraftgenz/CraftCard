@@ -75,7 +75,7 @@ export const updateProfileSchema = z.object({
   isPublished: z.boolean().optional(),
   resumeUrl: z.preprocess(emptyToUndefined, safeUrlSchema.optional().nullable()),
   resumeType: z.enum(['pdf', 'link']).optional().nullable(),
-  cardTheme: z.enum(['default', 'gradient', 'minimal', 'bold', 'ocean', 'sunset', 'forest', 'neon', 'elegant', 'cosmic', 'glass', 'brutalist', 'neumorphism', 'terminal', 'polaroid', 'pastel', 'noir', 'retro']).optional(),
+  cardTheme: z.enum(['default', 'gradient', 'minimal', 'bold', 'ocean', 'sunset', 'forest', 'neon', 'elegant', 'cosmic', 'glass', 'brutalist', 'neumorphism', 'terminal', 'polaroid', 'pastel', 'noir', 'retro', 'glass3d']).optional(),
   coverPhotoUrl: z.preprocess(emptyToUndefined, safeUrlSchema.optional().nullable()),
   availabilityStatus: z.enum(['available', 'busy', 'unavailable']).optional().nullable(),
   availabilityMessage: z.preprocess(emptyToUndefined, z.string().max(100).optional().nullable()),

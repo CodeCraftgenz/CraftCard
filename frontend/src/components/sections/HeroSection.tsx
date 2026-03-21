@@ -1,8 +1,6 @@
-import { useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { CardPreview } from '@/components/organisms/CardPreview';
 import { FloatingDecorations } from '@/components/atoms/FloatingDecorations';
 import { MagneticButton } from '@/components/atoms/MagneticButton';
 import { Typewriter } from '@/components/atoms/Typewriter';
@@ -31,24 +29,6 @@ const reveal = (delay = 0) => ({
 
 export function HeroSection() {
   const { isAuthenticated } = useAuth();
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [isCardHovered, setIsCardHovered] = useState(false);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    cardRef.current.style.transform = `rotateY(${x * 10}deg) rotateX(${-y * 10}deg)`;
-  }, []);
-
-  const handleMouseEnter = useCallback(() => setIsCardHovered(true), []);
-
-  const handleMouseLeave = useCallback(() => {
-    if (!cardRef.current) return;
-    cardRef.current.style.transform = '';
-    setIsCardHovered(false);
-  }, []);
 
   const headlineWords = ['Seu', 'cartão', 'digital', 'profissional'];
 
@@ -130,25 +110,21 @@ export function HeroSection() {
           </motion.div>
         </div>
 
-        {/* Right: 3D Tilt Card Preview */}
+        {/* Direita: Imagem 3D do cartao com rotacao continua */}
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="flex justify-center relative perspective-1200"
-          onMouseEnter={handleMouseEnter}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
+          className="flex justify-center relative"
         >
-          {/* Glow behind card */}
-          <div className="absolute inset-0 rounded-full scale-75 animate-pulse-glow glow-card-bg" />
-          <div
-            ref={cardRef}
-            className={`relative preserve-3d ${isCardHovered ? 'transition-transform duration-200 ease-out' : 'card-auto-rotate'}`}
-          >
-            {/* Subtle border glow ring */}
-            <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-br from-blue-500/25 via-indigo-500/15 to-violet-600/25 blur-sm" />
-            <CardPreview demo />
+          <div className="relative flex items-center justify-center">
+            {/* Brilho difuso atras do cartao */}
+            <div className="absolute w-64 h-64 rounded-full bg-brand-indigo/10 blur-3xl" />
+            <img
+              src="/hero-3d-card.png"
+              alt="Cartao digital 3D com efeito de vidro"
+              className="w-80 md:w-96 drop-shadow-2xl hero-card-3d-rotate"
+            />
           </div>
         </motion.div>
       </div>

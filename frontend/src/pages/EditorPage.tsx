@@ -78,6 +78,7 @@ const CARD_THEMES = [
   { value: 'pastel', label: 'Pastel', gradient: 'linear-gradient(135deg, #FFB6C1, #C4B5FD)' },                                    // Tons pastel suaves (rosa/lilas)
   { value: 'noir', label: 'Noir', gradient: 'linear-gradient(135deg, #000000, #B8860B)' },                                        // Cinema noir (preto e dourado)
   { value: 'retro', label: 'Retro', gradient: 'linear-gradient(135deg, #EC4899, #00E4F2)' },                                      // Retro/synthwave (rosa e ciano)
+  { value: 'glass3d', label: 'Vidro 3D', gradient: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05), rgba(0,228,242,0.1))' }, // Glassmorphism 3D com profundidade
 ];
 
 function EditorSection({ icon, title, badge, children, defaultOpen = true }: { icon: React.ReactNode; title: string; badge?: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean }) {
@@ -85,7 +86,7 @@ function EditorSection({ icon, title, badge, children, defaultOpen = true }: { i
   return (
     <div className="glass-card overflow-hidden hover:border-white/20 transition-colors">
       <button type="button" onClick={() => setOpen(!open)} className="w-full px-6 py-4 flex items-center gap-3 text-left">
-        <span className="text-brand-cyan/70">{icon}</span>
+        <span className="w-7 h-7 rounded-lg bg-brand-cyan/10 flex items-center justify-center text-brand-cyan/70 shrink-0">{icon}</span>
         <h3 className="font-semibold text-white/90 text-sm">{title}</h3>
         {badge}
         <ChevronDown size={16} className={`ml-auto text-white/30 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
@@ -677,7 +678,7 @@ export function EditorPage() {
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Sparkles size={22} className="text-brand-cyan" />
-              Editor do Cartão
+              <span className="bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">Editor do Cartão</span>
             </h1>
             <div className="flex items-center gap-2 text-xs">
               {updateProfile.isPending ? (
@@ -694,6 +695,8 @@ export function EditorPage() {
             </div>
           </div>
           <p className="text-sm text-white/40 mt-1">Personalize seu cartão digital profissional</p>
+          {/* Linha separadora com gradiente sutil */}
+          <div className="h-px bg-gradient-to-r from-transparent via-brand-cyan/20 to-transparent mt-4" />
         </motion.div>
 
         {/* Card Switcher (multiple cards) */}
@@ -3048,8 +3051,11 @@ export function EditorPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="glass-card p-4 flex items-center gap-3 sticky bottom-4"
+              className="glass-card overflow-hidden sticky bottom-4"
             >
+              {/* Linha gradiente decorativa no topo da barra */}
+              <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+              <div className="p-4 flex items-center gap-3">
               <button
                 type="button"
                 onClick={handleSave}
@@ -3074,6 +3080,7 @@ export function EditorPage() {
                   </div>
                 </label>
               )}
+              </div>
             </motion.div>
           </motion.div>
 

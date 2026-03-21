@@ -81,7 +81,8 @@
 
   .glass-card {
     @apply backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   .glass-card-hover {
@@ -507,6 +508,19 @@
   animation: shimmer-load 1.5s ease-in-out infinite !important;
 }
 
+/* ── Rotacao 3D do cartao hero com efeito de flutuacao ── */
+@keyframes hero-card-rotate {
+  0%   { transform: perspective(1000px) rotateX(10deg) rotateY(0deg) translateY(0px); }
+  25%  { transform: perspective(1000px) rotateX(10deg) rotateY(90deg) translateY(-10px); }
+  50%  { transform: perspective(1000px) rotateX(10deg) rotateY(180deg) translateY(0px); }
+  75%  { transform: perspective(1000px) rotateX(10deg) rotateY(270deg) translateY(-10px); }
+  100% { transform: perspective(1000px) rotateX(10deg) rotateY(360deg) translateY(0px); }
+}
+.hero-card-3d-rotate {
+  animation: hero-card-rotate 20s ease-in-out infinite;
+  will-change: transform;
+}
+
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   .animate-glow-drift,
@@ -523,6 +537,7 @@
   .section-divider-shimmer,
   .rain-bg,
   .card-auto-rotate,
+  .hero-card-3d-rotate,
   .shimmer-loading {
     animation: none !important;
   }

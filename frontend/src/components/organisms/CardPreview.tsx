@@ -134,6 +134,8 @@ function getThemeBackground(theme: string, accent: string): string {
       return '#000000';
     case 'retro':
       return 'linear-gradient(135deg, #EC489920 0%, #00E4F215 50%, #0A0A1A 100%)';
+    case 'glass3d':     // Vidro 3D: fundo escuro translucido para efeito de profundidade
+      return 'linear-gradient(135deg, rgba(15,23,42,0.6) 0%, rgba(30,41,59,0.4) 50%, rgba(15,23,42,0.6) 100%)';
     default:
       return `linear-gradient(180deg, ${accent}15 0%, #1A1A2E 30%, #1A1A2E 100%)`;
   }
@@ -174,6 +176,8 @@ function getThemeCardClass(theme: string): string {
       return 'border border-yellow-600/30';
     case 'retro':
       return 'border-2 border-pink-500/30 shadow-[0_0_30px_rgba(236,72,153,0.1)]';
+    case 'glass3d':     // Vidro 3D: glassmorphism com profundidade e reflexos luminosos
+      return 'backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]';
     default:
       return 'border border-white/10';
   }

@@ -74,8 +74,8 @@ export function CardSwitcher({
             {cards.map((card) => (
               <div
                 key={card.id}
-                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${
-                  card.id === activeCardId ? 'bg-brand-cyan/10 border border-brand-cyan/20' : 'hover:bg-white/5'
+                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 ${
+                  card.id === activeCardId ? 'bg-brand-cyan/10 border border-brand-cyan/20 shadow-sm shadow-brand-cyan/10' : 'hover:bg-white/5 hover:translate-x-1 border border-transparent'
                 }`}
                 onClick={() => { onSwitch(card.id); setIsOpen(false); }}
               >
