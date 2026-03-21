@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getGridSize, parseMetadata, MESH_GRADIENTS } from '@/lib/constants';
 import { AnimatedBackgroundOverlay } from './AnimatedBackgroundOverlay';
@@ -249,6 +249,19 @@ export const CardPreview = memo(function CardPreview({
   const scale = fontSizeScale || 1;
   const bgType = backgroundType || 'theme';
 
+  // Shimmer loading states for images
+  const [photoLoaded, setPhotoLoaded] = useState(!card.photoUrl);
+  const [coverLoaded, setCoverLoaded] = useState(!card.coverPhotoUrl);
+
+  // Reset loading states when URLs change
+  useEffect(() => {
+    setPhotoLoaded(!card.photoUrl);
+  }, [card.photoUrl]);
+
+  useEffect(() => {
+    setCoverLoaded(!card.coverPhotoUrl);
+  }, [card.coverPhotoUrl]);
+
   // Compute background
   const computedBg = (() => {
     if (bgType === 'gradient' && backgroundGradient) {
@@ -307,24 +320,26 @@ export const CardPreview = memo(function CardPreview({
         {/* Cover Photo */}
         {card.coverPhotoUrl && (
           <div
-            className="relative z-[1] w-full h-20 bg-white/5"
+            className={`relative z-[1] w-full h-20 bg-white/5 ${card.coverPhotoUrl && !coverLoaded ? 'shimmer-loading' : ''}`}
             style={{
-              backgroundImage: `url(${card.coverPhotoUrl})`,
+              backgroundImage: coverLoaded ? `url(${card.coverPhotoUrl})` : undefined,
               backgroundSize: 'cover',
               backgroundPosition: `center ${card.coverPositionY ?? 50}%`,
             }}
-          />
+          >
+            {card.coverPhotoUrl && <img src={card.coverPhotoUrl} onLoad={() => setCoverLoaded(true)} className="hidden" alt="" />}
+          </div>
         )}
 
         <div className={`relative z-[1] p-6 flex flex-col items-center text-center ${card.coverPhotoUrl ? '-mt-10' : ''}`}>
           {/* Avatar */}
           <div
-            className="w-24 h-24 rounded-full flex items-center justify-center mb-4 shadow-lg border-4 border-[#16213E]"
+            className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 shadow-lg border-4 border-[#16213E] ${card.photoUrl && !photoLoaded ? 'shimmer-loading' : ''}`}
             style={{
               background: card.photoUrl
                 ? undefined
                 : `linear-gradient(135deg, ${accent}, #D12BF2)`,
-              ...(card.photoUrl ? {
+              ...(card.photoUrl && photoLoaded ? {
                 backgroundImage: `url(${card.photoUrl})`,
                 backgroundSize: 'cover',
                 backgroundPosition: `center ${card.photoPositionY ?? 50}%`,
@@ -332,6 +347,7 @@ export const CardPreview = memo(function CardPreview({
             }}
           >
             {!card.photoUrl && <User className="w-10 h-10 text-white" />}
+            {card.photoUrl && <img src={card.photoUrl} onLoad={() => setPhotoLoaded(true)} className="hidden" alt="" />}
           </div>
 
           {/* Name */}

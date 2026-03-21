@@ -5,6 +5,7 @@ import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus, Lock,
   Camera, FileText, Palette, Link2, Sparkles, Smartphone, Building2, Shield,
   QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, Star, Video, UserPlus, Users, Paintbrush, Trash2,
+  ChevronDown, Cloud, CloudUpload, Image, User,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
@@ -78,6 +79,33 @@ const CARD_THEMES = [
   { value: 'noir', label: 'Noir', gradient: 'linear-gradient(135deg, #000000, #B8860B)' },                                        // Cinema noir (preto e dourado)
   { value: 'retro', label: 'Retro', gradient: 'linear-gradient(135deg, #EC4899, #00E4F2)' },                                      // Retro/synthwave (rosa e ciano)
 ];
+
+function EditorSection({ icon, title, badge, children, defaultOpen = true }: { icon: React.ReactNode; title: string; badge?: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="glass-card overflow-hidden hover:border-white/20 transition-colors">
+      <button type="button" onClick={() => setOpen(!open)} className="w-full px-6 py-4 flex items-center gap-3 text-left">
+        <span className="text-brand-cyan/70">{icon}</span>
+        <h3 className="font-semibold text-white/90 text-sm">{title}</h3>
+        {badge}
+        <ChevronDown size={16} className={`ml-auto text-white/30 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="px-6 pb-6 pt-0">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export function EditorPage() {
   const { hasPaid, paidUntil, refreshAuth, cards: authCards, hasFeature, organizations, plan, planLimits, isAdmin } = useAuth();
@@ -646,10 +674,25 @@ export function EditorPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Sparkles size={22} className="text-brand-cyan" />
-            Editor do Cartão
-          </h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Sparkles size={22} className="text-brand-cyan" />
+              Editor do Cartão
+            </h1>
+            <div className="flex items-center gap-2 text-xs">
+              {updateProfile.isPending ? (
+                <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity }} className="flex items-center gap-1.5 text-brand-cyan/70">
+                  <Cloud size={14} />
+                  <span>Salvando...</span>
+                </motion.div>
+              ) : saved ? (
+                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-1.5 text-emerald-400/70">
+                  <CloudUpload size={14} />
+                  <span>Salvo</span>
+                </motion.div>
+              ) : null}
+            </div>
+          </div>
           <p className="text-sm text-white/40 mt-1">Personalize seu cartão digital profissional</p>
         </motion.div>
 
@@ -1078,13 +1121,7 @@ export function EditorPage() {
             ))}
 
             {/* Photo Section */}
-            <div className="glass-card p-6 group hover:border-white/20 transition-colors">
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-8 h-8 rounded-lg bg-brand-cyan/10 flex items-center justify-center">
-                  <Camera size={16} className="text-brand-cyan" />
-                </div>
-                <h3 className="font-semibold">Foto de Perfil</h3>
-              </div>
+            <EditorSection icon={<Camera size={16} />} title="Foto de Perfil" defaultOpen>
               <div className="flex items-center gap-5">
                 <div className="relative">
                   <div
@@ -1139,23 +1176,18 @@ export function EditorPage() {
                   </div>
                 </div>
               )}
-            </div>
+            </EditorSection>
 
             {/* Cover Photo Section */}
-            <div className="glass-card p-6 group hover:border-white/20 transition-colors relative">
-              {isOrgCoverLocked && (
-                <div className="absolute inset-0 z-10 bg-dark-card/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-2 p-6">
-                  <Lock size={20} className="text-purple-400" />
-                  <p className="text-white/60 text-xs text-center">A capa é definida pela organização <strong>{orgForProfile?.name}</strong></p>
-                </div>
-              )}
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                  <Camera size={16} className="text-purple-400" />
-                </div>
-                <h3 className="font-semibold">Foto de Capa</h3>
-              </div>
-              <div className="space-y-3">
+            <EditorSection icon={<Image size={16} />} title="Foto de Capa" defaultOpen>
+              <div className="relative">
+                {isOrgCoverLocked && (
+                  <div className="absolute inset-0 z-10 bg-dark-card/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-2 p-6">
+                    <Lock size={20} className="text-purple-400" />
+                    <p className="text-white/60 text-xs text-center">A capa é definida pela organização <strong>{orgForProfile?.name}</strong></p>
+                  </div>
+                )}
+                <div className="space-y-3">
                 {profile?.coverPhotoUrl && (
                   <div
                     className="w-full h-24 rounded-xl bg-brand-bg-card overflow-hidden border border-white/10"
@@ -1199,16 +1231,11 @@ export function EditorPage() {
                   </div>
                 )}
               </div>
-            </div>
+              </div>
+            </EditorSection>
 
             {/* Basic Info */}
-            <div className="glass-card p-6 hover:border-white/20 transition-colors">
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-8 h-8 rounded-lg bg-brand-magenta/10 flex items-center justify-center">
-                  <Sparkles size={16} className="text-brand-magenta" />
-                </div>
-                <h3 className="font-semibold">Informacoes</h3>
-              </div>
+            <EditorSection icon={<User size={16} />} title="Informações Básicas" defaultOpen>
               <div className="space-y-4">
                 <div>
                   <label className="text-xs font-medium text-white/50 mb-1.5 block uppercase tracking-wider">Nome exibido</label>
@@ -1273,16 +1300,18 @@ export function EditorPage() {
                   )}
                 </div>
               </div>
-            </div>
+            </EditorSection>
 
             {/* Social Links */}
-            <div className="glass-card p-6 hover:border-white/20 transition-colors overflow-hidden">
+            <EditorSection
+              icon={<Link2 size={16} />}
+              title="Links e Redes Sociais"
+              badge={form.socialLinks.length > 0 ? <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-white/50">{form.socialLinks.length}</span> : undefined}
+              defaultOpen
+            >
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <Link2 size={16} className="text-blue-400" />
-                  </div>
-                  <h3 className="font-semibold">Redes Sociais</h3>
+                  <h3 className="font-semibold text-sm text-white/70">Redes Sociais</h3>
                   {form.socialLinks.filter(l => l.platform !== 'custom').length > 0 && (
                     <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-white/50">
                       {form.socialLinks.filter(l => l.platform !== 'custom').length}
@@ -1615,10 +1644,9 @@ export function EditorPage() {
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Custom Links (Link-in-bio) */}
-            <div className="glass-card p-6 hover:border-white/20 transition-colors overflow-hidden">
+              {/* Custom Links (Link-in-bio) */}
+              <div className="mt-6 pt-6 border-t border-white/10">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-brand-cyan/10 flex items-center justify-center">
@@ -1943,7 +1971,8 @@ export function EditorPage() {
                   <UpgradeBanner compact />
                 </div>
               )}
-            </div>
+              </div>
+            </EditorSection>
 
             {/* Resume */}
             <FeatureLock feature="resume">{(
@@ -1989,24 +2018,19 @@ export function EditorPage() {
             </FeatureLock>
 
             {/* Appearance */}
-            <div className="glass-card p-6 hover:border-white/20 transition-colors relative">
-              {isBrandingLocked && (
-                <div className="absolute inset-0 z-10 bg-dark-card/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 p-6">
-                  <div className="w-12 h-12 rounded-xl bg-yellow-500/10 flex items-center justify-center">
-                    <Lock size={24} className="text-yellow-400" />
+            <EditorSection icon={<Palette size={16} />} title="Tema do Cartão" defaultOpen={false}>
+              <div className="relative">
+                {isBrandingLocked && (
+                  <div className="absolute inset-0 z-10 bg-dark-card/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 p-6">
+                    <div className="w-12 h-12 rounded-xl bg-yellow-500/10 flex items-center justify-center">
+                      <Lock size={24} className="text-yellow-400" />
+                    </div>
+                    <p className="text-sm text-white/70 text-center max-w-xs">
+                      Visual controlado pela organização. Contacte o administrador para alterar cores, tema ou fontes.
+                    </p>
                   </div>
-                  <p className="text-sm text-white/70 text-center max-w-xs">
-                    Visual controlado pela organização. Contacte o administrador para alterar cores, tema ou fontes.
-                  </p>
-                </div>
-              )}
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                  <Palette size={16} className="text-purple-400" />
-                </div>
-                <h3 className="font-semibold">Aparencia</h3>
-              </div>
-              <div className="space-y-5">
+                )}
+                <div className="space-y-5">
                 {/* Card Theme */}
                 <div>
                   <label className="text-xs font-medium text-white/50 mb-3 block uppercase tracking-wider">Tema do cartão</label>
@@ -2090,19 +2114,22 @@ export function EditorPage() {
                   )}
                 </div>
               </div>
-            </div>
+              </div>
+            </EditorSection>
 
             {/* Visual Customization (Pro+ only) */}
             {isBrandingLocked ? null : hasFeature('customFonts') ? (
-              <StyleEditor
-                value={styleEditorValue}
-                onChange={handleStyleChange}
-                accent={form.buttonColor}
-                onUploadBackground={handleUploadBackground}
-                onDeleteBackground={handleDeleteBackground}
-                isUploadingBackground={uploadBackground.isPending}
-                backgroundLockedByOrg={isOrgBackgroundLocked ? orgForProfile?.name || null : null}
-              />
+              <EditorSection icon={<Paintbrush size={16} />} title="Visual" defaultOpen={false}>
+                <StyleEditor
+                  value={styleEditorValue}
+                  onChange={handleStyleChange}
+                  accent={form.buttonColor}
+                  onUploadBackground={handleUploadBackground}
+                  onDeleteBackground={handleDeleteBackground}
+                  isUploadingBackground={uploadBackground.isPending}
+                  backgroundLockedByOrg={isOrgBackgroundLocked ? orgForProfile?.name || null : null}
+                />
+              </EditorSection>
             ) : (
               <UpgradeBanner feature="customFonts" compact />
             )}
@@ -3056,7 +3083,7 @@ export function EditorPage() {
               <Smartphone size={16} className="text-white/40" />
               <h3 className="font-semibold text-white/60">Preview Mobile</h3>
             </div>
-            <MobilePreview>
+            <MobilePreview accentColor={form.buttonColor}>
               <CardPreview
                 displayName={form.displayName}
                 bio={form.bio}

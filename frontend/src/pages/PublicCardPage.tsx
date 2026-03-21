@@ -52,6 +52,23 @@ import {
   Instagram,
 } from 'lucide-react';
 import { CustomQrCode } from '@/components/organisms/CustomQrCode';
+
+/** Variantes de animacao — entrada em cascata estilo Apple/Stripe */
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.15 },
+  },
+};
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
 import { AnimatedBackground } from '@/components/atoms/AnimatedBackground';
 import { AnimatedBackgroundOverlay } from '@/components/organisms/AnimatedBackgroundOverlay';
 import { GalleryGrid } from '@/components/organisms/GalleryGrid';
@@ -1088,24 +1105,27 @@ export function PublicCardPage() {
         )}
         <AnimatedBackground theme={theme} />
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
           className={`relative z-[1] w-full max-w-md sm:max-w-lg lg:max-w-2xl ${theme !== 'minimal' ? 'p-6' : ''} ${getThemeCardStyle(theme)}`}
         >
           {/* Cover Photo */}
           {profile.coverPhotoUrl && (
-            <div
-              className="w-full h-32 rounded-t-3xl bg-white/5"
-              style={{
-                backgroundImage: `url(${resolvePhotoUrl(profile.coverPhotoUrl)})`,
-                backgroundSize: 'cover',
-                backgroundPosition: `center ${profile.coverPositionY ?? 50}%`,
-              }}
-            />
+            <motion.div variants={itemVariants}>
+              <div
+                className="w-full h-32 rounded-t-3xl bg-white/5"
+                style={{
+                  backgroundImage: `url(${resolvePhotoUrl(profile.coverPhotoUrl)})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: `center ${profile.coverPositionY ?? 50}%`,
+                }}
+              />
+            </motion.div>
           )}
 
           {/* Avatar */}
-          <div className={`flex flex-col items-center mb-8 ${profile.coverPhotoUrl ? '-mt-14' : ''}`}>
+          <motion.div variants={itemVariants} className={`flex flex-col items-center mb-8 ${profile.coverPhotoUrl ? '-mt-14' : ''}`}>
             <div
               className="w-28 h-28 rounded-full mb-4 shadow-xl flex items-center justify-center border-4"
               style={{
@@ -1177,25 +1197,28 @@ export function PublicCardPage() {
                 )}
               </div>
             )}
-          </div>
+          </motion.div>
 
-          {/* Save Contact (vCard) — CTA proeminente */}
+          {/* Save Contact (vCard) — CTA proeminente com shimmer */}
           <motion.button
+            variants={itemVariants}
             onClick={() => handleDownloadVCard(profile)}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.45, type: 'spring', stiffness: 200 }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
-            className="w-full flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl font-semibold text-sm shadow-lg transition-all mt-5 mb-2"
+            className="relative overflow-hidden w-full flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl font-semibold text-sm shadow-lg transition-all mt-5 mb-2"
             style={{
               background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
               color: '#fff',
               boxShadow: `0 4px 20px ${accent}40`,
             }}
           >
-            <UserPlus size={18} />
-            Salvar Contato
+            {/* Shimmer sweep — brilho animado */}
+            <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+              <div className="absolute inset-0 -translate-x-full animate-[shimmer-sweep_3s_ease-in-out_infinite]"
+                   style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)' }} />
+            </div>
+            <UserPlus size={18} className="relative z-[1]" />
+            <span className="relative z-[1]">Salvar Contato</span>
           </motion.button>
 
           {/* Video Intro */}
@@ -1256,21 +1279,25 @@ export function PublicCardPage() {
 
           {/* Gallery / Portfolio */}
           {profile.galleryImages && profile.galleryImages.length > 0 && (
-            <div className="mt-6">
+            <motion.div variants={itemVariants} className="mt-6">
               <div className="flex items-center gap-2 mb-3 px-1">
+                <div className="w-1 h-4 rounded-full" style={{ backgroundColor: accent }} />
                 <ImageIcon size={14} className="text-white/50" />
                 <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">Portfolio</span>
+                <div className="flex-1 h-px bg-white/5" />
               </div>
               <GalleryGrid images={profile.galleryImages} />
-            </div>
+            </motion.div>
           )}
 
           {/* Services */}
           {profile.services && profile.services.length > 0 && (
-            <div className="mt-6">
+            <motion.div variants={itemVariants} className="mt-6">
               <div className="flex items-center gap-2 mb-3 px-1">
+                <div className="w-1 h-4 rounded-full" style={{ backgroundColor: accent }} />
                 <Briefcase size={14} className="text-amber-400/60" />
                 <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">Serviços</span>
+                <div className="flex-1 h-px bg-white/5" />
               </div>
               <div className="space-y-2">
                 {profile.services.map((s) => (
@@ -1287,22 +1314,24 @@ export function PublicCardPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* FAQ */}
           {profile.faqItems && profile.faqItems.length > 0 && (
-            <div className="mt-6">
+            <motion.div variants={itemVariants} className="mt-6">
               <div className="flex items-center gap-2 mb-3 px-1">
+                <div className="w-1 h-4 rounded-full" style={{ backgroundColor: accent }} />
                 <HelpCircle size={14} className="text-indigo-400/60" />
                 <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">Perguntas Frequentes</span>
+                <div className="flex-1 h-px bg-white/5" />
               </div>
               <div className="space-y-2">
                 {profile.faqItems.map((item) => (
                   <FaqAccordion key={item.id} question={item.question} answer={item.answer} />
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Location Map */}
@@ -1317,10 +1346,12 @@ export function PublicCardPage() {
 
           {/* Testimonials */}
           {profile.testimonials && profile.testimonials.length > 0 && (
-            <div className="mt-6">
+            <motion.div variants={itemVariants} className="mt-6">
               <div className="flex items-center gap-2 mb-3 px-1">
+                <div className="w-1 h-4 rounded-full" style={{ backgroundColor: accent }} />
                 <Star size={14} className="text-yellow-400" />
                 <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">Depoimentos</span>
+                <div className="flex-1 h-px bg-white/5" />
               </div>
               <div className="space-y-3">
                 {profile.testimonials.map((t) => (
@@ -1343,7 +1374,7 @@ export function PublicCardPage() {
                   </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Leave Testimonial Button */}

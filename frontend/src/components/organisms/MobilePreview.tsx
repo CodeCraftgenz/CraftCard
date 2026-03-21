@@ -2,9 +2,10 @@ import type { ReactNode } from 'react';
 
 interface MobilePreviewProps {
   children: ReactNode;
+  accentColor?: string;
 }
 
-export function MobilePreview({ children }: MobilePreviewProps) {
+export function MobilePreview({ children, accentColor }: MobilePreviewProps) {
   return (
     <div className="flex flex-col items-center">
       {/* Phone Frame */}
@@ -45,12 +46,23 @@ export function MobilePreview({ children }: MobilePreviewProps) {
           <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent pt-7">
             {children}
           </div>
+
+          {/* Glass highlight overlay */}
+          <div className="absolute inset-0 rounded-[30px] pointer-events-none bg-gradient-to-br from-white/[0.02] via-transparent to-transparent z-10" />
         </div>
 
         {/* Home Indicator */}
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
           <div className="w-24 h-1 bg-white/20 rounded-full" />
         </div>
+
+        {/* Accent glow beneath the phone */}
+        {accentColor && (
+          <div
+            className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-2/3 h-6 rounded-full blur-xl opacity-15 transition-colors duration-500"
+            style={{ backgroundColor: accentColor }}
+          />
+        )}
       </div>
     </div>
   );

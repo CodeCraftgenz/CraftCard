@@ -226,6 +226,15 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background-color: rgba(255, 255, 255, 0.20);
   }
+
+  /* Borda com gradiente no focus — estilo premium (Stripe/Linear) */
+  .input-premium {
+    @apply bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 text-sm transition-all duration-200;
+  }
+  .input-premium:focus {
+    @apply outline-none border-brand-cyan/50 ring-1 ring-brand-cyan/20;
+    box-shadow: 0 0 0 3px rgba(0, 228, 242, 0.08);
+  }
 }
 
 /* ── Marquee ── */
@@ -450,6 +459,33 @@
   animation: float 3s ease-in-out infinite;
 }
 
+/* Shimmer sweep — efeito de brilho no botao CTA de salvar contato */
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Shimmer loading — efeito de carregamento de imagem */
+@keyframes shimmer-load {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+.shimmer-loading {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%) !important;
+  background-size: 200px 100% !important;
+  animation: shimmer-load 1.5s ease-in-out infinite !important;
+}
+
+/* Input premium — borda com glow no focus estilo Stripe/Linear */
+.input-premium {
+  @apply bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 text-sm transition-all duration-200;
+}
+.input-premium:focus {
+  @apply outline-none border-brand-cyan/50 ring-1 ring-brand-cyan/20;
+  box-shadow: 0 0 0 3px rgba(0, 228, 242, 0.08);
+}
+
 /* ── Block Texture Animations ── */
 @keyframes shimmer {
   0% { background-position: 200% 0; }
@@ -458,6 +494,17 @@
 @keyframes hologram {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
+}
+
+/* Shimmer loading — efeito de carregamento de imagem */
+@keyframes shimmer-load {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+.shimmer-loading {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%) !important;
+  background-size: 200px 100% !important;
+  animation: shimmer-load 1.5s ease-in-out infinite !important;
 }
 
 /* ── Reduced motion ── */
@@ -475,7 +522,8 @@
   .marquee-track,
   .section-divider-shimmer,
   .rain-bg,
-  .card-auto-rotate {
+  .card-auto-rotate,
+  .shimmer-loading {
     animation: none !important;
   }
   .feature-frame::before {
