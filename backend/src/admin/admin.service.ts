@@ -584,20 +584,63 @@ export class AdminService {
     return user;
   }
 
-  async updateUser(userId: string, data: { role?: string; plan?: string }) {
+  /**
+   * Atualiza role e/ou plano de um usuário pelo painel admin.
+   * Quando o plano é alterado, cria registro de pagamento (amount=0) para auditoria
+   * e define expiresAt baseado no ciclo (mensal=30d, anual=365d).
+   * Ciclo padrão: YEARLY (365 dias) se não especificado.
+   */
+  async updateUser(userId: string, data: { role?: string; plan?: string; billingCycle?: string; days?: number }) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw AppException.notFound('Usuário');
 
-    const updated = await this.prisma.user.update({
+    // Se mudou o plano, cria registro de pagamento para auditoria e define expiração
+    if (data.plan !== undefined && data.plan !== user.plan) {
+      const normalizedPlan = data.plan.toUpperCase();
+      const cycle = data.billingCycle === 'MONTHLY' ? 'MONTHLY' : 'YEARLY';
+      const subDays = data.days || (cycle === 'MONTHLY' ? 30 : 365);
+      const now = new Date();
+      const expiresAt = normalizedPlan === 'FREE' ? null : new Date(now.getTime() + subDays * 24 * 60 * 60 * 1000);
+
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { plan: normalizedPlan },
+      });
+
+      // Registro de pagamento para auditoria (amount=0 = ativação manual)
+      if (normalizedPlan !== 'FREE') {
+        await this.prisma.payment.create({
+          data: {
+            userId,
+            amount: 0,
+            currency: 'BRL',
+            status: 'approved',
+            plan: normalizedPlan,
+            billingCycle: cycle,
+            payerEmail: user.email,
+            paidAt: now,
+            expiresAt,
+          },
+        });
+      }
+
+      this.logger.log(`Admin changed plan for ${user.email}: ${user.plan} → ${normalizedPlan} (${cycle}, ${subDays}d, expires: ${expiresAt?.toISOString() || 'never'})`);
+    }
+
+    // Atualiza role separadamente se necessário
+    if (data.role !== undefined && data.role !== user.role) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { role: data.role },
+      });
+      this.logger.log(`Admin changed role for ${user.email}: ${user.role} → ${data.role}`);
+    }
+
+    const updated = await this.prisma.user.findUnique({
       where: { id: userId },
-      data: {
-        ...(data.role !== undefined && { role: data.role }),
-        ...(data.plan !== undefined && { plan: data.plan }),
-      },
       select: { id: true, email: true, role: true, plan: true },
     });
 
-    this.logger.log(`Admin updated user ${userId}: ${JSON.stringify(data)}`);
     return updated;
   }
 

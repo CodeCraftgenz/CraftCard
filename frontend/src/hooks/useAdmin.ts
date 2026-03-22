@@ -188,7 +188,7 @@ export function useAdminOrgs(search: string, page = 1) {
 export function useUpdateAdminUser() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ userId, data }: { userId: string; data: { role?: string; plan?: string } }) =>
+    mutationFn: ({ userId, data }: { userId: string; data: { role?: string; plan?: string; billingCycle?: string; days?: number } }) =>
       api.put(`/admin/users/${userId}`, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'users'] });

@@ -391,8 +391,10 @@ function UsersTab() {
   const updateUser = useUpdateAdminUser();
   const deleteUser = useDeleteAdminUser();
 
+  // Ao mudar plano pelo admin, envia ciclo de cobrança para criar registro de pagamento com auditoria
   const handlePlanChange = (user: AdminUser, newPlan: string) => {
-    updateUser.mutate({ userId: user.id, data: { plan: newPlan } });
+    const billingCycle = newPlan === 'FREE' ? undefined : (confirm('Plano ANUAL (365 dias)?\n\nOK = Anual\nCancelar = Mensal (30 dias)') ? 'YEARLY' : 'MONTHLY');
+    updateUser.mutate({ userId: user.id, data: { plan: newPlan, billingCycle } });
     setEditingUser(null);
   };
 
