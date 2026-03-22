@@ -124,7 +124,7 @@ export function Footer() {
           <div className="flex items-center gap-4 text-xs text-white/30">
             <a href="/privacy" className="hover:text-white/60 transition-colors">Política de Privacidade</a>
             <span className="text-white/10">|</span>
-            <a href="/privacy" className="hover:text-white/60 transition-colors">Termos de Uso</a>
+            <a href="/privacy" className="hover:text-white/60 transition-colors">Termos e Privacidade</a>
           </div>
         </div>
       </div>

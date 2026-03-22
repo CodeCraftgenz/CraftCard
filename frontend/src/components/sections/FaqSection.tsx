@@ -9,7 +9,7 @@ const faqs = [
   },
   {
     q: 'Qual a diferenca entre os planos?',
-    a: 'O plano Free e ideal para experimentar (1 cartão, 5 links, 3 temas). O Pro (R$30/ano) libera analytics, galeria, agendamentos, depoimentos, serviços, FAQ, currículo, video, customizacao visual completa, imagem de fundo personalizada, export de leads e ate 3 cartões. O Business (R$189,90/ano) adiciona organização com ate 10 membros, dashboard centralizado, branding e webhooks. O Enterprise (R$299,90/ano) inclui tudo do Business + domínio customizado.',
+    a: 'O plano Free e ideal para experimentar (1 cartão, 5 links, 3 temas). O Pro (R$19,90/mês ou R$190,80/ano) libera analytics, galeria, agendamentos, depoimentos, serviços, FAQ, currículo, video, customizacao visual completa, imagem de fundo personalizada, export de leads e ate 3 cartões. O Business (a partir de R$39,90/assento/mês) adiciona organização com ate 100 membros, dashboard centralizado, branding e webhooks. O Enterprise (sob consulta) inclui tudo do Business + domínio customizado.',
   },
   {
     q: 'Como funciona para empresas?',
@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     q: 'Como funciona a assinatura Pro?',
-    a: 'A assinatura Pro é anual por R$30 (preço promocional — valor original R$99,90). Você tem acesso completo por 365 dias. Ao final do período, basta renovar para continuar com todos os recursos.',
+    a: 'A assinatura Pro custa R$19,90/mês ou R$15,90/mês no plano anual (R$190,80 cobrado anualmente). Você tem acesso completo enquanto a assinatura estiver ativa. Ao final do período, basta renovar para continuar com todos os recursos.',
   },
   {
     q: 'Quais formas de pagamento sao aceitas?',

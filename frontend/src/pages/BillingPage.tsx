@@ -19,6 +19,14 @@ const STATUS_COLORS: Record<string, string> = {
   refunded: 'bg-orange-500/20 text-orange-400',
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  approved: 'Aprovado',
+  pending: 'Pendente',
+  rejected: 'Rejeitado',
+  cancelled: 'Cancelado',
+  refunded: 'Reembolsado',
+};
+
 const PLAN_FEATURES: Record<string, string[]> = {
   FREE: ['1 cartão', '5 links', '3 temas', 'Marca d\u0027agua'],
   PRO: ['5 cartões', '20 links', 'Todos temas', 'Analytics', 'Sem marca d\u0027agua', 'Fontes personalizadas'],
@@ -79,22 +87,25 @@ export function BillingPage() {
           </div>
 
           {/* Days remaining bar */}
-          {billing.daysRemaining !== null && (
-            <div className="mb-4">
-              <div className="flex justify-between text-xs text-white/50 mb-1">
-                <span>{billing.daysRemaining} dias restantes</span>
-                <span>365 dias</span>
+          {billing.daysRemaining !== null && (() => {
+            const totalDays = (billing.daysRemaining ?? 0) <= 35 ? 30 : 365; // Infere ciclo: ≤35 dias = mensal, senão anual
+            return (
+              <div className="mb-4">
+                <div className="flex justify-between text-xs text-white/50 mb-1">
+                  <span>{billing.daysRemaining} dias restantes</span>
+                  <span>{totalDays} dias</span>
+                </div>
+                <div className="bg-white/5 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      billing.daysRemaining <= 30 ? 'bg-red-500' : 'bg-brand-cyan'
+                    }`}
+                    style={{ width: `${Math.min(100, (billing.daysRemaining / totalDays) * 100)}%` }}
+                  />
+                </div>
               </div>
-              <div className="bg-white/5 rounded-full h-2 overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${
-                    billing.daysRemaining <= 30 ? 'bg-red-500' : 'bg-brand-cyan'
-                  }`}
-                  style={{ width: `${Math.min(100, (billing.daysRemaining / 365) * 100)}%` }}
-                />
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {billing.plan === 'FREE' && !billing.expiresAt && (
             <p className="text-white/40 text-sm">Plano gratuito — sem data de expiracao</p>
@@ -134,9 +145,9 @@ export function BillingPage() {
                   />
                   <PlanCard
                     name="BUSINESS"
-                    price="R$ 49,90"
-                    period="/mês por usuário"
-                    features={['5-50 licenças', '50 links', 'Dashboard org', 'Brand Lock', 'Webhooks', 'BI Corporativo']}
+                    price="R$ 39,90"
+                    period="/mês por assento"
+                    features={['5-100 licenças', '50 links', 'Dashboard org', 'Brand Lock', 'Webhooks', 'BI Corporativo']}
                     onSelect={() => checkout.mutate({ plan: 'BUSINESS' })}
                     loading={checkout.isPending}
                   />
@@ -156,8 +167,8 @@ export function BillingPage() {
                 <>
                   <PlanCard
                     name="BUSINESS"
-                    price="R$ 49,90"
-                    period="/mês por usuário"
+                    price="R$ 39,90"
+                    period="/mês por assento"
                     features={['5-50 licenças', '50 links', 'Dashboard org', 'Brand Lock', 'Webhooks', 'BI Corporativo']}
                     onSelect={() => checkout.mutate({ plan: 'BUSINESS' })}
                     loading={checkout.isPending}
@@ -188,9 +199,9 @@ export function BillingPage() {
               {billing.canRenew && (
                 <PlanCard
                   name={billing.plan}
-                  price={billing.plan === 'PRO' ? 'R$ 30' : billing.plan === 'BUSINESS' ? 'R$ 189,90' : 'R$ 299,90'}
-                  period="/ano"
-                  features={['Renovar por mais 1 ano']}
+                  price={billing.plan === 'PRO' ? 'R$ 19,90' : billing.plan === 'BUSINESS' ? 'R$ 39,90' : 'Sob Consulta'}
+                  period={billing.plan === 'PRO' ? '/mês' : billing.plan === 'BUSINESS' ? '/mês por assento' : ''}
+                  features={['Renovar assinatura']}
                   onSelect={() => checkout.mutate({ plan: billing.plan })}
                   loading={checkout.isPending}
                   cta="Renovar"
@@ -221,7 +232,7 @@ export function BillingPage() {
                   </div>
                   <span className="text-white/70 text-sm font-mono">R$ {p.amount.toFixed(2)}</span>
                   <span className={`px-2 py-0.5 rounded-lg text-xs font-medium ${STATUS_COLORS[p.status] || STATUS_COLORS.pending}`}>
-                    {p.status}
+                    {STATUS_LABELS[p.status] || p.status}
                   </span>
                   {p.expiresAt && (
                     <span className="text-white/30 text-xs hidden md:block">

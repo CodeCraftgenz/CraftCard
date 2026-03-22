@@ -580,7 +580,11 @@ export function PublicCardPage() {
   const { data: profile, isLoading, error } = useQuery<PublicProfile>({
     queryKey: ['public-profile', slug],
     queryFn: () => api.get(`/profile/${slug}`),
-    retry: 3, // SG-5: 3 tentativas com delay progressivo para cold start do Render
+    retry: (failureCount, error) => {
+      // Não retentar em 404 (cartão não existe) — só retentar em timeout/500
+      if ((error as any)?.response?.status === 404) return false;
+      return failureCount < 3;
+    },
     retryDelay: (attempt) => Math.min(15000 * (attempt + 1), 60000), // 15s, 30s, 45s
   });
 
@@ -606,6 +610,8 @@ export function PublicCardPage() {
 
   const handleSendMessage = async () => {
     if (!slug) return;
+    if (!contactForm.senderName.trim()) return;
+    if (!contactForm.message.trim()) return;
     try {
       await sendMessage.mutateAsync({
         slug,
@@ -1665,6 +1671,7 @@ export function PublicCardPage() {
                     value={contactForm.senderName}
                     onChange={(e) => setContactForm((prev) => ({ ...prev, senderName: e.target.value }))}
                     maxLength={80}
+                    required
                     placeholder="Seu nome *"
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50 transition-all"
                   />
@@ -1681,6 +1688,7 @@ export function PublicCardPage() {
                     placeholder="Sua mensagem *"
                     rows={4}
                     maxLength={1000}
+                    required
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50 transition-all resize-none"
                   />
                   <div className="flex justify-end">

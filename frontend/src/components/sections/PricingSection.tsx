@@ -214,7 +214,7 @@ export function PricingSection() {
                   Mais popular
                 </span>
                 <span className="text-xs font-bold bg-indigo-500/10 text-indigo-400 px-2.5 py-0.5 rounded-full">
-                  70% OFF
+                  {isYearly ? '20% OFF' : 'Mais popular'}
                 </span>
               </div>
 
@@ -222,18 +222,18 @@ export function PricingSection() {
                 <p className="text-sm text-indigo-300 font-semibold uppercase tracking-wider mb-1">Pro</p>
                 <p className="text-xs text-white/50 mb-3">Para profissionais individuais</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-base text-white/40 line-through">R$29,90</span>
+                  {isYearly && <span className="text-base text-white/40 line-through">R$19,90</span>}
                   <span className="font-heading text-4xl font-extrabold gradient-text">R${proPrice.toFixed(2).replace('.', ',')}</span>
                   <span className="text-sm text-white/50">/mês</span>
                 </div>
                 {isYearly ? (
                   <p className="text-sm mt-2">
-                    <span className="text-emerald-400 font-semibold">Economize R${((29.9 - proPrice) * 12).toFixed(0)}/ano</span>
+                    <span className="text-emerald-400 font-semibold">Economize R${((19.9 - proPrice) * 12).toFixed(0)}/ano</span>
                     <span className="text-white/30"> · R${(proPrice * 12).toFixed(2).replace('.', ',')} cobrado anualmente</span>
                   </p>
                 ) : (
                   <p className="text-sm text-white/40 mt-2">
-                    <span className="text-amber-400 font-medium">33% OFF</span> — de R$29,90 por R$19,90
+                    R$19,90/mês · cancele quando quiser
                   </p>
                 )}
               </div>
@@ -275,7 +275,7 @@ export function PricingSection() {
               <p className="text-sm text-indigo-400 font-semibold uppercase tracking-wider mb-1">Business</p>
               <p className="text-xs text-slate-600 mb-3">Gestão de equipe centralizada</p>
               <div className="flex items-baseline gap-1 flex-wrap">
-                <span className="text-sm text-white/40 line-through">R$49,90</span>
+                {isYearly && <span className="text-sm text-white/40 line-through">R$22,90</span>}
                 <span className="font-heading text-3xl sm:text-4xl font-extrabold text-white">R${(isYearly ? Math.round(22.9 * 0.8 * 100) / 100 : 22.9).toFixed(2).replace('.', ',')}</span>
               </div>
               <p className="text-xs text-slate-500 mt-1">a partir de /mês por seat · 5 a 100 membros</p>

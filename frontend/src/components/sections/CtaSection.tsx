@@ -30,7 +30,7 @@ export function CtaSection() {
         <div className="mt-10">
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-semibold mb-4">
             <Sparkles size={12} />
-            70% OFF - Oferta de lancamento
+            Plano anual com 20% OFF
           </span>
           <br />
           <MagneticButton strength={0.25} className="inline-block">
@@ -43,7 +43,7 @@ export function CtaSection() {
             </Link>
           </MagneticButton>
           <p className="mt-4 text-sm text-slate-600">
-            Comece grátis &middot; Preço promocional de R$30/ano por tempo limitado
+            Comece grátis &middot; A partir de R$15,90/mês no plano anual
           </p>
         </div>
       </motion.div>

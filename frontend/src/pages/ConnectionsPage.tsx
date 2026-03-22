@@ -87,7 +87,7 @@ export default function ConnectionsPage() {
           {tab === 'tags' && <TagsTab />}
           {tab === 'wrapped' && <WrappedTab />}
         </Suspense>
-        {tab === 'connections' && <MyConnectionsTab />}
+        {tab === 'connections' && <MyConnectionsTab onDiscoverClick={() => setTab('discover')} />}
         {tab === 'pending' && <PendingTab />}
         {tab === 'discover' && (
           <DiscoverTab
@@ -134,7 +134,7 @@ function formatConnectionDate(dateStr: string | null): string {
 }
 
 /** Aba principal de conexoes — design moderno com glass cards e animacoes */
-function MyConnectionsTab() {
+function MyConnectionsTab({ onDiscoverClick }: { onDiscoverClick: () => void }) {
   const { data: connections, isLoading } = useMyConnections();
   const removeMutation = useRemoveConnection();
 
@@ -175,14 +175,14 @@ function MyConnectionsTab() {
         <p className="text-white/25 text-xs mb-6 max-w-[260px] mx-auto">
           Descubra pessoas incríveis e construa sua rede de contatos
         </p>
-        <Link
-          to="/connections"
-          onClick={() => {/* Pai controla tab, mas link serve como CTA visual */}}
+        <button
+          type="button"
+          onClick={onDiscoverClick}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-cyan/20 text-brand-cyan text-sm font-medium hover:bg-brand-cyan/30 transition-all"
         >
           <UserPlus size={16} />
           Descobrir perfis
-        </Link>
+        </button>
       </motion.div>
     );
   }
@@ -307,8 +307,6 @@ function MyConnectionsTab() {
                             )}
                           </div>
                         </div>
-                        {/* Indicador decorativo online */}
-                        <div className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-brand-card" />
                       </div>
                     </Link>
 
@@ -348,7 +346,7 @@ function MyConnectionsTab() {
                       type="button"
                       onClick={() => removeMutation.mutate(conn.id)}
                       disabled={removeMutation.isPending}
-                      className="p-1.5 rounded-lg text-white/15 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                      className="p-1.5 rounded-lg text-white/15 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                       title="Remover conexão"
                     >
                       <Trash2 size={13} />
@@ -388,7 +386,6 @@ function MyConnectionsTab() {
                           )}
                         </div>
                       </div>
-                      <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-brand-card" />
                     </div>
                   </Link>
 
@@ -423,7 +420,7 @@ function MyConnectionsTab() {
                       type="button"
                       onClick={() => removeMutation.mutate(conn.id)}
                       disabled={removeMutation.isPending}
-                      className="p-2 rounded-lg text-white/15 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                      className="p-2 rounded-lg text-white/15 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                       title="Remover conexão"
                     >
                       <Trash2 size={14} />

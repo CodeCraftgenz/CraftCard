@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useDebouncedCallback } from '@/hooks/useDebouncedCallback';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -220,6 +221,7 @@ export function EditorPage() {
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState(false); // SG-1: feedback visual de erro ao salvar
+  const [filteredLinksWarning, setFilteredLinksWarning] = useState(0);
   const [photoVersion, setPhotoVersion] = useState(Date.now());
   const [coverVersion, setCoverVersion] = useState(Date.now());
   const [debouncedSlug, setDebouncedSlug] = useState('');
@@ -365,17 +367,21 @@ export function EditorPage() {
       data.slug = slugInput;
     }
 
-    // Filter social links - only include complete ones
+    // Filtra links sociais — apenas os completos são salvos
     const validLinks = form.socialLinks.filter((l) => {
       const hasLabel = l.label.trim().length > 0;
-      // Headers and Pix don't need a URL
+      // Headers e Pix não precisam de URL
       if (l.platform === 'header' || l.platform === 'pix') return hasLabel;
-      // Map and Phone accept plain text (address/number)
+      // Map e Phone aceitam texto simples (endereço/número)
       if (l.platform === 'map' || l.platform === 'phone') return hasLabel && l.url.trim().length > 0;
       const hasUrl = l.url.trim().length > 0;
       const isValidUrl = /^(https?:\/\/|mailto:|tel:).+/i.test(l.url.trim());
       return hasLabel && hasUrl && isValidUrl;
     });
+    // Avisa o usuário sobre links filtrados por URL inválida
+    const removedCount = form.socialLinks.length - validLinks.length;
+    setFilteredLinksWarning(removedCount);
+    if (removedCount > 0) setTimeout(() => setFilteredLinksWarning(0), 5000);
     data.socialLinks = validLinks.map((l, i) => {
       // Strip UI-only keys from metadata before saving
       let cleanMeta = l.metadata || null;
@@ -520,11 +526,6 @@ export function EditorPage() {
     });
     triggerAutoSave();
   }, [triggerAutoSave]);
-
-  const handleCheckout = async () => {
-    const data: { url: string } = await api.post('/payments/checkout', { plan: 'PRO' });
-    window.location.href = data.url;
-  };
 
   // Memoized props for StyleEditor to prevent re-renders
   const styleEditorValue = useMemo(() => ({
@@ -907,17 +908,16 @@ export function EditorPage() {
                   <div>
                     <h3 className="font-bold text-lg">Desbloqueie seu cartão</h3>
                     <p className="text-sm text-white/50">
-                      De <span className="line-through text-white/30">R$99,90</span> por apenas R$30/ano para publicar e compartilhar
+                      A partir de R$15,90/mês para publicar e compartilhar
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleCheckout}
+                <Link
+                  to="/billing"
                   className="flex items-center gap-2 px-8 py-3 rounded-xl gradient-bg font-bold text-sm hover:opacity-90 transition-all hover:shadow-lg hover:shadow-brand-cyan/20 shrink-0"
                 >
-                  Assinar R$ 30,00/ano (70% OFF)
-                </button>
+                  Assinar PRO
+                </Link>
               </div>
             </motion.div>
           )}
@@ -3084,6 +3084,13 @@ export function EditorPage() {
                 {saved ? <Check size={16} /> : <Save size={16} />}
                 {saved ? 'Salvo!' : updateProfile.isPending ? 'Salvando...' : 'Salvar'}
               </button>
+
+              {filteredLinksWarning > 0 && (
+                <span className="flex items-center gap-1.5 text-xs text-yellow-400 bg-yellow-500/10 px-3 py-1.5 rounded-lg">
+                  <AlertCircle size={14} />
+                  {filteredLinksWarning} link(s) sem URL válida não foram salvos
+                </span>
+              )}
 
               {hasPaid && (
                 <label className="flex items-center gap-3 text-sm cursor-pointer ml-auto px-3 py-2 rounded-xl hover:bg-white/5 transition-colors">
