@@ -11,7 +11,7 @@ import { randomUUID } from 'crypto';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
 import type { EnvConfig } from '../common/config/env.config';
 
-/** Legacy Hostinger URLs — files still served from there, new uploads go to R2 */
+/** URLs legadas do Hostinger — arquivos antigos ainda servidos de la, novos uploads vao para R2 */
 const OLD_UPLOAD_HOST = 'https://azure-eagle-617866.hostingersite.com/uploads';
 const HOSTINGER_UPLOADS_URL = 'https://craftcardgenz.com/uploads';
 
@@ -30,7 +30,7 @@ export class ProfilesService {
     this.backendUrl = this.configService.get('BACKEND_URL', { infer: true }) || '';
   }
 
-  /** Rewrite URLs that still reference the old Hostinger subdomain */
+  /** Reescreve URLs que ainda referenciam o subdominio antigo do Hostinger */
   private migrateUrl(url: string | null): string | null {
     if (!url) return url;
     if (url.startsWith(OLD_UPLOAD_HOST)) {
@@ -39,13 +39,14 @@ export class ProfilesService {
     return url;
   }
 
-  /** Convert relative API paths to absolute URLs using BACKEND_URL */
+  /** Converte caminhos relativos da API em URLs absolutas usando BACKEND_URL */
   private resolveApiUrl(url: string | null): string | null {
     if (!url) return null;
     if (url.startsWith('http') || url.startsWith('data:')) return url;
     return this.backendUrl + url;
   }
 
+  /** Busca perfil do usuario por ID (ou perfil primario se profileId nao fornecido) */
   async getByUserId(userId: string, profileId?: string) {
     const include = {
       socialLinks: { orderBy: { order: 'asc' } as const, select: { id: true, platform: true, label: true, url: true, order: true, startsAt: true, endsAt: true, linkType: true, metadata: true } },
@@ -68,6 +69,7 @@ export class ProfilesService {
     return { ...rest, resumeUrl: this.resolveApiUrl(this.migrateUrl(rest.resumeUrl)) };
   }
 
+  /** Lista todos os perfis (cartoes) do usuario */
   async getAllByUserId(userId: string) {
     const profiles = await this.prisma.profile.findMany({
       where: { userId },
@@ -77,11 +79,12 @@ export class ProfilesService {
     return profiles;
   }
 
+  /** Cria novo cartao respeitando limites do plano (B2C) ou assentos da org (B2B) */
   async createCard(userId: string, label: string, orgId?: string) {
     const { plan: effectivePlan, planLimits: limits } = await this.paymentsService.getUserPlanInfo(userId);
 
     if (orgId) {
-      // B2B: validate org membership and seat limit
+      // B2B: valida pertencimento a org e limite de assentos
       const org = await this.prisma.organization.findUnique({
         where: { id: orgId },
         select: { maxMembers: true, extraSeats: true },
@@ -99,7 +102,7 @@ export class ProfilesService {
         throw AppException.badRequest(`Limite de ${totalSeats} ${totalSeats === 1 ? 'assento' : 'assentos'} na organização atingido`);
       }
     } else {
-      // B2C: validate personal card limit
+      // B2C: valida limite de cartoes pessoais
       const personalCount = await this.prisma.profile.count({
         where: { userId, orgId: null },
       });
@@ -122,6 +125,7 @@ export class ProfilesService {
     });
   }
 
+  /** Exclui cartao (nao permite excluir o primario) */
   async deleteCard(userId: string, profileId: string) {
     const profile = await this.prisma.profile.findFirst({
       where: { id: profileId, userId },
@@ -134,6 +138,7 @@ export class ProfilesService {
     return { deleted: true };
   }
 
+  /** Define um cartao como primario (desmarca todos os outros via transacao) */
   async setPrimary(userId: string, profileId: string) {
     const profile = await this.prisma.profile.findFirst({
       where: { id: profileId, userId },
@@ -147,6 +152,7 @@ export class ProfilesService {
     return { primary: true };
   }
 
+  /** Busca perfil publico pelo slug (com cache de 10s para absorver picos de acesso) */
   async getBySlug(slug: string, viewerUserId?: string) {
     const cacheKey = `profile:${slug}`;
     const cached = await this.cache.get(cacheKey);
@@ -168,10 +174,10 @@ export class ProfilesService {
       throw AppException.notFound('Perfil');
     }
 
-    // View counting is handled by POST /analytics/view (not here)
-    // to avoid race conditions with auth initialization on public pages
+    // Contagem de views e feita via POST /analytics/view (nao aqui)
+    // para evitar race conditions com inicializacao de auth em paginas publicas
 
-    // Filter links by schedule (only show currently active ones on public page)
+    // Filtra links por agendamento (exibe apenas os ativos na pagina publica)
     const now = new Date();
     const activeLinks = profile.socialLinks.filter((link) => {
       if (link.startsAt && link.startsAt > now) return false;
@@ -179,12 +185,12 @@ export class ProfilesService {
       return true;
     });
 
-    // Check if user has paid (verified badge)
+    // Verifica se o usuario tem plano pago (selo verificado)
     const subscription = await this.paymentsService.getActiveSubscription(profile.userId);
 
     const { photoData: _, coverPhotoData: _c, resumeData: _r, ...rest } = profile;
 
-    // Apply org branding overrides if active
+    // Aplica sobrescrita de branding da organizacao se ativo
     const orgBranding = profile.organization?.brandingActive ? {
       orgName: profile.organization.name,
       orgLogoUrl: profile.organization.logoUrl,
@@ -200,7 +206,7 @@ export class ProfilesService {
       orgBackgroundGradient: profile.organization.backgroundGradient,
     } : null;
 
-    // Fetch connections if enabled
+    // Busca conexoes se habilitado no perfil
     let connections: Array<{ id: string; displayName: string; photoUrl: string | null; slug: string; tagline: string | null }> = [];
     if (profile.connectionsEnabled) {
       const rawConnections = await this.prisma.connection.findMany({
@@ -243,32 +249,33 @@ export class ProfilesService {
       orgBranding,
     };
 
-    await this.cache.set(cacheKey, result, 10000); // 10s TTL — short for burst absorption, fresh for edits
+    await this.cache.set(cacheKey, result, 10000); // TTL 10s — curto para absorver picos, atualiza rapido apos edicoes
     return result;
   }
 
+  /** Atualiza perfil com validacao de limites do plano, slug e branding da org */
   async update(userId: string, data: UpdateProfileDto, profileId?: string) {
     const profile = profileId
       ? await this.prisma.profile.findFirst({ where: { id: profileId, userId }, include: { organization: { select: { brandingActive: true } } } })
       : await this.prisma.profile.findFirst({ where: { userId, isPrimary: true }, include: { organization: { select: { brandingActive: true } } } });
     if (!profile) throw AppException.notFound('Perfil');
 
-    // Enforce plan limits (uses PaymentsService to respect whitelist + org inheritance)
+    // Aplica limites do plano (usa PaymentsService para respeitar whitelist + heranca de org)
     const { plan: effectivePlan, planLimits: limits } = await this.paymentsService.getUserPlanInfo(userId);
 
-    // Validate maxLinks
+    // Valida limite maximo de links
     if (data.socialLinks && data.socialLinks.length > limits.maxLinks) {
       throw AppException.badRequest(`Máximo de ${limits.maxLinks} links no plano ${effectivePlan}`);
     }
 
-    // Validate theme for free tier
+    // Valida tema para plano gratuito
     if (data.cardTheme && limits.maxThemes !== 'all') {
       if (!FREE_THEMES.includes(data.cardTheme)) {
         throw AppException.badRequest(`Tema "${data.cardTheme}"não disponivel no plano gratuito`);
       }
     }
 
-    // If org branding is active, strip visual customization fields
+    // Se branding da org esta ativo, remove campos de customizacao visual (Brand Lock)
     if (profile.organization?.brandingActive) {
       delete data.buttonColor;
       delete data.cardTheme;
@@ -285,7 +292,7 @@ export class ProfilesService {
       delete data.iconStyle;
     }
 
-    // Validate slug uniqueness
+    // Valida unicidade do slug
     if (data.slug && data.slug !== profile.slug) {
       const available = await this.slugsService.isAvailable(data.slug, userId);
       if (!available) {
@@ -296,13 +303,13 @@ export class ProfilesService {
     const { socialLinks, ...profileData } = data;
 
     const result = await this.prisma.$transaction(async (tx) => {
-      // Update profile fields
+      // Atualiza campos do perfil
       const updated = await tx.profile.update({
         where: { id: profile.id },
         data: profileData,
       });
 
-      // Replace social links if provided
+      // Substitui links sociais se fornecidos (delete + recreate)
       if (socialLinks !== undefined) {
         await tx.socialLink.deleteMany({ where: { profileId: profile.id } });
 
@@ -329,16 +336,16 @@ export class ProfilesService {
       });
     });
 
-    // Invalidate public page cache after update
+    // Invalida cache da pagina publica apos atualizacao
     await this.cache.del(`profile:${profile.slug}`);
-    // Also invalidate HTTP-level cache entries (CacheInterceptor keys)
+    // Tambem invalida entradas de cache HTTP (chaves do CacheInterceptor)
     await this.cache.del(`/api/profile/${profile.slug}`);
     await this.cache.del(`/api/profile/${profile.slug}/form-fields`);
 
     return result;
   }
 
-  /** Custom domain management */
+  /** Configura dominio customizado para o perfil */
   async setCustomDomain(userId: string, domain: string, profileId?: string) {
     const profile = profileId
       ? await this.prisma.profile.findFirst({ where: { id: profileId, userId } })
@@ -364,6 +371,7 @@ export class ProfilesService {
     });
   }
 
+  /** Verifica dominio customizado via registro DNS TXT */
   async verifyCustomDomain(userId: string, profileId?: string) {
     const profile = profileId
       ? await this.prisma.profile.findFirst({ where: { id: profileId, userId } })
@@ -375,7 +383,7 @@ export class ProfilesService {
     });
     if (!customDomain) throw AppException.notFound('Domínio');
 
-    // Try DNS TXT record verification
+    // Tenta verificacao via registro DNS TXT
     try {
       const dns = await import('dns');
       const records = await new Promise<string[][]>((resolve, reject) => {
@@ -402,6 +410,7 @@ export class ProfilesService {
     }
   }
 
+  /** Retorna dados do dominio customizado do perfil */
   async getCustomDomain(userId: string, profileId?: string) {
     const profile = profileId
       ? await this.prisma.profile.findFirst({ where: { id: profileId, userId } })
@@ -413,6 +422,7 @@ export class ProfilesService {
     });
   }
 
+  /** Remove dominio customizado do perfil */
   async removeCustomDomain(userId: string, profileId?: string) {
     const profile = profileId
       ? await this.prisma.profile.findFirst({ where: { id: profileId, userId } })
@@ -426,8 +436,8 @@ export class ProfilesService {
   }
 
   /**
-   * Upsert hackathon profile — creates a SEPARATE profile (never touches the primary/paid card).
-   * The hackathon profile has label "Hackathon Senac" and isPrimary: false.
+   * Upsert de perfil hackathon — cria um perfil SEPARADO (nunca altera o cartao primario/pago).
+   * O perfil hackathon tem label "Hackathon Senac" e isPrimary: false.
    */
   async upsertHackathonMeta(
     userId: string,
@@ -436,14 +446,14 @@ export class ProfilesService {
   ) {
     const metadata = JSON.stringify(hackathonData);
 
-    // Find or create a dedicated hackathon profile (NEVER the primary)
+    // Busca ou cria perfil dedicado para hackathon (NUNCA o primario)
     let hackProfile = await this.prisma.profile.findFirst({
       where: { userId, label: 'Hackathon Senac' },
       include: { socialLinks: { where: { linkType: 'hackathon_meta' } } },
     });
 
     if (!hackProfile) {
-      // Create a new separate profile for hackathon
+      // Cria novo perfil separado para hackathon
       const slug = `hack-${Date.now().toString(36)}`;
       hackProfile = await this.prisma.profile.create({
         data: {
@@ -461,12 +471,12 @@ export class ProfilesService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      // 1. Remove old hackathon_meta links
+      // 1. Remove links hackathon_meta antigos
       await tx.socialLink.deleteMany({
         where: { profileId: hackProfile!.id, linkType: 'hackathon_meta' },
       });
 
-      // 2. Create the hackathon_meta link on the hackathon profile
+      // 2. Cria o link hackathon_meta no perfil de hackathon
       await tx.socialLink.create({
         data: {
           profileId: hackProfile!.id,
@@ -479,7 +489,7 @@ export class ProfilesService {
         },
       });
 
-      // 3. Update hackathon profile fields (safe — this is NOT the primary card)
+      // 3. Atualiza campos do perfil hackathon (seguro — NAO e o cartao primario)
       await tx.profile.update({
         where: { id: hackProfile!.id },
         data: {
@@ -491,13 +501,14 @@ export class ProfilesService {
       });
     });
 
-    // Invalidate cache
+    // Invalida cache do perfil hackathon
     await this.cache.del(`profile:${hackProfile.slug}`);
     await this.cache.del(`/api/profile/${hackProfile.slug}`);
 
     return { success: true, profileId: hackProfile.id, slug: hackProfile.slug };
   }
 
+  /** Registra visualizacao diaria do perfil (upsert por profileId + data) */
   private async trackDailyView(profileId: string) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);

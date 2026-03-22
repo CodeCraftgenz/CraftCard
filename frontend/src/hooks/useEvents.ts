@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
+/** Resumo de um evento (usado em listagens e detalhes) */
 export interface EventSummary {
   id: string;
   name: string;
@@ -26,6 +27,7 @@ export function usePublicEvent(slug: string | undefined) {
   });
 }
 
+/** Hook para listar eventos do usuario autenticado */
 export function useMyEvents() {
   return useQuery<EventSummary[]>({
     queryKey: ['events'],
@@ -33,6 +35,7 @@ export function useMyEvents() {
   });
 }
 
+/** Hook para buscar detalhes de um evento especifico */
 export function useEvent(id: string | undefined) {
   return useQuery({
     queryKey: ['events', id],
@@ -41,6 +44,7 @@ export function useEvent(id: string | undefined) {
   });
 }
 
+/** Hook para criar novo evento (invalida cache de listagem apos sucesso) */
 export function useCreateEvent() {
   const qc = useQueryClient();
   return useMutation({
@@ -56,6 +60,7 @@ export function useCreateEvent() {
   });
 }
 
+/** Hook para atualizar evento existente */
 export function useUpdateEvent() {
   const qc = useQueryClient();
   return useMutation({
@@ -65,6 +70,7 @@ export function useUpdateEvent() {
   });
 }
 
+/** Hook para excluir evento */
 export function useDeleteEvent() {
   const qc = useQueryClient();
   return useMutation({

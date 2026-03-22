@@ -1,5 +1,10 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 
+/**
+ * Excecao padronizada da aplicacao.
+ * Encapsula HttpException do NestJS com codigo, mensagem e detalhes opcionais.
+ * Metodos estaticos facilitam a criacao de erros comuns (400, 401, 403, 404, etc.).
+ */
 export class AppException extends HttpException {
   public readonly code: string;
   public readonly details?: unknown;

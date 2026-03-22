@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Star, Trash2, ChevronDown, Lock } from 'lucide-react';
 
+/** Dados minimos de um cartao para o seletor */
 interface Card {
   id: string;
   label: string;
@@ -10,6 +11,7 @@ interface Card {
   displayName: string;
 }
 
+/** Props do seletor de cartoes */
 interface CardSwitcherProps {
   cards: Card[];
   activeCardId: string | undefined;
@@ -21,6 +23,11 @@ interface CardSwitcherProps {
   maxCards?: number;
 }
 
+/**
+ * Seletor de cartoes — dropdown para alternar entre cartoes do usuario.
+ * Exibe apenas para usuarios pagos com multiplos cartoes.
+ * Permite criar, excluir e definir cartao primario.
+ */
 export function CardSwitcher({
   cards,
   activeCardId,

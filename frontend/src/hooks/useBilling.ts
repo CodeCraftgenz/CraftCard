@@ -2,6 +2,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { PlanLimits } from '@/providers/AuthProvider';
 
+/** Dados de um pagamento individual */
 export interface BillingPayment {
   id: string;
   amount: number;
@@ -12,6 +13,7 @@ export interface BillingPayment {
   createdAt: string;
 }
 
+/** Informacoes completas de cobranca do usuario (plano, limites, pagamentos) */
 export interface BillingInfo {
   plan: string;
   planLimits: PlanLimits;
@@ -22,6 +24,7 @@ export interface BillingInfo {
   canRenew: boolean;
 }
 
+/** Hook para buscar informacoes de cobranca e plano do usuario */
 export function useBillingInfo() {
   return useQuery<BillingInfo>({
     queryKey: ['billing'],
@@ -29,6 +32,7 @@ export function useBillingInfo() {
   });
 }
 
+/** Hook para iniciar checkout — redireciona para pagina de pagamento do Mercado Pago */
 export function useCheckout() {
   return useMutation<{ url: string }, Error, { plan: string }>({
     mutationFn: (data) => api.post('/payments/checkout', data),

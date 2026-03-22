@@ -4,6 +4,7 @@ import { ArrowLeft, CreditCard, Crown, Check, Loader2 } from 'lucide-react';
 import { Header } from '@/components/organisms/Header';
 import { useBillingInfo, useCheckout } from '@/hooks/useBilling';
 
+/** Cores de badge por plano */
 const PLAN_COLORS: Record<string, string> = {
   FREE: 'bg-white/10 text-white/60',
   PRO: 'bg-blue-500/20 text-blue-400',
@@ -11,6 +12,7 @@ const PLAN_COLORS: Record<string, string> = {
   ENTERPRISE: 'bg-amber-500/20 text-amber-400',
 };
 
+/** Cores de badge por status de pagamento */
 const STATUS_COLORS: Record<string, string> = {
   approved: 'bg-green-500/20 text-green-400',
   pending: 'bg-yellow-500/20 text-yellow-400',
@@ -19,6 +21,7 @@ const STATUS_COLORS: Record<string, string> = {
   refunded: 'bg-orange-500/20 text-orange-400',
 };
 
+/** Labels traduzidos para status de pagamento */
 const STATUS_LABELS: Record<string, string> = {
   approved: 'Aprovado',
   pending: 'Pendente',
@@ -27,6 +30,7 @@ const STATUS_LABELS: Record<string, string> = {
   refunded: 'Reembolsado',
 };
 
+/** Lista de recursos por plano (exibido nos cards de upgrade) */
 const PLAN_FEATURES: Record<string, string[]> = {
   FREE: ['1 cartão', '5 links', '3 temas', 'Marca d\u0027agua'],
   PRO: ['5 cartões', '20 links', 'Todos temas', 'Analytics', 'Sem marca d\u0027agua', 'Fontes personalizadas'],
@@ -34,6 +38,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
   ENTERPRISE: ['Todos recursos', 'Domínio customizado', 'Suporte prioritário'],
 };
 
+/** Pagina de cobranca — exibe plano atual, upgrade/renovacao e historico de pagamentos */
 export function BillingPage() {
   const { data: billing, isLoading } = useBillingInfo();
   const checkout = useCheckout();
@@ -66,7 +71,7 @@ export function BillingPage() {
           <h1 className="text-2xl font-bold text-white">Meu Plano</h1>
         </div>
 
-        {/* Current plan */}
+        {/* Plano atual */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -86,7 +91,7 @@ export function BillingPage() {
             )}
           </div>
 
-          {/* Days remaining bar */}
+          {/* Barra de dias restantes */}
           {billing.daysRemaining !== null && (() => {
             const totalDays = (billing.daysRemaining ?? 0) <= 35 ? 30 : 365; // Infere ciclo: ≤35 dias = mensal, senão anual
             return (
@@ -115,7 +120,7 @@ export function BillingPage() {
             <p className="text-white/40 text-sm">Acesso vitalicio</p>
           )}
 
-          {/* Features */}
+          {/* Recursos do plano */}
           <div className="mt-4 flex flex-wrap gap-2">
             {(PLAN_FEATURES[billing.plan] || PLAN_FEATURES.FREE).map((f) => (
               <span key={f} className="flex items-center gap-1 text-xs text-white/50 bg-white/5 px-2 py-1 rounded-lg">
@@ -126,7 +131,7 @@ export function BillingPage() {
           </div>
         </motion.div>
 
-        {/* Upgrade / Renew */}
+        {/* Upgrade / Renovacao */}
         {(billing.canUpgrade || billing.canRenew) && (
           <div className="mb-6">
             <h2 className="text-white font-semibold mb-4">
@@ -211,7 +216,7 @@ export function BillingPage() {
           </div>
         )}
 
-        {/* Payment history */}
+        {/* Historico de pagamentos */}
         <div>
           <h2 className="text-white font-semibold mb-4">Histórico de Pagamentos</h2>
           {billing.payments.length === 0 ? (
@@ -249,6 +254,7 @@ export function BillingPage() {
   );
 }
 
+/** Card de plano para upgrade/renovacao com lista de recursos e botao de acao */
 function PlanCard({
   name, price, period, features, onSelect, loading, highlight, cta,
 }: {

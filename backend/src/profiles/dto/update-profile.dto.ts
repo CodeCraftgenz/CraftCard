@@ -3,7 +3,7 @@ import { z } from 'zod';
 // Bloqueia protocolos perigosos: javascript, data, vbscript e file (acesso a sistema de arquivos local)
 const DANGEROUS_PROTOCOLS = /^(javascript|data|vbscript|file):/i;
 
-/** Preprocess: convert empty/whitespace-only strings to undefined so .optional() treats them as absent */
+/** Pre-processamento: converte strings vazias/somente espacos em undefined para que .optional() as trate como ausentes */
 const emptyToUndefined = (val: unknown) =>
   typeof val === 'string' && val.trim() === '' ? undefined : val;
 
@@ -12,7 +12,7 @@ const safeUrlSchema = z.string().url().refine(
   { message: 'Protocolonão permitido' },
 );
 
-/** URL schema for social links — accepts http(s), mailto:, and tel: */
+/** Schema de URL para links sociais — aceita http(s), mailto: e tel: */
 const socialUrlSchema = z.string().min(1).refine(
   (url) => /^https?:\/\/.+/i.test(url) || /^mailto:.+@.+/i.test(url) || /^tel:.+/i.test(url),
   { message: 'URL invalida' },
@@ -38,17 +38,17 @@ export const socialLinkSchema = z.object({
   metadata: z.string().max(2000).optional().nullable(),
 }).refine(
   (link) => {
-    // Headers don't need a URL
+    // Headers nao precisam de URL
     if (link.platform === 'header') return true;
-    // Pix stores key in metadata, not URL
+    // Pix armazena chave em metadata, nao em URL
     if (link.platform === 'pix') return true;
-    // Map accepts plain address text (e.g. "Av. Paulista, 1000 - SP")
+    // Mapa aceita texto de endereco simples (ex: "Av. Paulista, 1000 - SP")
     if (link.platform === 'map') return true;
-    // Phone accepts plain number
+    // Telefone aceita numero simples
     if (link.platform === 'phone') return true;
-    // Hackathon meta stores data in metadata, URL is '#'
+    // Hackathon meta armazena dados em metadata, URL e '#'
     if (link.linkType === 'hackathon_meta') return true;
-    // All other types need a valid URL
+    // Todos os outros tipos precisam de URL valida
     if (!link.url) return false;
     return /^https?:\/\/.+/i.test(link.url) || /^mailto:.+@.+/i.test(link.url) || /^tel:.+/i.test(link.url);
   },
@@ -91,7 +91,7 @@ export const updateProfileSchema = z.object({
   servicesEnabled: z.boolean().optional(),
   faqEnabled: z.boolean().optional(),
   connectionsEnabled: z.boolean().optional(),
-  // Visual Customization
+  // Customizacao visual
   fontFamily: z.preprocess(emptyToUndefined, z.string().max(50).optional().nullable()),
   fontSizeScale: z.number().min(0.8).max(1.3).optional().nullable(),
   backgroundType: z.enum(['theme', 'gradient', 'mesh', 'image', 'pattern', 'animated']).optional().nullable(),
@@ -104,7 +104,7 @@ export const updateProfileSchema = z.object({
   linkLayout: z.enum(['list', 'grid']).optional().nullable(),
   iconStyle: z.enum(['default', 'filled', 'outline', 'neomorph', 'glass', 'gradient', 'neon', 'shadow', 'minimal', 'circle', 'soft', 'duotone', 'isometric', 'badge', 'floating', 'diamond']).optional().nullable(),
   iconPack: z.enum(['lucide', 'brand', 'filled']).optional().nullable(),
-  // Expanded Bio
+  // Bio expandida
   location: z.preprocess(emptyToUndefined, z.string().max(100).optional().nullable()),
   pronouns: z.preprocess(emptyToUndefined, z.string().max(30).optional().nullable()),
   workingHours: z.preprocess(emptyToUndefined, z.string().max(100).optional().nullable()),
@@ -112,8 +112,8 @@ export const updateProfileSchema = z.object({
   sectionsOrder: z.preprocess(emptyToUndefined, z.string().max(500).optional().nullable()),
   socialLinks: z.array(socialLinkSchema).max(20).optional(),
 }).transform((data) => {
-  // Filter out incomplete social links (empty label or invalid url)
-  // Headers and Pix don't need a URL — only filter other types
+  // Filtra links sociais incompletos (label vazio ou url invalida)
+  // Headers e Pix nao precisam de URL — filtra apenas os outros tipos
   if (data.socialLinks) {
     data.socialLinks = data.socialLinks.filter(
       (link) => {

@@ -22,10 +22,12 @@ const WrappedTab = lazy(() => import('./connections/WrappedTab'));
 
 type Tab = 'timeline' | 'connections' | 'pending' | 'discover' | 'map' | 'events' | 'tags' | 'wrapped';
 
+/** Spinner de carregamento para abas com lazy loading */
 const TabLoader = () => (
   <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-white/20" /></div>
 );
 
+/** Pagina principal de conexoes, memorias e networking */
 export default function ConnectionsPage() {
   const [tab, setTab] = useState<Tab>('timeline');
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,7 +47,7 @@ export default function ConnectionsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-bg via-brand-card to-brand-bg text-white">
       <div className="max-w-2xl mx-auto px-4 py-8">
-        {/* Header */}
+        {/* Cabecalho */}
         <div className="flex items-center gap-3 mb-6">
           <Link to="/editor" className="text-white/50 hover:text-white transition-colors">
             <ArrowLeft size={20} />
@@ -56,7 +58,7 @@ export default function ConnectionsPage() {
           </div>
         </div>
 
-        {/* Tabs — scrollable */}
+        {/* Abas — com scroll horizontal */}
         <div className="flex gap-1.5 mb-6 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10 -mx-1 px-1">
           {tabs.map((t) => {
             const Icon = t.icon;
@@ -79,7 +81,7 @@ export default function ConnectionsPage() {
           })}
         </div>
 
-        {/* Content */}
+        {/* Conteudo da aba ativa */}
         <Suspense fallback={<TabLoader />}>
           {tab === 'timeline' && <TimelineTab />}
           {tab === 'map' && <MapTab />}
@@ -101,6 +103,7 @@ export default function ConnectionsPage() {
   );
 }
 
+/** Badge com contador de conexoes pendentes */
 function PendingBadge() {
   const { data: pending } = usePendingConnections();
   if (!pending || pending.length === 0) return null;
@@ -436,6 +439,7 @@ function MyConnectionsTab({ onDiscoverClick }: { onDiscoverClick: () => void }) 
   );
 }
 
+/** Aba de solicitacoes de conexao pendentes (aceitar/rejeitar) */
 function PendingTab() {
   const { data: pending, isLoading } = usePendingConnections();
   const acceptMutation = useAcceptConnection();
@@ -502,6 +506,7 @@ function PendingTab() {
   );
 }
 
+/** Aba de descoberta de perfis — busca e envia solicitacoes de conexao */
 function DiscoverTab({ query, onQueryChange, myProfileId }: { query: string; onQueryChange: (q: string) => void; myProfileId?: string }) {
   const [page, setPage] = useState(1);
   const { data, isLoading } = useDiscoverProfiles(query, page);
@@ -582,7 +587,7 @@ function DiscoverTab({ query, onQueryChange, myProfileId }: { query: string; onQ
             })}
           </div>
 
-          {/* Pagination */}
+          {/* Paginacao */}
           {data.totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-6">
               <button

@@ -5,12 +5,14 @@ import { Eye, EyeOff, Mail, Lock, User, Crown, Building2 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
 import { api } from '@/lib/api';
 
+/** Regras de validacao de senha exibidas no formulario */
 const PASSWORD_RULES = [
   { test: (v: string) => v.length >= 8, label: 'Mínimo 8 caracteres' },
   { test: (v: string) => /[A-Z]/.test(v), label: '1 letra maiuscula' },
   { test: (v: string) => /[0-9]/.test(v), label: '1 número' },
 ];
 
+/** Pagina de registro — suporta convite de org, checkout automatico e validacao de senha */
 export function RegisterPage() {
   const { register, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -19,7 +21,7 @@ export function RegisterPage() {
   const inviteToken = searchParams.get('invite') || undefined;
   const inviteEmail = searchParams.get('email') || '';
 
-  // Checkout intent from pricing page
+  // Intencao de checkout vinda da pagina de precos
   const checkoutPlan = searchParams.get('plan') as 'PRO' | 'BUSINESS' | null;
   const checkoutSeats = parseInt(searchParams.get('seats') || '1');
   const checkoutCycle = (searchParams.get('cycle') || 'YEARLY') as 'MONTHLY' | 'YEARLY';
@@ -56,7 +58,7 @@ export function RegisterPage() {
     try {
       const result = await register({ email, name, password, confirmPassword, inviteToken });
 
-      // Auto-checkout if coming from pricing page
+      // Checkout automatico se veio da pagina de precos
       if (hasCheckoutIntent && checkoutPlan) {
         try {
           const data: { url: string } = await api.post('/payments/checkout', {
@@ -67,7 +69,7 @@ export function RegisterPage() {
           window.location.href = data.url;
           return;
         } catch {
-          // Checkout failed — still redirect to billing
+          // Checkout falhou — redireciona para billing mesmo assim
           navigate('/billing');
           return;
         }
@@ -102,7 +104,7 @@ export function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-[#0B0E1A] flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Background glow */}
+      {/* Brilho decorativo de fundo */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] bg-brand-cyan/5 rounded-full blur-[180px]" />
         <div className="absolute bottom-1/4 right-1/3 w-[400px] h-[400px] bg-brand-magenta/5 rounded-full blur-[150px]" />
@@ -114,7 +116,7 @@ export function RegisterPage() {
         transition={{ duration: 0.6 }}
         className="w-full max-w-md relative z-10"
       >
-        {/* Header */}
+        {/* Cabecalho */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-block mb-4">
             <span className="text-3xl font-extrabold text-white tracking-tight">
@@ -126,7 +128,7 @@ export function RegisterPage() {
             {inviteToken ? 'Crie sua conta para entrar na organização' : hasCheckoutIntent ? 'Crie sua conta para continuar com a assinatura' : 'Comece a criar seu cartão digital'}
           </p>
 
-          {/* Checkout intent banner */}
+          {/* Banner de intencao de checkout */}
           {hasCheckoutIntent && (
             <div className="mt-4 p-3 rounded-xl bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-indigo-500/20">
               <div className="flex items-center gap-2">
@@ -143,7 +145,7 @@ export function RegisterPage() {
           )}
         </div>
 
-        {/* Form */}
+        {/* Formulario de registro */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
             <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
@@ -190,7 +192,7 @@ export function RegisterPage() {
             </button>
           </div>
 
-          {/* Password strength indicators */}
+          {/* Indicadores de forca da senha */}
           {password.length > 0 && (
             <div className="flex gap-3">
               {PASSWORD_RULES.map((rule, i) => (
@@ -230,7 +232,7 @@ export function RegisterPage() {
           </button>
         </form>
 
-        {/* Login link */}
+        {/* Link para login */}
         <p className="text-sm text-white/40 text-center mt-6">
           Já tem conta?{' '}
           <Link to={loginUrl} className="text-brand-cyan hover:text-brand-cyan/80 font-medium transition-colors">

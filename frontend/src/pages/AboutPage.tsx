@@ -119,6 +119,7 @@ const TECH_STACK = [
 
 // ─── Contador animado (reutilizado da TrustedBySection) ───────────
 
+/** Contador animado com easing cubico — incrementa de 0 ate `end` em 2s quando `started` e true */
 function AnimatedCounter({
   end,
   suffix,
