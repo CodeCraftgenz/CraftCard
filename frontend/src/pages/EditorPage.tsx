@@ -5,7 +5,7 @@ import {
   Save, Copy, Check, ExternalLink, CreditCard, Upload, X, Plus, Lock,
   Camera, FileText, Palette, Link2, Sparkles, Smartphone, Building2, Shield,
   QrCode, BarChart3, Calendar, Download, MessageSquare, Mail, Star, Video, UserPlus, Users, Paintbrush, Trash2,
-  ChevronDown, Cloud, CloudUpload, Image, User,
+  ChevronDown, Cloud, CloudUpload, Image, User, AlertCircle,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
@@ -219,6 +219,7 @@ export function EditorPage() {
   const [slugInput, setSlugInput] = useState('');
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(false); // SG-1: feedback visual de erro ao salvar
   const [photoVersion, setPhotoVersion] = useState(Date.now());
   const [coverVersion, setCoverVersion] = useState(Date.now());
   const [debouncedSlug, setDebouncedSlug] = useState('');
@@ -409,7 +410,9 @@ export function EditorPage() {
       // Check achievements after save (fire-and-forget)
       checkAchievements.mutate();
     } catch {
-      // Silently fail on auto-save validation errors
+      // SG-1: exibe feedback visual de erro ao salvar (auto-dismiss 5s)
+      setSaveError(true);
+      setTimeout(() => setSaveError(false), 5000);
     }
   }, [buildSavePayload, updateProfile]);
 
@@ -422,11 +425,15 @@ export function EditorPage() {
   }, [triggerAutoSave]);
 
   const [uploadError, setUploadError] = useState('');
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB — limite para fotos e capas
+  const MAX_RESUME_SIZE = 10 * 1024 * 1024; // 10MB — limite para currículos/PDFs
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadError('');
+    // SG-2: validação de tamanho antes do upload
+    if (file.size > MAX_IMAGE_SIZE) { setUploadError('Arquivo muito grande. Máximo: 5MB'); return; }
     try {
       await uploadPhoto.mutateAsync(file);
       setPhotoVersion(Date.now());
@@ -440,6 +447,7 @@ export function EditorPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadError('');
+    if (file.size > MAX_IMAGE_SIZE) { setUploadError('Arquivo muito grande. Máximo: 5MB'); return; }
     try {
       await uploadCover.mutateAsync(file);
       setCoverVersion(Date.now());
@@ -453,6 +461,7 @@ export function EditorPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadError('');
+    if (file.size > MAX_RESUME_SIZE) { setUploadError('Arquivo muito grande. Máximo: 10MB'); return; }
     try {
       await uploadResume.mutateAsync(file);
     } catch (err) {
@@ -690,6 +699,11 @@ export function EditorPage() {
                   <Cloud size={14} />
                   <span>Salvando...</span>
                 </motion.div>
+              ) : saveError ? (
+                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-1.5 text-red-400/90">
+                  <AlertCircle size={14} />
+                  <span>Erro ao salvar</span>
+                </motion.div>
               ) : saved ? (
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-1.5 text-emerald-400/70">
                   <CloudUpload size={14} />
@@ -708,7 +722,7 @@ export function EditorPage() {
           <CardSwitcher
             cards={cards}
             activeCardId={activeCardId}
-            onSwitch={(id) => setActiveCardId(id)}
+            onSwitch={async (id) => { triggerAutoSave.cancel(); await handleSave(); setActiveCardId(id); }} // SG-4: flush dados antes de trocar cartão
             onCreate={(label) => createCard.mutate(label, {
               onSuccess: () => refreshAuth(),
             })}
@@ -1250,6 +1264,7 @@ export function EditorPage() {
                     type="text"
                     value={form.displayName}
                     onChange={(e) => updateField('displayName', e.target.value)}
+                    maxLength={60}
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-brand-cyan/50 focus:bg-white/[0.07] transition-all"
                     placeholder="Seu nome"
                   />
@@ -3062,7 +3077,7 @@ export function EditorPage() {
               <div className="p-4 flex items-center gap-3">
               <button
                 type="button"
-                onClick={handleSave}
+                onClick={() => { triggerAutoSave.cancel(); handleSave(); }} // SG-8: cancela debounce pendente antes do save manual
                 disabled={updateProfile.isPending}
                 className="flex items-center gap-2 px-6 py-2.5 rounded-xl gradient-bg font-semibold text-sm hover:opacity-90 transition-all hover:shadow-lg hover:shadow-brand-cyan/20 disabled:opacity-50"
               >

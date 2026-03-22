@@ -580,8 +580,8 @@ export function PublicCardPage() {
   const { data: profile, isLoading, error } = useQuery<PublicProfile>({
     queryKey: ['public-profile', slug],
     queryFn: () => api.get(`/profile/${slug}`),
-    retry: 2,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
+    retry: 3, // SG-5: 3 tentativas com delay progressivo para cold start do Render
+    retryDelay: (attempt) => Math.min(15000 * (attempt + 1), 60000), // 15s, 30s, 45s
   });
 
   // Deriva configuracoes visuais com fallbacks seguros (funciona mesmo com profile=null).
@@ -959,10 +959,32 @@ export function PublicCardPage() {
     finally { setExporting(false); }
   };
 
+  // SG-7: skeleton loading que imita a estrutura do cartão (percepção de velocidade)
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-brand-bg-dark flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-brand-cyan/30 border-t-brand-cyan rounded-full animate-spin" />
+      <div className="min-h-screen bg-brand-bg-dark flex items-center justify-center px-4">
+        <div className="w-full max-w-md mx-auto">
+          {/* Skeleton do cartão */}
+          <div className="rounded-3xl bg-white/[0.04] border border-white/10 p-8 space-y-6">
+            {/* Avatar */}
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-24 h-24 rounded-full bg-white/10 animate-pulse" />
+              <div className="h-6 w-48 bg-white/10 rounded-lg animate-pulse" />
+              <div className="h-4 w-64 bg-white/[0.06] rounded-lg animate-pulse" />
+            </div>
+            {/* Bio */}
+            <div className="space-y-2">
+              <div className="h-3 w-full bg-white/[0.05] rounded animate-pulse" />
+              <div className="h-3 w-3/4 bg-white/[0.05] rounded animate-pulse mx-auto" />
+            </div>
+            {/* Links */}
+            <div className="space-y-3">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="h-12 w-full bg-white/[0.06] rounded-xl animate-pulse" />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -1642,6 +1664,7 @@ export function PublicCardPage() {
                     type="text"
                     value={contactForm.senderName}
                     onChange={(e) => setContactForm((prev) => ({ ...prev, senderName: e.target.value }))}
+                    maxLength={80}
                     placeholder="Seu nome *"
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50 transition-all"
                   />
@@ -1841,6 +1864,7 @@ export function PublicCardPage() {
                     type="text"
                     value={testimonialForm.authorName}
                     onChange={(e) => setTestimonialForm((prev) => ({ ...prev, authorName: e.target.value }))}
+                    maxLength={80}
                     placeholder="Seu nome *"
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50 transition-all"
                   />
@@ -1848,6 +1872,7 @@ export function PublicCardPage() {
                     type="text"
                     value={testimonialForm.authorRole}
                     onChange={(e) => setTestimonialForm((prev) => ({ ...prev, authorRole: e.target.value }))}
+                    maxLength={80}
                     placeholder="Seu cargo/empresa (opcional)"
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-brand-cyan/50 transition-all"
                   />
