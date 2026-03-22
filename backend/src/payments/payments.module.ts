@@ -16,6 +16,6 @@ import { MercadoPagoProvider } from './gateway/mercadopago.provider';
     PaymentsCron,
     { provide: PAYMENT_GATEWAY, useClass: MercadoPagoProvider },
   ],
-  exports: [PaymentsService, PaidUserGuard, PlanGuard],
+  exports: [PaymentsService, PaidUserGuard, PlanGuard, PAYMENT_GATEWAY],
 })
 export class PaymentsModule {}

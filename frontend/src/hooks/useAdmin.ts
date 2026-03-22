@@ -227,6 +227,50 @@ export function useUpdateAdminOrg() {
   });
 }
 
+// ── Enterprise Proposal ──────────────────────────────────
+
+export interface EnterpriseProposalResult {
+  success: boolean;
+  isNewUser: boolean;
+  paymentId: string;
+  checkoutUrl: string;
+  pricing: {
+    seats: number;
+    billingCycle: string;
+    pricePerSeat: number;
+    monthlyTotal: number;
+    yearlyTotal: number;
+    discount: number;
+  };
+}
+
+export interface PendingProposal {
+  id: string;
+  email: string;
+  name: string | null;
+  seats: number | null;
+  billingCycle: string | null;
+  amount: number;
+  createdAt: string;
+}
+
+export function useSendEnterpriseProposal() {
+  const qc = useQueryClient();
+  return useMutation<EnterpriseProposalResult, Error, { email: string; companyName: string; seats: number; billingCycle: string }>({
+    mutationFn: (data) => api.post('/admin/enterprise/proposal', data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'enterprise'] });
+    },
+  });
+}
+
+export function useEnterprisePendingProposals() {
+  return useQuery<PendingProposal[]>({
+    queryKey: ['admin', 'enterprise', 'pending'],
+    queryFn: () => api.get('/admin/enterprise/proposals/pending'),
+  });
+}
+
 // ── Hackathon Admin ───────────────────────────────────────
 
 export interface HackathonDashboardStats {

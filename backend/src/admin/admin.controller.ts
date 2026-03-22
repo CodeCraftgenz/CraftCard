@@ -40,9 +40,32 @@ export class AdminController {
     });
   }
 
+  @Post('enterprise/proposal')
+  async sendEnterpriseProposal(@Body() body: {
+    email: string;
+    companyName: string;
+    seats: number;
+    billingCycle?: string;
+  }) {
+    if (!body.email || !body.companyName || !body.seats) {
+      throw new Error('Email, nome da empresa e quantidade de seats são obrigatórios');
+    }
+    return this.adminService.sendEnterpriseProposal({
+      targetEmail: body.email,
+      companyName: body.companyName,
+      seats: body.seats,
+      billingCycle: body.billingCycle?.toUpperCase() === 'MONTHLY' ? 'MONTHLY' : 'YEARLY',
+    });
+  }
+
   @Get('enterprise/clients')
   async listEnterpriseClients() {
     return this.adminService.listEnterpriseClients();
+  }
+
+  @Get('enterprise/proposals/pending')
+  async listPendingProposals() {
+    return this.adminService.listEnterprisePendingProposals();
   }
 
   @Get('users')

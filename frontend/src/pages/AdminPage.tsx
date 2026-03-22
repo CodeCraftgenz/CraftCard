@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, CreditCard, Building2, ArrowLeft,
   Search, Trash2, Crown, Shield, ChevronRight, Save, X,
   Eye, MessageSquare, TrendingUp, Clock, Smartphone, Monitor, Tablet,
-  UserPlus, DollarSign, Mail, GraduationCap,
+  UserPlus, DollarSign, Mail, GraduationCap, Send, ExternalLink,
 } from 'lucide-react';
 import { HackathonAdminDashboard } from '@/hackathon/components/HackathonAdminDashboard';
 import { api } from '@/lib/api';
@@ -21,6 +21,8 @@ import {
   useUpdateAdminOrg,
   useUpdateAdminUser,
   useDeleteAdminUser,
+  useSendEnterpriseProposal,
+  useEnterprisePendingProposals,
   type AdminUser,
 } from '@/hooks/useAdmin';
 
@@ -841,9 +843,11 @@ function EnterpriseTab() {
   const [companyName, setCompanyName] = useState('');
   const [seats, setSeats] = useState(150);
   const [cycle, setCycle] = useState<'MONTHLY' | 'YEARLY'>('YEARLY');
-  const [activating, setActivating] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; isNewUser: boolean; pricing: Record<string, unknown> } | null>(null);
   const [clients, setClients] = useState<Array<Record<string, unknown>>>([]);
+  const [successMsg, setSuccessMsg] = useState('');
+
+  const proposalMutation = useSendEnterpriseProposal();
+  const { data: pendingProposals } = useEnterprisePendingProposals();
 
   // Tiered pricing calculation (mirrors backend)
   const getTierPrice = (s: number) => {
@@ -859,30 +863,29 @@ function EnterpriseTab() {
 
   useEffect(() => {
     api.get('/admin/enterprise/clients').then((data: unknown) => setClients(data as Array<Record<string, unknown>>)).catch(() => {});
-  }, [result]);
+  }, [proposalMutation.isSuccess]);
 
-  const handleActivate = async () => {
+  const handleSendProposal = async () => {
     if (!email || !companyName || seats < 101) return;
-    setActivating(true);
+    setSuccessMsg('');
     try {
-      const data: unknown = await api.post('/admin/enterprise/activate', { email, companyName, seats, billingCycle: cycle });
-      setResult(data as { success: boolean; isNewUser: boolean; pricing: Record<string, unknown> });
+      await proposalMutation.mutateAsync({ email, companyName, seats, billingCycle: cycle });
+      setSuccessMsg(`Proposta enviada para ${email}! O plano será ativado automaticamente após o pagamento.`);
       setEmail('');
       setCompanyName('');
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Erro ao ativar');
+      alert(err instanceof Error ? err.message : 'Erro ao enviar proposta');
     }
-    setActivating(false);
   };
 
   return (
     <div className="space-y-6">
-      {/* Calculator + Activate */}
+      {/* Calculator + Send Proposal */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Form */}
         <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-4">
           <h3 className="text-white font-semibold flex items-center gap-2">
-            <Crown size={16} className="text-violet-400" /> Ativar Enterprise
+            <Crown size={16} className="text-violet-400" /> Enviar Proposta Enterprise
           </h3>
 
           <input
@@ -927,17 +930,30 @@ function EnterpriseTab() {
 
           <button
             type="button"
-            onClick={handleActivate}
-            disabled={activating || !email || !companyName || seats < 101}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold text-sm transition hover:brightness-110 disabled:opacity-40"
+            onClick={handleSendProposal}
+            disabled={proposalMutation.isPending || !email || !companyName || seats < 101}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold text-sm transition hover:brightness-110 disabled:opacity-40 flex items-center justify-center gap-2"
           >
-            {activating ? 'Ativando...' : 'Ativar Enterprise e Enviar Email'}
+            <Send size={16} />
+            {proposalMutation.isPending ? 'Enviando...' : 'Enviar Proposta de Pagamento'}
           </button>
 
-          {result?.success && (
+          {successMsg && (
             <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs">
-              {result.isNewUser ? 'Conta criada e email enviado com sucesso!' : 'Plano atualizado para Enterprise!'}
+              {successMsg}
             </div>
+          )}
+
+          {proposalMutation.data?.checkoutUrl && (
+            <a
+              href={proposalMutation.data.checkoutUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 text-xs text-violet-300 hover:text-violet-200 transition"
+            >
+              <ExternalLink size={12} />
+              Abrir link de pagamento
+            </a>
           )}
         </div>
 
@@ -968,6 +984,32 @@ function EnterpriseTab() {
         </div>
       </div>
 
+      {/* Propostas Pendentes */}
+      {pendingProposals && pendingProposals.length > 0 && (
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+            <Clock size={16} className="text-yellow-400" /> Propostas Pendentes
+          </h3>
+          <div className="space-y-2">
+            {pendingProposals.map((p) => (
+              <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                <div>
+                  <p className="text-white text-sm font-medium">{p.name || p.email}</p>
+                  <p className="text-white/30 text-xs">{p.email}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-yellow-300 text-xs font-semibold">R$ {p.amount.toFixed(2).replace('.', ',')}</p>
+                    <p className="text-white/20 text-[10px]">{p.seats} seats · {p.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'}</p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-500/20 text-yellow-400">Pendente</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Enterprise Clients List */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
         <h3 className="text-white font-semibold mb-4">Clientes Enterprise Ativos</h3>
@@ -981,13 +1023,16 @@ function EnterpriseTab() {
                   <p className="text-white text-sm font-medium">{String(c.name || c.email)}</p>
                   <p className="text-white/30 text-xs">{String(c.email)}</p>
                 </div>
-                <div className="text-right">
-                  {(c.org as Record<string, unknown>) && (
-                    <>
-                      <p className="text-violet-300 text-xs font-semibold">{String((c.org as Record<string, unknown>).currentMembers)}/{String((c.org as Record<string, unknown>).maxSeats)} seats</p>
-                      <p className="text-white/20 text-[10px]">{String((c.org as Record<string, unknown>).name)}</p>
-                    </>
-                  )}
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    {(c.org as Record<string, unknown>) && (
+                      <>
+                        <p className="text-violet-300 text-xs font-semibold">{String((c.org as Record<string, unknown>).currentMembers)}/{String((c.org as Record<string, unknown>).maxSeats)} seats</p>
+                        <p className="text-white/20 text-[10px]">{String((c.org as Record<string, unknown>).name)}</p>
+                      </>
+                    )}
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-400">Ativo</span>
                 </div>
               </div>
             ))}

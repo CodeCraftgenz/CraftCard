@@ -1,8 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { randomBytes, createHash } from 'crypto';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { AppException } from '../common/exceptions/app.exception';
+import { PAYMENT_GATEWAY, type PaymentGateway } from '../payments/gateway/payment-gateway.interface';
+import type { EnvConfig } from '../common/config/env.config';
 
 /** Enterprise tiered pricing — starts at 101+ seats (above Business max of 100) */
 const ENTERPRISE_TIERS = [
@@ -26,6 +29,8 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
+    private readonly configService: ConfigService<EnvConfig>,
+    @Inject(PAYMENT_GATEWAY) private readonly gateway: PaymentGateway,
   ) {}
 
   // --- Enterprise Management ---
@@ -197,6 +202,156 @@ export class AdminService {
         currentMembers: u.orgMemberships[0].org._count.members,
       } : null,
       lastPayment: u.payments[0] || null,
+    }));
+  }
+
+  /**
+   * Envia proposta/orçamento Enterprise por email com link de pagamento Mercado Pago.
+   * O plano é ativado automaticamente quando o pagamento é confirmado via webhook.
+   */
+  async sendEnterpriseProposal(data: {
+    adminUserId?: string;
+    targetEmail: string;
+    companyName: string;
+    seats: number;
+    billingCycle: 'MONTHLY' | 'YEARLY';
+  }) {
+    const { targetEmail, companyName, seats, billingCycle } = data;
+
+    if (seats < 101) {
+      throw AppException.badRequest('Enterprise requer mínimo de 101 licenças');
+    }
+
+    const pricing = this.calculateEnterprisePrice(seats, billingCycle);
+    const frontendUrl = this.configService.get('FRONTEND_URL', { infer: true }) || 'https://craftcardgenz.com';
+    const backendUrl = this.configService.get('BACKEND_URL', { infer: true }) || 'https://craftcard.onrender.com';
+
+    // 1. Buscar ou criar usuário
+    let user = await this.prisma.user.findUnique({ where: { email: targetEmail } });
+    let isNewUser = false;
+
+    if (!user) {
+      const rawToken = randomBytes(32).toString('hex');
+      const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+      user = await this.prisma.user.create({
+        data: {
+          email: targetEmail,
+          name: companyName,
+          plan: 'FREE', // Plano só será ativado após pagamento
+          passwordResetToken: tokenHash,
+          passwordResetExpiresAt: expiresAt,
+        },
+      });
+      isNewUser = true;
+
+      // Criar perfil padrão para novo usuário
+      const slug = companyName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').slice(0, 40) || `ent-${Date.now().toString(36)}`;
+      await this.prisma.profile.create({
+        data: {
+          userId: user.id,
+          displayName: companyName,
+          slug,
+          isPrimary: true,
+          isPublished: false,
+          label: 'Principal',
+        },
+      });
+    }
+
+    // 2. Calcular preço total para cobrança
+    const months = billingCycle === 'YEARLY' ? 12 : 1;
+    const totalPrice = Math.round(pricing.pricePerSeat * seats * months * 100) / 100;
+
+    // 3. Criar registro de pagamento pendente
+    const payment = await this.prisma.payment.create({
+      data: {
+        userId: user.id,
+        amount: totalPrice,
+        currency: 'BRL',
+        status: 'pending',
+        plan: 'ENTERPRISE',
+        billingCycle,
+        seatsCount: seats,
+        payerEmail: targetEmail,
+      },
+    });
+
+    // 4. Gerar preferência de checkout no Mercado Pago
+    const cycleLabel = billingCycle === 'YEARLY' ? 'Anual' : 'Mensal';
+    const result = await this.gateway.createPreference({
+      paymentId: payment.id,
+      title: `CraftCard Enterprise (${cycleLabel} - ${seats} licenças) — ${companyName}`,
+      description: `CraftCard Enterprise ${cycleLabel} × ${seats} licenças para ${companyName}`,
+      price: totalPrice,
+      currency: 'BRL',
+      payerEmail: targetEmail,
+      backUrls: {
+        success: `${frontendUrl}/billing/success`,
+        failure: `${frontendUrl}/editor?payment=failed`,
+        pending: `${frontendUrl}/editor?payment=pending`,
+      },
+      notificationUrl: `${backendUrl}/api/payments/webhook`,
+    });
+
+    // 5. Atualizar registro com preferenceId
+    await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: { preferenceId: result.preferenceId },
+    });
+
+    // 6. Enviar email com proposta e link de pagamento
+    await this.mailService.sendEnterpriseProposalEmail(targetEmail, {
+      companyName,
+      seats,
+      pricePerSeat: pricing.pricePerSeat,
+      monthlyTotal: pricing.monthlyTotal,
+      yearlyTotal: pricing.yearlyTotal,
+      billingCycle: cycleLabel,
+      discount: pricing.discount,
+      checkoutUrl: result.checkoutUrl,
+    });
+
+    this.logger.log(
+      `Proposta Enterprise enviada: ${targetEmail} (${companyName}, ${seats} seats, ${cycleLabel}) — admin: ${data.adminUserId || 'unknown'}`,
+    );
+
+    return {
+      success: true,
+      isNewUser,
+      paymentId: payment.id,
+      checkoutUrl: result.checkoutUrl,
+      pricing,
+    };
+  }
+
+  /**
+   * Lista propostas Enterprise pendentes (pagamentos ENTERPRISE com status pending).
+   */
+  async listEnterprisePendingProposals() {
+    const pending = await this.prisma.payment.findMany({
+      where: { plan: 'ENTERPRISE', status: 'pending' },
+      select: {
+        id: true,
+        amount: true,
+        seatsCount: true,
+        billingCycle: true,
+        payerEmail: true,
+        createdAt: true,
+        user: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return pending.map((p) => ({
+      id: p.id,
+      email: p.payerEmail || p.user.email,
+      name: p.user.name,
+      seats: p.seatsCount,
+      billingCycle: p.billingCycle,
+      amount: Number(p.amount),
+      createdAt: p.createdAt,
     }));
   }
 

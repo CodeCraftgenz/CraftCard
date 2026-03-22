@@ -427,6 +427,85 @@ export class MailService {
     );
   }
 
+  /**
+   * Email de proposta/orçamento Enterprise — enviado pelo admin com link de pagamento MP
+   */
+  async sendEnterpriseProposalEmail(
+    email: string,
+    opts: {
+      companyName: string;
+      seats: number;
+      pricePerSeat: number;
+      monthlyTotal: number;
+      yearlyTotal: number;
+      billingCycle: string;
+      discount: number;
+      checkoutUrl: string;
+    },
+  ): Promise<void> {
+    const fmtBRL = (v: number) => v.toFixed(2).replace('.', ',');
+
+    const body = `
+      <div style="background:linear-gradient(135deg, rgba(139,92,246,0.15), rgba(0,228,242,0.1));border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:20px;margin-bottom:20px;text-align:center;">
+        <p style="color:#8B5CF6;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">PROPOSTA ENTERPRISE</p>
+        <p style="color:#fff;font-size:24px;font-weight:800;margin:0 0 4px;">${this.esc(opts.companyName)}</p>
+        <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0;">${opts.seats} licenças · ${opts.billingCycle}</p>
+      </div>
+
+      <p style="color:rgba(255,255,255,0.7);font-size:14px;line-height:1.6;margin:0 0 16px;">
+        Olá! Preparamos uma proposta personalizada do <strong style="color:#fff;">CraftCard Enterprise</strong> para a <strong style="color:#8B5CF6;">${this.esc(opts.companyName)}</strong>.
+      </p>
+
+      <div style="background:#0D0D1A;border-radius:12px;padding:16px;margin:0 0 20px;">
+        <table style="width:100%;border-collapse:collapse;">
+          <tr>
+            <td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:13px;">Licenças</td>
+            <td style="padding:8px 0;color:#fff;font-size:13px;font-weight:600;text-align:right;">${opts.seats} membros</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:13px;">Preço por licença/mês</td>
+            <td style="padding:8px 0;color:#fff;font-size:13px;font-weight:600;text-align:right;">R$ ${fmtBRL(opts.pricePerSeat)}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 0;color:rgba(255,255,255,0.4);font-size:13px;">Ciclo</td>
+            <td style="padding:8px 0;color:#fff;font-size:13px;font-weight:600;text-align:right;">${opts.billingCycle}</td>
+          </tr>
+          <tr style="border-top:1px solid rgba(255,255,255,0.08);">
+            <td style="padding:12px 0 4px;color:rgba(255,255,255,0.6);font-size:14px;font-weight:600;">Total mensal</td>
+            <td style="padding:12px 0 4px;color:#00E4F2;font-size:16px;font-weight:800;text-align:right;">R$ ${fmtBRL(opts.monthlyTotal)}/mês</td>
+          </tr>
+          ${opts.billingCycle === 'Anual' ? `
+          <tr>
+            <td style="padding:4px 0;color:rgba(255,255,255,0.6);font-size:14px;font-weight:600;">Total anual</td>
+            <td style="padding:4px 0;color:#8B5CF6;font-size:16px;font-weight:800;text-align:right;">R$ ${fmtBRL(opts.yearlyTotal)}</td>
+          </tr>` : ''}
+        </table>
+        ${opts.discount > 0 ? `<p style="color:#10B981;font-size:12px;font-weight:600;margin:12px 0 0;text-align:center;">${opts.discount}% de desconto por volume${opts.billingCycle === 'Anual' ? ' + 20% anual' : ''}</p>` : ''}
+      </div>
+
+      <p style="color:rgba(255,255,255,0.5);font-size:13px;line-height:1.5;margin:0 0 8px;">
+        Inclui: cartões digitais ilimitados, analytics avançado, branding corporativo, suporte prioritário e muito mais.
+      </p>
+
+      <p style="color:rgba(255,255,255,0.7);font-size:14px;line-height:1.6;margin:0 0 8px;">
+        Clique no botão abaixo para realizar o pagamento seguro. Seu plano será ativado automaticamente após a confirmação.
+      </p>
+    `;
+
+    return this.enqueue(
+      email,
+      `Proposta CraftCard Enterprise — ${opts.companyName}`,
+      this.buildEmail({
+        preheader: `Proposta Enterprise: ${opts.seats} licenças por R$ ${fmtBRL(opts.monthlyTotal)}/mês`,
+        title: 'Proposta Enterprise',
+        icon: '📋',
+        body,
+        ctaText: 'Pagar Agora',
+        ctaUrl: opts.checkoutUrl,
+      }),
+    );
+  }
+
   // ============================================================
   // Email Template Builder
   // ============================================================
