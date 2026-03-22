@@ -557,7 +557,9 @@ export class PaymentsService {
     }
 
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + SUBSCRIPTION_DAYS_YEARLY * 24 * 60 * 60 * 1000);
+    // Corrigido: respeita o ciclo de billing do registro — mensal (30d) ou anual (365d)
+    const subDays = existing.billingCycle === 'MONTHLY' ? SUBSCRIPTION_DAYS_MONTHLY : SUBSCRIPTION_DAYS_YEARLY;
+    const expiresAt = new Date(now.getTime() + subDays * 24 * 60 * 60 * 1000);
 
     // Atualização atômica: só atualiza se status ainda NÃO é 'approved'.
     // Previne race condition quando webhooks duplicados chegam simultaneamente.
